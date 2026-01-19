@@ -1,0 +1,35 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
+import ImportPage from './components/ImportPage';
+import DatabasePage from './components/DatabasePage';
+import PlayerDetail from './components/PlayerDetail';
+import './App.css';
+
+function App() {
+    return (
+        <Router>
+            <div className="app">
+                <nav className="nav">
+                    <div className="nav-content">
+                        <div className="nav-title">⚽ Football Player Database</div>
+                        <NavLink to="/import" className="nav-link">
+                            Import Players
+                        </NavLink>
+                        <NavLink to="/database" className="nav-link">
+                            Database
+                        </NavLink>
+                    </div>
+                </nav>
+
+                <Routes>
+                    <Route path="/" element={<DatabasePage />} />
+                    <Route path="/import" element={<ImportPage />} />
+                    <Route path="/database" element={<DatabasePage />} />
+                    <Route path="/player/:id" element={<PlayerDetail />} />
+                </Routes>
+            </div>
+        </Router>
+    );
+}
+
+export default App;

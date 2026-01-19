@@ -1,0 +1,26 @@
+{
+  "name": "statfoot-backend",
+  "version": "1.0.0",
+  "description": "Backend server for Football Player Database",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "init-db": "node scripts/initDatabase.js"
+  },
+  "keywords": [
+    "football",
+    "api",
+    "sqlite"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "sql.js": "^1.10.3",
+    "axios": "^1.6.5"
+  }
+}
