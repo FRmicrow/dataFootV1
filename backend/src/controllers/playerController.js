@@ -17,10 +17,10 @@ export const getAllPlayers = (req, res) => {
         p.nationality,
         p.photo_url,
         p.created_at,
-        GROUP_CONCAT(DISTINCT t.name) as teams
+        GROUP_CONCAT(DISTINCT c.name) as teams
       FROM players p
       LEFT JOIN player_club_stats pcs ON p.id = pcs.player_id
-      LEFT JOIN teams t ON pcs.team_id = t.id
+      LEFT JOIN clubs c ON pcs.club_id = c.id
       GROUP BY p.id
       ORDER BY p.created_at DESC
     `);
@@ -48,12 +48,14 @@ export const getPlayerById = (req, res) => {
 
         // Get club statistics
         const clubStats = db.all(`
-            SELECT pcs.*, t.name as team_name, t.logo_url as team_logo, 
-                   l.name as league_name, lc.competition_type, s.label as season_label
+            SELECT pcs.*, c.name as team_name, c.logo_url as team_logo,
+                   COALESCE(ch.name, nc.name, ic.name) as league_name,
+                   pcs.competition_type, s.label as season_label
             FROM player_club_stats pcs
-            JOIN teams t ON pcs.team_id = t.id
-            JOIN leagues l ON pcs.league_id = l.id
-            LEFT JOIN league_classifications lc ON l.id = lc.league_id
+            JOIN clubs c ON pcs.club_id = c.id
+            LEFT JOIN championships ch ON pcs.competition_type = 'championship' AND pcs.competition_id = ch.id
+            LEFT JOIN national_cups nc ON pcs.competition_type = 'cup' AND pcs.competition_id = nc.id
+            LEFT JOIN international_cups ic ON pcs.competition_type = 'international_cup' AND pcs.competition_id = ic.id
             JOIN seasons s ON pcs.season_id = s.id
             WHERE pcs.player_id = ?
             ORDER BY s.year DESC
@@ -62,16 +64,16 @@ export const getPlayerById = (req, res) => {
         // Group by club
         const clubsMap = {};
         clubStats.forEach(stat => {
-            if (!clubsMap[stat.team_id]) {
-                clubsMap[stat.team_id] = {
-                    id: stat.team_id,
+            if (!clubsMap[stat.club_id]) {
+                clubsMap[stat.club_id] = {
+                    id: stat.club_id,
                     name: stat.team_name,
                     logo: stat.team_logo,
                     seasons: []
                 };
             }
 
-            clubsMap[stat.team_id].seasons.push({
+            clubsMap[stat.club_id].seasons.push({
                 season: stat.season_label,
                 league: stat.league_name,
                 competition_type: stat.competition_type,
@@ -85,10 +87,10 @@ export const getPlayerById = (req, res) => {
 
         // Get national team statistics
         const nationalStats = db.all(`
-            SELECT pns.*, nt.name as team_name, l.name as league_name, s.label as season_label
+            SELECT pns.*, nt.name as team_name, ntc.name as league_name, s.label as season_label
             FROM player_national_stats pns
-            JOIN teams nt ON pns.team_id = nt.id
-            JOIN leagues l ON pns.league_id = l.id
+            JOIN national_teams nt ON pns.national_team_id = nt.id
+            JOIN national_team_cups ntc ON pns.competition_id = ntc.id
             JOIN seasons s ON pns.season_id = s.id
             WHERE pns.player_id = ?
             ORDER BY s.year DESC
@@ -97,15 +99,15 @@ export const getPlayerById = (req, res) => {
         // Group by national team
         const nationalTeamsMap = {};
         nationalStats.forEach(stat => {
-            if (!nationalTeamsMap[stat.team_id]) {
-                nationalTeamsMap[stat.team_id] = {
-                    id: stat.team_id,
+            if (!nationalTeamsMap[stat.national_team_id]) {
+                nationalTeamsMap[stat.national_team_id] = {
+                    id: stat.national_team_id,
                     name: stat.team_name,
                     seasons: []
                 };
             }
 
-            nationalTeamsMap[stat.team_id].seasons.push({
+            nationalTeamsMap[stat.national_team_id].seasons.push({
                 season: stat.season_label,
                 league: stat.league_name,
                 matches: stat.matches,
@@ -118,11 +120,10 @@ export const getPlayerById = (req, res) => {
 
         // Get trophies
         const trophies = db.all(`
-            SELECT pt.*, tr.name as trophy_name, s.label as season_label, t.name as team_name
+            SELECT pt.*, tr.name as trophy_name, s.label as season_label
             FROM player_trophies pt
             JOIN trophies tr ON pt.trophy_id = tr.id
             JOIN seasons s ON pt.season_id = s.id
-            LEFT JOIN teams t ON pt.team_id = t.id
             WHERE pt.player_id = ?
             ORDER BY s.year DESC
         `, [id]);
@@ -142,8 +143,9 @@ export const getPlayerById = (req, res) => {
 
 export const getAllTeams = (req, res) => {
     try {
-        const teams = db.all('SELECT * FROM teams ORDER BY name ASC');
-        res.json({ teams });
+        const clubs = db.all('SELECT id, name, logo_url, "club" as type FROM clubs ORDER BY name ASC');
+        const nationalTeams = db.all('SELECT id, name, "national" as type FROM national_teams ORDER BY name ASC');
+        res.json({ teams: [...clubs, ...nationalTeams] });
     } catch (error) {
         console.error('❌ Error getting teams:', error.message);
         res.status(500).json({ error: 'Failed to get teams' });
@@ -154,48 +156,25 @@ export const getTeamData = (req, res) => {
     const { id } = req.params;
 
     try {
-        const team = db.get('SELECT * FROM teams WHERE id = ?', [id]);
+        // Try club first
+        let team = db.get('SELECT *, "club" as type FROM clubs WHERE id = ?', [id]);
+
+        if (!team) {
+            // Try national team
+            team = db.get('SELECT *, "national" as type FROM national_teams WHERE id = ?', [id]);
+        }
 
         if (!team) {
             return res.status(404).json({ error: 'Team not found' });
         }
 
-        // Get standings
-        const standings = db.all(`
-            SELECT std.*, l.name as league_name, s.label as season_label
-            FROM standings std
-            JOIN leagues l ON std.league_id = l.id
-            JOIN seasons s ON std.season_id = s.id
-            WHERE std.team_id = ?
-            ORDER BY s.year DESC
-        `, [id]);
-
-        // Get trophies
-        const trophies = db.all(`
-            SELECT tt.*, tr.name as trophy_name, s.label as season_label
-            FROM team_trophies tt
-            JOIN trophies tr ON tt.trophy_id = tr.id
-            JOIN seasons s ON tt.season_id = s.id
-            WHERE tt.team_id = ?
-            ORDER BY s.year DESC
-        `, [id]);
-
-        // Get statistics
-        const statistics = db.all(`
-            SELECT ts.team_id, ts.league_id, ts.season_id, ts.played, ts.wins, ts.draws, ts.losses, ts.goals_for, ts.goals_against, 
-                   l.name as league_name, s.label as season_label
-            FROM team_statistics ts
-            JOIN leagues l ON ts.league_id = l.id
-            JOIN seasons s ON ts.season_id = s.id
-            WHERE ts.team_id = ?
-            ORDER BY s.year DESC
-        `, [id]);
-
+        // TODO: Update Standings and Team Statistics to work with new schema
+        // For now returning empty stats to prevent crash
         res.json({
             team,
-            standings,
-            trophies,
-            statistics
+            standings: [],
+            trophies: [],
+            statistics: []
         });
 
     } catch (error) {
@@ -213,12 +192,11 @@ export const deletePlayer = (req, res) => {
             return res.status(404).json({ error: 'Player not found' });
         }
 
-        db.transaction(() => {
-            db.run('DELETE FROM player_club_stats WHERE player_id = ?', [id]);
-            db.run('DELETE FROM player_national_stats WHERE player_id = ?', [id]);
-            db.run('DELETE FROM player_trophies WHERE player_id = ?', [id]);
-            db.run('DELETE FROM players WHERE id = ?', [id]);
-        })();
+        // Transaction support missing in wrapper, running sequentially
+        db.run('DELETE FROM player_club_stats WHERE player_id = ?', [id]);
+        db.run('DELETE FROM player_national_stats WHERE player_id = ?', [id]);
+        db.run('DELETE FROM player_trophies WHERE player_id = ?', [id]);
+        db.run('DELETE FROM players WHERE id = ?', [id]);
 
         console.log(`🗑️ Deleted player ${id} and associated data`);
         res.json({ success: true, message: 'Player deleted successfully' });

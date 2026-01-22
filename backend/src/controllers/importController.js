@@ -1,5 +1,6 @@
 import footballApi from '../services/footballApi.js';
 import db from '../config/database.js';
+import { getOrCreateCountry, getOrCreateClub, getOrCreateNationalTeam, getOrCreateCompetition } from '../utils/schemaHelpers.js';
 
 /**
  * Import Controller
@@ -526,15 +527,12 @@ export const retryFailedImport = async (req, res) => {
  * Process player statistics and store in database
  */
 async function processPlayerStatistics(playerId, seasonLabel, statistics) {
-    // Convert season to string in case API returns number
     seasonLabel = String(seasonLabel);
     console.log(`  📊 Processing statistics for season ${seasonLabel}...`);
 
     // Get or create season
     let season = db.get('SELECT id FROM seasons WHERE label = ?', [seasonLabel]);
-
     if (!season) {
-        // Handle both "2023/2024" and "2023" formats
         const year = parseInt(seasonLabel.split('/')[0]) || parseInt(seasonLabel);
         const result = db.run('INSERT INTO seasons (label, year) VALUES (?, ?)', [seasonLabel, year]);
         season = { id: result.lastInsertRowid };
@@ -552,96 +550,94 @@ async function processPlayerStatistics(playerId, seasonLabel, statistics) {
 
             if (!teamData) continue;
 
-            // Determine if it's a national team based on team.national flag or league/team names
+            // Determine if it's a national team
             const isNationalTeam = teamData.national === true ||
                 teamData.name?.includes('National') ||
-                leagueData?.name?.includes('National') ||
                 leagueData?.name?.includes('World Cup') ||
                 leagueData?.name?.includes('Euro') ||
                 leagueData?.name?.includes('Copa America') ||
-                leagueData?.name?.includes('African Cup of Nations') ||
-                leagueData?.name?.includes('Asian Cup') ||
                 leagueData?.name?.includes('Friendlies') ||
-                leagueData?.name?.includes('UEFA Nations League') ||
-                leagueData?.name?.includes('Qualifiers');
+                leagueData?.name?.includes('Qualifiers') ||
+                leagueData?.name?.includes('Nations League');
 
-            // Route to appropriate table based on team type
             if (isNationalTeam) {
-                // NATIONAL TEAM - Store in player_national_stats
+                // === NATIONAL TEAM ===
                 const nationalTeamId = teamData.id || -(Math.abs(hashString(teamData.name)));
-                let team = db.get('SELECT id FROM teams WHERE api_team_id = ?', [nationalTeamId]);
+                const nationalTeam = getOrCreateNationalTeam(nationalTeamId, teamData.name, teamData.name);
 
-                if (!team) {
-                    const result = db.run('INSERT INTO teams (api_team_id, name, logo_url) VALUES (?, ?, ?)', [nationalTeamId, teamData.name, teamData.logo]);
-                    team = { id: result.lastInsertRowid };
-                }
-
-                // Get or create league (e.g. "Friendlies", "Euro", etc.)
-                const apiLeagueId = leagueData.id || -(Math.abs(hashString(leagueData.name)));
-                let league = db.get('SELECT id FROM leagues WHERE api_league_id = ?', [apiLeagueId]);
-
-                if (!league) {
-                    const result = db.run('INSERT INTO leagues (api_league_id, name, country) VALUES (?, ?, ?)', [apiLeagueId, leagueData.name, leagueData.country]);
-                    league = { id: result.lastInsertRowid };
-                }
-
-                // Insert/Replace national team stats
-                db.run(
-                    `INSERT OR REPLACE INTO player_national_stats 
-                    (player_id, team_id, league_id, season_id, matches, goals, assists)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        playerId, team.id, league.id, season.id,
-                        games?.appearences || 0, goals?.total || 0, passes?.assists || 0
-                    ]
-                );
-            } else {
-                // Process club stats - Ensure we have the necessary IDs
-                if (!teamData.id || !leagueData?.name) {
-                    console.warn(`  ⚠️ Skipping statistic entry due to missing data: Team ${teamData.name} (${teamData.id}), League ${leagueData?.name}`);
+                if (!nationalTeam) {
+                    console.warn(`    ⚠️  Could not create national team: ${teamData.name}`);
                     continue;
                 }
 
-                let team = db.get('SELECT id FROM teams WHERE api_team_id = ?', [teamData.id]);
-
-                if (!team) {
-                    const result = db.run('INSERT INTO teams (api_team_id, name, logo_url) VALUES (?, ?, ?)', [teamData.id, teamData.name, teamData.logo]);
-                    team = { id: result.lastInsertRowid };
-                }
-
-                // Get or create league
                 const apiLeagueId = leagueData.id || -(Math.abs(hashString(leagueData.name)));
-                let league = db.get('SELECT id FROM leagues WHERE api_league_id = ?', [apiLeagueId]);
+                const competition = getOrCreateCompetition(apiLeagueId, leagueData.name, leagueData.country);
 
-                if (!league) {
-                    const result = db.run('INSERT INTO leagues (api_league_id, name, country) VALUES (?, ?, ?)', [apiLeagueId, leagueData.name, leagueData.country]);
-                    league = { id: result.lastInsertRowid };
-
-                    // Auto-classify the new league
-                    const competitionType = classifyLeague(leagueData.name);
-                    if (competitionType) {
-                        db.run('INSERT OR REPLACE INTO league_classifications (league_id, competition_type) VALUES (?, ?)',
-                            [league.id, competitionType]);
-                        console.log(`  ✓ Auto-classified "${leagueData.name}" as "${competitionType}"`);
-                    } else {
-                        console.log(`  ⚠️  Could not auto-classify league: "${leagueData.name}" - will need manual classification`);
-                    }
+                if (!competition || competition.table !== 'national_team_cups') {
+                    console.warn(`    ⚠️  Skipping non-national-team competition: ${leagueData.name}`);
+                    continue;
                 }
 
-                // Insert/Replace club stats
+                console.log(`    ✓ ${teamData.name} - ${leagueData.name}`);
+
+                db.run(
+                    `INSERT OR REPLACE INTO player_national_stats 
+                    (player_id, national_team_id, competition_id, season_id, matches, goals, assists)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [playerId, nationalTeam.id, competition.id, season.id,
+                        games?.appearences || 0, goals?.total || 0, passes?.assists || 0]
+                );
+            } else {
+                // === CLUB TEAM ===
+                if (!teamData.id) {
+                    console.warn(`    ⚠️  Skipping team without ID: ${teamData.name}`);
+                    continue;
+                }
+
+                const club = getOrCreateClub(teamData.id, teamData.name, teamData.logo, leagueData?.country);
+                if (!club) {
+                    console.warn(`    ⚠️  Could not create club: ${teamData.name}`);
+                    continue;
+                }
+
+                const apiLeagueId = leagueData.id || -(Math.abs(hashString(leagueData.name)));
+                const competition = getOrCreateCompetition(apiLeagueId, leagueData.name, leagueData.country);
+
+                if (!competition) {
+                    console.warn(`    ⚠️  Could not create competition: ${leagueData.name}`);
+                    continue;
+                }
+
+                // Map competition table to type
+                let competitionType;
+                if (competition.table === 'championships') competitionType = 'championship';
+                else if (competition.table === 'national_cups') competitionType = 'cup';
+                else if (competition.table === 'international_cups') competitionType = 'international_cup';
+                else {
+                    console.warn(`    ⚠️  Unexpected competition table: ${competition.table} for ${leagueData.name}`);
+                    continue;
+                }
+
+                console.log(`    ✓ ${teamData.name} - ${leagueData.name} (${competitionType})`);
+
                 db.run(
                     `INSERT OR REPLACE INTO player_club_stats 
-                    (player_id, team_id, league_id, season_id, matches, goals, assists)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        playerId, team.id, league.id, season.id,
-                        games?.appearences || 0, goals?.total || 0, passes?.assists || 0
-                    ]
+                    (player_id, club_id, competition_id, competition_type, season_id, matches, goals, assists)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [playerId, club.id, competition.id, competitionType, season.id,
+                        games?.appearences || 0, goals?.total || 0, passes?.assists || 0]
                 );
             }
         }
     }
 }
+
+
+/**
+ * Process trophies and store in database
+ */
+
+
 
 /**
  * Process trophies and store in database

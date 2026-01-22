@@ -34,6 +34,13 @@ const PlayerDetail = () => {
         return yearB - yearA;
     };
 
+    const sortStats = (a, b) => {
+        const diff = sortSeasonsDesc(a, b);
+        if (diff !== 0) return diff;
+        // Secondary sort to group clubs
+        return b.clubName ? b.clubName.localeCompare(a.clubName) : 0;
+    };
+
     const [syncing, setSyncing] = useState(false);
 
     const handleRefresh = async () => {
@@ -121,10 +128,10 @@ const PlayerDetail = () => {
         return acc;
     }, { championship: [], cup: [], international: [] });
 
-    // Sort all categories by season DESC
-    allStats.championship.sort(sortSeasonsDesc);
-    allStats.cup.sort(sortSeasonsDesc);
-    allStats.international.sort(sortSeasonsDesc);
+    // Sort all categories
+    allStats.championship.sort(sortStats);
+    allStats.cup.sort(sortStats);
+    allStats.international.sort(sortStats);
 
     const renderStatTable = (stats) => (
         <table className="table" style={{ fontSize: '0.9rem' }}>
