@@ -1,4 +1,5 @@
 import db from '../config/database.js';
+import footballApi from '../services/footballApi.js';
 
 /**
  * Player Controller
@@ -141,45 +142,147 @@ export const getPlayerById = (req, res) => {
     }
 };
 
+
 export const getAllTeams = (req, res) => {
     try {
-        const clubs = db.all('SELECT id, name, logo_url, "club" as type FROM clubs ORDER BY name ASC');
-        const nationalTeams = db.all('SELECT id, name, "national" as type FROM national_teams ORDER BY name ASC');
-        res.json({ teams: [...clubs, ...nationalTeams] });
+        // Get all clubs with country information
+        const clubs = db.all(`
+            SELECT c.id, c.api_team_id, c.name, c.logo_url, c.main_league_id, 
+                   co.name as country, co.id as country_id
+            FROM clubs c
+            LEFT JOIN countries co ON c.country_id = co.id
+            ORDER BY co.name ASC, c.name ASC
+        `);
+
+        // Transform to frontend format
+        const teams = clubs.map(club => ({
+            id: club.id,
+            apiId: club.api_team_id,
+            name: club.name,
+            logo_url: club.logo_url,
+            type: 'club',
+            country: club.country,
+            mainLeagueId: club.main_league_id,
+            isMainLeague: club.main_league_id !== null
+        }));
+
+        res.json({ teams });
     } catch (error) {
         console.error('❌ Error getting teams:', error.message);
         res.status(500).json({ error: 'Failed to get teams' });
     }
 };
 
-export const getTeamData = (req, res) => {
+export const getTeamData = async (req, res) => {
     const { id } = req.params;
 
     try {
-        // Try club first
-        let team = db.get('SELECT *, "club" as type FROM clubs WHERE id = ?', [id]);
-
-        if (!team) {
-            // Try national team
-            team = db.get('SELECT *, "national" as type FROM national_teams WHERE id = ?', [id]);
-        }
+        // Get team from database
+        let team = db.get('SELECT * FROM clubs WHERE id = ?', [id]);
 
         if (!team) {
             return res.status(404).json({ error: 'Team not found' });
         }
 
-        // TODO: Update Standings and Team Statistics to work with new schema
-        // For now returning empty stats to prevent crash
+        const apiTeamId = team.api_team_id;
+
+        // Fetch live team details from API
+        console.log(`🏆 Fetching team details for ${team.name} (API ID: ${apiTeamId})...`);
+        const teamDetails = await footballApi.getTeamById(apiTeamId);
+
+        // Fetch trophies from database
+        const trophyRecords = db.all(`
+            SELECT 
+                t.name as trophy_name,
+                t.type as trophy_type,
+                s.year as season_year,
+                s.label as season_label,
+                tt.place
+            FROM team_trophies tt
+            JOIN trophies t ON tt.trophy_id = t.id
+            JOIN seasons s ON tt.season_id = s.id
+            WHERE tt.team_id = ?
+            ORDER BY t.type, s.year DESC
+        `, [id]);
+
+        // Group trophies by type and name
+        const trophiesByType = {};
+        trophyRecords.forEach(record => {
+            const type = record.trophy_type;
+            const name = record.trophy_name;
+
+            if (!trophiesByType[type]) {
+                trophiesByType[type] = {};
+            }
+
+            if (!trophiesByType[type][name]) {
+                trophiesByType[type][name] = {
+                    count: 0,
+                    years: []
+                };
+            }
+
+            trophiesByType[type][name].count++;
+            trophiesByType[type][name].years.push(record.season_year);
+        });
+
+        // Convert to array format
+        const trophies = Object.entries(trophiesByType).map(([type, competitions]) => ({
+            type,
+            competitions: Object.entries(competitions).map(([name, data]) => ({
+                name,
+                count: data.count,
+                years: data.years
+            }))
+        }));
+
+        // Determine the main league for statistics
+        const MAIN_LEAGUES = {
+            'England': 39,
+            'Spain': 140,
+            'Germany': 78,
+            'Italy': 135,
+            'France': 61
+        };
+
+        // Get country to determine league
+        const country = db.get('SELECT name FROM countries WHERE id = ?', [team.country_id]);
+        const leagueId = country ? MAIN_LEAGUES[country.name] : 39;
+
+        // Get season from query parameter or default to current year
+        const season = req.query.season ? parseInt(req.query.season) : 2024;
+
+        // Fetch season statistics
+        let statistics = null;
+        if (leagueId) {
+            console.log(`📊 Fetching statistics for league ${leagueId}, season ${season}...`);
+            try {
+                const stats = await footballApi.getTeamStatistics(apiTeamId, leagueId, season);
+                if (stats.response) {
+                    statistics = stats.response;
+                    console.log(`  ✓ Statistics fetched successfully`);
+                }
+            } catch (error) {
+                console.log(`  ⚠️ No statistics found for this league/season`);
+            }
+        }
+
         res.json({
-            team,
-            standings: [],
-            trophies: [],
-            statistics: []
+            team: {
+                ...team,
+                name: team.name,
+                logo_url: team.logo_url,
+                country: country ? country.name : null
+            },
+            statistics: statistics || null,
+            trophies: trophies,
+            teamDetails: teamDetails.response ? teamDetails.response[0] : null,
+            leagueId: leagueId // Send back the league ID for frontend use
         });
 
     } catch (error) {
         console.error('❌ Error getting team data:', error.message);
-        res.status(500).json({ error: 'Failed to get team data' });
+        res.status(500).json({ error: 'Failed to get team data', details: error.message });
     }
 };
 
@@ -204,5 +307,112 @@ export const deletePlayer = (req, res) => {
     } catch (error) {
         console.error('❌ Error deleting player:', error.message);
         res.status(500).json({ error: 'Failed to delete player' });
+    }
+};
+
+// New method to fetch specific season statistics per user request
+export const getTeamStatistics = async (req, res) => {
+    const { id } = req.params;
+    const season = req.query.season ? parseInt(req.query.season) : 2024;
+
+    try {
+        const team = db.get('SELECT * FROM clubs WHERE id = ?', [id]);
+        if (!team) return res.status(404).json({ error: 'Team not found' });
+
+        const apiTeamId = team.api_team_id;
+
+        // Determine league
+        const MAIN_LEAGUES = {
+            'England': 39, 'Spain': 140, 'Germany': 78, 'Italy': 135, 'France': 61
+        };
+        const country = db.get('SELECT name FROM countries WHERE id = ?', [team.country_id]);
+        const leagueId = country ? MAIN_LEAGUES[country.name] : 39;
+
+        console.log(`📊 API Request: Statistics for Team ${apiTeamId}, League ${leagueId}, Season ${season}`);
+
+        const stats = await footballApi.getTeamStatistics(apiTeamId, leagueId, season);
+
+        res.json({
+            teamId: id,
+            season: season,
+            statistics: stats.response || []
+        });
+
+    } catch (error) {
+        console.error('❌ Error in getTeamStatistics:', error.message);
+        res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
+};
+
+// New method to fetch trophies per user request
+export const getTeamTrophies = (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // Fetch trophies from team_trophies table
+        // season_id is stored as integer year (e.g., 2024)
+        const trophyRecords = db.all(`
+            SELECT 
+                t.name as trophy_name,
+                t.type as trophy_type,
+                tt.season_id as year,
+                tt.place
+            FROM team_trophies tt
+            JOIN trophies t ON tt.trophy_id = t.id
+            WHERE tt.team_id = ?
+            ORDER BY t.name, tt.season_id DESC
+        `, [id]);
+
+        console.log(`📊 Found ${trophyRecords.length} trophy records for team ${id}`);
+
+        // Group trophies by competition name and place
+        const competitionMap = {};
+
+        trophyRecords.forEach(record => {
+            const { trophy_name, trophy_type, year, place } = record;
+
+            if (!competitionMap[trophy_name]) {
+                competitionMap[trophy_name] = {
+                    name: trophy_name,
+                    type: trophy_type,
+                    wins: { count: 0, years: [] },
+                    runnersUp: { count: 0, years: [] },
+                    third: { count: 0, years: [] }
+                };
+            }
+
+            // Categorize by place (use == to handle string/int comparison)
+            if (place == 1) {
+                competitionMap[trophy_name].wins.count++;
+                competitionMap[trophy_name].wins.years.push(year);
+            } else if (place == 2) {
+                competitionMap[trophy_name].runnersUp.count++;
+                competitionMap[trophy_name].runnersUp.years.push(year);
+            } else if (place == 3) {
+                competitionMap[trophy_name].third.count++;
+                competitionMap[trophy_name].third.years.push(year);
+            }
+        });
+
+        // Convert to array format for frontend
+        const trophies = Object.values(competitionMap).map(comp => ({
+            competition: comp.name,
+            type: comp.type,
+            titles: comp.wins.count,
+            years: comp.wins.years,
+            runnersUp: comp.runnersUp.count > 0 ? comp.runnersUp.count : undefined,
+            runnersUpYears: comp.runnersUp.years.length > 0 ? comp.runnersUp.years : undefined,
+            third: comp.third.count > 0 ? comp.third.count : undefined,
+            thirdYears: comp.third.years.length > 0 ? comp.third.years : undefined
+        }));
+
+        res.json({
+            teamId: id,
+            trophies: trophies
+        });
+
+    } catch (error) {
+        console.error('❌ Error in getTeamTrophies:', error.message);
+        res.status(500).json({ error: 'Failed to fetch trophies' });
     }
 };

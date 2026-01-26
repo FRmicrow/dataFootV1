@@ -114,7 +114,12 @@ const PlayerDetail = () => {
     const allStats = clubs.reduce((acc, club) => {
         club.seasons.forEach(season => {
             // Use backend classification, default to 'championship' if not classified
-            const category = season.competition_type || 'championship';
+            let category = season.competition_type || 'championship';
+
+            // Map 'international_cup' to 'international' for frontend display
+            if (category === 'international_cup') {
+                category = 'international';
+            }
 
             // Only include if we have a valid category
             if (acc[category]) {
@@ -317,36 +322,83 @@ const PlayerDetail = () => {
                 )}
 
                 {/* Trophies Tab */}
-                {activeTab === 'trophies' && (
-                    <div>
-                        {trophies.length === 0 ? (
-                            <div className="empty-state">
-                                <p>No trophies recorded</p>
-                            </div>
-                        ) : (
-                            <table className="table">
-                                <thead>
-                                    <tr>
-                                        <th>Season</th>
-                                        <th>Trophy</th>
-                                        <th>Team</th>
-                                        <th>Type</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {trophies.sort((a, b) => (parseInt(b.season) || 0) - (parseInt(a.season) || 0)).map((trophy, idx) => (
-                                        <tr key={idx}>
-                                            <td><strong>{trophy.season}</strong></td>
-                                            <td>{trophy.trophy_name}</td>
-                                            <td>{trophy.team_name || 'N/A'}</td>
-                                            <td>{trophy.trophy_type || 'N/A'}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
-                )}
+                {activeTab === 'trophies' && (() => {
+                    // Group trophies by club/national team
+                    const clubTrophies = trophies.filter(t => t.team_name && !t.team_name.toLowerCase().includes('portugal') && !t.team_name.toLowerCase().includes('national'));
+                    const nationalTrophies = trophies.filter(t => !clubTrophies.includes(t));
+
+                    // Sort by year (newest first)
+                    const sortByYear = (a, b) => {
+                        const yearA = parseInt(a.season_label || a.season || '0');
+                        const yearB = parseInt(b.season_label || b.season || '0');
+                        return yearB - yearA;
+                    };
+
+                    clubTrophies.sort(sortByYear);
+                    nationalTrophies.sort(sortByYear);
+
+                    return (
+                        <div>
+                            {trophies.length === 0 ? (
+                                <div className="empty-state">
+                                    <p>No trophies recorded</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Club Trophies */}
+                                    {clubTrophies.length > 0 && (
+                                        <div style={{ marginBottom: '2rem' }}>
+                                            <h3 style={{ marginBottom: '1rem', color: '#4a5568', fontSize: '1.1rem' }}>🏆 Club Trophies</h3>
+                                            <table className="table" style={{ fontSize: '0.9rem' }}>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Season</th>
+                                                        <th>Trophy</th>
+                                                        <th>Team</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {clubTrophies.map((trophy, idx) => (
+                                                        <tr key={idx}>
+                                                            <td><strong>{trophy.season_label || trophy.season}</strong></td>
+                                                            <td>{trophy.trophy_name}</td>
+                                                            <td>{trophy.team_name || 'N/A'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+
+                                    {/* National Team Trophies */}
+                                    {nationalTrophies.length > 0 && (
+                                        <div>
+                                            <h3 style={{ marginBottom: '1rem', color: '#4a5568', fontSize: '1.1rem' }}>🌍 National Team Trophies</h3>
+                                            <table className="table" style={{ fontSize: '0.9rem' }}>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Season</th>
+                                                        <th>Trophy</th>
+                                                        <th>Team</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {nationalTrophies.map((trophy, idx) => (
+                                                        <tr key={idx}>
+                                                            <td><strong>{trophy.season_label || trophy.season}</strong></td>
+                                                            <td>{trophy.trophy_name}</td>
+                                                            <td>{trophy.team_name || 'N/A'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    );
+                })()}
             </div>
         </div>
     );

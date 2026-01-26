@@ -123,18 +123,6 @@ class FootballApi {
         }, requestId);
     }
 
-    /**
-     * Get team statistics for a specific league and season
-     * GET /teams/statistics?team={id}&league={league}&season={season}
-     */
-    async getTeamStatistics(teamId, leagueId, season) {
-        const requestId = `team-stats-${teamId}-${leagueId}-${season}`;
-        return this.makeRequest('/teams/statistics', {
-            team: teamId,
-            league: leagueId,
-            season: season
-        }, requestId);
-    }
 
     /**
      * Get available seasons for a team
@@ -144,6 +132,38 @@ class FootballApi {
         const requestId = `seasons-team-${teamId}`;
         return this.makeRequest('/teams/seasons', {
             team: teamId
+        }, requestId);
+    }
+
+    /**
+     * Get all leagues for a specific season
+     * GET /leagues?season={season}
+     */
+    async getLeagues(season) {
+        const requestId = `leagues-${season}`;
+        return this.makeRequest('/leagues', {
+            season: season
+        }, requestId);
+    }
+
+    /**
+     * Get all countries
+     * GET /countries
+     */
+    async getCountries() {
+        const requestId = 'all-countries';
+        return this.makeRequest('/countries', {}, requestId);
+    }
+
+    /**
+     * Get teams from a specific league and season
+     * GET /teams?league={id}&season={season}
+     */
+    async getTeamsFromLeague(leagueId, season) {
+        const requestId = `teams-league-${leagueId}-${season}`;
+        return this.makeRequest('/teams', {
+            league: leagueId,
+            season: season
         }, requestId);
     }
 
@@ -164,6 +184,89 @@ class FootballApi {
             team: teamId,
             season: season,
             page: page
+        }, requestId);
+    }
+
+    /**
+     * Get trophies for a specific player
+     * GET /trophies?player={playerId}
+     */
+    async getTrophies(playerId) {
+        const requestId = `trophies-player-${playerId}`;
+        return this.makeRequest('/trophies', {
+            player: playerId
+        }, requestId);
+    }
+
+    /**
+     * Get team information by name
+     * GET /teams?name={name}
+     */
+    async getTeamByName(teamName) {
+        const requestId = `team-name-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
+        return this.makeRequest('/teams', {
+            name: teamName
+        }, requestId);
+    }
+
+    /**
+     * Get all countries available for teams
+     * GET /teams/countries
+     */
+    async getTeamCountries() {
+        const requestId = 'team-countries';
+        return this.makeRequest('/teams/countries', {}, requestId);
+    }
+
+    /**
+     * Get all teams from a specific country
+     * GET /teams?country={country}
+     */
+    async getTeamsByCountry(country) {
+        const requestId = `teams-country-${country.toLowerCase().replace(/\s+/g, '-')}`;
+        return this.makeRequest('/teams', {
+            country: country
+        }, requestId);
+    }
+
+    /**
+     * Get team statistics for a specific league and season
+     * GET /teams/statistics?league={leagueId}&team={teamId}&season={season}
+     */
+    async getTeamStatistics(teamId, leagueId, season, date = null) {
+        const requestId = `team-stats-${teamId}-${leagueId}-${season}`;
+        const params = {
+            team: teamId,
+            league: leagueId,
+            season: season
+        };
+        if (date) {
+            params.date = date;
+        }
+        return this.makeRequest('/teams/statistics', params, requestId);
+    }
+
+
+    /**
+     * Get complete team information by ID (includes trophies)
+     * GET /teams?id={id}
+     */
+    async getTeamById(teamId) {
+        const requestId = `team-id-${teamId}`;
+        return this.makeRequest('/teams', {
+            id: teamId
+        }, requestId);
+    }
+
+    /**
+     * Get all teams in a specific league and season
+     * GET /teams?league={leagueId}&season={season}
+     */
+    async getTeamsByLeague(leagueId, season) {
+        const requestId = `teams-league-${leagueId}-${season}`;
+        return this.makeRequest('/teams', {
+            league: leagueId,
+            season: season
         }, requestId);
     }
 }
