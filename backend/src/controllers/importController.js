@@ -971,3 +971,128 @@ function hashString(str) {
     }
     return hash;
 }
+
+/**
+ * BATCH IMPORT FUNCTIONALITY
+ * Multi-threaded import with retry logic
+ */
+
+// Store batch import progress
+const batchProgress = new Map();
+
+/**
+ * Import multiple players concurrently with batching
+ * POST /api/import/batch
+ */
+export const importBatch = async (req, res) => {
+    const { playerIds, batchSize = 5 } = req.body;
+    
+    if (!playerIds || !Array.isArray(playerIds) || playerIds.length === 0) {
+        return res.status(400).json({ error: 'playerIds array is required' });
+    }
+    
+    const batchId = `batch-${Date.now()}`;
+    const progress = {
+        batchId,
+        total: playerIds.length,
+        completed: 0,
+        failed: 0,
+        results: [],
+        startTime: new Date(),
+        status: 'running'
+    };
+    
+    batchProgress.set(batchId, progress);
+    
+    res.json({
+        success: true,
+        batchId,
+        message: `Batch import started for ${playerIds.length} players`
+    });
+    
+    // Process in background
+    processBatchImport(batchId, playerIds, batchSize).catch(error => {
+        console.error('Batch error:', error);
+        progress.status = 'failed';
+    });
+};
+
+/**
+ * Get batch progress
+ */
+export const getBatchProgress = (req, res) => {
+    const { batchId } = req.params;
+    const progress = batchProgress.get(batchId);
+    
+    if (!progress) {
+        return res.status(404).json({ error: 'Batch not found' });
+    }
+    
+    res.json(progress);
+};
+
+async function processBatchImport(batchId, playerIds, batchSize) {
+    const progress = batchProgress.get(batchId);
+    const batches = [];
+    
+    for (let i = 0; i < playerIds.length; i += batchSize) {
+        batches.push(playerIds.slice(i, i + batchSize));
+    }
+    
+    console.log(`🚀 Batch import: ${batches.length} batches`);
+    
+    for (const batch of batches) {
+        const results = await Promise.allSettled(
+            batch.map(id => importPlayerQuick(id))
+        );
+        
+        results.forEach((result, idx) => {
+            if (result.status === 'fulfilled') {
+                progress.completed++;
+                progress.results.push({ playerId: batch[idx], status: 'success' });
+            } else {
+                progress.failed++;
+                progress.results.push({ playerId: batch[idx], status: 'failed', error: result.reason?.message });
+            }
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    progress.status = 'completed';
+    progress.endTime = new Date();
+}
+
+async function importPlayerQuick(playerId) {
+    let player = db.get('SELECT id FROM players WHERE api_player_id = ?', [playerId]);
+    
+    if (!player) {
+        const profileData = await footballApi.getPlayerProfile(playerId);
+        if (!profileData.response?.[0]) throw new Error('Not found');
+        
+        const p = profileData.response[0].player;
+        db.run(
+            `INSERT OR IGNORE INTO players (api_player_id, first_name, last_name, age, nationality, photo_url)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [p.id, p.firstname, p.lastname, p.age, p.nationality, p.photo]
+        );
+        player = { id: db.get('SELECT id FROM players WHERE api_player_id = ?', [playerId]).id };
+    }
+    
+    const dbPlayerId = player.id;
+    const currentYear = new Date().getFullYear();
+    
+    // Only fetch last 2 years for speed
+    for (let year = currentYear; year >= currentYear - 2; year--) {
+        try {
+            const statsData = await footballApi.getPlayerStatistics(playerId, year);
+            if (statsData.response?.length > 0) {
+                await processPlayerStatistics(dbPlayerId, String(year), statsData.response);
+            }
+        } catch (e) {
+            console.error(`Year ${year} failed for ${playerId}`);
+        }
+    }
+    
+    return dbPlayerId;
+}

@@ -74,8 +74,20 @@ const api = {
     },
 
     // Get single team with data
-    getTeam: async (id) => {
-        const response = await axios.get(`${API_BASE_URL}/team/${id}`);
+    getTeam: async (id, season = null) => {
+        const params = season ? { season } : {};
+        const response = await axios.get(`${API_BASE_URL}/team/${id}`, { params });
+        return response.data;
+    },
+
+    getTeamStatistics: async (id, season) => {
+        const params = season ? { season } : {};
+        const response = await axios.get(`${API_BASE_URL}/team/${id}/statistics`, { params });
+        return response.data;
+    },
+
+    getTeamTrophies: async (id) => {
+        const response = await axios.get(`${API_BASE_URL}/team/${id}/trophies`);
         return response.data;
     },
 
@@ -96,6 +108,20 @@ const api = {
     // FBref Import
     importFromFbref: async (league, season) => {
         const response = await axios.post(`${API_BASE_URL}/import/fbref`, { league, season });
+        return response.data;
+    },
+
+    // Batch Import
+    importBatch: async (playerIds, batchSize = 5) => {
+        const response = await axios.post(`${API_BASE_URL}/import/batch`, {
+            playerIds,
+            batchSize
+        });
+        return response.data;
+    },
+
+    getBatchProgress: async (batchId) => {
+        const response = await axios.get(`${API_BASE_URL}/import/batch/${batchId}`);
         return response.data;
     },
 

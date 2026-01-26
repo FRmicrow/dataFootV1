@@ -20,12 +20,6 @@ const ImportPage = () => {
     const [researchLoading, setResearchLoading] = useState(false);
     const [batchImportInProgress, setBatchImportInProgress] = useState(false);
 
-    // FBref import states
-    const [fbrefLeague, setFbrefLeague] = useState('ENG-Premier League');
-    const [fbrefSeason, setFbrefSeason] = useState('2021');
-    const [fbrefLoading, setFbrefLoading] = useState(false);
-    const [fbrefStatus, setFbrefStatus] = useState(null);
-
     const [error, setError] = useState(null);
     const [importing, setImporting] = useState({});
     const [importStatus, setImportStatus] = useState({});
@@ -189,44 +183,60 @@ const ImportPage = () => {
     const handleImportAllFound = async () => {
         if (!researchResults.length || batchImportInProgress) return;
 
-        if (!window.confirm(`Are you sure you want to import all ${researchResults.length} players? This will take some time and process via the queue.`)) {
+        if (!window.confirm(`Import all ${researchResults.length} players using multi-threaded batch import?`)) {
             return;
         }
 
         setBatchImportInProgress(true);
-
-        // Import one by one to avoid overwhelming the frontend state updates, 
-        // though the backend handles the real concurrency via queue.
-        for (const player of researchResults) {
-            // Skip already imported
-            if (importStatus[player.id]?.success) continue;
-
-            try {
-                await handleImport(player.id);
-            } catch (err) {
-                console.error(`Batch import failed for ${player.id}`, err);
-            }
-        }
-
-        setBatchImportInProgress(false);
-        alert('Batch import complete!');
-    };
-
-    const handleFbrefImport = async (e) => {
-        e.preventDefault();
-        setFbrefLoading(true);
-        setFbrefStatus(null);
         setError(null);
+
         try {
-            const data = await api.importFromFbref(fbrefLeague, fbrefSeason);
-            setFbrefStatus(data.message);
-            alert('FBref import successful!');
+            // Get player IDs
+            const playerIds = researchResults
+                .filter(p => !importStatus[p.id]?.success)
+                .map(p => p.id);
+
+            if (playerIds.length === 0) {
+                alert('All players already imported!');
+                setBatchImportInProgress(false);
+                return;
+            }
+
+            // Start batch import
+            const batchResponse = await api.importBatch(playerIds, 5);
+            const { batchId } = batchResponse;
+
+            // Poll for progress
+            const pollInterval = setInterval(async () => {
+                try {
+                    const progress = await api.getBatchProgress(batchId);
+
+                    console.log(`Batch progress: ${progress.completed}/${progress.total}`);
+
+                    // Update import status for completed players
+                    progress.results.forEach(result => {
+                        setImportStatus(prev => ({
+                            ...prev,
+                            [result.playerId]: {
+                                success: result.status === 'success',
+                                message: result.error || 'Imported successfully'
+                            }
+                        }));
+                    });
+
+                    if (progress.status === 'completed') {
+                        clearInterval(pollInterval);
+                        setBatchImportInProgress(false);
+                        alert(`Batch import complete! ${progress.completed} success, ${progress.failed} failed`);
+                    }
+                } catch (err) {
+                    console.error('Error polling batch progress:', err);
+                }
+            }, 2000); // Poll every 2 seconds
+
         } catch (err) {
-            const errorMessage = err.response?.data?.error || 'Failed to import from FBref';
-            setError(errorMessage);
-            console.error(err);
-        } finally {
-            setFbrefLoading(false);
+            setError(err.response?.data?.error || 'Batch import failed');
+            setBatchImportInProgress(false);
         }
     };
 
@@ -576,43 +586,6 @@ const ImportPage = () => {
             )}
 
             {error && !loading && !teamLoading && <div className="error">{error}</div>}
-
-            <div className="card" style={{ marginBottom: '2rem' }}>
-                <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>⚽ FBref Data Import</h2>
-                <form onSubmit={handleFbrefImport} className="search-form-complex">
-                    <div className="search-group" style={{ flex: 1 }}>
-                        <label>League (FBref Format)</label>
-                        <select
-                            className="search-input"
-                            value={fbrefLeague}
-                            onChange={(e) => setFbrefLeague(e.target.value)}
-                        >
-                            <option value="ENG-Premier League">ENG-Premier League</option>
-                            <option value="FRA-Ligue 1">FRA-Ligue 1</option>
-                            <option value="ESP-La Liga">ESP-La Liga</option>
-                            <option value="GER-Bundesliga">GER-Bundesliga</option>
-                            <option value="ITA-Serie A">ITA-Serie A</option>
-                        </select>
-                    </div>
-                    <div className="search-group" style={{ width: '120px' }}>
-                        <label>Season</label>
-                        <input
-                            type="text"
-                            className="search-input"
-                            placeholder="e.g. 2021"
-                            value={fbrefSeason}
-                            onChange={(e) => setFbrefSeason(e.target.value)}
-                        />
-                    </div>
-                    <div className="action-group" style={{ marginTop: 'auto' }}>
-                        <button type="submit" className="btn btn-primary" disabled={fbrefLoading}>
-                            {fbrefLoading ? 'Importing...' : 'Import from FBref'}
-                        </button>
-                    </div>
-                </form>
-                {fbrefStatus && <div className="success" style={{ marginTop: '1rem' }}>{fbrefStatus}</div>}
-                {fbrefLoading && <div className="loading" style={{ marginTop: '1rem' }}>Scraping FBref and importing data (this may take 1-2 minutes)...</div>}
-            </div>
         </div>
     );
 };
