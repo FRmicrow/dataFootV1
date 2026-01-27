@@ -1,5 +1,8 @@
+
 // NEW TEAM DETAIL MODAL WITH 3 SECTIONS
-const renderTeamDetail = () => {
+import React from 'react';
+
+const TeamDetailModal = ({ selectedTeam, setSelectedTeam, selectedSeason, handleSeasonChange }) => {
     if (!selectedTeam) return null;
     const { team, statistics, teamDetails, trophies, leagueId } = selectedTeam;
 
@@ -211,7 +214,7 @@ const renderTeamDetail = () => {
                                                 gap: '0.75rem',
                                                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))'
                                             }}>
-                                                {category.competitions.map((comp, cIdx) => (
+                                                {category.competitions?.map((comp, cIdx) => (
                                                     <div key={cIdx} style={{
                                                         padding: '1rem',
                                                         background: '#ffffff',
@@ -233,8 +236,7 @@ const renderTeamDetail = () => {
                                                             </span>
                                                         </div>
                                                         <div style={{ fontSize: '0.75rem', color: '#718096', lineHeight: '1.5' }}>
-                                                            {comp.years.slice(0, 8).join(', ')}
-                                                            {comp.years.length > 8 && ` +${comp.years.length - 8} more`}
+                                                            {comp.years.join(', ')}
                                                         </div>
                                                     </div>
                                                 ))}
@@ -252,7 +254,7 @@ const renderTeamDetail = () => {
                                 }}>
                                     <strong style={{ fontSize: '1.2rem', color: 'white' }}>
                                         Total Trophies: {trophies.reduce((sum, cat) =>
-                                            sum + cat.competitions.reduce((s, c) => s + c.count, 0), 0
+                                            sum + (cat.competitions?.reduce((s, c) => s + c.count, 0) || 0), 0
                                         )}
                                     </strong>
                                 </div>
@@ -264,3 +266,5 @@ const renderTeamDetail = () => {
         </div>
     );
 };
+
+export default TeamDetailModal;

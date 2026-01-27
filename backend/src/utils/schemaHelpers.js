@@ -31,10 +31,40 @@ export function getOrCreateCountry(countryName) {
  * Get or create club
  * Returns club object with id
  */
+import { CLUB_MAPPINGS } from './clubMappings.js';
+
+// ... (other imports)
+
+// ...
+
+/**
+ * Get or create club
+ * Returns club object with id
+ */
 export function getOrCreateClub(apiTeamId, teamName, logoUrl, countryName) {
-    // Check if club exists
+    // 1. Normalize the name using the mapping
+    const normalizedName = CLUB_MAPPINGS[teamName] || teamName;
+
+    // Check if club exists by API ID
     let club = db.get('SELECT id FROM clubs WHERE api_team_id = ?', [apiTeamId]);
-    if (club) return club;
+    if (club) {
+        // Optional: Update name if it doesn't match normalized (self-correction)
+        // db.run('UPDATE clubs SET name = ? WHERE id = ?', [normalizedName, club.id]);
+        return club;
+    }
+
+    // Check if club exists by normalized name (to catch duplicates from different sources)
+    club = db.get('SELECT id FROM clubs WHERE name = ?', [normalizedName]);
+    if (club) {
+        // If we found it by name but it didn't have this API ID, we should update the API ID?
+        // Or maybe this is a different team?
+        // For safety, let's assume if names match exactly (after normalization), it's the same club.
+        // We can backfill the api_team_id if it's missing.
+        if (apiTeamId) {
+            db.run('UPDATE clubs SET api_team_id = ? WHERE id = ? AND api_team_id IS NULL', [apiTeamId, club.id]);
+        }
+        return club;
+    }
 
     // Get or create country
     const countryId = getOrCreateCountry(countryName) || getOrCreateCountry('Unknown');
@@ -47,7 +77,7 @@ export function getOrCreateClub(apiTeamId, teamName, logoUrl, countryName) {
     // Create club
     const result = db.run(
         'INSERT INTO clubs (api_team_id, name, logo_url, country_id) VALUES (?, ?, ?, ?)',
-        [apiTeamId, teamName, logoUrl, countryId]
+        [apiTeamId, normalizedName, logoUrl, countryId]
     );
 
     return { id: result.lastInsertRowid };
