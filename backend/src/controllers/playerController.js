@@ -195,8 +195,7 @@ export const getTeamData = async (req, res) => {
             SELECT 
                 t.name as trophy_name,
                 t.type as trophy_type,
-                s.year as season_year,
-                s.label as season_label,
+                s.label as season_year,
                 tt.place
             FROM team_trophies tt
             JOIN trophies t ON tt.trophy_id = t.id
@@ -355,12 +354,13 @@ export const getTeamTrophies = (req, res) => {
             SELECT 
                 t.name as trophy_name,
                 t.type as trophy_type,
-                tt.season_id as year,
+                s.label as year,
                 tt.place
             FROM team_trophies tt
             JOIN trophies t ON tt.trophy_id = t.id
+            JOIN seasons s ON tt.season_id = s.id
             WHERE tt.team_id = ?
-            ORDER BY t.name, tt.season_id DESC
+            ORDER BY t.name, s.year DESC
         `, [id]);
 
         console.log(`📊 Found ${trophyRecords.length} trophy records for team ${id}`);
