@@ -38,4 +38,13 @@ router.get('/team/:id/trophies', getTeamTrophies);
 router.get('/leagues/unclassified', getUnclassifiedLeagues);
 router.post('/leagues/:leagueId/classify', classifyLeagueManually);
 
+import { getPalmaresHierarchy, getTrophyHistory, updateTrophyWinner } from '../controllers/palmaresController.js';
+
+// ... existing imports ...
+
+// Palmares routes
+router.get('/palmares/hierarchy', getPalmaresHierarchy);
+router.get('/palmares/history/:trophyId', getTrophyHistory);
+router.post('/palmares/winner/:trophyId/:seasonId', updateTrophyWinner);
+
 export default router;

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-rou
 import ImportPage from './components/ImportPage';
 import DatabasePage from './components/DatabasePage';
 import PlayerDetail from './components/PlayerDetail';
+import PalmaresPage from './components/PalmaresPage';
 import './App.css';
 
 function App() {
@@ -18,6 +19,9 @@ function App() {
                         <NavLink to="/database" className="nav-link">
                             Database
                         </NavLink>
+                        <NavLink to="/palmares" className="nav-link">
+                            Palmares
+                        </NavLink>
                     </div>
                 </nav>
 
@@ -25,6 +29,7 @@ function App() {
                     <Route path="/" element={<DatabasePage />} />
                     <Route path="/import" element={<ImportPage />} />
                     <Route path="/database" element={<DatabasePage />} />
+                    <Route path="/palmares" element={<PalmaresPage />} />
                     <Route path="/player/:id" element={<PlayerDetail />} />
                 </Routes>
             </div>
