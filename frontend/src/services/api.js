@@ -134,6 +134,22 @@ const api = {
     getVerifyStatus: async () => {
         const response = await axios.get(`${API_BASE_URL}/verify-status`);
         return response.data;
+    },
+
+    // Palmares
+    getPalmaresHierarchy: async () => {
+        const response = await axios.get(`${API_BASE_URL}/palmares/hierarchy`);
+        return response.data;
+    },
+
+    getTrophyHistory: async (trophyId, filters = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/palmares/history/${trophyId}`, { params: filters });
+        return response.data;
+    },
+
+    updateTrophyWinner: async (trophyId, seasonId, data) => {
+        const response = await axios.post(`${API_BASE_URL}/palmares/winner/${trophyId}/${seasonId}`, data);
+        return response.data;
     }
 };
 
