@@ -77,8 +77,8 @@ async function main() {
         countryMap[c.country_name.toLowerCase()] = c.country_id;
     });
 
-    const BATCH_START = 86; // Resume from St Etienne to ensure full coverage
-    const BATCH_END = 100;
+    const BATCH_START = 101;
+    const BATCH_END = 200;
 
     console.log(`Starting enrichment loop from ID ${BATCH_START} to ${BATCH_END}...`);
 
