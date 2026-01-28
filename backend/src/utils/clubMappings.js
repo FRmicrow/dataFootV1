@@ -209,8 +209,10 @@ export const CLUB_MAPPINGS = {
     'Estoril': 'Estoril',
     'Moreirense': 'Moreirense',
     'Portimonense': 'Portimonense',
-    'Marítimo': 'Marítimo', // Not in DB yet?
-    'Vitória SC': 'Vitória SC', // Guimaraes
-    'Vitória FC': 'Vitória FC', // Setubal
-    'Paços de Ferreira': 'Paços de Ferreira',
+    'Marítimo': 'Maritimo',
+    'Vitória SC': 'Vitoria', // Guimaraes often just Vitoria in some DBs or one of the Vitoria entries
+    'Vitória Guimarães': 'Vitoria',
+    'Vitória FC': 'Vitoria Setubal',
+    'Paços de Ferreira': 'Pacos Ferreira',
+    'Famalicão': 'Famalicao',
 };
