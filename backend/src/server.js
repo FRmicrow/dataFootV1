@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import apiRoutes from './routes/api.js';
+import adminRoutes from './routes/adminRoutes.js';
 import db from './config/database.js';
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 
 // API routes
 app.use('/api', apiRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

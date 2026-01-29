@@ -4,6 +4,7 @@ import ImportPage from './components/ImportPage';
 import DatabasePage from './components/DatabasePage';
 import PlayerDetail from './components/PlayerDetail';
 import PalmaresPage from './components/PalmaresPage';
+import AdminLayout from './components/admin/AdminLayout';
 import './App.css';
 
 function App() {
@@ -22,6 +23,9 @@ function App() {
                         <NavLink to="/palmares" className="nav-link">
                             Palmares
                         </NavLink>
+                        <NavLink to="/admin" className="nav-link">
+                            Administration
+                        </NavLink>
                     </div>
                 </nav>
 
@@ -31,6 +35,7 @@ function App() {
                     <Route path="/database" element={<DatabasePage />} />
                     <Route path="/palmares" element={<PalmaresPage />} />
                     <Route path="/player/:id" element={<PlayerDetail />} />
+                    <Route path="/admin/*" element={<AdminLayout />} />
                 </Routes>
             </div>
         </Router>
