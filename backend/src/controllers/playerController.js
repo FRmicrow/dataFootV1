@@ -6,6 +6,10 @@ import footballApi from '../services/footballApi.js';
  * Handles fetching player data from local database
  */
 
+// ... (previous code)
+
+// ... (previous code)
+
 export const getAllPlayers = (req, res) => {
     try {
         const players = db.all(`
@@ -36,6 +40,64 @@ export const getAllPlayers = (req, res) => {
         });
     }
 };
+
+export const getV2Players = (req, res) => {
+    try {
+        // Updated Query: Hierarchy based on CLUB'S Country -> League -> Club -> Player
+        const sql = `
+                WITH LatestPlayerClub AS (
+                    -- Get the most recent club for each player based on stats year
+                    SELECT 
+                        ps.player_id, 
+                        ps.club_id, 
+                        ps.competition_id, 
+                        ps.year,
+                        ROW_NUMBER() OVER(PARTITION BY ps.player_id ORDER BY ps.year DESC, ps.matches_played DESC) as rn
+                    FROM V2_player_statistics ps
+                )
+                SELECT 
+                    p.player_id,
+                    p.first_name,
+                    p.last_name,
+                    p.photo_url,
+                    p.position,
+                    
+                    -- Hierarchy Level 1: Country (of the Club)
+                    c.country_name as country_name,
+                    c.importance_rank as country_rank,
+                    
+                    -- Hierarchy Level 2: League
+                    COALESCE(comp.competition_name, 'Other Leagues') as league_name,
+                    COALESCE(comp.level, 99) as league_level,
+                    
+                    -- Hierarchy Level 3: Club
+                    cl.club_name,
+                    cl.club_logo_url
+                    
+                FROM V2_players p
+                JOIN LatestPlayerClub lpc ON p.player_id = lpc.player_id AND lpc.rn = 1
+                JOIN V2_clubs cl ON lpc.club_id = cl.club_id
+                JOIN V2_countries c ON cl.country_id = c.country_id  -- Use Club's Country
+                LEFT JOIN V2_competitions comp ON lpc.competition_id = comp.competition_id
+                
+                ORDER BY 
+                    c.importance_rank ASC,       -- Rank 1 (England, etc.)
+                    COALESCE(comp.level, 99) ASC, -- League Level (1=PL, 2=Champ)
+                    comp.competition_name ASC,
+                    cl.club_name ASC,
+                    p.last_name ASC
+            `;
+
+        const players = db.all(sql);
+        res.json(players);
+    } catch (error) {
+        console.error('Error fetching V2 players:', error);
+        res.status(500).json({ error: 'Failed to fetch players' });
+    }
+};
+
+// ... (existing exports)
+// Make sure to export it.
 
 export const getPlayerById = (req, res) => {
     const { id } = req.params;
@@ -414,5 +476,69 @@ export const getTeamTrophies = (req, res) => {
     } catch (error) {
         console.error('❌ Error in getTeamTrophies:', error.message);
         res.status(500).json({ error: 'Failed to fetch trophies' });
+    }
+};
+
+export const getV2PlayerDetails = (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // 1. Get Player Basic Info
+        const player = db.get(`
+            SELECT 
+                p.player_id,
+                p.first_name,
+                p.last_name,
+                p.date_of_birth,
+                p.photo_url,
+                p.height_cm,
+                p.weight_kg,
+                p.position,
+                p.birth_place,
+                p.birth_country,
+                c.country_name as nationality,
+                NULL as nationality_flag
+            FROM V2_players p
+            LEFT JOIN V2_countries c ON p.nationality_id = c.country_id
+            WHERE p.player_id = ?
+        `, [id]);
+
+        if (!player) {
+            return res.status(404).json({ error: 'Player not found' });
+        }
+
+        // 2. Get Career Statistics
+        const stats = db.all(`
+            SELECT 
+                ps.season,
+                ps.year,
+                cl.club_name,
+                cl.club_logo_url,
+                comp.competition_name,
+                comp.country_id as comp_country_id,
+                ps.matches_played,
+                ps.matches_started,
+                ps.minutes_played,
+                ps.goals,
+                ps.assists,
+                ps.yellow_cards,
+                ps.red_cards,
+                ps.penalty_goals,
+                ps.penalty_misses
+            FROM V2_player_statistics ps
+            JOIN V2_clubs cl ON ps.club_id = cl.club_id
+            LEFT JOIN V2_competitions comp ON ps.competition_id = comp.competition_id
+            WHERE ps.player_id = ?
+            ORDER BY ps.season DESC, ps.year DESC
+        `, [id]);
+
+        res.json({
+            player,
+            statistics: stats
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting V2 player details:', error.message);
+        res.status(500).json({ error: 'Failed to get player details', details: error.message });
     }
 };

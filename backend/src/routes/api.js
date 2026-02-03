@@ -1,7 +1,7 @@
 import express from 'express';
 import { searchPlayers, searchTeams, getQueueStatus, getPlayersByTeam } from '../controllers/searchController.js';
 import { importPlayer, importTeam, getImportProgress, retryFailedImport, getImportMetadata, syncPlayerData, verifyDatabase, getMassVerifyStatus, getUnclassifiedLeagues, classifyLeagueManually, importBatch, getBatchProgress } from '../controllers/importController.js';
-import { getAllPlayers, getPlayerById, getAllTeams, getTeamData, deletePlayer, getTeamStatistics, getTeamTrophies } from '../controllers/playerController.js';
+import { getAllPlayers, getV2Players, getPlayerById, getV2PlayerDetails, getAllTeams, getTeamData, deletePlayer, getTeamStatistics, getTeamTrophies } from '../controllers/playerController.js';
 
 const router = express.Router();
 
@@ -23,6 +23,8 @@ router.post('/verify-database', verifyDatabase);
 router.get('/verify-status', getMassVerifyStatus);
 
 // Player data routes (from local database)
+router.get('/v2/players', getV2Players);
+router.get('/v2/players/:id', getV2PlayerDetails);
 router.get('/players', getAllPlayers);
 router.get('/player/:id', getPlayerById);
 router.delete('/player/:id', deletePlayer);
