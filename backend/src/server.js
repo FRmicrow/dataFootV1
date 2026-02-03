@@ -47,11 +47,20 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log('⚽ Football Player Database API');
     console.log('================================');
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📊 Database: SQLite (sql.js)`);
     console.log(`🔑 API: API-Football v3`);
     console.log('================================\n');
+});
+
+server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+        console.log(`❌ Port ${PORT} is in use. Trying to kill the process...`);
+        // We can't actually kill it easily from here without exec, but we can exit gracefully
+        console.error(`⚠️ Port ${PORT} is already busy. Please run: kill -9 $(lsof -t -i:${PORT})`);
+        process.exit(1);
+    }
 });
