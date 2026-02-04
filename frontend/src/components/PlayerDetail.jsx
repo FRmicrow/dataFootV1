@@ -78,30 +78,49 @@ const PlayerDetail = () => {
         );
     }
 
-    const { player, clubs, nationalTeams, trophies } = playerData;
+    const { player, clubs, nationalTeams, trophies, awards } = playerData;
 
     // Aggregate Career Recap by Club
-    const clubSummaries = clubs.map(club => {
-        const years = club.seasons.map(s => parseInt(s.season.split('/')[0]) || parseInt(s.season));
+    const clubSummaries = clubs.reduce((acc, clubSeason) => {
+        const clubKey = clubSeason.club_name;
+
+        if (!acc[clubKey]) {
+            acc[clubKey] = {
+                name: clubSeason.club_name,
+                logo: clubSeason.club_logo,
+                seasons: [],
+                totalMatches: 0,
+                totalGoals: 0,
+                totalAssists: 0
+            };
+        }
+
+        acc[clubKey].seasons.push(clubSeason.season);
+        clubSeason.competitions.forEach(comp => {
+            acc[clubKey].totalMatches += comp.matches || 0;
+            acc[clubKey].totalGoals += comp.goals || 0;
+            acc[clubKey].totalAssists += comp.assists || 0;
+        });
+
+        return acc;
+    }, {});
+
+    const clubSummariesArray = Object.values(clubSummaries).map(club => {
+        const years = club.seasons.map(s => parseInt(s.split('/')[0]) || parseInt(s));
         const firstYear = Math.min(...years);
         const lastYear = Math.max(...years);
 
-        const totalMatches = club.seasons.reduce((acc, s) => acc + (s.matches || 0), 0);
-        const totalGoals = club.seasons.reduce((acc, s) => acc + (s.goals || 0), 0);
-        const totalAssists = club.seasons.reduce((acc, s) => acc + (s.assists || 0), 0);
-
-        const clubTrophies = trophies.filter(t =>
-            t.team_name?.toLowerCase() === club.name.toLowerCase() ||
-            t.team_id === club.id
+        const clubTrophies = (trophies || []).filter(t =>
+            t.team_name?.toLowerCase() === club.name.toLowerCase()
         ).length;
 
         return {
             name: club.name,
             logo: club.logo,
             period: firstYear === lastYear ? `${firstYear}` : `${firstYear} - ${lastYear}`,
-            matches: totalMatches,
-            goals: totalGoals,
-            assists: totalAssists,
+            matches: club.totalMatches,
+            goals: club.totalGoals,
+            assists: club.totalAssists,
             trophies: clubTrophies
         };
     }).sort((a, b) => {
@@ -110,28 +129,32 @@ const PlayerDetail = () => {
         return yearB - yearA;
     });
 
-    // Process and categorize club stats based on backend classification
-    const allStats = clubs.reduce((acc, club) => {
-        club.seasons.forEach(season => {
-            // Use backend classification, default to 'championship' if not classified
-            let category = season.competition_type || 'championship';
+    // Process and categorize club stats
+    const allStats = { championship: [], cup: [], international: [] };
 
-            // Map 'international_cup' to 'international' for frontend display
-            if (category === 'international_cup') {
+    clubs.forEach(clubSeason => {
+        clubSeason.competitions.forEach(comp => {
+            // Determine category based on competition name
+            let category = 'championship';
+            const compName = (comp.competition_name || '').toLowerCase();
+
+            if (compName.includes('cup') || compName.includes('copa') || compName.includes('coupe')) {
+                category = 'cup';
+            } else if (compName.includes('champions') || compName.includes('europa') || compName.includes('uefa')) {
                 category = 'international';
             }
 
-            // Only include if we have a valid category
-            if (acc[category]) {
-                acc[category].push({
-                    ...season,
-                    clubName: club.name,
-                    clubLogo: club.logo
-                });
-            }
+            allStats[category].push({
+                season: clubSeason.season,
+                league: comp.competition_name,
+                matches: comp.matches,
+                goals: comp.goals,
+                assists: comp.assists,
+                clubName: clubSeason.club_name,
+                clubLogo: clubSeason.club_logo
+            });
         });
-        return acc;
-    }, { championship: [], cup: [], international: [] });
+    });
 
     // Sort all categories
     allStats.championship.sort(sortStats);
@@ -224,7 +247,7 @@ const PlayerDetail = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {clubSummaries.map((summary, idx) => (
+                            {clubSummariesArray.map((summary, idx) => (
                                 <tr key={idx}>
                                     <td><strong>{summary.period}</strong></td>
                                     <td style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

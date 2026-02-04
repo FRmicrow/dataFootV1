@@ -8,21 +8,25 @@ const DatabasePage = () => {
     const [players, setPlayers] = useState([]);
     const [teams, setTeams] = useState([]);
     const [activeTab, setActiveTab] = useState('players');
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [teamLoading, setTeamLoading] = useState(false);
-    const [selectedSeason, setSelectedSeason] = useState(2024); // For year dropdown
+    const [selectedSeason, setSelectedSeason] = useState(2024);
+    const [searched, setSearched] = useState(false); // Track if search was performed
 
     // Filter states
     const [filterNationality, setFilterNationality] = useState('');
     const [filterClub, setFilterClub] = useState('');
     const [filterName, setFilterName] = useState('');
 
+    // Nationalities from backend
+    const [nationalities, setNationalities] = useState([]);
+
     // Team filter states
     const [filterTeamName, setFilterTeamName] = useState('');
     const [filterTeamCountry, setFilterTeamCountry] = useState('');
-    const [showAllTeams, setShowAllTeams] = useState(false); // By default, show only main countries
+    const [showAllTeams, setShowAllTeams] = useState(false);
 
     // Mass verify states
     const [verifying, setVerifying] = useState(false);
@@ -30,7 +34,7 @@ const DatabasePage = () => {
 
     useEffect(() => {
         if (activeTab === 'players') {
-            loadPlayers();
+            loadNationalities();
         } else {
             loadTeams();
         }
@@ -46,7 +50,9 @@ const DatabasePage = () => {
                     setVerifyStatus(status);
                     if (status.status === 'completed') {
                         setVerifying(false);
-                        loadPlayers(); // Refresh list after completion
+                        if (searched) {
+                            searchPlayers(); // Refresh search after completion
+                        }
                     }
                 } catch (err) {
                     console.error('Failed to get verify status', err);
@@ -54,16 +60,42 @@ const DatabasePage = () => {
             }, 2000);
         }
         return () => clearInterval(interval);
-    }, [verifying]);
+    }, [verifying, searched]);
 
-    const loadPlayers = async () => {
+    const loadNationalities = async () => {
+        try {
+            const data = await api.getNationalities();
+            setNationalities(data.nationalities || []);
+        } catch (err) {
+            console.error('Failed to load nationalities', err);
+        }
+    };
+
+    const searchPlayers = async () => {
+        // Require at least one search criteria
+        if (!filterName && !filterNationality && !filterClub) {
+            setError('Please provide at least one search criteria (name, nationality, or club)');
+            return;
+        }
+
         setLoading(true);
         setError(null);
+        setSearched(true);
+
         try {
-            const data = await api.getAllPlayers();
+            const params = {};
+            if (filterName) params.name = filterName;
+            if (filterNationality) params.nationality = filterNationality;
+            if (filterClub) params.club = filterClub;
+
+            const data = await api.searchPlayers(params);
             setPlayers(data.players || []);
+
+            if (data.players && data.players.length === 0) {
+                setError('No players found matching your criteria');
+            }
         } catch (err) {
-            setError('Failed to load players');
+            setError('Failed to search players');
             console.error(err);
         } finally {
             setLoading(false);
@@ -140,38 +172,26 @@ const DatabasePage = () => {
         }
     };
 
-    if (loading && !selectedTeam) {
+
+    if (loading) {
         return (
             <div className="container">
-                <div className="loading">Loading database...</div>
+                <div className="loading">Searching players...</div>
             </div>
         );
     }
 
-    // Derived filtering logic
-    const uniqueNationalities = [...new Set(players.map(p => p.nationality))].filter(Boolean).sort();
-    const allClubs = players.reduce((acc, p) => {
-        if (p.teams) {
-            p.teams.split(',').forEach(t => acc.add(t.trim()));
-        }
-        return acc;
-    }, new Set());
-    const uniqueClubs = [...allClubs].sort();
-
-    const filteredPlayers = players.filter(player => {
-        const matchesNationality = !filterNationality || player.nationality === filterNationality;
-        const matchesClub = !filterClub || (player.teams && player.teams.toLowerCase().includes(filterClub.toLowerCase()));
-        const matchesName = !filterName ||
-            `${player.first_name} ${player.last_name}`.toLowerCase().includes(filterName.toLowerCase());
-        return matchesNationality && matchesClub && matchesName;
-    });
-
     const renderPlayerGrid = () => (
         <div className="player-grid">
-            {filteredPlayers.length === 0 ? (
-                <div className="empty-state">No players found matching your filters.</div>
+            {!searched ? (
+                <div className="empty-state" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
+                    <h3 style={{ marginBottom: '1rem', color: '#4a5568' }}>Search for Players</h3>
+                    <p style={{ color: '#718096' }}>Enter at least one search criteria above to find players</p>
+                </div>
+            ) : players.length === 0 ? (
+                <div className="empty-state" style={{ gridColumn: '1 / -1' }}>No players found matching your criteria.</div>
             ) : (
-                filteredPlayers.map((player) => (
+                players.map((player) => (
                     <Link key={player.id} to={`/player/${player.id}`} className="player-card">
                         <button
                             className="btn-delete"
@@ -183,9 +203,9 @@ const DatabasePage = () => {
                         <img src={player.photo_url} alt={player.first_name} className="player-card-photo" />
                         <div className="player-card-name">{player.first_name} {player.last_name}</div>
                         <div className="player-card-info">{player.nationality}</div>
-                        {player.teams && (
+                        {player.current_team && (
                             <div className="player-card-teams" style={{ fontSize: '0.7rem', color: '#718096', marginTop: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {player.teams}
+                                {player.current_team}
                             </div>
                         )}
                     </Link>
@@ -321,6 +341,7 @@ const DatabasePage = () => {
                                 placeholder="e.g. Cristiano Ronaldo"
                                 value={filterName}
                                 onChange={(e) => setFilterName(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && searchPlayers()}
                                 style={{ width: '100%' }}
                             />
                         </div>
@@ -333,7 +354,7 @@ const DatabasePage = () => {
                                 style={{ width: '100%' }}
                             >
                                 <option value="">All Nationalities</option>
-                                {uniqueNationalities.map(n => <option key={n} value={n}>{n}</option>)}
+                                {nationalities.map(n => <option key={n.id} value={n.id}>{n.name} ({n.player_count})</option>)}
                             </select>
                         </div>
                         <div style={{ flex: 1, minWidth: '200px' }}>
@@ -344,16 +365,32 @@ const DatabasePage = () => {
                                 placeholder="e.g. Real Madrid"
                                 value={filterClub}
                                 onChange={(e) => setFilterClub(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && searchPlayers()}
                                 style={{ width: '100%' }}
                             />
                         </div>
-                        {(filterNationality || filterClub || filterName) && (
+                        <button
+                            className="btn btn-primary btn-small"
+                            onClick={searchPlayers}
+                            disabled={loading}
+                            style={{ alignSelf: 'flex-end' }}
+                        >
+                            {loading ? 'Searching...' : 'Search Players'}
+                        </button>
+                        {(filterNationality || filterClub || filterName || searched) && (
                             <button
                                 className="btn btn-secondary btn-small"
-                                onClick={() => { setFilterNationality(''); setFilterClub(''); setFilterName(''); }}
+                                onClick={() => {
+                                    setFilterNationality('');
+                                    setFilterClub('');
+                                    setFilterName('');
+                                    setPlayers([]);
+                                    setSearched(false);
+                                    setError(null);
+                                }}
                                 style={{ alignSelf: 'flex-end' }}
                             >
-                                Clear Filters
+                                Clear All
                             </button>
                         )}
                     </div>

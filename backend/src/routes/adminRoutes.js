@@ -22,6 +22,7 @@ router.get('/clubs-by-country', adminController.getClubsByCountry);
 router.post('/import-club-players', adminController.importClubPlayers);
 router.post('/import-deep-league-players', adminController.importDeepLeaguePlayers);
 router.post('/import-league-players', adminController.importLeaguePlayers);
+router.post('/import-player/:playerId', adminController.importSinglePlayerDeep);
 router.post('/clear-player-data', adminController.clearPlayerData);
 router.get('/club-season-stats', adminController.getClubSeasonStats);
 router.post('/scan-club-countries', adminController.scanClubCountries);

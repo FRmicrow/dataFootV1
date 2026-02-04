@@ -2,476 +2,108 @@ import db from '../config/database.js';
 import footballApi from '../services/footballApi.js';
 
 /**
- * Player Controller
- * Handles fetching player data from local database
+ * Player Controller - V2 Schema Only
+ * All endpoints use V2_* tables
  */
 
-// ... (previous code)
-
-// ... (previous code)
-
+/**
+ * Search players with filters
+ * Requires at least one search parameter: name, nationality, or club
+ */
 export const getAllPlayers = (req, res) => {
     try {
-        const players = db.all(`
-      SELECT 
-        p.id,
-        p.api_player_id,
-        p.first_name,
-        p.last_name,
-        p.age,
-        p.nationality,
-        p.photo_url,
-        p.created_at,
-        GROUP_CONCAT(DISTINCT c.name) as teams
-      FROM players p
-      LEFT JOIN player_club_stats pcs ON p.id = pcs.player_id
-      LEFT JOIN clubs c ON pcs.club_id = c.id
-      GROUP BY p.id
-      ORDER BY p.created_at DESC
-    `);
+        const { name, nationality, club } = req.query;
 
-        res.json({ players });
+        // Require at least one search parameter
+        if (!name && !nationality && !club) {
+            return res.json({ players: [], message: 'Please provide at least one search criteria' });
+        }
+
+        let whereClauses = [];
+        let params = [];
+
+        // Build WHERE clauses based on provided filters
+        if (name && name.trim()) {
+            whereClauses.push(`(p.first_name LIKE ? OR p.last_name LIKE ?)`);
+            const searchTerm = `%${name.trim()}%`;
+            params.push(searchTerm, searchTerm);
+        }
+
+        if (nationality && nationality !== 'all') {
+            whereClauses.push(`nat.country_id = ?`);
+            params.push(nationality);
+        }
+
+        if (club && club.trim()) {
+            whereClauses.push(`lpc.club_name LIKE ?`);
+            params.push(`%${club.trim()}%`);
+        }
+
+        const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        const sql = `
+            WITH LatestPlayerClub AS (
+                SELECT 
+                    ps.player_id,
+                    ps.club_id,
+                    c.club_name,
+                    c.club_logo_url,
+                    co.country_name,
+                    ps.season,
+                    ps.year,
+                    ROW_NUMBER() OVER (PARTITION BY ps.player_id ORDER BY ps.year DESC) as rn
+                FROM V2_player_statistics ps
+                JOIN V2_clubs c ON ps.club_id = c.club_id
+                LEFT JOIN V2_countries co ON c.country_id = co.country_id
+            )
+            SELECT 
+                p.player_id as id,
+                p.api_id as api_player_id,
+                p.first_name,
+                p.last_name,
+                p.date_of_birth,
+                p.nationality_id,
+                nat.country_name as nationality,
+                p.photo_url,
+                p.position,
+                lpc.club_name as current_team,
+                lpc.club_logo_url,
+                lpc.country_name as team_country
+            FROM V2_players p
+            LEFT JOIN V2_countries nat ON p.nationality_id = nat.country_id
+            LEFT JOIN LatestPlayerClub lpc ON p.player_id = lpc.player_id AND lpc.rn = 1
+            ${whereClause}
+            ORDER BY p.last_name, p.first_name
+            LIMIT 100
+        `;
+
+        const players = db.all(sql, params);
+        res.json({ players, count: players.length });
 
     } catch (error) {
-        console.error('❌ Error fetching players:', error.message);
+        console.error('❌ Error searching players:', error.message);
         res.status(500).json({
-            error: 'Failed to fetch players',
+            error: 'Failed to search players',
             details: error.message
         });
     }
 };
 
-export const getV2Players = (req, res) => {
-    try {
-        // Updated Query: Hierarchy based on CLUB'S Country -> League -> Club -> Player
-        const sql = `
-                WITH LatestPlayerClub AS (
-                    -- Get the most recent club for each player based on stats year
-                    SELECT 
-                        ps.player_id, 
-                        ps.club_id, 
-                        ps.competition_id, 
-                        ps.year,
-                        ROW_NUMBER() OVER(PARTITION BY ps.player_id ORDER BY ps.year DESC, ps.matches_played DESC) as rn
-                    FROM V2_player_statistics ps
-                )
-                SELECT 
-                    p.player_id,
-                    p.first_name,
-                    p.last_name,
-                    p.photo_url,
-                    p.position,
-                    
-                    -- Hierarchy Level 1: Country (of the Club)
-                    c.country_name as country_name,
-                    c.importance_rank as country_rank,
-                    
-                    -- Hierarchy Level 2: League
-                    COALESCE(comp.competition_name, 'Other Leagues') as league_name,
-                    COALESCE(comp.level, 99) as league_level,
-                    
-                    -- Hierarchy Level 3: Club
-                    cl.club_name,
-                    cl.club_logo_url
-                    
-                FROM V2_players p
-                JOIN LatestPlayerClub lpc ON p.player_id = lpc.player_id AND lpc.rn = 1
-                JOIN V2_clubs cl ON lpc.club_id = cl.club_id
-                JOIN V2_countries c ON cl.country_id = c.country_id  -- Use Club's Country
-                LEFT JOIN V2_competitions comp ON lpc.competition_id = comp.competition_id
-                
-                ORDER BY 
-                    c.importance_rank ASC,       -- Rank 1 (England, etc.)
-                    COALESCE(comp.level, 99) ASC, -- League Level (1=PL, 2=Champ)
-                    comp.competition_name ASC,
-                    cl.club_name ASC,
-                    p.last_name ASC
-            `;
-
-        const players = db.all(sql);
-        res.json(players);
-    } catch (error) {
-        console.error('Error fetching V2 players:', error);
-        res.status(500).json({ error: 'Failed to fetch players' });
-    }
-};
-
-// ... (existing exports)
-// Make sure to export it.
-
-export const getPlayerById = (req, res) => {
+/**
+ * Get player detail by ID
+ */
+export const getPlayerDetail = (req, res) => {
     const { id } = req.params;
 
     try {
-        const player = db.get('SELECT * FROM players WHERE id = ?', [id]);
-
-        if (!player) {
-            return res.status(404).json({ error: 'Player not found' });
-        }
-
-        // Get club statistics
-        const clubStats = db.all(`
-            SELECT pcs.*, c.name as team_name, c.logo_url as team_logo,
-                   COALESCE(ch.name, nc.name, ic.name) as league_name,
-                   pcs.competition_type, s.label as season_label
-            FROM player_club_stats pcs
-            JOIN clubs c ON pcs.club_id = c.id
-            LEFT JOIN championships ch ON pcs.competition_type = 'championship' AND pcs.competition_id = ch.id
-            LEFT JOIN national_cups nc ON pcs.competition_type = 'cup' AND pcs.competition_id = nc.id
-            LEFT JOIN international_cups ic ON pcs.competition_type = 'international_cup' AND pcs.competition_id = ic.id
-            JOIN seasons s ON pcs.season_id = s.id
-            WHERE pcs.player_id = ?
-            ORDER BY s.year DESC
-        `, [id]);
-
-        // Group by club
-        const clubsMap = {};
-        clubStats.forEach(stat => {
-            if (!clubsMap[stat.club_id]) {
-                clubsMap[stat.club_id] = {
-                    id: stat.club_id,
-                    name: stat.team_name,
-                    logo: stat.team_logo,
-                    seasons: []
-                };
-            }
-
-            clubsMap[stat.club_id].seasons.push({
-                season: stat.season_label,
-                league: stat.league_name,
-                competition_type: stat.competition_type,
-                matches: stat.matches,
-                goals: stat.goals,
-                assists: stat.assists
-            });
-        });
-
-        const clubs = Object.values(clubsMap);
-
-
-        // National team statistics are now included in V2_player_statistics
-        // with competition_id linking to international competitions
-        const nationalTeams = [];
-
-        // Get trophies
-        const trophies = db.all(`
-            SELECT pt.*, tr.name as trophy_name, s.label as season_label
-            FROM player_trophies pt
-            JOIN trophies tr ON pt.trophy_id = tr.id
-            JOIN seasons s ON pt.season_id = s.id
-            WHERE pt.player_id = ?
-            ORDER BY s.year DESC
-        `, [id]);
-
-        res.json({
-            player,
-            clubs,
-            nationalTeams,
-            trophies
-        });
-
-    } catch (error) {
-        console.error('❌ Error getting player detail:', error.message);
-        res.status(500).json({ error: 'Failed to get player detail' });
-    }
-};
-
-
-export const getAllTeams = (req, res) => {
-    try {
-        // Get all clubs with country information
-        const clubs = db.all(`
-            SELECT c.id, c.api_team_id, c.name, c.logo_url, c.main_league_id, 
-                   co.name as country, co.id as country_id
-            FROM clubs c
-            LEFT JOIN countries co ON c.country_id = co.id
-            ORDER BY co.name ASC, c.name ASC
-        `);
-
-        // Transform to frontend format
-        const teams = clubs.map(club => ({
-            id: club.id,
-            apiId: club.api_team_id,
-            name: club.name,
-            logo_url: club.logo_url,
-            type: 'club',
-            country: club.country,
-            mainLeagueId: club.main_league_id,
-            isMainLeague: club.main_league_id !== null
-        }));
-
-        res.json({ teams });
-    } catch (error) {
-        console.error('❌ Error getting teams:', error.message);
-        res.status(500).json({ error: 'Failed to get teams' });
-    }
-};
-
-export const getTeamData = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        // Get team from database
-        let team = db.get('SELECT * FROM clubs WHERE id = ?', [id]);
-
-        if (!team) {
-            return res.status(404).json({ error: 'Team not found' });
-        }
-
-        const apiTeamId = team.api_team_id;
-
-        // Fetch live team details from API
-        console.log(`🏆 Fetching team details for ${team.name} (API ID: ${apiTeamId})...`);
-        const teamDetails = await footballApi.getTeamById(apiTeamId);
-
-        // Fetch trophies from database
-        const trophyRecords = db.all(`
-            SELECT 
-                t.name as trophy_name,
-                t.type as trophy_type,
-                s.label as season_year,
-                tt.place
-            FROM team_trophies tt
-            JOIN trophies t ON tt.trophy_id = t.id
-            JOIN seasons s ON tt.season_id = s.id
-            WHERE tt.team_id = ?
-            ORDER BY t.type, s.year DESC
-        `, [id]);
-
-        // Group trophies by type and name
-        const trophiesByType = {};
-        trophyRecords.forEach(record => {
-            const type = record.trophy_type;
-            const name = record.trophy_name;
-
-            if (!trophiesByType[type]) {
-                trophiesByType[type] = {};
-            }
-
-            if (!trophiesByType[type][name]) {
-                trophiesByType[type][name] = {
-                    count: 0,
-                    years: []
-                };
-            }
-
-            trophiesByType[type][name].count++;
-            trophiesByType[type][name].years.push(record.season_year);
-        });
-
-        // Convert to array format
-        const trophies = Object.entries(trophiesByType).map(([type, competitions]) => ({
-            type,
-            competitions: Object.entries(competitions).map(([name, data]) => ({
-                name,
-                count: data.count,
-                years: data.years
-            }))
-        }));
-
-        // Determine the main league for statistics
-        const MAIN_LEAGUES = {
-            'England': 39,
-            'Spain': 140,
-            'Germany': 78,
-            'Italy': 135,
-            'France': 61
-        };
-
-        // Get country to determine league
-        const country = db.get('SELECT name FROM countries WHERE id = ?', [team.country_id]);
-        const leagueId = country ? MAIN_LEAGUES[country.name] : 39;
-
-        // Get season from query parameter or default to current year
-        const season = req.query.season ? parseInt(req.query.season) : 2024;
-
-        // Fetch season statistics
-        let statistics = null;
-        if (leagueId) {
-            console.log(`📊 Fetching statistics for league ${leagueId}, season ${season}...`);
-            try {
-                const stats = await footballApi.getTeamStatistics(apiTeamId, leagueId, season);
-                if (stats.response) {
-                    statistics = stats.response;
-                    console.log(`  ✓ Statistics fetched successfully`);
-                }
-            } catch (error) {
-                console.log(`  ⚠️ No statistics found for this league/season`);
-            }
-        }
-
-        res.json({
-            team: {
-                ...team,
-                name: team.name,
-                logo_url: team.logo_url,
-                country: country ? country.name : null
-            },
-            statistics: statistics || null,
-            trophies: trophies,
-            teamDetails: teamDetails.response ? teamDetails.response[0] : null,
-            leagueId: leagueId // Send back the league ID for frontend use
-        });
-
-    } catch (error) {
-        console.error('❌ Error getting team data:', error.message);
-        res.status(500).json({ error: 'Failed to get team data', details: error.message });
-    }
-};
-
-export const deletePlayer = (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const player = db.get('SELECT id FROM players WHERE id = ?', [id]);
-        if (!player) {
-            return res.status(404).json({ error: 'Player not found' });
-        }
-
-        // Transaction support missing in wrapper, running sequentially
-        db.run('DELETE FROM player_club_stats WHERE player_id = ?', [id]);
-        db.run('DELETE FROM player_national_stats WHERE player_id = ?', [id]);
-        db.run('DELETE FROM player_trophies WHERE player_id = ?', [id]);
-        db.run('DELETE FROM players WHERE id = ?', [id]);
-
-        console.log(`🗑️ Deleted player ${id} and associated data`);
-        res.json({ success: true, message: 'Player deleted successfully' });
-
-    } catch (error) {
-        console.error('❌ Error deleting player:', error.message);
-        res.status(500).json({ error: 'Failed to delete player' });
-    }
-};
-
-// New method to fetch specific season statistics per user request
-export const getTeamStatistics = async (req, res) => {
-    const { id } = req.params;
-    const season = req.query.season ? parseInt(req.query.season) : 2024;
-
-    try {
-        const team = db.get('SELECT * FROM clubs WHERE id = ?', [id]);
-        if (!team) return res.status(404).json({ error: 'Team not found' });
-
-        const apiTeamId = team.api_team_id;
-
-        // Determine league
-        const MAIN_LEAGUES = {
-            'England': 39, 'Spain': 140, 'Germany': 78, 'Italy': 135, 'France': 61
-        };
-        const country = db.get('SELECT name FROM countries WHERE id = ?', [team.country_id]);
-        const leagueId = country ? MAIN_LEAGUES[country.name] : 39;
-
-        console.log(`📊 API Request: Statistics for Team ${apiTeamId}, League ${leagueId}, Season ${season}`);
-
-        const stats = await footballApi.getTeamStatistics(apiTeamId, leagueId, season);
-
-        res.json({
-            teamId: id,
-            season: season,
-            statistics: stats.response || []
-        });
-
-    } catch (error) {
-        console.error('❌ Error in getTeamStatistics:', error.message);
-        res.status(500).json({ error: 'Failed to fetch statistics' });
-    }
-};
-
-// New method to fetch trophies per user request
-export const getTeamTrophies = (req, res) => {
-    const { id } = req.params;
-
-    try {
-        // Fetch trophies from team_trophies table
-        // season_id is stored as integer year (e.g., 2024)
-        const trophyRecords = db.all(`
-            SELECT 
-                t.name as trophy_name,
-                t.type as trophy_type,
-                s.label as year,
-                tt.place
-            FROM team_trophies tt
-            JOIN trophies t ON tt.trophy_id = t.id
-            JOIN seasons s ON tt.season_id = s.id
-            WHERE tt.team_id = ?
-            ORDER BY t.name, s.year DESC
-        `, [id]);
-
-        console.log(`📊 Found ${trophyRecords.length} trophy records for team ${id}`);
-
-        // Group trophies by competition name and place
-        const competitionMap = {};
-
-        trophyRecords.forEach(record => {
-            const { trophy_name, trophy_type, year, place } = record;
-
-            if (!competitionMap[trophy_name]) {
-                competitionMap[trophy_name] = {
-                    name: trophy_name,
-                    type: trophy_type,
-                    wins: { count: 0, years: [] },
-                    runnersUp: { count: 0, years: [] },
-                    third: { count: 0, years: [] }
-                };
-            }
-
-            // Categorize by place (use == to handle string/int comparison)
-            if (place == 1) {
-                competitionMap[trophy_name].wins.count++;
-                competitionMap[trophy_name].wins.years.push(year);
-            } else if (place == 2) {
-                competitionMap[trophy_name].runnersUp.count++;
-                competitionMap[trophy_name].runnersUp.years.push(year);
-            } else if (place == 3) {
-                competitionMap[trophy_name].third.count++;
-                competitionMap[trophy_name].third.years.push(year);
-            }
-        });
-
-        // Convert to array format for frontend
-        const trophies = Object.values(competitionMap).map(comp => ({
-            competition: comp.name,
-            type: comp.type,
-            titles: comp.wins.count,
-            years: comp.wins.years,
-            runnersUp: comp.runnersUp.count > 0 ? comp.runnersUp.count : undefined,
-            runnersUpYears: comp.runnersUp.years.length > 0 ? comp.runnersUp.years : undefined,
-            third: comp.third.count > 0 ? comp.third.count : undefined,
-            thirdYears: comp.third.years.length > 0 ? comp.third.years : undefined
-        }));
-
-        res.json({
-            teamId: id,
-            trophies: trophies
-        });
-
-    } catch (error) {
-        console.error('❌ Error in getTeamTrophies:', error.message);
-        res.status(500).json({ error: 'Failed to fetch trophies' });
-    }
-};
-
-export const getV2PlayerDetails = (req, res) => {
-    const { id } = req.params;
-
-    try {
-        // 1. Get Player Basic Info
+        // Get player basic info
         const player = db.get(`
             SELECT 
-                p.player_id,
-                p.first_name,
-                p.last_name,
-                p.date_of_birth,
-                p.photo_url,
-                p.height_cm,
-                p.weight_kg,
-                p.position,
-                p.birth_place,
-                p.birth_country,
-                c.country_name as nationality,
-                NULL as nationality_flag
+                p.*,
+                nat.country_name as nationality,
+                nat.country_code as nationality_code
             FROM V2_players p
-            LEFT JOIN V2_countries c ON p.nationality_id = c.country_id
+            LEFT JOIN V2_countries nat ON p.nationality_id = nat.country_id
             WHERE p.player_id = ?
         `, [id]);
 
@@ -479,38 +111,265 @@ export const getV2PlayerDetails = (req, res) => {
             return res.status(404).json({ error: 'Player not found' });
         }
 
-        // 2. Get Career Statistics
-        const stats = db.all(`
+        // Get club statistics
+        const clubStats = db.all(`
             SELECT 
-                ps.season,
-                ps.year,
-                cl.club_name,
-                cl.club_logo_url,
+                ps.*,
+                c.club_name,
+                c.club_logo_url,
+                co.country_name as club_country,
                 comp.competition_name,
-                comp.country_id as comp_country_id,
-                ps.matches_played,
-                ps.matches_started,
-                ps.minutes_played,
-                ps.goals,
-                ps.assists,
-                ps.yellow_cards,
-                ps.red_cards,
-                ps.penalty_goals,
-                ps.penalty_misses
+                comp.competition_id
             FROM V2_player_statistics ps
-            JOIN V2_clubs cl ON ps.club_id = cl.club_id
+            JOIN V2_clubs c ON ps.club_id = c.club_id
+            LEFT JOIN V2_countries co ON c.country_id = co.country_id
             LEFT JOIN V2_competitions comp ON ps.competition_id = comp.competition_id
             WHERE ps.player_id = ?
-            ORDER BY ps.season DESC, ps.year DESC
+            ORDER BY ps.year DESC, ps.matches_played DESC
+        `, [id]);
+
+        // Group by club and season
+        const clubsMap = {};
+        clubStats.forEach(stat => {
+            const clubKey = `${stat.club_id}_${stat.season}`;
+            if (!clubsMap[clubKey]) {
+                clubsMap[clubKey] = {
+                    club_id: stat.club_id,
+                    club_name: stat.club_name,
+                    club_logo: stat.club_logo_url,
+                    country: stat.club_country,
+                    season: stat.season,
+                    competitions: []
+                };
+            }
+
+            clubsMap[clubKey].competitions.push({
+                competition_id: stat.competition_id,
+                competition_name: stat.competition_name || 'Unknown',
+                matches: stat.matches_played,
+                goals: stat.goals,
+                assists: stat.assists,
+                yellow_cards: stat.yellow_cards,
+                red_cards: stat.red_cards,
+                minutes: stat.minutes_played
+            });
+        });
+
+        const clubs = Object.values(clubsMap);
+
+        // Get trophies
+        const trophies = db.all(`
+            SELECT 
+                pt.*,
+                c.club_name,
+                comp.competition_name as trophy_name
+            FROM V2_player_trophies pt
+            LEFT JOIN V2_clubs c ON pt.club_id = c.club_id
+            LEFT JOIN V2_competitions comp ON pt.competition_id = comp.competition_id
+            WHERE pt.player_id = ?
+            ORDER BY pt.season DESC
+        `, [id]);
+
+        // Get individual awards
+        const awards = db.all(`
+            SELECT 
+                pia.*,
+                ia.award_name,
+                ia.award_type
+            FROM V2_player_individual_awards pia
+            JOIN V2_individual_awards ia ON pia.award_id = ia.award_id
+            WHERE pia.player_id = ?
+            ORDER BY pia.season DESC
         `, [id]);
 
         res.json({
             player,
-            statistics: stats
+            clubs,
+            trophies,
+            awards,
+            nationalTeams: [] // Deprecated - now part of club stats
         });
 
     } catch (error) {
-        console.error('❌ Error getting V2 player details:', error.message);
-        res.status(500).json({ error: 'Failed to get player details', details: error.message });
+        console.error('❌ Error getting player detail:', error.message);
+        res.status(500).json({ error: error.message });
     }
+};
+
+/**
+ * Get team/club detail by ID
+ */
+export const getTeamDetail = (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const team = db.get(`
+            SELECT 
+                c.*,
+                co.country_name,
+                co.country_code
+            FROM V2_clubs c
+            LEFT JOIN V2_countries co ON c.country_id = co.country_id
+            WHERE c.club_id = ?
+        `, [id]);
+
+        if (!team) {
+            return res.status(404).json({ error: 'Team not found' });
+        }
+
+        // Get team trophies
+        const trophies = db.all(`
+            SELECT 
+                ct.*,
+                comp.competition_name as trophy_name
+            FROM V2_club_trophies ct
+            JOIN V2_competitions comp ON ct.competition_id = comp.competition_id
+            WHERE ct.club_id = ?
+            ORDER BY ct.season DESC
+        `, [id]);
+
+        res.json({
+            team,
+            trophies
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting team detail:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Search players
+ */
+export const searchPlayers = (req, res) => {
+    const { query } = req.query;
+
+    if (!query || query.length < 2) {
+        return res.json({ players: [] });
+    }
+
+    try {
+        const searchTerm = `%${query}%`;
+        const players = db.all(`
+            SELECT 
+                p.player_id as id,
+                p.first_name,
+                p.last_name,
+                p.photo_url,
+                p.position,
+                nat.country_name as nationality
+            FROM V2_players p
+            LEFT JOIN V2_countries nat ON p.nationality_id = nat.country_id
+            WHERE p.first_name LIKE ? OR p.last_name LIKE ?
+            ORDER BY p.last_name, p.first_name
+            LIMIT 50
+        `, [searchTerm, searchTerm]);
+
+        res.json({ players });
+
+    } catch (error) {
+        console.error('❌ Error searching players:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Get team statistics for a specific season
+ */
+export const getTeamSeasonStats = (req, res) => {
+    const { id, season } = req.params;
+
+    try {
+        const stats = db.all(`
+            SELECT 
+                p.player_id,
+                p.first_name,
+                p.last_name,
+                p.photo_url,
+                p.position,
+                ps.matches_played,
+                ps.goals,
+                ps.assists,
+                ps.yellow_cards,
+                ps.red_cards,
+                ps.minutes_played,
+                comp.competition_name
+            FROM V2_player_statistics ps
+            JOIN V2_players p ON ps.player_id = p.player_id
+            LEFT JOIN V2_competitions comp ON ps.competition_id = comp.competition_id
+            WHERE ps.club_id = ? AND ps.season = ?
+            ORDER BY ps.matches_played DESC, ps.goals DESC
+        `, [id, season]);
+
+        res.json({ stats });
+
+    } catch (error) {
+        console.error('❌ Error getting team season stats:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Delete player (admin only)
+ */
+export const deletePlayer = (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const player = db.get('SELECT player_id FROM V2_players WHERE player_id = ?', [id]);
+
+        if (!player) {
+            return res.status(404).json({ error: 'Player not found' });
+        }
+
+        // Delete related records
+        db.run('DELETE FROM V2_player_statistics WHERE player_id = ?', [id]);
+        db.run('DELETE FROM V2_player_trophies WHERE player_id = ?', [id]);
+        db.run('DELETE FROM V2_player_individual_awards WHERE player_id = ?', [id]);
+        db.run('DELETE FROM V2_player_club_history WHERE player_id = ?', [id]);
+        db.run('DELETE FROM V2_players WHERE player_id = ?', [id]);
+
+        res.json({ success: true, message: 'Player deleted successfully' });
+
+    } catch (error) {
+        console.error('❌ Error deleting player:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+/**
+ * Get all nationalities (countries with players)
+ */
+export const getNationalities = (req, res) => {
+    try {
+        const nationalities = db.all(`
+            SELECT DISTINCT
+                c.country_id as id,
+                c.country_name as name,
+                c.country_code as code,
+                COUNT(DISTINCT p.player_id) as player_count
+            FROM V2_countries c
+            JOIN V2_players p ON c.country_id = p.nationality_id
+            GROUP BY c.country_id, c.country_name, c.country_code
+            ORDER BY c.country_name
+        `);
+
+        res.json({ nationalities });
+
+    } catch (error) {
+        console.error('❌ Error fetching nationalities:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export default {
+    getAllPlayers,
+    getNationalities,
+    getPlayerDetail,
+    getTeamDetail,
+    searchPlayers,
+    getTeamSeasonStats,
+    deletePlayer
 };

@@ -106,10 +106,14 @@ const ImportPage = () => {
         });
 
         try {
-            const result = await api.importPlayer(playerId);
+            const result = await api.importPlayerDeep(playerId);
+            const message = result.seasonsImported !== undefined
+                ? `✅ Imported ${result.seasonsImported} seasons (${result.seasonsSkipped} already existed)`
+                : "Imported successfully";
+
             setImportStatus(prev => ({
                 ...prev,
-                [playerId]: { success: true, message: "Imported successfuly" }
+                [playerId]: { success: true, message }
             }));
             setCurrentImportProgress({
                 playerId,
