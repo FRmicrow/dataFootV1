@@ -27,12 +27,21 @@ router.get('/club-season-stats', adminController.getClubSeasonStats);
 router.post('/scan-club-countries', adminController.scanClubCountries);
 router.post('/fix-club-country', adminController.fixClubCountry);
 
-// Cleanup Routes
+// Cleanup Routes //
 import * as cleanupController from '../controllers/cleanupController.js';
 router.get('/cleanup-candidates', cleanupController.getCleanupCandidates);
 router.post('/cleanup-merge', cleanupController.mergeStats);
 router.post('/cleanup-assign', cleanupController.assignCompetition);
 router.get('/cleanup-competitions', cleanupController.getCompetitionsForSelect);
 router.post('/cleanup-init-regions', cleanupController.initializeRegions);
+router.post('/cleanup-consolidation', cleanupController.consolidateGenericCompetitions);
+router.get('/cleanup-competitions-list', cleanupController.getAllCompetitions);
+router.post('/cleanup-comp-country', cleanupController.updateCompetitionCountry);
+router.post('/cleanup-import-mappings', cleanupController.importMappings);
+router.post('/cleanup-updates', cleanupController.runCompetitionDataUpdate);
+router.get('/cleanup-verification', cleanupController.getVerificationReport);
+router.post('/cleanup-bulk-update', cleanupController.bulkUpdateOrphanedCompetition);
+router.get('/unresolved-competitions', cleanupController.getUnresolvedCompetitions);
+router.post('/resolve-competition', cleanupController.resolveUnresolvedCompetition);
 
 export default router;

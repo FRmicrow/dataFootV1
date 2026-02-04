@@ -1,124 +1,87 @@
 import db from '../config/database.js';
 
 export const getCleanupCandidates = async (req, res) => {
-    const { clubId } = req.query;
+    const { page = 1, limit = 100 } = req.query;
+    const offset = (page - 1) * limit;
 
     try {
-        // --- 1. Find Duplicates (Same Player, Club, Season) ---
-        // We find groups of records that share Player + Club + Season.
-
-        // Base Query for duplicate groups
-        let dupSql = `
-            SELECT s.player_id, s.club_id, s.season, count(*) as count
+        // Count orphaned competition IDs (competition_id in stats but not in competitions table)
+        const countSql = `
+            SELECT COUNT(DISTINCT s.competition_id) as count 
             FROM V2_player_statistics s
+            LEFT JOIN V2_competitions comp ON s.competition_id = comp.competition_id
+            WHERE s.competition_id IS NOT NULL 
+            AND comp.competition_id IS NULL
         `;
-        let dupParams = [];
+        const countRes = await db.get(countSql);
+        const total = countRes.count;
 
-        if (clubId) {
-            dupSql += ` WHERE s.club_id = ? `;
-            dupParams.push(clubId);
-        }
-
-        dupSql += `
-            GROUP BY s.player_id, s.club_id, s.season
-            HAVING count(*) > 1
-        `;
-
-        const potentialDupes = await db.all(dupSql, dupParams);
-
-        let mergeCandidates = [];
-        for (const group of potentialDupes) {
-            const stats = await db.all(`
-               SELECT s.*, c.competition_name, p.first_name, p.last_name, p.photo_url, cl.club_name, cl.country_id
-               FROM V2_player_statistics s
-               JOIN V2_players p ON s.player_id = p.player_id
-               JOIN V2_clubs cl ON s.club_id = cl.club_id
-               LEFT JOIN V2_competitions c ON s.competition_id = c.competition_id
-               WHERE s.player_id = ? AND s.club_id = ? AND s.season = ?
-            `, [group.player_id, group.club_id, group.season]);
-
-            // We return all fields so the user can see them and decide
-            mergeCandidates.push({
-                type: 'duplicate',
-                items: stats
-            });
-        }
-
-        // --- 2. Unknown Competitions (NULL competition_id) ---
-        let unknownSql = `
-            SELECT s.*, p.first_name, p.last_name, p.photo_url, cl.club_name, cl.country_id, co.country_name
+        // Get list of orphaned competition IDs with their record counts
+        const orphanedIdsSql = `
+            SELECT 
+                s.competition_id,
+                COUNT(*) as affected_records,
+                MAX(s.matches_played) as max_matches
             FROM V2_player_statistics s
-            JOIN V2_players p ON s.player_id = p.player_id
-            JOIN V2_clubs cl ON s.club_id = cl.club_id
-            LEFT JOIN V2_countries co ON cl.country_id = co.country_id
-            WHERE s.competition_id IS NULL
+            LEFT JOIN V2_competitions comp ON s.competition_id = comp.competition_id
+            WHERE s.competition_id IS NOT NULL 
+            AND comp.competition_id IS NULL
+            GROUP BY s.competition_id
+            ORDER BY affected_records DESC
+            LIMIT ? OFFSET ?
         `;
 
-        const unknownParams = [];
-        if (clubId) {
-            unknownSql += " AND s.club_id = ?";
-            unknownParams.push(clubId);
+        const orphanedIds = await db.all(orphanedIdsSql, [limit, offset]);
+
+        // For each orphaned ID, get one example player (the one with most matches)
+        const rows = [];
+        for (const orphaned of orphanedIds) {
+            const exampleSql = `
+                SELECT 
+                    s.competition_id as orphaned_competition_id,
+                    s.stat_id,
+                    s.player_id,
+                    s.season,
+                    s.club_id,
+                    p.first_name,
+                    p.last_name,
+                    p.photo_url,
+                    c.club_name,
+                    c.country_id,
+                    co.country_name,
+                    s.matches_played,
+                    s.goals,
+                    s.assists,
+                    ? as affected_records
+                FROM V2_player_statistics s
+                LEFT JOIN V2_players p ON s.player_id = p.player_id
+                JOIN V2_clubs c ON s.club_id = c.club_id
+                LEFT JOIN V2_countries co ON c.country_id = co.country_id
+                WHERE s.competition_id = ?
+                ORDER BY s.matches_played DESC
+                LIMIT 1
+            `;
+
+            const example = await db.get(exampleSql, [orphaned.affected_records, orphaned.competition_id]);
+            if (example) {
+                rows.push(example);
+            }
         }
 
-        const unknowns = await db.all(unknownSql, unknownParams);
-
-        // Enhance Unknowns with suggestions (Limit if no filter)
-        const limit = clubId ? 1000 : 50;
-        const processingList = unknowns.slice(0, limit);
-
-        const enhancedUnknowns = [];
-        for (const u of processingList) {
-            let suggestion = null;
-            let rule = null;
-
-            // Heuristic 1: > 15 matches => National League
-            if (u.matches_played > 15 && u.country_id) {
-                const league = await db.get(`
-                    SELECT * FROM V2_competitions 
-                    WHERE country_id = ? AND trophy_type_id = 7
-                    LIMIT 1
-                `, [u.country_id]);
-
-                if (league) {
-                    suggestion = league;
-                    rule = "Match Count > 15 (Likely League)";
-                }
-            }
-
-            // Heuristic 2: Check other players in same club/season
-            if (!suggestion) {
-                const teammateLeague = await db.get(`
-                    SELECT c.*, count(*) as cnt
-                    FROM V2_player_statistics s
-                    JOIN V2_competitions c ON s.competition_id = c.competition_id
-                    WHERE s.club_id = ? AND s.season = ? AND c.trophy_type_id = 7
-                    GROUP BY c.competition_id
-                    ORDER BY cnt DESC
-                    LIMIT 1
-                `, [u.club_id, u.season]);
-
-                if (teammateLeague) {
-                    suggestion = teammateLeague;
-                    rule = "Teammates in this League";
-                }
-            }
-
-            enhancedUnknowns.push({
-                ...u,
-                suggestion,
-                suggestionRule: rule
-            });
+        // Debug: Log first row to see what data we're getting
+        if (rows.length > 0) {
+            console.log('Sample orphaned competition:', rows[0]);
         }
 
         res.json({
-            mergeCandidates,
-            unknowns: enhancedUnknowns,
-            totalUnknowns: unknowns.length,
-            showing: processingList.length
+            unknowns: rows,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / limit)
         });
 
     } catch (e) {
-        console.error(e);
+        console.error('Error in getCleanupCandidates:', e);
         res.status(500).json({ error: e.message });
     }
 };
@@ -143,14 +106,99 @@ export const assignCompetition = async (req, res) => {
     }
 };
 
+// NEW: Bulk update all records with orphaned competition_id (with duplicate handling)
+export const bulkUpdateOrphanedCompetition = async (req, res) => {
+    const { orphanedCompetitionId, newCompetitionId } = req.body;
+
+    try {
+        // Step 1: Find records that would create duplicates
+        const duplicateCheckSql = `
+            SELECT 
+                orphaned.stat_id as orphaned_stat_id,
+                orphaned.player_id,
+                orphaned.club_id,
+                orphaned.season,
+                orphaned.matches_played as orphaned_matches,
+                orphaned.goals as orphaned_goals,
+                orphaned.assists as orphaned_assists,
+                existing.stat_id as existing_stat_id,
+                existing.matches_played as existing_matches,
+                existing.goals as existing_goals,
+                existing.assists as existing_assists
+            FROM V2_player_statistics orphaned
+            INNER JOIN V2_player_statistics existing 
+                ON orphaned.player_id = existing.player_id
+                AND orphaned.club_id = existing.club_id
+                AND orphaned.season = existing.season
+                AND existing.competition_id = ?
+            WHERE orphaned.competition_id = ?
+        `;
+
+        const duplicates = await db.all(duplicateCheckSql, [newCompetitionId, orphanedCompetitionId]);
+
+        let mergedCount = 0;
+        let updatedCount = 0;
+
+        // Step 2: Merge duplicates (sum the stats)
+        for (const dup of duplicates) {
+            const newMatches = (dup.existing_matches || 0) + (dup.orphaned_matches || 0);
+            const newGoals = (dup.existing_goals || 0) + (dup.orphaned_goals || 0);
+            const newAssists = (dup.existing_assists || 0) + (dup.orphaned_assists || 0);
+
+            // Update the existing record with merged stats
+            await db.run(
+                `UPDATE V2_player_statistics 
+                 SET matches_played = ?, goals = ?, assists = ?
+                 WHERE stat_id = ?`,
+                [newMatches, newGoals, newAssists, dup.existing_stat_id]
+            );
+
+            // Delete the orphaned record
+            await db.run(
+                "DELETE FROM V2_player_statistics WHERE stat_id = ?",
+                [dup.orphaned_stat_id]
+            );
+
+            mergedCount++;
+        }
+
+        // Step 3: Update remaining orphaned records (those that won't create duplicates)
+        const updateResult = await db.run(
+            `UPDATE V2_player_statistics 
+             SET competition_id = ? 
+             WHERE competition_id = ?`,
+            [newCompetitionId, orphanedCompetitionId]
+        );
+
+        updatedCount = updateResult.changes;
+
+        res.json({
+            success: true,
+            updatedCount,
+            mergedCount,
+            totalProcessed: updatedCount + mergedCount
+        });
+    } catch (e) {
+        console.error('Error in bulkUpdateOrphanedCompetition:', e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
 export const getCompetitionsForSelect = async (req, res) => {
     const { countryId } = req.query;
     try {
         let sql = "SELECT * FROM V2_competitions";
         let params = [];
         if (countryId) {
-            sql += " WHERE country_id = ?";
-            params.push(countryId);
+            if (countryId.includes(',')) {
+                const ids = countryId.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
+                if (ids.length > 0) {
+                    sql += ` WHERE country_id IN (${ids.join(',')}) `;
+                }
+            } else {
+                sql += " WHERE country_id = ?";
+                params.push(countryId);
+            }
         }
         sql += " ORDER BY competition_name";
         const comps = await db.all(sql, params);
@@ -160,83 +208,106 @@ export const getCompetitionsForSelect = async (req, res) => {
     }
 };
 
+// Stub functions for routes that are no longer used in the orphaned ID workflow
 export const initializeRegions = async (req, res) => {
+    res.status(501).json({ error: 'Not implemented in orphaned ID workflow' });
+};
+
+export const consolidateGenericCompetitions = async (req, res) => {
+    res.status(501).json({ error: 'Not implemented in orphaned ID workflow' });
+};
+
+export const getAllCompetitions = async (req, res) => {
     try {
-        // 1. Insert Regions (as Countries)
-        const regions = [
-            { id: 1, name: 'World', code: 'WLD' },
-            { id: 2, name: 'Europe', code: 'EUR' },
-            { id: 3, name: 'Asia', code: 'ASI' },
-            { id: 4, name: 'Africa', code: 'AFR' },
-            { id: 5, name: 'America', code: 'AME' }, // Covers North & South for now as requested
-            { id: 6, name: 'Oceania', code: 'OCE' }
-        ];
-
-        for (const r of regions) {
-            // Check if exists
-            const exists = await db.get("SELECT country_id FROM V2_countries WHERE country_id = ?", [r.id]);
-            if (!exists) {
-                // Using a dummy flag link or empty
-                await db.run(`
-                    INSERT INTO V2_countries (country_id, country_name, country_code, region) 
-                    VALUES (?, ?, ?, 'Region')
-                `, [r.id, r.name, r.code]);
-            }
-        }
-
-        // 2. Auto-assign Competitions based on Name
-        const mappings = [
-            { regionId: 2, percentLike: '%UEFA%' },
-            { regionId: 2, percentLike: '%Euro%' },
-            { regionId: 2, percentLike: '%Champions League%' }, // Often Europe if not qualified
-            { regionId: 5, percentLike: '%CONMEBOL%' },
-            { regionId: 5, percentLike: '%CONCACAF%' },
-            { regionId: 5, percentLike: '%Libertadores%' },
-            { regionId: 5, percentLike: '%Sudamericana%' },
-            { regionId: 5, percentLike: '%America%' }, // Copa America
-            { regionId: 3, percentLike: '%AFC%' },
-            { regionId: 3, percentLike: '%Asian%' },
-            { regionId: 4, percentLike: '%CAF%' },
-            { regionId: 4, percentLike: '%African%' },
-            { regionId: 6, percentLike: '%OFC%' },
-            { regionId: 6, percentLike: '%Oceania%' },
-            { regionId: 1, percentLike: '%FIFA%' },
-            { regionId: 1, percentLike: '%World Cup%' },
-            { regionId: 1, percentLike: '%International%' },
-            { regionId: 1, percentLike: '%Olympics%' }
-        ];
-
-        let updatedCount = 0;
-        for (const m of mappings) {
-            const result = await db.run(`
-                UPDATE V2_competitions 
-                SET country_id = ? 
-                WHERE competition_name LIKE ? 
-                AND (country_id IS NULL OR country_id NOT IN (SELECT country_id FROM V2_countries WHERE region != 'Region'))
-            `, [m.regionId, m.percentLike]);
-            // Note: The extra check prevents overwriting specific national leagues if they happen to match keywords, 
-            // though unlikely with these specific keywords. 
-            // Better to just overwrite NULL or specific known placeholders, 
-            // but for now we overwrite everything matching the keyword as these are typically international.
-
-            // Simplified update:
-            await db.run(`
-                UPDATE V2_competitions 
-                SET country_id = ? 
-                WHERE competition_name LIKE ? AND country_id > 200
-            `, [m.regionId, m.percentLike]);
-            // Why > 200? Assuming real countries start at 213 (from previous check). 
-            // This prevents overwriting valid country assignments if they exist and we want to replace them with Region ONLY if they definitely match.
-            // Actually, competitions like "UEFA Champions League" might curently have country_id=1 (which was old?).
-            // Let's just force update for these keywords.
-
-            const resUpdate = await db.run(`UPDATE V2_competitions SET country_id = ? WHERE competition_name LIKE ?`, [m.regionId, m.percentLike]);
-            updatedCount += resUpdate.changes || 0;
-        }
-
-        res.json({ success: true, message: `Regions initialized and ${updatedCount} competitions updated.` });
+        const comps = await db.all("SELECT * FROM V2_competitions ORDER BY competition_name");
+        res.json(comps);
     } catch (e) {
-        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const updateCompetitionCountry = async (req, res) => {
+    res.status(501).json({ error: 'Not implemented in orphaned ID workflow' });
+};
+
+export const importMappings = async (req, res) => {
+    res.status(501).json({ error: 'Not implemented in orphaned ID workflow' });
+};
+
+export const runCompetitionDataUpdate = async (req, res) => {
+    res.status(501).json({ error: 'Not implemented in orphaned ID workflow' });
+};
+
+export const getVerificationReport = async (req, res) => {
+    res.status(501).json({ error: 'Not implemented in orphaned ID workflow' });
+};
+
+// NEW: Get unresolved competitions for manual review
+export const getUnresolvedCompetitions = async (req, res) => {
+    try {
+        const unresolved = db.all(`
+            SELECT 
+                u.*,
+                p.first_name,
+                p.last_name,
+                c.club_name,
+                co.country_name
+            FROM V2_unresolved_competitions u
+            JOIN V2_players p ON u.player_id = p.player_id
+            JOIN V2_clubs c ON u.club_id = c.club_id
+            LEFT JOIN V2_countries co ON c.country_id = co.country_id
+            WHERE u.resolved = 0
+            ORDER BY u.matches_played DESC, u.created_at DESC
+        `);
+        
+        res.json(unresolved);
+    } catch (e) {
+        console.error('Error fetching unresolved competitions:', e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
+// NEW: Resolve an unresolved competition by assigning it manually
+export const resolveUnresolvedCompetition = async (req, res) => {
+    const { unresolvedId, competitionId } = req.body;
+    
+    try {
+        // Get the unresolved record details
+        const unresolved = db.get(
+            "SELECT * FROM V2_unresolved_competitions WHERE unresolved_id = ?",
+            [unresolvedId]
+        );
+        
+        if (!unresolved) {
+            return res.status(404).json({ error: 'Unresolved competition not found' });
+        }
+
+        // Update or insert the player statistics with the correct competition
+        const existingStat = db.get(
+            `SELECT stat_id FROM V2_player_statistics 
+             WHERE player_id = ? AND club_id = ? AND season = ? AND competition_id IS NULL`,
+            [unresolved.player_id, unresolved.club_id, unresolved.season]
+        );
+
+        if (existingStat) {
+            // Update existing stat with the competition
+            db.run(
+                "UPDATE V2_player_statistics SET competition_id = ? WHERE stat_id = ?",
+                [competitionId, existingStat.stat_id]
+            );
+        }
+
+        // Mark as resolved
+        db.run(
+            `UPDATE V2_unresolved_competitions 
+             SET resolved = 1, resolved_competition_id = ?, resolved_at = datetime('now')
+             WHERE unresolved_id = ?`,
+            [competitionId, unresolvedId]
+        );
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Error resolving competition:', e);
         res.status(500).json({ error: e.message });
     }
 };
