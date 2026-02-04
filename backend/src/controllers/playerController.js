@@ -148,38 +148,10 @@ export const getPlayerById = (req, res) => {
 
         const clubs = Object.values(clubsMap);
 
-        // Get national team statistics
-        const nationalStats = db.all(`
-            SELECT pns.*, nt.name as team_name, ntc.name as league_name, s.label as season_label
-            FROM player_national_stats pns
-            JOIN national_teams nt ON pns.national_team_id = nt.id
-            JOIN national_team_cups ntc ON pns.competition_id = ntc.id
-            JOIN seasons s ON pns.season_id = s.id
-            WHERE pns.player_id = ?
-            ORDER BY s.year DESC
-        `, [id]);
 
-        // Group by national team
-        const nationalTeamsMap = {};
-        nationalStats.forEach(stat => {
-            if (!nationalTeamsMap[stat.national_team_id]) {
-                nationalTeamsMap[stat.national_team_id] = {
-                    id: stat.national_team_id,
-                    name: stat.team_name,
-                    seasons: []
-                };
-            }
-
-            nationalTeamsMap[stat.national_team_id].seasons.push({
-                season: stat.season_label,
-                league: stat.league_name,
-                matches: stat.matches,
-                goals: stat.goals,
-                assists: stat.assists
-            });
-        });
-
-        const nationalTeams = Object.values(nationalTeamsMap);
+        // National team statistics are now included in V2_player_statistics
+        // with competition_id linking to international competitions
+        const nationalTeams = [];
 
         // Get trophies
         const trophies = db.all(`

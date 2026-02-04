@@ -9,6 +9,7 @@ import PlayerList from './PlayerList';
 import PlayerDetail from './PlayerDetail';
 import CompetitionManager from './CompetitionManager';
 import FixClubCountries from './FixClubCountries';
+import FixCompetitionCountries from './FixCompetitionCountries';
 import DataCleanup from './DataCleanup';
 import './Admin.css';
 
@@ -42,6 +43,9 @@ const AdminLayout = () => {
                     <NavLink to="/admin/fix-club-countries" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
                         Fix Club Countries
                     </NavLink>
+                    <NavLink to="/admin/fix-competition-countries" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+                        Fix Comp. Countries
+                    </NavLink>
                     <NavLink to="/admin/cleanup" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
                         Data Cleanup
                     </NavLink>
@@ -59,6 +63,7 @@ const AdminLayout = () => {
                     <Route path="import-deep" element={<ImportLeagueDeep />} />
                     <Route path="import-by-club" element={<ImportClubPlayers />} />
                     <Route path="competitions" element={<CompetitionManager />} />
+                    <Route path="fix-competition-countries" element={<FixCompetitionCountries />} />
                     <Route path="fix-club-countries" element={<FixClubCountries />} />
                     <Route path="cleanup" element={<DataCleanup />} />
                     <Route path="players" element={<PlayerList />} />

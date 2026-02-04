@@ -1,6 +1,7 @@
 import db from '../config/database.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { detectCompetition, createCompetitionIfNecessary, logUnresolvedCompetition } from '../services/competitionDetectionService.js';
 
 dotenv.config();
 
@@ -247,7 +248,7 @@ export const getCountries = async (req, res) => {
             sql += " ORDER BY country_name";
         }
 
-        const countries = db.all(sql, params);
+        const countries = await db.all(sql, params);
         res.json(countries);
     } catch (error) {
         console.error('Error fetching countries:', error);
@@ -377,7 +378,7 @@ export const getUncategorizedCompetitions = (req, res) => {
 
 export const getTrophyTypes = (req, res) => {
     try {
-        const types = db.all("SELECT * FROM V2_trophy_types ORDER BY type_order ASC");
+        const types = db.all("SELECT * FROM V2_trophy_type ORDER BY type_order ASC");
         res.json(types);
     } catch (error) {
         console.error("Error fetching trophy types:", error);
@@ -764,48 +765,46 @@ const upsertClub = (team) => {
     return clubRow ? clubRow.club_id : null;
 };
 
-const upsertCompetition = (league) => {
-    // Some stats objects might have league: { name: "Friendly", country: "World", season: 2021 } but NO id.
-    // If no ID, we can try to match by name, but it's risky. 
-    // Ideally we need an ID. If league.id is null, we might skip or insert deeply.
+const upsertCompetition = (league, clubId, season, matchesPlayed, countryId) => {
+    // Import the intelligent detection service
 
-    if (!league.name) return null; // Can't do anything without a name
+    if (!league || !league.name) return null;
 
-    let compRow;
+    // Use intelligent detection with multiple strategies
+    let competitionId = detectCompetition(league, clubId, season, matchesPlayed, countryId);
+
+    if (competitionId) {
+        return competitionId;
+    }
+
+    // Only create new competition if it's from a major league (has API ID)
+    // This prevents creating duplicate entries for friendly matches, etc.
     if (league.id) {
-        compRow = db.get("SELECT competition_id FROM V2_competitions WHERE api_id = ?", [league.id]);
+        console.log(`⚠️ Creating new competition with API ID: ${league.name} (ID: ${league.id})`);
+        return createCompetitionIfNecessary(league, countryId);
     }
 
-    if (!compRow) {
-        // Fallback: Check by name (and maybe country if available, but let's stick to name for now as sometimes country differs)
-        // Be careful with common names like "Cup".
-        compRow = db.get("SELECT competition_id FROM V2_competitions WHERE competition_name = ?", [league.name]);
-    }
-
-    if (!compRow) {
-        try {
-            // Insert new
-            const apiId = league.id || null;
-            // Default Trophy Type to 7 (League) or null? Let's leave null.
-            db.run("INSERT INTO V2_competitions (competition_name, api_id, country_id) VALUES (?, ?, ?)", [league.name, apiId, 1]); // Country 1 is hardcoded 'World' usually, better than crashing
-
-            if (apiId) {
-                compRow = db.get("SELECT competition_id FROM V2_competitions WHERE api_id = ?", [apiId]);
-            } else {
-                compRow = db.get("SELECT competition_id FROM V2_competitions WHERE competition_name = ?", [league.name]);
-            }
-        } catch (e) {
-            console.error("Error creating competition:", truncate(e.message, 50));
-        }
-    }
-    return compRow ? compRow.competition_id : null;
+    // For competitions without API ID, don't create - return null for manual review
+    console.log(`⚠️ Competition without API ID not created: ${league.name} - flagging for manual review`);
+    return null;
 };
 
 const upsertPlayerStats = (playerId, stat, year) => {
     const clubId = upsertClub(stat.team);
     if (!clubId) return;
 
-    const compId = upsertCompetition(stat.league);
+    // Get club's country for better competition detection
+    const clubInfo = db.get("SELECT country_id FROM V2_clubs WHERE club_id = ?", [clubId]);
+    const countryId = clubInfo ? clubInfo.country_id : null;
+
+    // Pass additional context for intelligent detection
+    const matchesPlayed = stat.games.appearences || 0;
+    const compId = upsertCompetition(stat.league, clubId, year.toString(), matchesPlayed, countryId);
+
+    // If competition couldn't be detected, log for manual review
+    if (!compId && stat.league && stat.league.name) {
+        logUnresolvedCompetition(playerId, clubId, year.toString(), stat.league.name, matchesPlayed);
+    }
 
     const existingStat = db.get(
         "SELECT stat_id FROM V2_player_statistics WHERE player_id=? AND club_id=? AND competition_id IS ? AND season=?",
