@@ -1154,3 +1154,103 @@ export const fixClubCountry = (req, res) => {
         res.status(500).json({ error: 'Database update failed' });
     }
 };
+
+/**
+ * Import Single Player (Deep) - Fetches ALL available seasons and statistics
+ */
+export const importSinglePlayerDeep = async (req, res) => {
+    const { playerId } = req.params;
+    
+    if (!playerId) {
+        return res.status(400).json({ error: 'Player ID is required' });
+    }
+
+    try {
+        const playerApiId = parseInt(playerId);
+        console.log(`🚀 Deep Import: Starting for player API ID ${playerApiId}...`);
+
+        // Check if player exists in DB
+        let dbPlayerId = null;
+        const playerRow = db.get("SELECT player_id FROM V2_players WHERE api_id = ?", [playerApiId]);
+        if (playerRow) dbPlayerId = playerRow.player_id;
+
+        // 1. Get Available Seasons
+        const seasonsRes = await callApiWithRateLimit(`${API_BASE_URL}/players/seasons`, {
+            params: { player: playerApiId },
+            headers: { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' }
+        });
+
+        const seasons = seasonsRes.data.response;
+        
+        if (!seasons || seasons.length === 0) {
+            return res.status(404).json({ error: 'No seasons found for this player' });
+        }
+
+        console.log(`📅 Found ${seasons.length} seasons for player ${playerApiId}`);
+
+        let importedSeasons = 0;
+        let skippedSeasons = 0;
+
+        // 2. Fetch Stats for EACH season
+        for (const seasonYear of seasons) {
+            if (dbPlayerId) {
+                // Check if valid stats exist for this season
+                const validStatsExist = db.get(
+                    "SELECT 1 FROM V2_player_statistics WHERE player_id = ? AND season = ? AND competition_id IS NOT NULL LIMIT 1",
+                    [dbPlayerId, seasonYear.toString()]
+                );
+
+                if (validStatsExist) {
+                    skippedSeasons++;
+                    continue;
+                }
+            }
+
+            // Fetch player stats for this season
+            await new Promise(r => setTimeout(r, 200)); // Throttle
+
+            const statsRes = await callApiWithRateLimit(`${API_BASE_URL}/players`, {
+                params: { id: playerApiId, season: seasonYear },
+                headers: { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io' }
+            });
+
+            if (!statsRes.data.response || statsRes.data.response.length === 0) {
+                console.log(`⚠️ No data for season ${seasonYear}`);
+                continue;
+            }
+
+            const playerData = statsRes.data.response[0];
+
+            // Create/Update player record if needed
+            if (!dbPlayerId) {
+                dbPlayerId = upsertPlayerRecord(playerData.player);
+            }
+
+            // Import statistics for each team/league in this season
+            if (playerData.statistics && playerData.statistics.length > 0) {
+                playerData.statistics.forEach(stat => {
+                    upsertPlayerStats(dbPlayerId, stat, seasonYear);
+                });
+                importedSeasons++;
+            }
+        }
+
+        console.log(`✅ Deep Import Complete for player ${playerApiId}: ${importedSeasons} seasons imported, ${skippedSeasons} skipped`);
+
+        res.json({
+            success: true,
+            message: 'Player imported successfully',
+            playerId: dbPlayerId,
+            seasonsImported: importedSeasons,
+            seasonsSkipped: skippedSeasons,
+            totalSeasons: seasons.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error importing player:', error.message);
+        res.status(500).json({
+            error: 'Failed to import player',
+            details: error.message
+        });
+    }
+};

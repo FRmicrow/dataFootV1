@@ -29,6 +29,12 @@ const api = {
         return response.data;
     },
 
+    // Import player (Deep - all seasons)
+    importPlayerDeep: async (playerId) => {
+        const response = await axios.post(`http://localhost:3001/api/admin/import-player/${playerId}`);
+        return response.data;
+    },
+
     // Retry failed import
     retryImport: async (playerId) => {
         const response = await axios.post(`${API_BASE_URL}/retry-import/${playerId}`);
