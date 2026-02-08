@@ -119,7 +119,7 @@ export const getPlayerDetail = (req, res) => {
                 c.club_logo_url,
                 co.country_name as club_country,
                 comp.competition_name,
-                comp.competition_id,
+                comp.competition_id, comp.api_id as competition_api_id,
                 comp.trophy_type_id,
                 tt.type_name as competition_type
             FROM V2_player_statistics ps

@@ -50,7 +50,8 @@ router.get('/import-competitions-range', importCompetitionsController.importComp
 router.get('/import-clubs-range', importClubsController.importClubsRange);
 
 // Optimized League Import (Replaces brute-force player import)
-router.post('/import-league-optimized', importLeagueController.importLeagueData);
+router.all('/import-league-optimized', importLeagueController.importLeagueData);
+router.post('/sync-player/:id', importLeagueController.syncPlayer);
 router.post('/cleanup-assign', cleanupController.assignCompetition);
 router.get('/cleanup-competitions', cleanupController.getCompetitionsForSelect);
 router.post('/cleanup-init-regions', cleanupController.initializeRegions);

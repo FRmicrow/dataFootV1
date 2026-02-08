@@ -87,6 +87,12 @@ const api = {
     updateTrophyWinner: async (trophyId, seasonId, data) => {
         const response = await axios.post(`${API_BASE_URL}/palmares/winner/${trophyId}/${seasonId}`, data);
         return response.data;
+    },
+
+    // Admin Sync
+    syncPlayer: async (id) => {
+        const response = await axios.post(`${API_BASE_URL}/admin/sync-player/${id}`);
+        return response.data;
     }
 };
 

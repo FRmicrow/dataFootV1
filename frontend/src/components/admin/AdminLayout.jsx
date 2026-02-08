@@ -14,6 +14,7 @@ import RepairPlayerData from './RepairPlayerData';
 import ImportCompetitions from './ImportCompetitions';
 import ImportClubs from './ImportClubs';
 import ImportPlayersV2 from './ImportPlayersV2';
+import ImportLeagueOptimized from './ImportLeagueOptimized';
 import './Admin.css';
 
 const AdminLayout = () => {
@@ -25,7 +26,33 @@ const AdminLayout = () => {
                 </div>
                 <nav className="admin-nav">
                     <div className="admin-nav-section">
-                        <div className="admin-nav-section-title">Global Changes</div>
+                        <div className="admin-nav-section-title">Import (Recommended)</div>
+                        <NavLink to="/admin/import-league-optimized" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+                            🚀 Optimized League Import
+                        </NavLink>
+                    </div>
+
+                    <div className="admin-nav-section">
+                        <div className="admin-nav-section-title">Import (Range & Legacy)</div>
+                        <NavLink to="/admin/import-players-v2" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+                            Import Players (ID Range)
+                        </NavLink>
+                        <NavLink to="/admin/import-deep" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+                            Import Players (Deep History)
+                        </NavLink>
+                        <NavLink to="/admin/import-competitions" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+                            Import Competitions (Range)
+                        </NavLink>
+                        <NavLink to="/admin/import-clubs" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+                            Import Clubs (Range)
+                        </NavLink>
+                        <NavLink to="/admin/import-by-club" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+                            Import Players (Club)
+                        </NavLink>
+                    </div>
+
+                    <div className="admin-nav-section">
+                        <div className="admin-nav-section-title">Global Management</div>
                         <NavLink to="/admin/team-mapping" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
                             Team Mapping
                         </NavLink>
@@ -48,33 +75,12 @@ const AdminLayout = () => {
                             Repair Player Data
                         </NavLink>
                     </div>
-
-                    <div className="admin-nav-section">
-                        <div className="admin-nav-section-title">Import</div>
-                        <NavLink to="/admin/import-competitions" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-                            Import Competitions (Range)
-                        </NavLink>
-                        <NavLink to="/admin/import-clubs" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-                            Import Clubs (Range)
-                        </NavLink>
-                        <NavLink to="/admin/import-players-v2" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-                            Import Players (V2 Optimized)
-                        </NavLink>
-                        <NavLink to="/admin/import-players" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-                            Import Players (League)
-                        </NavLink>
-                        <NavLink to="/admin/import-deep" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-                            Import Players (Deep)
-                        </NavLink>
-                        <NavLink to="/admin/import-by-club" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-                            Import Players (Club)
-                        </NavLink>
-                    </div>
                 </nav>
             </aside>
             <main className="admin-content">
                 <Routes>
-                    <Route path="/" element={<Navigate to="team-mapping" replace />} />
+                    <Route path="/" element={<Navigate to="import-league-optimized" replace />} />
+                    <Route path="import-league-optimized" element={<ImportLeagueOptimized />} />
                     <Route path="team-mapping" element={<TeamMapping />} />
                     <Route path="missing-info" element={<MissingInfo />} />
                     <Route path="import-competitions" element={<ImportCompetitions />} />
