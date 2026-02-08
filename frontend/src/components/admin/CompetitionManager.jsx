@@ -2,109 +2,195 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const CompetitionManager = () => {
-    const [competitions, setCompetitions] = useState([]);
-    const [trophyTypes, setTrophyTypes] = useState([]);
-    const [selectedTypes, setSelectedTypes] = useState({}); // { compId: typeId }
-    const [loading, setLoading] = useState(true);
+    const [duplicates, setDuplicates] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentPair, setCurrentPair] = useState(null);
+    const [targetId, setTargetId] = useState(null);
 
     useEffect(() => {
-        fetchData();
+        fetchDuplicates();
     }, []);
 
-    const fetchData = async () => {
+    const fetchDuplicates = async () => {
+        setLoading(true);
         try {
-            const [compRes, typeRes] = await Promise.all([
-                axios.get('/api/admin/uncategorized-competitions'),
-                axios.get('/api/admin/trophy-types')
-            ]);
-            setCompetitions(compRes.data);
-            setTrophyTypes(typeRes.data);
+            const response = await axios.get('/api/admin/duplicate-competitions');
+            setDuplicates(response.data);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Error fetching duplicate competitions:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSelectChange = (compId, typeId) => {
-        setSelectedTypes(prev => ({ ...prev, [compId]: typeId }));
+    const openMergeModal = (pair) => {
+        setCurrentPair(pair);
+        setTargetId(null); // Force user to pick
+        setIsModalOpen(true);
     };
 
-    const handleSetTrophy = async (compId) => {
-        const typeId = selectedTypes[compId];
-        if (!typeId) return;
+    const handleMerge = async () => {
+        if (!targetId || !currentPair) return;
+
+        const sourceId = targetId === currentPair.id1 ? currentPair.id2 : currentPair.id1;
 
         try {
-            await axios.post('/api/admin/set-trophy-type', {
-                competitionId: compId,
-                trophyTypeId: typeId
+            await axios.post('/api/admin/merge-competitions', {
+                targetId,
+                sourceId
             });
+
             // Remove from list
-            setCompetitions(prev => prev.filter(c => c.competition_id !== compId));
-            // Clear selection
-            const newSel = { ...selectedTypes };
-            delete newSel[compId];
-            setSelectedTypes(newSel);
+            setDuplicates(prev => prev.filter(p => p.id1 !== currentPair.id1 || p.id2 !== currentPair.id2));
+            setIsModalOpen(false);
+            setCurrentPair(null);
+            setTargetId(null);
         } catch (error) {
-            console.error('Error updating trophy type:', error);
-            alert('Failed to update.');
+            console.error('Error merging competitions:', error);
+            alert('Failed to merge competitions');
         }
     };
 
-    if (loading) return <div>Loading...</div>;
-
     return (
-        <div className="competition-manager" style={{ padding: '2rem' }}>
-            <h2>Competition Manager</h2>
-            <p>Assign trophy types to competitions that are currently uncategorized.</p>
+        <div className="competition-manager">
+            <h2>Competition Manager - Duplicate Detection</h2>
+            <p>Find and merge duplicate competition entries in the database.</p>
 
-            {competitions.length === 0 ? (
-                <div style={{ padding: '2rem', background: '#f0fdf4', color: '#15803d', borderRadius: '8px' }}>
-                    All competitions are categorized! 🎉
-                </div>
-            ) : (
-                <div className="competition-list" style={{ display: 'grid', gap: '1rem' }}>
-                    {competitions.map(comp => (
-                        <div key={comp.competition_id} style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            background: 'white', padding: '1rem', borderRadius: '8px',
-                            border: '1px solid #e2e8f0'
-                        }}>
-                            <div>
-                                <strong style={{ fontSize: '1.1rem' }}>{comp.competition_name}</strong>
-                                <span style={{ marginLeft: '10px', color: '#64748b', fontSize: '0.9rem' }}>
-                                    (ID: {comp.competition_id})
-                                </span>
+            <div className="duplicates-list">
+                {loading && <div>Loading duplicates...</div>}
+
+                {!loading && duplicates.length === 0 && (
+                    <div style={{ padding: '2rem', background: '#f0fdf4', color: '#15803d', borderRadius: '8px' }}>
+                        No duplicate competitions found! 🎉
+                    </div>
+                )}
+
+                {duplicates.map((pair, index) => (
+                    <div key={`${pair.id1}-${pair.id2}`} className="duplicate-card">
+                        <div className="duplicate-header">
+                            <span className="match-reason">{pair.reason}</span>
+                        </div>
+                        <div className="duplicate-pair">
+                            <div className="competition-item">
+                                <div className="competition-header">
+                                    <span className="competition-id">#{pair.id1}</span>
+                                    {pair.flag1 && (
+                                        <img src={pair.flag1} alt={pair.country1} className="country-flag" />
+                                    )}
+                                </div>
+                                <div className="competition-details">
+                                    <div className="competition-name">{pair.name1}</div>
+                                    {pair.short_name1 && (
+                                        <div className="competition-meta">
+                                            <span className="label">Short:</span> {pair.short_name1}
+                                        </div>
+                                    )}
+                                    {pair.country1 && (
+                                        <div className="competition-meta">
+                                            <span className="label">Country:</span> {pair.country1}
+                                        </div>
+                                    )}
+                                    {pair.trophy_type1 && (
+                                        <div className="competition-meta">
+                                            <span className="label">Type:</span> {pair.trophy_type1}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <select
-                                    value={selectedTypes[comp.competition_id] || ''}
-                                    onChange={(e) => handleSelectChange(comp.competition_id, e.target.value)}
-                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
-                                >
-                                    <option value="">Select Type...</option>
-                                    {trophyTypes.map(type => (
-                                        <option key={type.trophy_type_id} value={type.trophy_type_id}>
-                                            {type.type_name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <button
-                                    onClick={() => handleSetTrophy(comp.competition_id)}
-                                    disabled={!selectedTypes[comp.competition_id]}
-                                    style={{
-                                        padding: '8px 16px', borderRadius: '4px', border: 'none',
-                                        backgroundColor: !selectedTypes[comp.competition_id] ? '#e2e8f0' : '#3b82f6',
-                                        color: !selectedTypes[comp.competition_id] ? '#94a3b8' : 'white',
-                                        cursor: !selectedTypes[comp.competition_id] ? 'not-allowed' : 'pointer'
-                                    }}
-                                >
-                                    Set Trophy
-                                </button>
+                            <div className="vs-separator">VS</div>
+
+                            <div className="competition-item">
+                                <div className="competition-header">
+                                    <span className="competition-id">#{pair.id2}</span>
+                                    {pair.flag2 && (
+                                        <img src={pair.flag2} alt={pair.country2} className="country-flag" />
+                                    )}
+                                </div>
+                                <div className="competition-details">
+                                    <div className="competition-name">{pair.name2}</div>
+                                    {pair.short_name2 && (
+                                        <div className="competition-meta">
+                                            <span className="label">Short:</span> {pair.short_name2}
+                                        </div>
+                                    )}
+                                    {pair.country2 && (
+                                        <div className="competition-meta">
+                                            <span className="label">Country:</span> {pair.country2}
+                                        </div>
+                                    )}
+                                    {pair.trophy_type2 && (
+                                        <div className="competition-meta">
+                                            <span className="label">Type:</span> {pair.trophy_type2}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    ))}
+                        <div className="merge-actions">
+                            <button
+                                className="btn-primary"
+                                onClick={() => openMergeModal(pair)}
+                            >
+                                Merge
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {isModalOpen && currentPair && (
+                <div className="admin-modal-overlay">
+                    <div className="admin-modal">
+                        <div className="admin-modal-header">
+                            <h3>Merge Duplicate Competitions</h3>
+                            <p>Select the version you want to <strong>KEEP</strong> (Target). The other will be merged into it and deleted.</p>
+                        </div>
+                        <div className="admin-modal-body">
+                            <div className="merge-comparison">
+                                <div
+                                    className={`merge-option ${targetId === currentPair.id1 ? 'target' : targetId === currentPair.id2 ? 'source' : ''}`}
+                                    onClick={() => setTargetId(currentPair.id1)}
+                                >
+                                    <h4>Option A</h4>
+                                    <p><strong>{currentPair.name1}</strong></p>
+                                    {currentPair.short_name1 && <p>Short: {currentPair.short_name1}</p>}
+                                    {currentPair.country1 && <p>Country: {currentPair.country1}</p>}
+                                    {currentPair.trophy_type1 && <p>Type: {currentPair.trophy_type1}</p>}
+                                    <p>ID: {currentPair.id1}</p>
+                                    {targetId === currentPair.id1 && <span className="badge">Surviving</span>}
+                                    {targetId === currentPair.id2 && <span className="badge warning">Will be deleted</span>}
+                                </div>
+
+                                <div
+                                    className={`merge-option ${targetId === currentPair.id2 ? 'target' : targetId === currentPair.id1 ? 'source' : ''}`}
+                                    onClick={() => setTargetId(currentPair.id2)}
+                                >
+                                    <h4>Option B</h4>
+                                    <p><strong>{currentPair.name2}</strong></p>
+                                    {currentPair.short_name2 && <p>Short: {currentPair.short_name2}</p>}
+                                    {currentPair.country2 && <p>Country: {currentPair.country2}</p>}
+                                    {currentPair.trophy_type2 && <p>Type: {currentPair.trophy_type2}</p>}
+                                    <p>ID: {currentPair.id2}</p>
+                                    {targetId === currentPair.id2 && <span className="badge">Surviving</span>}
+                                    {targetId === currentPair.id1 && <span className="badge warning">Will be deleted</span>}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="admin-modal-footer">
+                            <button className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                            <button
+                                className="btn-primary"
+                                disabled={!targetId}
+                                onClick={handleMerge}
+                            >
+                                Confirm Merge
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -44,13 +44,23 @@ const PlayerDetail = () => {
     const [syncing, setSyncing] = useState(false);
 
     const handleRefresh = async () => {
+        if (!playerData?.player?.api_id) {
+            alert('Cannot refresh: Player API ID not found');
+            return;
+        }
+
         setSyncing(true);
         try {
-            await api.syncPlayer(id);
-            await loadPlayer(); // Reload data after sync
+            // Deep import to get all data
+            console.log('📥 Performing deep import...');
+            await api.importPlayerDeep(playerData.player.api_id);
+
+            // Reload data
+            await loadPlayer();
+
             alert('Player data refreshed successfully!');
         } catch (err) {
-            console.error('Sync failed:', err);
+            console.error('Refresh failed:', err);
             alert('Failed to refresh player data. Please try again.');
         } finally {
             setSyncing(false);
