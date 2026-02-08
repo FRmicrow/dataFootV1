@@ -120,6 +120,7 @@ export const getPlayerDetail = (req, res) => {
                 co.country_name as club_country,
                 comp.competition_name,
                 comp.competition_id,
+                comp.trophy_type_id,
                 tt.type_name as competition_type
             FROM V2_player_statistics ps
             JOIN V2_clubs c ON ps.club_id = c.club_id
@@ -139,7 +140,7 @@ export const getPlayerDetail = (req, res) => {
         };
 
         allStats.forEach(stat => {
-            // 1. U23 / Youth Logic
+            // 1. U23 / Youth Logic (Highest Priority)
             const isU23Team = /U23|U21|U19|Reserve|Youth/i.test(stat.club_name);
             const isU23Comp = /U23|U21|U19|Youth/i.test(stat.competition_name || '');
 
@@ -148,26 +149,31 @@ export const getPlayerDetail = (req, res) => {
                 return;
             }
 
-            // 2. National Team Logic
-            const type = stat.competition_type || '';
-            if (type.includes('National Team')) {
+            const ttid = stat.trophy_type_id;
+
+            // 2. National Team Categorization
+            // IDs: 2 (UEFA NT), 4 (FIFA NT), 6 (Continental NT)
+            if ([2, 4, 6].includes(ttid)) {
                 categorized.national_team.push(stat);
                 return;
             }
 
-            // 3. International Club Cup Logic (UEFA/FIFA/Continental Club)
-            if (type.includes('Club') && (type.includes('UEFA') || type.includes('FIFA') || type.includes('Continental'))) {
+            // 3. International Cup Categorization
+            // IDs: 1 (UEFA Club), 3 (FIFA Club), 5 (Continental Club)
+            if ([1, 3, 5].includes(ttid)) {
                 categorized.international_cups.push(stat);
                 return;
             }
 
-            // 4. Domestic Cup Logic
-            if (type.includes('Domestic') && (type.includes('Cup') || type.includes('Shield'))) {
+            // 4. National Cup Categorization (Domestic Cup, Super Cup, League Cup)
+            // IDs: 8 (Domestic Cup), 9 (Domestic Super Cup), 10 (Domestic League Cup)
+            if ([8, 9, 10].includes(ttid)) {
                 categorized.national_cups.push(stat);
                 return;
             }
 
-            // 5. Domestic Leagues (Default fallback)
+            // 5. Domestic Leagues & Fallback
+            // ID: 7 (Domestic League) or missing
             if (stat.competition_id && !stat.competition_type) {
                 console.warn(`⚠️ Competition [${stat.competition_name}] (ID: ${stat.competition_id}) has no trophy_type defined in DB.`);
             }
@@ -175,14 +181,17 @@ export const getPlayerDetail = (req, res) => {
         });
 
         // Get trophies
-        const trophies = db.all(`
+        const trophiesList = db.all(`
             SELECT 
                 pt.*,
                 c.club_name,
-                comp.competition_name as trophy_name
+                comp.competition_name as trophy_name,
+                tt.type_name as competition_type,
+                tt.trophy_type_id
             FROM V2_player_trophies pt
             LEFT JOIN V2_clubs c ON pt.club_id = c.club_id
             LEFT JOIN V2_competitions comp ON pt.competition_id = comp.competition_id
+            LEFT JOIN V2_trophy_type tt ON comp.trophy_type_id = tt.trophy_type_id
             WHERE pt.player_id = ?
             ORDER BY pt.season DESC
         `, [id]);
@@ -232,7 +241,7 @@ export const getPlayerDetail = (req, res) => {
             player,
             stats: categorized,
             clubs, // Restored grouped format
-            trophies,
+            trophies: trophiesList,
             awards
         });
 
