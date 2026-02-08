@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import TeamDetailModal from './TeamDetailModal';
 import TeamsTab from './TeamsTab';
+import './DatabasePage.css';
 
 const DatabasePage = () => {
     const [players, setPlayers] = useState([]);
@@ -185,12 +185,12 @@ const DatabasePage = () => {
     const renderPlayerGrid = () => (
         <div className="player-grid">
             {!searched ? (
-                <div className="empty-state" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
-                    <h3 style={{ marginBottom: '1rem', color: '#4a5568' }}>Search for Players</h3>
-                    <p style={{ color: '#718096' }}>Enter at least one search criteria above to find players</p>
+                <div className="empty-state">
+                    <h3>Search for Players</h3>
+                    <p>Enter at least one search criteria above to find players</p>
                 </div>
             ) : players.length === 0 ? (
-                <div className="empty-state" style={{ gridColumn: '1 / -1' }}>No players found matching your criteria.</div>
+                <div className="empty-state">No players found matching your criteria.</div>
             ) : (
                 players.map((player) => (
                     <Link key={player.id} to={`/player/${player.id}`} className="player-card">
@@ -205,7 +205,7 @@ const DatabasePage = () => {
                         <div className="player-card-name">{player.first_name} {player.last_name}</div>
                         <div className="player-card-info">{player.nationality}</div>
                         {player.current_team && (
-                            <div className="player-card-teams" style={{ fontSize: '0.7rem', color: '#718096', marginTop: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div className="player-card-teams">
                                 {player.current_team}
                             </div>
                         )}
@@ -257,21 +257,15 @@ const DatabasePage = () => {
                     </div>
                 ) : (
                     sortedCountries.map(country => (
-                        <div key={country} style={{ marginBottom: '2rem' }}>
-                            <h3 style={{
-                                fontSize: '1.1rem',
-                                color: '#4a5568',
-                                marginBottom: '1rem',
-                                paddingBottom: '0.5rem',
-                                borderBottom: '2px solid #e2e8f0'
-                            }}>
+                        <div key={country} className="country-group">
+                            <h3 className="country-title">
                                 {country} ({teamsByCountry[country].length})
                             </h3>
                             <div className="player-grid">
                                 {teamsByCountry[country].map((team) => (
                                     <div
                                         key={team.id}
-                                        className="player-card"
+                                        className="player-card team-card-item"
                                         onClick={() => {
                                             console.log('🖱️ CLICK DETECTED on team:', team.name, 'ID:', team.id);
                                             handleViewTeam(team.id);
@@ -292,10 +286,10 @@ const DatabasePage = () => {
     };
 
     return (
-        <div className="container">
+        <div className="database-container">
             <h1 className="page-title">Database</h1>
 
-            <div className="tabs" style={{ marginBottom: '2rem' }}>
+            <div className="tabs">
                 <button className={`tab ${activeTab === 'players' ? 'active' : ''}`} onClick={() => setActiveTab('players')}>
                     Players ({players.length})
                 </button>
@@ -305,7 +299,7 @@ const DatabasePage = () => {
             </div>
 
             {activeTab === 'players' && (
-                <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <div className="action-bar">
                     <button
                         className={`btn ${verifying ? 'btn-secondary' : 'btn-primary'}`}
                         onClick={handleMassVerify}
@@ -317,25 +311,25 @@ const DatabasePage = () => {
             )}
 
             {verifying && verifyStatus && (
-                <div className="card" style={{ marginBottom: '2rem', padding: '1rem', border: '1px solid #667eea', background: '#f0f4ff' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <span style={{ fontWeight: 'bold', color: '#4c51bf' }}>Database Verification in Progress</span>
+                <div className="verify-status-card">
+                    <div className="verify-header">
+                        <span>Database Verification in Progress</span>
                         <span>{verifyStatus.current} / {verifyStatus.total} Players</span>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
-                        <div style={{ width: `${(verifyStatus.current / verifyStatus.total) * 100}%`, height: '100%', background: '#667eea', transition: 'width 0.3s ease' }}></div>
+                    <div className="progress-bar-container">
+                        <div className="progress-bar-fill" style={{ width: `${(verifyStatus.current / verifyStatus.total) * 100}%` }}></div>
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: '#4a5568' }}>{verifyStatus.details}</div>
+                    <div className="verify-details">{verifyStatus.details}</div>
                 </div>
             )}
 
             {error && <div className="error">{error}</div>}
 
             {activeTab === 'players' && (
-                <div className="card" style={{ marginBottom: '2rem', padding: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                        <div style={{ flex: 1, minWidth: '200px' }}>
-                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#718096', marginBottom: '0.25rem' }}>Filter by Name</label>
+                <div className="filters-card">
+                    <div className="filters-grid">
+                        <div className="filter-item">
+                            <label className="filter-label">Filter by Name</label>
                             <input
                                 type="text"
                                 className="search-input"
@@ -343,23 +337,21 @@ const DatabasePage = () => {
                                 value={filterName}
                                 onChange={(e) => setFilterName(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && searchPlayers()}
-                                style={{ width: '100%' }}
                             />
                         </div>
-                        <div style={{ flex: 1, minWidth: '200px' }}>
-                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#718096', marginBottom: '0.25rem' }}>Filter by Nationality</label>
+                        <div className="filter-item">
+                            <label className="filter-label">Filter by Nationality</label>
                             <select
                                 className="search-input"
                                 value={filterNationality}
                                 onChange={(e) => setFilterNationality(e.target.value)}
-                                style={{ width: '100%' }}
                             >
                                 <option value="">All Nationalities</option>
                                 {nationalities.map(n => <option key={n.id} value={n.id}>{n.name} ({n.player_count})</option>)}
                             </select>
                         </div>
-                        <div style={{ flex: 1, minWidth: '200px' }}>
-                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#718096', marginBottom: '0.25rem' }}>Filter by Club Name</label>
+                        <div className="filter-item">
+                            <label className="filter-label">Filter by Club Name</label>
                             <input
                                 type="text"
                                 className="search-input"
@@ -367,14 +359,12 @@ const DatabasePage = () => {
                                 value={filterClub}
                                 onChange={(e) => setFilterClub(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && searchPlayers()}
-                                style={{ width: '100%' }}
                             />
                         </div>
                         <button
                             className="btn btn-primary btn-small"
                             onClick={searchPlayers}
                             disabled={loading}
-                            style={{ alignSelf: 'flex-end' }}
                         >
                             {loading ? 'Searching...' : 'Search Players'}
                         </button>
@@ -389,7 +379,6 @@ const DatabasePage = () => {
                                     setSearched(false);
                                     setError(null);
                                 }}
-                                style={{ alignSelf: 'flex-end' }}
                             >
                                 Clear All
                             </button>
@@ -398,27 +387,29 @@ const DatabasePage = () => {
                 </div>
             )}
 
+            {activeTab === 'players' && (
+                renderPlayerGrid()
+            )}
+
             {activeTab === 'teams' && (
-                <div className="card" style={{ marginBottom: '2rem', padding: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                        <div style={{ flex: 1, minWidth: '200px' }}>
-                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#718096', marginBottom: '0.25rem' }}>Filter by Team Name</label>
+                <div className="filters-card">
+                    <div className="filters-grid">
+                        <div className="filter-item">
+                            <label className="filter-label">Filter by Team Name</label>
                             <input
                                 type="text"
                                 className="search-input"
                                 placeholder="e.g. Manchester United"
                                 value={filterTeamName}
                                 onChange={(e) => setFilterTeamName(e.target.value)}
-                                style={{ width: '100%' }}
                             />
                         </div>
-                        <div style={{ flex: 1, minWidth: '200px' }}>
-                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#718096', marginBottom: '0.25rem' }}>Filter by Country</label>
+                        <div className="filter-item">
+                            <label className="filter-label">Filter by Country</label>
                             <select
                                 className="search-input"
                                 value={filterTeamCountry}
                                 onChange={(e) => setFilterTeamCountry(e.target.value)}
-                                style={{ width: '100%' }}
                             >
                                 <option value="">All Countries</option>
                                 {[...new Set(teams.map(t => t.country).filter(Boolean))].sort().map(c => (
@@ -430,7 +421,6 @@ const DatabasePage = () => {
                             <button
                                 className="btn btn-secondary btn-small"
                                 onClick={() => { setFilterTeamName(''); setFilterTeamCountry(''); }}
-                                style={{ alignSelf: 'flex-end' }}
                             >
                                 Clear Filters
                             </button>
@@ -438,7 +428,6 @@ const DatabasePage = () => {
                         <button
                             className={`btn ${showAllTeams ? 'btn-secondary' : 'btn-primary'} btn-small`}
                             onClick={() => setShowAllTeams(!showAllTeams)}
-                            style={{ alignSelf: 'flex-end' }}
                         >
                             {showAllTeams ? 'Show Main Leagues Only' : 'Show All Teams'}
                         </button>
@@ -446,7 +435,9 @@ const DatabasePage = () => {
                 </div>
             )}
 
-            {activeTab === 'players' ? renderPlayerGrid() : <TeamsTab />}
+            {activeTab === 'teams' && (
+                renderTeamList()
+            )}
 
             {selectedTeam && (
                 <TeamDetailModal
