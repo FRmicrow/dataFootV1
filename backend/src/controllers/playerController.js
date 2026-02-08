@@ -168,8 +168,8 @@ export const getPlayerDetail = (req, res) => {
             }
 
             // 5. Domestic Leagues (Default fallback)
-            if (!stat.competition_type) {
-                console.warn(`⚠️ Competition [${stat.competition_name}] (ID: ${stat.competition_id}) has no trophy_type defined. Defaulting to League.`);
+            if (stat.competition_id && !stat.competition_type) {
+                console.warn(`⚠️ Competition [${stat.competition_name}] (ID: ${stat.competition_id}) has no trophy_type defined in DB.`);
             }
             categorized.leagues.push(stat);
         });

@@ -147,7 +147,17 @@ export const importLeagueData = async (req, res) => {
                                 if (comp) compId = comp.competition_id;
                                 else {
                                     // Create generic if missing
-                                    db.run("INSERT INTO V2_competitions (competition_name, api_id, country_id, created_at) VALUES (?, ?, 1, CURRENT_TIMESTAMP)", [stat.league.name, stat.league.id]);
+                                    const name = stat.league.name ? stat.league.name.toLowerCase() : "";
+                                    let typeId = 7; // Default Domestic League
+
+                                    if (name.includes('cup') || name.includes('pokal') || name.includes('taça') ||
+                                        name.includes('copa') || name.includes('shield') || name.includes('trophy')) typeId = 8;
+                                    else if (name.includes('champions league') || name.includes('europa') || name.includes('conference')) typeId = 5;
+                                    else if (name.includes('national team') || name.includes('world cup') || name.includes('euro')) typeId = 6;
+
+                                    db.run("INSERT INTO V2_competitions (competition_name, api_id, country_id, trophy_type_id, created_at) VALUES (?, ?, 1, ?, CURRENT_TIMESTAMP)",
+                                        [stat.league.name, stat.league.id, typeId]);
+
                                     const newComp = db.get("SELECT competition_id FROM V2_competitions WHERE api_id = ?", [stat.league.id]);
                                     compId = newComp.competition_id;
                                 }
