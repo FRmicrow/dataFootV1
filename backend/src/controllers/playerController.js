@@ -111,51 +111,68 @@ export const getPlayerDetail = (req, res) => {
             return res.status(404).json({ error: 'Player not found' });
         }
 
-        // Get club statistics
-        const clubStats = db.all(`
+        // Get extended statistics for categorization
+        const allStats = db.all(`
             SELECT 
                 ps.*,
                 c.club_name,
                 c.club_logo_url,
                 co.country_name as club_country,
                 comp.competition_name,
-                comp.competition_id
+                comp.competition_id,
+                tt.type_name as competition_type
             FROM V2_player_statistics ps
             JOIN V2_clubs c ON ps.club_id = c.club_id
             LEFT JOIN V2_countries co ON c.country_id = co.country_id
             LEFT JOIN V2_competitions comp ON ps.competition_id = comp.competition_id
+            LEFT JOIN V2_trophy_type tt ON comp.trophy_type_id = tt.trophy_type_id
             WHERE ps.player_id = ?
-            ORDER BY ps.year DESC, ps.matches_played DESC
+            ORDER BY ps.year DESC, ps.season DESC
         `, [id]);
 
-        // Group by club and season
-        const clubsMap = {};
-        clubStats.forEach(stat => {
-            const clubKey = `${stat.club_id}_${stat.season}`;
-            if (!clubsMap[clubKey]) {
-                clubsMap[clubKey] = {
-                    club_id: stat.club_id,
-                    club_name: stat.club_name,
-                    club_logo: stat.club_logo_url,
-                    country: stat.club_country,
-                    season: stat.season,
-                    competitions: []
-                };
+        const categorized = {
+            leagues: [],
+            national_cups: [],
+            international_cups: [],
+            national_team: [],
+            under_23: []
+        };
+
+        allStats.forEach(stat => {
+            // 1. U23 / Youth Logic
+            const isU23Team = /U23|U21|U19|Reserve|Youth/i.test(stat.club_name);
+            const isU23Comp = /U23|U21|U19|Youth/i.test(stat.competition_name || '');
+
+            if (isU23Team || isU23Comp) {
+                categorized.under_23.push(stat);
+                return;
             }
 
-            clubsMap[clubKey].competitions.push({
-                competition_id: stat.competition_id,
-                competition_name: stat.competition_name || 'Unknown',
-                matches: stat.matches_played,
-                goals: stat.goals,
-                assists: stat.assists,
-                yellow_cards: stat.yellow_cards,
-                red_cards: stat.red_cards,
-                minutes: stat.minutes_played
-            });
-        });
+            // 2. National Team Logic
+            const type = stat.competition_type || '';
+            if (type.includes('National Team')) {
+                categorized.national_team.push(stat);
+                return;
+            }
 
-        const clubs = Object.values(clubsMap);
+            // 3. International Club Cup Logic (UEFA/FIFA/Continental Club)
+            if (type.includes('Club') && (type.includes('UEFA') || type.includes('FIFA') || type.includes('Continental'))) {
+                categorized.international_cups.push(stat);
+                return;
+            }
+
+            // 4. Domestic Cup Logic
+            if (type.includes('Domestic') && (type.includes('Cup') || type.includes('Shield'))) {
+                categorized.national_cups.push(stat);
+                return;
+            }
+
+            // 5. Domestic Leagues (Default fallback)
+            if (!stat.competition_type) {
+                console.warn(`⚠️ Competition [${stat.competition_name}] (ID: ${stat.competition_id}) has no trophy_type defined. Defaulting to League.`);
+            }
+            categorized.leagues.push(stat);
+        });
 
         // Get trophies
         const trophies = db.all(`
@@ -182,12 +199,41 @@ export const getPlayerDetail = (req, res) => {
             ORDER BY pia.season DESC
         `, [id]);
 
+        // Group by club and season for backward compatibility
+        const clubsMap = {};
+        allStats.forEach(stat => {
+            const clubKey = `${stat.club_id}_${stat.season}`;
+            if (!clubsMap[clubKey]) {
+                clubsMap[clubKey] = {
+                    club_id: stat.club_id,
+                    club_name: stat.club_name,
+                    club_logo: stat.club_logo_url,
+                    country: stat.club_country,
+                    season: stat.season,
+                    competitions: []
+                };
+            }
+
+            clubsMap[clubKey].competitions.push({
+                competition_id: stat.competition_id,
+                competition_name: stat.competition_name || 'Unknown',
+                matches: stat.matches_played,
+                goals: stat.goals,
+                assists: stat.assists,
+                yellow_cards: stat.yellow_cards,
+                red_cards: stat.red_cards,
+                minutes: stat.minutes_played
+            });
+        });
+
+        const clubs = Object.values(clubsMap);
+
         res.json({
             player,
-            clubs,
+            stats: categorized,
+            clubs, // Restored grouped format
             trophies,
-            awards,
-            nationalTeams: [] // Deprecated - now part of club stats
+            awards
         });
 
     } catch (error) {
