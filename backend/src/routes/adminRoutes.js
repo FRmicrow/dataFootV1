@@ -40,7 +40,7 @@ router.get('/fix-competition-ids', fixMissingCompetitionsController.fixCompetiti
 import * as cleanupController from '../controllers/cleanupController.js';
 import * as importCompetitionsController from '../controllers/importCompetitionsController.js';
 import * as importClubsController from '../controllers/importClubsController.js';
-import * as importPlayersV2Controller from '../controllers/importPlayersV2Controller.js';
+import * as importLeagueController from '../controllers/importLeagueController.js';
 
 router.get('/cleanup-candidates', cleanupController.getCleanupCandidates);
 router.get('/debug-player/:id', cleanupController.debugPlayerStats);
@@ -48,8 +48,9 @@ router.post('/cleanup-merge', cleanupController.mergeStats);
 
 router.get('/import-competitions-range', importCompetitionsController.importCompetitionsRange);
 router.get('/import-clubs-range', importClubsController.importClubsRange);
-router.post('/import-player-v2', importPlayersV2Controller.importPlayerV2);
-router.get('/import-players-range-v2', importPlayersV2Controller.importPlayersRangeV2);
+
+// Optimized League Import (Replaces brute-force player import)
+router.post('/import-league-optimized', importLeagueController.importLeagueData);
 router.post('/cleanup-assign', cleanupController.assignCompetition);
 router.get('/cleanup-competitions', cleanupController.getCompetitionsForSelect);
 router.post('/cleanup-init-regions', cleanupController.initializeRegions);

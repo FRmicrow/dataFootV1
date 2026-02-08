@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = 'http://localhost:3001/api';
 
 const api = {
-    // Search players
+    // Search players (Database only)
     searchPlayers: async (name, nationality) => {
         const response = await axios.get(`${API_BASE_URL}/search`, {
             params: { name, nationality }
@@ -11,38 +11,9 @@ const api = {
         return response.data;
     },
 
-    // Get metadata for import preview
-    getImportMetadata: async (playerId) => {
-        const response = await axios.get(`${API_BASE_URL}/import-metadata/${playerId}`);
-        return response.data;
-    },
-
-    // Sync player data (Refresh)
-    syncPlayer: async (dbId) => {
-        const response = await axios.post(`${API_BASE_URL}/player/${dbId}/sync`);
-        return response.data;
-    },
-
-    // Import player
-    importPlayer: async (playerId) => {
-        const response = await axios.post(`${API_BASE_URL}/import/${playerId}`);
-        return response.data;
-    },
-
-    // Import player (Deep - all seasons)
-    importPlayerDeep: async (playerId) => {
-        const response = await axios.post(`http://localhost:3001/api/admin/import-player/${playerId}`);
-        return response.data;
-    },
-
-    // Retry failed import
-    retryImport: async (playerId) => {
-        const response = await axios.post(`${API_BASE_URL}/retry-import/${playerId}`);
-        return response.data;
-    },
-
     // Get all players from database
     getAllPlayers: async () => {
+        // Ensure this endpoint exists or is removed if unused
         const response = await axios.get(`${API_BASE_URL}/players`);
         return response.data;
     },
@@ -59,17 +30,11 @@ const api = {
         return response.data;
     },
 
-    // Search teams
+    // Search teams (Database only)
     searchTeams: async (name) => {
         const response = await axios.get(`${API_BASE_URL}/search/teams`, {
             params: { name }
         });
-        return response.data;
-    },
-
-    // Import team
-    importTeam: async (teamId) => {
-        const response = await axios.post(`${API_BASE_URL}/import/team/${teamId}`);
         return response.data;
     },
 
@@ -97,40 +62,6 @@ const api = {
         return response.data;
     },
 
-    // Delete player
-    deletePlayer: async (id) => {
-        const response = await axios.delete(`${API_BASE_URL}/player/${id}`);
-        return response.data;
-    },
-
-    // Search players by team and season range
-    searchPlayersByTeam: async (teamName, startSeason, endSeason) => {
-        const response = await axios.get(`${API_BASE_URL}/search/players-by-team`, {
-            params: { teamName, startSeason, endSeason }
-        });
-        return response.data;
-    },
-
-    // FBref Import
-    importFromFbref: async (league, season) => {
-        const response = await axios.post(`${API_BASE_URL}/import/fbref`, { league, season });
-        return response.data;
-    },
-
-    // Batch Import
-    importBatch: async (playerIds, batchSize = 5) => {
-        const response = await axios.post(`${API_BASE_URL}/import/batch`, {
-            playerIds,
-            batchSize
-        });
-        return response.data;
-    },
-
-    getBatchProgress: async (batchId) => {
-        const response = await axios.get(`${API_BASE_URL}/import/batch/${batchId}`);
-        return response.data;
-    },
-
     // Mass Verify
     massVerify: async () => {
         const response = await axios.post(`${API_BASE_URL}/verify-database`);
@@ -155,12 +86,6 @@ const api = {
 
     updateTrophyWinner: async (trophyId, seasonId, data) => {
         const response = await axios.post(`${API_BASE_URL}/palmares/winner/${trophyId}/${seasonId}`, data);
-        return response.data;
-    },
-
-    // Fix missing competitions for a player
-    fixPlayerMissingCompetitions: async (playerId) => {
-        const response = await axios.post(`http://localhost:3001/api/admin/fix-player-missing-competitions/${playerId}`);
         return response.data;
     }
 };
