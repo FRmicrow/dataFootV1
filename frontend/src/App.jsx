@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-router-dom';
-import ImportPage from './components/ImportPage';
+import LeagueManager from './components/LeagueManager';
 import DatabasePage from './components/DatabasePage';
 import PlayerDetail from './components/PlayerDetail';
 import TeamDetail from './components/TeamDetail';
@@ -18,7 +18,7 @@ function App() {
                     <div className="nav-content">
                         <div className="nav-title">⚽ Football Player Database</div>
                         <NavLink to="/import" className="nav-link">
-                            Import Players
+                            League Manager
                         </NavLink>
                         <NavLink to="/football-data" className="nav-link">
                             Football Data
@@ -34,7 +34,7 @@ function App() {
 
                 <Routes>
                     <Route path="/" element={<FootballDataPage />} />
-                    <Route path="/import" element={<ImportPage />} />
+                    <Route path="/import" element={<LeagueManager />} />
                     <Route path="/database" element={<DatabasePage />} />
                     <Route path="/football-data" element={<FootballDataPage />} />
                     <Route path="/palmares" element={<PalmaresPage />} />
