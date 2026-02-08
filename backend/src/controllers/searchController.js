@@ -10,7 +10,7 @@ export const searchPlayers = async (req, res) => {
     try {
         const { name, nationality } = req.query;
 
-        if (!name || name.trim().length < 2) {
+        if (!name || typeof name !== 'string' || name.trim().length < 2) {
             return res.status(400).json({
                 error: 'Player name must be at least 2 characters'
             });
@@ -37,7 +37,7 @@ export const searchPlayers = async (req, res) => {
             photo: item.player.photo
         }));
 
-        if (nationality && nationality.trim() !== '') {
+        if (nationality && typeof nationality === 'string' && nationality.trim() !== '') {
             const filterNationalty = nationality.trim().toLowerCase();
             players = players.filter(p =>
                 p.nationality && p.nationality.toLowerCase().includes(filterNationalty)
@@ -59,7 +59,7 @@ export const searchTeams = async (req, res) => {
     try {
         const { name } = req.query;
 
-        if (!name || name.trim().length < 2) {
+        if (!name || typeof name !== 'string' || name.trim().length < 2) {
             return res.status(400).json({
                 error: 'Team name must be at least 2 characters'
             });
@@ -103,7 +103,7 @@ export const getPlayersByTeam = async (req, res) => {
     try {
         const { teamName, startSeason, endSeason } = req.query;
 
-        if (!teamName || teamName.trim().length < 2) {
+        if (!teamName || typeof teamName !== 'string' || teamName.trim().length < 2) {
             return res.status(400).json({ error: 'Team name is required (min 2 characters)' });
         }
         if (!startSeason) {

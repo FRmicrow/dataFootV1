@@ -156,6 +156,12 @@ const api = {
     updateTrophyWinner: async (trophyId, seasonId, data) => {
         const response = await axios.post(`${API_BASE_URL}/palmares/winner/${trophyId}/${seasonId}`, data);
         return response.data;
+    },
+
+    // Fix missing competitions for a player
+    fixPlayerMissingCompetitions: async (playerId) => {
+        const response = await axios.post(`http://localhost:3001/api/admin/fix-player-missing-competitions/${playerId}`);
+        return response.data;
     }
 };
 
