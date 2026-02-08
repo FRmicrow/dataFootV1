@@ -13,62 +13,65 @@ export const getDuplicateClubs = async (req, res) => {
     try {
         const { countryId } = req.query;
 
-        // Fetch all clubs for the target country (or all if countryId is null)
+        // Fetch all clubs 
+        // We select api_id to distinguish between "local" and "api" clubs
         let sql = `
             SELECT 
-                c.club_id, c.club_name, c.club_logo_url, c.country_id, co.country_name
+                c.club_id, c.club_name, c.club_logo_url, c.country_id, c.api_id, co.country_name
             FROM V2_clubs c
             JOIN V2_countries co ON c.country_id = co.country_id
-            WHERE LENGTH(c.club_name) > 2
+            WHERE LENGTH(c.club_name) > 1
         `;
 
         const params = [];
-        if (countryId) {
+        if (countryId && countryId !== 'all') {
             sql += ` AND c.country_id = ?`;
             params.push(countryId);
         }
 
-        sql += ` ORDER BY co.country_name, c.club_name`;
+        // Ordering by name helps but we separate lists anyway
+        sql += ` ORDER BY c.club_name`;
 
         const allClubs = db.all(sql, params);
+
+        // Split duplicates detection: One MUST have api_id, the other MUST NOT
+        const withApi = allClubs.filter(c => c.api_id);
+        const withoutApi = allClubs.filter(c => !c.api_id);
+
         const duplicates = [];
 
-        // JS-based fuzzy matching
-        for (let i = 0; i < allClubs.length; i++) {
-            for (let j = i + 1; j < allClubs.length; j++) {
-                const c1 = allClubs[i];
-                const c2 = allClubs[j];
+        console.log(`Checking duplicates: ${withApi.length} API clubs vs ${withoutApi.length} Local clubs`);
 
-                // Must be same country - DISABLED per user request for global duplicate finding
-                // if (c1.country_id !== c2.country_id) continue;
+        const stopWords = ["the", "and", "fc", "fk", "sc", "sv", "as", "ac", "cd", "cf", "club", "city", "united", "sporting", "real", "athletic", "atletico", "olympique", "stade", "racing", "union", "inter"];
 
-                const name1 = c1.club_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                const name2 = c2.club_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        // We iterate over the ones WITHOUT api_id and try to find a match in the ones WITH api_id
+        for (const local of withoutApi) {
+            const localName = local.club_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const localWords = localName.split(/[\s-]+/).filter(w => w.length > 2 && !stopWords.includes(w));
+
+            for (const apiClub of withApi) {
+                // Ignore country check as per user request
+                const apiName = apiClub.club_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
                 // 1. Exact match
-                if (name1 === name2) {
-                    duplicates.push(createPair(c1, c2, "Exact Match"));
-                    continue;
+                if (localName === apiName) {
+                    duplicates.push(createPair(local, apiClub, "Exact Match"));
+                    continue; // Best match found
                 }
 
-                // 2. Comma containment
-                if (name1.includes(name2) || name2.includes(name1)) {
-                    duplicates.push(createPair(c1, c2, "Containment"));
+                // 2. Containment (e.g. "Lille OSC" contains "Lille")
+                if (localName.includes(apiName) || apiName.includes(localName)) {
+                    duplicates.push(createPair(local, apiClub, "Containment"));
                     continue;
                 }
 
                 // 3. Word Intersection
-                const words1 = name1.split(/[\s-]+/).filter(w => w.length > 2);
-                const words2 = name2.split(/[\s-]+/).filter(w => w.length > 2);
+                const apiWords = apiName.split(/[\s-]+/).filter(w => w.length > 2 && !stopWords.includes(w));
+                const intersection = localWords.filter(w => apiWords.includes(w));
 
-                const stopWords = ["the", "and", "fc", "fk", "sc", "sv", "as", "ac", "cd", "cf", "club", "city", "united", "sporting", "real", "athletic", "atletico", "olympique", "stade", "racing", "union", "inter"];
-
-                const filteredWords1 = words1.filter(w => !stopWords.includes(w));
-                const filteredWords2 = words2.filter(w => !stopWords.includes(w));
-
-                const intersection = filteredWords1.filter(w => filteredWords2.includes(w));
                 if (intersection.length > 0) {
-                    duplicates.push(createPair(c1, c2, `Word Match: ${intersection.join(', ')}`));
+                    // Match if they share at least one significant word
+                    duplicates.push(createPair(local, apiClub, `Word Match: ${intersection.join(', ')}`));
                 }
             }
         }
@@ -85,9 +88,11 @@ function createPair(c1, c2, reason) {
         id1: c1.club_id,
         name1: c1.club_name,
         logo1: c1.club_logo_url,
+        api_id1: c1.api_id,
         id2: c2.club_id,
         name2: c2.club_name,
         logo2: c2.club_logo_url,
+        api_id2: c2.api_id,
         country_id: c1.country_id,
         country_name: c1.country_name,
         reason
@@ -102,18 +107,254 @@ export const mergeClubs = async (req, res) => {
     }
 
     try {
-        const target = db.get("SELECT * FROM V2_clubs WHERE club_id = ?", [targetId]);
-        const source = db.get("SELECT * FROM V2_clubs WHERE club_id = ?", [sourceId]);
-
-        if (!target || !source) {
+        const success = executeClubMerge(targetId, sourceId);
+        if (!success) {
             return res.status(404).json({ error: 'Club not found' });
         }
+        res.json({ message: 'Clubs merged successfully' });
+    } catch (error) {
+        console.error('Error merging clubs:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
-        // 1. Merge Club Details
+function executeClubMerge(targetId, sourceId) {
+    const target = db.get("SELECT * FROM V2_clubs WHERE club_id = ?", [targetId]);
+    const source = db.get("SELECT * FROM V2_clubs WHERE club_id = ?", [sourceId]);
+
+    if (!target || !source) return false;
+
+    // 1. Merge Club Details
+    const updates = [];
+    const params = [];
+    const fields = ['club_short_name', 'city', 'stadium_name', 'stadium_capacity', 'founded_year', 'club_logo_url'];
+
+    fields.forEach(field => {
+        if (!target[field] && source[field]) {
+            updates.push(`${field} = ?`);
+            params.push(source[field]);
+        }
+    });
+
+    if (updates.length > 0) {
+        params.push(targetId);
+        db.run(`UPDATE V2_clubs SET ${updates.join(', ')} WHERE club_id = ?`, params);
+    }
+
+    // 2. Resolve Conflicts & Update Foreign Keys
+    // Stats
+    db.run(`DELETE FROM V2_player_statistics WHERE club_id = ? AND EXISTS (SELECT 1 FROM V2_player_statistics T2 WHERE T2.club_id = ? AND T2.player_id = V2_player_statistics.player_id AND T2.competition_id = V2_player_statistics.competition_id AND T2.season = V2_player_statistics.season)`, [sourceId, targetId]);
+    db.run("UPDATE V2_player_statistics SET club_id = ? WHERE club_id = ?", [targetId, sourceId]);
+
+    // Trophies
+    db.run(`DELETE FROM V2_club_trophies WHERE club_id = ? AND EXISTS (SELECT 1 FROM V2_club_trophies T2 WHERE T2.club_id = ? AND T2.competition_id = V2_club_trophies.competition_id AND T2.year = V2_club_trophies.year)`, [sourceId, targetId]);
+    db.run("UPDATE V2_club_trophies SET club_id = ? WHERE club_id = ?", [targetId, sourceId]);
+
+    // History
+    db.run(`DELETE FROM V2_player_club_history WHERE club_id = ? AND EXISTS (SELECT 1 FROM V2_player_club_history T2 WHERE T2.club_id = ? AND T2.player_id = V2_player_club_history.player_id AND T2.season_start = V2_player_club_history.season_start)`, [sourceId, targetId]);
+    db.run("UPDATE V2_player_club_history SET club_id = ? WHERE club_id = ?", [targetId, sourceId]);
+
+    // 3. Delete Source
+    db.run("DELETE FROM V2_clubs WHERE club_id = ?", [sourceId]);
+
+    return true;
+}
+
+export const massMergeExactMatches = async (req, res) => {
+    try {
+        console.log("⚡ Starting Mass Merge for Exact Matches...");
+
+        // Fetch all clubs
+        const sql = `
+            SELECT club_id, club_name, country_id, api_id
+            FROM V2_clubs
+            WHERE LENGTH(club_name) > 1
+        `;
+        const allClubs = db.all(sql);
+
+        const withApi = allClubs.filter(c => c.api_id);
+        const withoutApi = allClubs.filter(c => !c.api_id);
+
+        let mergedCount = 0;
+        const processedIds = new Set(); // Prevent double merging involved IDs
+
+        for (const local of withoutApi) {
+            if (processedIds.has(local.club_id)) continue;
+
+            const localName = local.club_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            // 1. Try Exact Match First
+            let bestMatch = withApi.find(api => {
+                const apiName = api.club_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                return localName === apiName;
+            });
+
+            // 2. Fallback: Containment (API name is contained in Local name) 
+            // e.g. "Bologna" (API) is in "Bologna FC" (Local)
+            if (!bestMatch) {
+                bestMatch = withApi.find(api => {
+                    const apiName = api.club_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    // Ensure API name is significant enough to avoid "FC" or "AS" matching everything
+                    if (apiName.length < 4) return false;
+                    return localName.includes(apiName);
+                });
+            }
+
+            if (bestMatch && !processedIds.has(bestMatch.club_id)) {
+                // Perform Merge
+                // Target: API Club (Has ID)
+                // Source: Local Club (No ID)
+                try {
+                    const success = executeClubMerge(bestMatch.club_id, local.club_id); // Target is bestMatch (API)
+                    if (success) {
+                        mergedCount++;
+                        processedIds.add(local.club_id);
+                        // processedIds.add(bestMatch.club_id); 
+                        console.log(`Merged: [${local.club_name}] -> [${bestMatch.club_name}] (API: ${bestMatch.api_id})`);
+                    }
+                } catch (e) {
+                    console.error(`Failed to merge ${local.club_name} -> ${bestMatch.club_name}:`, e.message);
+                }
+            }
+        }
+
+        console.log(`✅ Mass Merge Complete. Merged ${mergedCount} pairs.`);
+        res.json({ message: 'Mass merge complete', mergedCount });
+
+    } catch (error) {
+        console.error('Error in mass merge:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const getDuplicateCompetitions = async (req, res) => {
+    try {
+        // Fetch all competitions
+        const allCompetitions = db.all(`
+            SELECT 
+                c.competition_id, 
+                c.competition_name, 
+                c.competition_short_name,
+                c.country_id,
+                co.country_name,
+                co.flag_url,
+                c.trophy_type_id,
+                tt.type_name as trophy_type
+            FROM V2_competitions c
+            LEFT JOIN V2_countries co ON c.country_id = co.country_id
+            LEFT JOIN V2_trophy_type tt ON c.trophy_type_id = tt.trophy_type_id
+            WHERE LENGTH(c.competition_name) > 2
+            ORDER BY c.competition_name
+        `);
+
+        const duplicates = [];
+
+        // Helper function to normalize competition names
+        const normalizeCompetitionName = (name) => {
+            // 1. Lowercase, remove accents, trim
+            let normalized = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+            // 2. Remove common organizational prefixes/suffixes
+            const prefixesToRemove = [
+                'uefa', 'fifa', 'conmebol', 'concacaf', 'caf', 'afc', 'ofc',
+                'the', 'official'
+            ];
+
+            // Remove prefixes (at start of string)
+            for (const prefix of prefixesToRemove) {
+                const regex = new RegExp(`^${prefix}\\s+`, 'i');
+                normalized = normalized.replace(regex, '');
+            }
+
+            // Remove suffixes (at end of string)
+            for (const suffix of prefixesToRemove) {
+                const regex = new RegExp(`\\s+${suffix}$`, 'i');
+                normalized = normalized.replace(regex, '');
+            }
+
+            // 3. Normalize multiple spaces to single space
+            normalized = normalized.replace(/\s+/g, ' ').trim();
+
+            return normalized;
+        };
+
+        // STRICT matching - only exact duplicates after normalization
+        for (let i = 0; i < allCompetitions.length; i++) {
+            for (let j = i + 1; j < allCompetitions.length; j++) {
+                const c1 = allCompetitions[i];
+                const c2 = allCompetitions[j];
+
+                // For international competitions (World, Europe, etc.), allow matching across these
+                const internationalCountries = ['World', 'Europe', 'Asia', 'Africa', 'North America', 'South America', 'Oceania'];
+                const c1IsInternational = internationalCountries.includes(c1.country_name);
+                const c2IsInternational = internationalCountries.includes(c2.country_name);
+
+                // Country matching rules:
+                // 1. If both are international (World/Europe/etc), allow matching
+                // 2. If both are same country, allow matching
+                // 3. Otherwise, skip
+                const countriesMatch =
+                    (c1IsInternational && c2IsInternational) ||
+                    (c1.country_id === c2.country_id);
+
+                if (!countriesMatch) continue;
+
+                // Normalize names
+                const name1 = normalizeCompetitionName(c1.competition_name);
+                const name2 = normalizeCompetitionName(c2.competition_name);
+
+                // ONLY exact match after normalization
+                if (name1 === name2) {
+                    duplicates.push(createCompetitionPair(c1, c2, "Exact Match"));
+                }
+            }
+        }
+
+        res.json(duplicates);
+    } catch (error) {
+        console.error('Error fetching duplicate competitions:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+function createCompetitionPair(c1, c2, reason) {
+    return {
+        id1: c1.competition_id,
+        name1: c1.competition_name,
+        short_name1: c1.competition_short_name,
+        country1: c1.country_name,
+        flag1: c1.flag_url,
+        trophy_type1: c1.trophy_type,
+        id2: c2.competition_id,
+        name2: c2.competition_name,
+        short_name2: c2.competition_short_name,
+        country2: c2.country_name,
+        flag2: c2.flag_url,
+        trophy_type2: c2.trophy_type,
+        reason
+    };
+}
+
+export const mergeCompetitions = async (req, res) => {
+    const { targetId, sourceId } = req.body;
+
+    if (!targetId || !sourceId) {
+        return res.status(400).json({ error: 'Target ID and Source ID are required' });
+    }
+
+    try {
+        const target = db.get("SELECT * FROM V2_competitions WHERE competition_id = ?", [targetId]);
+        const source = db.get("SELECT * FROM V2_competitions WHERE competition_id = ?", [sourceId]);
+
+        if (!target || !source) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+
+        // 1. Merge Competition Details (fill in missing fields from source)
         const updates = [];
         const params = [];
 
-        const fields = ['club_short_name', 'city', 'stadium_name', 'stadium_capacity', 'founded_year', 'club_logo_url'];
+        const fields = ['competition_short_name', 'trophy_type_id', 'level', 'start_year'];
         fields.forEach(field => {
             if (!target[field] && source[field]) {
                 updates.push(`${field} = ?`);
@@ -123,28 +364,66 @@ export const mergeClubs = async (req, res) => {
 
         if (updates.length > 0) {
             params.push(targetId);
-            db.run(`UPDATE V2_clubs SET ${updates.join(', ')} WHERE club_id = ?`, params);
+            db.run(`UPDATE V2_competitions SET ${updates.join(', ')} WHERE competition_id = ?`, params);
         }
 
-        // 2. Resolve Conflicts & Update Foreign Keys
-        db.run(`DELETE FROM V2_player_statistics WHERE club_id = ? AND EXISTS (SELECT 1 FROM V2_player_statistics T2 WHERE T2.club_id = ? AND T2.player_id = V2_player_statistics.player_id AND T2.competition_id = V2_player_statistics.competition_id AND T2.season = V2_player_statistics.season)`, [sourceId, targetId]);
-        db.run("UPDATE V2_player_statistics SET club_id = ? WHERE club_id = ?", [targetId, sourceId]);
+        // 2. Update Foreign Keys - V2_player_statistics
+        // Delete duplicates first (same player, club, season, but different competition)
+        db.run(`
+            DELETE FROM V2_player_statistics 
+            WHERE competition_id = ? 
+            AND EXISTS (
+                SELECT 1 FROM V2_player_statistics T2 
+                WHERE T2.competition_id = ? 
+                AND T2.player_id = V2_player_statistics.player_id 
+                AND T2.club_id = V2_player_statistics.club_id 
+                AND T2.season = V2_player_statistics.season
+            )
+        `, [sourceId, targetId]);
 
-        db.run(`DELETE FROM V2_club_trophies WHERE club_id = ? AND EXISTS (SELECT 1 FROM V2_club_trophies T2 WHERE T2.club_id = ? AND T2.competition_id = V2_club_trophies.competition_id AND T2.year = V2_club_trophies.year)`, [sourceId, targetId]);
-        db.run("UPDATE V2_club_trophies SET club_id = ? WHERE club_id = ?", [targetId, sourceId]);
+        db.run("UPDATE V2_player_statistics SET competition_id = ? WHERE competition_id = ?", [targetId, sourceId]);
 
-        db.run(`DELETE FROM V2_player_club_history WHERE club_id = ? AND EXISTS (SELECT 1 FROM V2_player_club_history T2 WHERE T2.club_id = ? AND T2.player_id = V2_player_club_history.player_id AND T2.season_start = V2_player_club_history.season_start)`, [sourceId, targetId]);
-        db.run("UPDATE V2_player_club_history SET club_id = ? WHERE club_id = ?", [targetId, sourceId]);
+        // 3. Update Foreign Keys - V2_club_trophies
+        db.run(`
+            DELETE FROM V2_club_trophies 
+            WHERE competition_id = ? 
+            AND EXISTS (
+                SELECT 1 FROM V2_club_trophies T2 
+                WHERE T2.competition_id = ? 
+                AND T2.club_id = V2_club_trophies.club_id 
+                AND T2.year = V2_club_trophies.year
+            )
+        `, [sourceId, targetId]);
 
-        // 3. Delete Source
-        db.run("DELETE FROM V2_clubs WHERE club_id = ?", [sourceId]);
+        db.run("UPDATE V2_club_trophies SET competition_id = ? WHERE competition_id = ?", [targetId, sourceId]);
 
-        res.json({ message: 'Clubs merged successfully' });
+        // 4. Update Foreign Keys - V2_player_trophies
+        db.run(`
+            DELETE FROM V2_player_trophies 
+            WHERE competition_id = ? 
+            AND EXISTS (
+                SELECT 1 FROM V2_player_trophies T2 
+                WHERE T2.competition_id = ? 
+                AND T2.player_id = V2_player_trophies.player_id 
+                AND T2.year = V2_player_trophies.year
+            )
+        `, [sourceId, targetId]);
+
+        db.run("UPDATE V2_player_trophies SET competition_id = ? WHERE competition_id = ?", [targetId, sourceId]);
+
+        // 5. Update V2_unresolved_competitions
+        db.run("UPDATE V2_unresolved_competitions SET resolved_competition_id = ? WHERE resolved_competition_id = ?", [targetId, sourceId]);
+
+        // 6. Delete Source Competition
+        db.run("DELETE FROM V2_competitions WHERE competition_id = ?", [sourceId]);
+
+        res.json({ message: 'Competitions merged successfully' });
     } catch (error) {
-        console.error('Error merging clubs:', error);
+        console.error('Error merging competitions:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 
 export const getRegionLeagues = async (req, res) => {
     const { region } = req.query;
@@ -1160,7 +1439,7 @@ export const fixClubCountry = (req, res) => {
  */
 export const importSinglePlayerDeep = async (req, res) => {
     const { playerId } = req.params;
-    
+
     if (!playerId) {
         return res.status(400).json({ error: 'Player ID is required' });
     }
@@ -1181,7 +1460,7 @@ export const importSinglePlayerDeep = async (req, res) => {
         });
 
         const seasons = seasonsRes.data.response;
-        
+
         if (!seasons || seasons.length === 0) {
             return res.status(404).json({ error: 'No seasons found for this player' });
         }
@@ -1244,7 +1523,7 @@ export const importSinglePlayerDeep = async (req, res) => {
             seasonsImported: importedSeasons,
             seasonsSkipped: skippedSeasons,
             totalSeasons: seasons.length
-        });
+        })
 
     } catch (error) {
         console.error('❌ Error importing player:', error.message);
@@ -1252,5 +1531,138 @@ export const importSinglePlayerDeep = async (req, res) => {
             error: 'Failed to import player',
             details: error.message
         });
+    }
+};
+
+export const cleanupDuplicatePlayerStats = async (req, res) => {
+    try {
+        // Set up SSE (Server-Sent Events) for real-time progress
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        const sendLog = (message, type = 'info') => {
+            res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
+        };
+
+        sendLog('🧹 Starting cleanup of duplicate player statistics...', 'info');
+
+        // Find all duplicate groups
+        sendLog('📊 Scanning database for duplicates...', 'info');
+        const duplicateGroups = db.all(`
+            SELECT 
+                player_id, 
+                club_id, 
+                year, 
+                matches_played, 
+                goals, 
+                assists,
+                COUNT(*) as duplicate_count,
+                GROUP_CONCAT(stat_id || ':' || COALESCE(competition_id, 'NULL')) as stat_ids
+            FROM V2_player_statistics
+            GROUP BY player_id, club_id, year, matches_played, goals, assists
+            HAVING COUNT(*) > 1
+        `);
+
+        sendLog(`✅ Found ${duplicateGroups.length} duplicate groups to process`, 'success');
+
+        let totalMerged = 0;
+        let totalDeleted = 0;
+        const batchSize = 100;
+
+        for (let i = 0; i < duplicateGroups.length; i++) {
+            const group = duplicateGroups[i];
+
+            // Send progress every batch
+            if (i % batchSize === 0) {
+                const progress = Math.round((i / duplicateGroups.length) * 100);
+                sendLog(`⏳ Progress: ${i}/${duplicateGroups.length} groups (${progress}%)`, 'progress');
+            }
+            // Parse the stat_ids to get individual records
+            const statPairs = group.stat_ids.split(',').map(pair => {
+                const [statId, compId] = pair.split(':');
+                return {
+                    stat_id: parseInt(statId),
+                    competition_id: compId === 'NULL' ? null : parseInt(compId)
+                };
+            });
+
+            // Sort by competition_id (NULL treated as Infinity, so it goes last)
+            statPairs.sort((a, b) => {
+                const aComp = a.competition_id === null ? Infinity : a.competition_id;
+                const bComp = b.competition_id === null ? Infinity : b.competition_id;
+                return aComp - bComp;
+            });
+
+            // Keep the one with the lowest competition_id (first in sorted array)
+            const targetStatId = statPairs[0].stat_id;
+            const targetCompId = statPairs[0].competition_id;
+
+            // Get the full record of the target
+            const targetRecord = db.get(
+                'SELECT * FROM V2_player_statistics WHERE stat_id = ?',
+                [targetStatId]
+            );
+
+            // For each duplicate, merge additional data if needed, then delete
+            for (let i = 1; i < statPairs.length; i++) {
+                const duplicateStatId = statPairs[i].stat_id;
+
+                // Get the duplicate record
+                const duplicateRecord = db.get(
+                    'SELECT * FROM V2_player_statistics WHERE stat_id = ?',
+                    [duplicateStatId]
+                );
+
+                // Merge any additional fields that might differ (like yellow_cards, red_cards, etc.)
+                const updates = [];
+                const params = [];
+
+                // Check if duplicate has more complete data for certain fields
+                const fieldsToMerge = ['matches_started', 'minutes_played', 'yellow_cards', 'red_cards', 'clean_sheets', 'penalty_goals', 'penalty_misses'];
+
+                for (const field of fieldsToMerge) {
+                    if (duplicateRecord[field] && (!targetRecord[field] || duplicateRecord[field] > targetRecord[field])) {
+                        updates.push(`${field} = ?`);
+                        params.push(duplicateRecord[field]);
+                    }
+                }
+
+                // Update target if there's additional data
+                if (updates.length > 0) {
+                    params.push(targetStatId);
+                    db.run(
+                        `UPDATE V2_player_statistics SET ${updates.join(', ')} WHERE stat_id = ?`,
+                        params
+                    );
+                }
+
+                // Delete the duplicate
+                db.run('DELETE FROM V2_player_statistics WHERE stat_id = ?', [duplicateStatId]);
+                totalDeleted++;
+            }
+
+            totalMerged++;
+        }
+
+        sendLog('✅ Cleanup complete!', 'success');
+        sendLog(`📊 Summary: ${totalMerged} groups merged, ${totalDeleted} duplicate records deleted`, 'success');
+
+        // Send final result
+        res.write(`data: ${JSON.stringify({
+            type: 'complete',
+            groupsMerged: totalMerged,
+            recordsDeleted: totalDeleted
+        })}\n\n`);
+
+        res.end();
+
+    } catch (error) {
+        console.error('❌ Error cleaning up duplicate player stats:', error);
+        res.write(`data: ${JSON.stringify({
+            type: 'error',
+            message: error.message
+        })}\n\n`);
+        res.end();
     }
 };

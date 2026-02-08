@@ -2,6 +2,9 @@ import express from 'express';
 import { searchPlayers, searchTeams, getQueueStatus, getPlayersByTeam } from '../controllers/searchController.js';
 import { getAllPlayers, getNationalities, getPlayerDetail, getTeamDetail, searchPlayers as searchPlayersV2, getTeamSeasonStats, deletePlayer } from '../controllers/playerController.js';
 import { getPalmaresHierarchy, getTrophyHistory, updateTrophyWinner } from '../controllers/palmaresController.js';
+import { getTeamsByLeague, getTeamById, getTeamPlayers, searchTeams as searchTeamsV2, getCountriesForTeams, getLeaguesMetadata, getTeamsByCompetition } from '../controllers/teamController.js';
+import { searchPlayers as searchPlayersData, searchClubs as searchClubsData, getAllCountries, getAllClubs } from '../controllers/footballDataController.js';
+import { getClubDetails, getClubPlayers, getPlayerClubDetails } from '../controllers/clubController.js';
 
 const router = express.Router();
 
@@ -20,10 +23,28 @@ router.delete('/player/:id', deletePlayer);
 // Team data routes (V2 schema only)
 router.get('/team/:id', getTeamDetail);
 router.get('/team/:id/season/:season', getTeamSeasonStats);
+router.get('/teams/by-league', getTeamsByLeague);
+router.get('/teams/leagues-metadata', getLeaguesMetadata);
+router.get('/teams/competition/:competitionId', getTeamsByCompetition);
+router.get('/teams/:id', getTeamById);
+router.get('/teams/:id/players', getTeamPlayers);
+router.get('/teams/search', searchTeamsV2);
+router.get('/teams/countries', getCountriesForTeams);
 
 // Palmares routes
 router.get('/palmares/hierarchy', getPalmaresHierarchy);
 router.get('/palmares/history/:trophyId', getTrophyHistory);
 router.post('/palmares/winner/:trophyId/:seasonId', updateTrophyWinner);
+
+// Football Data routes
+router.get('/football-data/players/search', searchPlayersData);
+router.get('/football-data/clubs/search', searchClubsData);
+router.get('/football-data/countries', getAllCountries);
+router.get('/football-data/clubs', getAllClubs);
+
+// Club Detail routes
+router.get('/clubs/:clubId', getClubDetails);
+router.get('/clubs/:clubId/players', getClubPlayers);
+router.get('/clubs/:clubId/players/:playerId/details', getPlayerClubDetails);
 
 export default router;

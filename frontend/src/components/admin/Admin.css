@@ -22,7 +22,22 @@
 .admin-nav {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+}
+
+.admin-nav-section {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.admin-nav-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.25rem;
 }
 
 .admin-nav-item {
@@ -31,6 +46,7 @@
     text-decoration: none;
     border-radius: 6px;
     transition: all 0.2s;
+    display: block;
 }
 
 .admin-nav-item:hover {
@@ -463,4 +479,31 @@
     padding: 3rem;
     color: #94a3b8;
     font-style: italic;
+}
+/* Team Mapping Badges */
+.club-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.api-badge {
+    display: inline-block;
+    background-color: #dcfce7;
+    color: #166534;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.local-badge {
+    display: inline-block;
+    background-color: #f1f5f9;
+    color: #64748b;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    width: fit-content;
 }

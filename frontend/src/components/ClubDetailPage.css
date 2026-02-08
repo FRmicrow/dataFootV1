@@ -1,0 +1,387 @@
+.club-detail-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.back-link {
+    display: inline-block;
+    color: #3b82f6;
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: #2563eb;
+}
+
+.club-detail-loading {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+/* Club Header */
+.club-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.club-header-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+}
+
+.club-header-info {
+    flex: 1;
+}
+
+.club-header-info h1 {
+    font-size: 2rem;
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+
+.club-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: #64748b;
+}
+
+.country-flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+.club-stadium,
+.club-founded {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.club-stadium strong,
+.club-founded strong {
+    color: #475569;
+}
+
+/* Tabs */
+.club-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.club-tab {
+    padding: 0.75rem 2rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -2px;
+}
+
+.club-tab:hover {
+    color: #3b82f6;
+}
+
+.club-tab.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+/* Tab Content */
+.club-tab-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    min-height: 400px;
+}
+
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+/* Players Table */
+.players-table-container {
+    overflow-x: auto;
+    margin-bottom: 2rem;
+}
+
+.players-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.players-table thead {
+    background: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.players-table th {
+    padding: 1rem 0.75rem;
+    text-align: left;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.players-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.players-table th.sortable:hover {
+    background: #f1f5f9;
+}
+
+.sort-icon {
+    margin-left: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+.expand-col {
+    width: 40px;
+}
+
+.photo-col {
+    width: 60px;
+}
+
+.stat-col {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.players-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.2s;
+}
+
+.player-row:hover {
+    background: #f8fafc;
+}
+
+.player-row.expanded {
+    background: #eff6ff;
+}
+
+.players-table td {
+    padding: 1rem 0.75rem;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    transition: color 0.2s;
+}
+
+.expand-btn:hover {
+    color: #3b82f6;
+}
+
+.player-photo-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f1f5f9;
+}
+
+.player-name-link {
+    color: #1e293b;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.player-name-link:hover {
+    color: #3b82f6;
+}
+
+/* Detail Row */
+.detail-row {
+    background: #f8fafc;
+}
+
+.detail-container {
+    padding: 1rem 2rem;
+}
+
+.loading-details {
+    text-align: center;
+    padding: 1rem;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.no-details {
+    text-align: center;
+    padding: 1rem;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.detail-table thead {
+    background: #e2e8f0;
+}
+
+.detail-table th {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    color: #475569;
+}
+
+.detail-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-table tbody tr:hover {
+    background: white;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.pagination-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #475569;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.pagination-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+    color: #94a3b8;
+    padding: 0 0.5rem;
+}
+
+/* Placeholder Tabs */
+.placeholder-tab {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.placeholder-tab h2 {
+    font-size: 1.5rem;
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+
+.placeholder-tab p {
+    color: #94a3b8;
+    font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .club-detail-page {
+        padding: 1rem;
+    }
+
+    .club-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .club-header-logo {
+        width: 80px;
+        height: 80px;
+    }
+
+    .club-header-info h1 {
+        font-size: 1.5rem;
+    }
+
+    .club-meta {
+        justify-content: center;
+    }
+
+    .club-tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .club-tab-content {
+        padding: 1rem;
+    }
+
+    .players-table-container {
+        overflow-x: scroll;
+    }
+
+    .players-table {
+        min-width: 800px;
+    }
+
+    .detail-container {
+        padding: 0.5rem;
+    }
+}

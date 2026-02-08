@@ -11,7 +11,7 @@ import db from '../config/database.js';
  * Step 1: Try to find competition in existing V2_competitions table
  * Matches by API ID first, then by name
  */
-const findExistingCompetition = (league) => {
+const findExistingCompetition = (league, countryId) => {
     if (!league || !league.name) return null;
 
     let compRow;
@@ -49,6 +49,38 @@ const findExistingCompetition = (league) => {
     if (compRow) {
         console.log(`✓ Found competition by fuzzy name: ${compRow.competition_name} (ID: ${compRow.competition_id})`);
         return compRow.competition_id;
+    }
+
+    // NEW: Try country-filtered fuzzy match (prevents matching wrong country's competitions)
+    if (countryId) {
+        compRow = db.get(`
+            SELECT competition_id, competition_name, country_id
+            FROM V2_competitions 
+            WHERE country_id = ? 
+            AND LOWER(TRIM(competition_name)) LIKE ?
+            ORDER BY level ASC
+            LIMIT 1
+        `, [countryId, `%${fuzzyName}%`]);
+
+        if (compRow) {
+            console.log(`✓ Found competition by country-filtered match: ${compRow.competition_name} (ID: ${compRow.competition_id})`);
+            return compRow.competition_id;
+        }
+
+        // Try matching by short name
+        compRow = db.get(`
+            SELECT competition_id, competition_name, competition_short_name
+            FROM V2_competitions 
+            WHERE country_id = ? 
+            AND (LOWER(TRIM(competition_short_name)) LIKE ? OR LOWER(TRIM(competition_name)) LIKE ?)
+            ORDER BY level ASC
+            LIMIT 1
+        `, [countryId, `%${fuzzyName}%`, `%${fuzzyName}%`]);
+
+        if (compRow) {
+            console.log(`✓ Found competition by country + short name: ${compRow.competition_name} (ID: ${compRow.competition_id})`);
+            return compRow.competition_id;
+        }
     }
 
     return null;
@@ -150,10 +182,10 @@ const getDefaultDomesticLeague = (countryId) => {
  * Tries multiple strategies in order of reliability
  */
 export const detectCompetition = (league, clubId, season, matchesPlayed, countryId) => {
-    console.log(`\n🔎 Detecting competition for: ${league?.name || 'Unknown'} (Club: ${clubId}, Season: ${season})`);
+    console.log(`\n🔎 Detecting competition for: ${league?.name || 'Unknown'} (Club: ${clubId}, Season: ${season}, Country: ${countryId})`);
 
-    // Strategy 1: Find in existing competitions table
-    let competitionId = findExistingCompetition(league);
+    // Strategy 1: Find in existing competitions table (with country filtering)
+    let competitionId = findExistingCompetition(league, countryId);
     if (competitionId) return competitionId;
 
     // Strategy 2: Infer from similar players (same club, season, similar matches)

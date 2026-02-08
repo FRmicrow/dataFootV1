@@ -3,8 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Link, NavLink } from 'react-rou
 import ImportPage from './components/ImportPage';
 import DatabasePage from './components/DatabasePage';
 import PlayerDetail from './components/PlayerDetail';
+import TeamDetail from './components/TeamDetail';
 import PalmaresPage from './components/PalmaresPage';
 import AdminLayout from './components/admin/AdminLayout';
+import FootballDataPage from './components/FootballDataPage';
+import ClubDetailPage from './components/ClubDetailPage';
 import './App.css';
 
 function App() {
@@ -17,8 +20,8 @@ function App() {
                         <NavLink to="/import" className="nav-link">
                             Import Players
                         </NavLink>
-                        <NavLink to="/database" className="nav-link">
-                            Database
+                        <NavLink to="/football-data" className="nav-link">
+                            Football Data
                         </NavLink>
                         <NavLink to="/palmares" className="nav-link">
                             Palmares
@@ -30,11 +33,14 @@ function App() {
                 </nav>
 
                 <Routes>
-                    <Route path="/" element={<DatabasePage />} />
+                    <Route path="/" element={<FootballDataPage />} />
                     <Route path="/import" element={<ImportPage />} />
                     <Route path="/database" element={<DatabasePage />} />
+                    <Route path="/football-data" element={<FootballDataPage />} />
                     <Route path="/palmares" element={<PalmaresPage />} />
                     <Route path="/player/:id" element={<PlayerDetail />} />
+                    <Route path="/team/:id" element={<TeamDetail />} />
+                    <Route path="/club/:id" element={<ClubDetailPage />} />
                     <Route path="/admin/*" element={<AdminLayout />} />
                 </Routes>
             </div>

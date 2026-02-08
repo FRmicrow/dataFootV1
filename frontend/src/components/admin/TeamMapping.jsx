@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const TeamMapping = () => {
@@ -11,6 +11,13 @@ const TeamMapping = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentPair, setCurrentPair] = useState(null);
     const [targetId, setTargetId] = useState(null);
+    const [logs, setLogs] = useState([]);
+    const logsEndRef = useRef(null);
+    const [showBatchConfirm, setShowBatchConfirm] = useState(false);
+
+    useEffect(() => {
+        logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [logs]);
 
     useEffect(() => {
         fetchCountries();
@@ -82,6 +89,67 @@ const TeamMapping = () => {
         }
     };
 
+    const handleDuplicateMerge = () => {
+        setShowBatchConfirm(true);
+    };
+
+    const executeBatchMerge = async () => {
+        setShowBatchConfirm(false);
+        setLoading(true);
+        setLogs([]);
+        try {
+            setLogs(prev => [...prev, { message: "Starting batch merge (limit 100)...", type: "info" }]);
+            const response = await axios.post('/api/admin/cleanup-merge-duplicates', { limit: 100 });
+            const data = response.data;
+            if (data.success) {
+                if (data.groupsFound === 0) {
+                    setLogs(prev => [...prev, { message: "✅ No strict duplicates found.", type: "success" }]);
+                } else {
+                    setLogs(prev => [...prev, { message: `✅ Batch Complete! Found: ${data.groupsFound}, Merged: ${data.groupsMerged}, Deleted: ${data.clubsDeleted}`, type: "success" }]);
+
+                    if (data.details) {
+                        data.details.forEach(d => {
+                            setLogs(prev => [...prev, {
+                                message: `   🔗 ${d.name}: Kept #${d.targetId} <- Merged [${d.sourceIds.join(', ')}] (${d.statsMerged} stats moved)`,
+                                type: "detail"
+                            }]);
+                        });
+                    }
+
+                    setLogs(prev => [...prev, { message: "👉 Run again to process more.", type: "info" }]);
+                }
+                if (selectedCountry) fetchDuplicates(selectedCountry);
+            } else {
+                setLogs(prev => [...prev, { message: `❌ Error: ${data.error}`, type: "error" }]);
+            }
+        } catch (error) {
+            console.error('Merge duplicates failed:', error);
+            setLogs(prev => [...prev, { message: `❌ Failed: ${error.message}`, type: "error" }]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleMassMerge = async () => {
+        if (!window.confirm("Are you sure? This will automatically merge ALL clubs with EXACT NAME MATCHES where one has an API ID and the other doesn't. This cannot be undone.")) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await axios.post('/api/admin/mass-merge-exact');
+            alert(`Mass Merge Complete! Merged ${response.data.mergedCount} pairs.`);
+            if (selectedCountry) {
+                fetchDuplicates(selectedCountry);
+            }
+        } catch (error) {
+            console.error('Mass merge failed:', error);
+            alert('Mass merge failed. Check console.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="team-mapping">
             <h2>Team Mapping & Deduplication</h2>
@@ -102,6 +170,24 @@ const TeamMapping = () => {
                         ))}
                     </select>
                 </div>
+
+                <button
+                    className="btn-primary"
+                    onClick={handleMassMerge}
+                    disabled={loading}
+                    style={{ height: 'fit-content', alignSelf: 'center', marginLeft: 'auto', backgroundColor: '#7c3aed' }}
+                >
+                    ⚡ Mass Merge Exact Matches
+                </button>
+
+                <button
+                    className="btn-primary"
+                    onClick={handleDuplicateMerge}
+                    disabled={loading}
+                    style={{ height: 'fit-content', alignSelf: 'center', marginLeft: '1rem', backgroundColor: '#f59e0b' }}
+                >
+                    🔄 Merge Strict Duplicates (Same API+Name)
+                </button>
             </div>
 
             <div className="duplicates-list">
@@ -117,12 +203,26 @@ const TeamMapping = () => {
                             <div className="club-item">
                                 <span className="club-id">#{pair.id1}</span>
                                 {pair.logo1 && <img src={pair.logo1} alt="" className="club-logo" />}
-                                <span className="club-name">{pair.name1}</span>
+                                <div className="club-details">
+                                    <span className="club-name">{pair.name1}</span>
+                                    {pair.api_id1 ? (
+                                        <span className="api-badge">API: {pair.api_id1}</span>
+                                    ) : (
+                                        <span className="local-badge">Local Only</span>
+                                    )}
+                                </div>
                             </div>
                             <div className="club-item">
                                 <span className="club-id">#{pair.id2}</span>
                                 {pair.logo2 && <img src={pair.logo2} alt="" className="club-logo" />}
-                                <span className="club-name">{pair.name2}</span>
+                                <div className="club-details">
+                                    <span className="club-name">{pair.name2}</span>
+                                    {pair.api_id2 ? (
+                                        <span className="api-badge">API: {pair.api_id2}</span>
+                                    ) : (
+                                        <span className="local-badge">Local Only</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="merge-actions">
@@ -180,6 +280,38 @@ const TeamMapping = () => {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {showBatchConfirm && (
+                <div className="admin-modal-overlay">
+                    <div className="admin-modal">
+                        <div className="admin-modal-header">
+                            <h3>⚠️ Confirm Batch Merge</h3>
+                        </div>
+                        <div className="admin-modal-body">
+                            <p>This will merge up to <strong>100 groups</strong> of strict duplicates (Same Name + API ID).</p>
+                            <p>This action <strong>cannot be undone</strong>.</p>
+                        </div>
+                        <div className="admin-modal-footer">
+                            <button className="btn-secondary" onClick={() => setShowBatchConfirm(false)}>Cancel</button>
+                            <button className="btn-primary" onClick={executeBatchMerge} style={{ backgroundColor: '#f59e0b' }}>
+                                Yes, Merge Duplicates
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Logs Area */}
+            {logs.length > 0 && (
+                <div className="logs-container" style={{ marginTop: '1rem', height: '300px', overflowY: 'auto', background: '#1e293b', color: '#e2e8f0', padding: '1rem', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                    {logs.map((log, i) => (
+                        <div key={i} style={{ marginBottom: '4px', color: log.type === 'error' ? '#f87171' : log.type === 'success' ? '#4ade80' : log.type === 'detail' ? '#94a3b8' : 'inherit' }}>
+                            {log.message}
+                        </div>
+                    ))}
+                    <div ref={logsEndRef} />
                 </div>
             )}
         </div>
