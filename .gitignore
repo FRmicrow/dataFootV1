@@ -1,9 +1,8 @@
-
 node_modules/
 .DS_Store
-backend/database.sqlite
-backend/database.sqlite-journal
-backend/backups/
+*.sqlite
+*.sqlite*
 backend/*.sql
-backend/*.sqlite*
 backend/*.db
+backend/backups/
+backend/database.sqlite-journal
