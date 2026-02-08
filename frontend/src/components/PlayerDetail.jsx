@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import './ImportModal.css';
 
 const PlayerDetail = () => {
     const { id } = useParams();
@@ -13,17 +14,35 @@ const PlayerDetail = () => {
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('leagues');
 
-    useEffect(() => {
-        const fetchPlayer = async () => {
-            try {
-                setLoading(true);
-                const data = await api.getPlayer(id);
-                setPlayer(data.player);
-                setCategorizedStats(data.stats);
-                setTrophies(data.trophies || []);
-                setAwards(data.awards || []);
+    // Sync State
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncLogs, setSyncLogs] = useState([]);
+    const [showSyncModal, setShowSyncModal] = useState(false);
+    const logsEndRef = useRef(null);
 
-                // Process Club Summaries from the restored grouped 'clubs' array
+    const scrollToBottom = () => {
+        logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        if (showSyncModal) {
+            scrollToBottom();
+        }
+    }, [syncLogs, showSyncModal]);
+
+    const fetchPlayer = async () => {
+        try {
+            setLoading(true);
+            const data = await api.getPlayer(id);
+            setPlayer(data.player);
+            setCategorizedStats(data.stats);
+            setTrophies(data.trophies || []);
+            setAwards(data.awards || []);
+
+            // Process Club Summaries
+            if (data.stats && data.stats.leagues) {
+                // We use categorizedStats.leagues to find clubs
+                // but actually the raw 'clubs' array from backend is better for summaries
                 if (data.clubs) {
                     const summaries = data.clubs.reduce((acc, clubSeason) => {
                         const clubId = clubSeason.club_id;
@@ -67,19 +86,90 @@ const PlayerDetail = () => {
 
                     setClubSummaries(sortedSummaries);
                 }
-
-                setLoading(false);
-            } catch (err) {
-                console.error('Failed to fetch player details', err);
-                setError('Failed to load player data');
-                setLoading(false);
             }
-        };
 
+            setLoading(false);
+        } catch (err) {
+            console.error('Failed to fetch player details', err);
+            setError('Failed to load player data');
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         if (id) {
             fetchPlayer();
         }
     }, [id]);
+
+    const handleSync = async () => {
+        if (!categorizedStats || !categorizedStats.leagues || categorizedStats.leagues.length === 0) {
+            alert("No league data found to identify sync parameters.");
+            return;
+        }
+
+        // 1. Identify most recent League ID and Season
+        // Since categorizedStats.leagues is sorted BY YEAR DESC from backend
+        const latestStat = categorizedStats.leagues[0];
+        const leagueId = latestStat.competition_api_id;
+        const season = latestStat.season;
+
+        if (!leagueId) {
+            alert("Latest competition does not have an API ID associated. Cannot sync.");
+            return;
+        }
+
+        setIsSyncing(true);
+        setShowSyncModal(true);
+        setSyncLogs([{ message: `🔄 Initializing Sync for League ${latestStat.competition_name} (${latestStat.season})...`, type: 'info' }]);
+
+        try {
+            // We use fetch directly for SSE handling with POST if possible, 
+            // OR use EventSource if the backend supports it.
+            // Our backend `importLeagueData` expects a POST and then starts SSE.
+
+            const response = await fetch('http://localhost:3001/api/admin/import-league-optimized', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leagueId, season })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                lines.forEach(line => {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            setSyncLogs(prev => [...prev, data]);
+                            if (data.type === 'complete') {
+                                setIsSyncing(false);
+                                // Refresh player data after a delay
+                                setTimeout(() => {
+                                    fetchPlayer();
+                                }, 2000);
+                            }
+                            if (data.type === 'error') {
+                                setIsSyncing(false);
+                            }
+                        } catch (e) {
+                            console.error("Error parsing SSE line", e);
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            setSyncLogs(prev => [...prev, { message: `❌ Sync failed: ${err.message}`, type: 'error' }]);
+            setIsSyncing(false);
+        }
+    };
 
     const renderStatTable = (statsList) => {
         if (!statsList || statsList.length === 0) {
@@ -132,7 +222,7 @@ const PlayerDetail = () => {
         );
     };
 
-    if (loading) return (
+    if (loading && !showSyncModal) return (
         <div className="container" style={{ display: 'flex', justifyContent: 'center', paddingTop: '4rem' }}>
             <div className="loading">Loading player details...</div>
         </div>
@@ -154,10 +244,26 @@ const PlayerDetail = () => {
 
     return (
         <div className="container" style={{ paddingBottom: '4rem' }}>
-            <div style={{ margin: '1rem 0' }}>
+            <div style={{ margin: '1rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Link to="/database" className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}>
                     ← Back to Database
                 </Link>
+                <button
+                    className={`btn-sync ${isSyncing ? 'syncing' : ''}`}
+                    onClick={handleSync}
+                    disabled={isSyncing}
+                >
+                    {isSyncing ? (
+                        <>
+                            <div className="sync-spinner"></div>
+                            Syncing Data...
+                        </>
+                    ) : (
+                        <>
+                            🔄 Sync Player Data
+                        </>
+                    )}
+                </button>
             </div>
 
             <div className="card" style={{ padding: '2rem' }}>
@@ -298,6 +404,45 @@ const PlayerDetail = () => {
                     );
                 })()}
             </div>
+
+            {/* Sync Progress Modal */}
+            {showSyncModal && (
+                <div className="import-modal-overlay">
+                    <div className="import-modal-content">
+                        <div className="import-modal-header">
+                            <h3>
+                                {isSyncing ? <div className="sync-spinner"></div> : '✅'}
+                                League Data Sync Progress
+                            </h3>
+                            {!isSyncing && (
+                                <button className="btn-close-import" onClick={() => setShowSyncModal(false)}>×</button>
+                            )}
+                        </div>
+                        <div className="import-modal-body">
+                            {syncLogs.map((log, i) => (
+                                <div key={i} className={`log-entry log-${log.type}`}>
+                                    {log.type === 'info' && '🔹 '}
+                                    {log.type === 'success' && '✅ '}
+                                    {log.type === 'warning' && '⚠️ '}
+                                    {log.type === 'error' && '❌ '}
+                                    {log.type === 'complete' && '🏁 '}
+                                    {log.message}
+                                </div>
+                            ))}
+                            <div ref={logsEndRef} />
+                        </div>
+                        <div className="import-modal-footer">
+                            <button
+                                className="btn-close-import"
+                                onClick={() => setShowSyncModal(false)}
+                                disabled={isSyncing}
+                            >
+                                {isSyncing ? 'Syncing...' : 'Close & Refresh'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
