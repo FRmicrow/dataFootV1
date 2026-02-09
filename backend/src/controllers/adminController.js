@@ -769,10 +769,13 @@ export const importLeaguePlayers = async (req, res) => {
                     // Skip UPDATE, proceed to use playerId
                 } else {
                     // Try fallback by name + dob
-                    // Handle missing DOB gracefully
                     const dob = p.birth.date || '1900-01-01';
 
-                    let fallbackRow = db.get("SELECT player_id FROM V2_players WHERE first_name = ? AND last_name = ? AND date_of_birth = ?", [p.firstname, p.lastname, dob]);
+                    // Handle missing name parts
+                    const firstName = p.firstname || p.name?.split(' ')[0] || "Unknown";
+                    const lastName = p.lastname || p.name?.split(' ').slice(1).join(' ') || p.name || "Unknown";
+
+                    let fallbackRow = db.get("SELECT player_id FROM V2_players WHERE first_name = ? AND last_name = ? AND date_of_birth = ?", [firstName, lastName, dob]);
 
                     if (fallbackRow) {
                         // Found by fallback, update api_id
@@ -783,7 +786,7 @@ export const importLeaguePlayers = async (req, res) => {
                         db.run(`INSERT INTO V2_players (
                             first_name, last_name, date_of_birth, nationality_id, photo_url, height_cm, weight_kg, api_id, position, birth_country, birth_place
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                            [p.firstname, p.lastname, dob, nationalityId, p.photo, parseInt(p.height) || null, parseInt(p.weight) || null, p.id, stats[0]?.games?.position || null, p.birth.country, p.birth.place]
+                            [firstName, lastName, dob, nationalityId, p.photo, parseInt(p.height) || null, parseInt(p.weight) || null, p.id, stats[0]?.games?.position || null, p.birth.country, p.birth.place]
                         );
                         // Fetch ID
                         playerRow = db.get("SELECT player_id FROM V2_players WHERE api_id = ?", [p.id]);
@@ -1009,8 +1012,13 @@ const upsertPlayerRecord = (p, stats) => {
     let playerRow = db.get("SELECT player_id FROM V2_players WHERE api_id = ?", [p.id]);
 
     if (!playerRow) {
-        const dob = p.birth.date || '1900-01-01';
-        let fallbackRow = db.get("SELECT player_id FROM V2_players WHERE first_name = ? AND last_name = ? AND date_of_birth = ?", [p.firstname, p.lastname, dob]);
+        const dob = p.birth?.date || '1900-01-01';
+
+        // Handle name parts
+        const firstName = p.firstname || p.name?.split(' ')[0] || "Unknown";
+        const lastName = p.lastname || p.name?.split(' ').slice(1).join(' ') || p.name || "Unknown";
+
+        let fallbackRow = db.get("SELECT player_id FROM V2_players WHERE first_name = ? AND last_name = ? AND date_of_birth = ?", [firstName, lastName, dob]);
 
         if (fallbackRow) {
             db.run("UPDATE V2_players SET api_id = ? WHERE player_id = ?", [p.id, fallbackRow.player_id]);
@@ -1019,7 +1027,7 @@ const upsertPlayerRecord = (p, stats) => {
             db.run(`INSERT INTO V2_players (
                 first_name, last_name, date_of_birth, nationality_id, photo_url, height_cm, weight_kg, api_id, position, birth_country, birth_place
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [p.firstname, p.lastname, dob, nationalityId, p.photo, parseInt(p.height) || null, parseInt(p.weight) || null, p.id, stats[0]?.games?.position || null, p.birth.country, p.birth.place]
+                [firstName, lastName, dob, nationalityId, p.photo, parseInt(p.height) || null, parseInt(p.weight) || null, p.id, stats && stats[0]?.games?.position || null, p.birth?.country, p.birth?.place]
             );
             playerRow = db.get("SELECT player_id FROM V2_players WHERE api_id = ?", [p.id]);
         }

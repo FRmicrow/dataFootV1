@@ -124,14 +124,11 @@ const PlayerDetail = () => {
         setSyncLogs([{ message: `🔄 Initializing Sync for League ${latestStat.competition_name} (${latestStat.season})...`, type: 'info' }]);
 
         try {
-            // We use fetch directly for SSE handling with POST if possible, 
-            // OR use EventSource if the backend supports it.
-            // Our backend `importLeagueData` expects a POST and then starts SSE.
-
-            const response = await fetch('http://localhost:3001/api/admin/import-league-optimized', {
+            // Call the dedicated player sync endpoint which performs career discovery
+            const response = await fetch(`http://localhost:3001/api/admin/sync-player/${id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ leagueId, season })
+                body: JSON.stringify({ deepSync: true })
             });
 
             const reader = response.body.getReader();
