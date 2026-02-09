@@ -15,10 +15,13 @@ router.get('/leagues/:id/seasons', getLeagueSeasonsStatus);
  * @body { leagueId, startYear, endYear }
  */
 import { importLeagueV3, getCountriesV3, getLeaguesV3, importBatchV3, getStandingsV3, getFixturesV3 } from '../controllers/v3/importControllerV3.js';
-import { getSeasonOverview, getTeamSquad } from '../controllers/v3/seasonController.js';
+import { getSeasonOverview, getTeamSquad, getSeasonPlayers } from '../controllers/v3/seasonController.js';
 import { getPlayerProfileV3 } from '../controllers/v3/playerController.js';
+import { getV3Stats, getImportedLeagues } from '../controllers/v3/dashboardController.js';
 
-router.post('/leagues/seasons/init', initializeSeasons); // Updated route slightly
+router.get('/stats', getV3Stats);
+router.get('/leagues/imported', getImportedLeagues);
+router.post('/leagues/seasons/init', initializeSeasons);
 
 /**
  * @route GET /api/v3/countries
@@ -37,6 +40,7 @@ router.get('/leagues', getLeaguesV3);
  * @desc Get aggregated season overview (standings, leaders)
  */
 router.get('/league/:id/season/:year', getSeasonOverview);
+router.get('/league/:id/season/:year/players', getSeasonPlayers);
 
 /**
  * @route GET /api/v3/league/:leagueId/season/:year/team/:teamId/squad

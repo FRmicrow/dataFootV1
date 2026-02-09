@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS V3_Teams (
     country TEXT,
     founded INTEGER,
     national BOOLEAN DEFAULT 0,
+    is_national_team BOOLEAN DEFAULT 0,
     logo_url TEXT,
     venue_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

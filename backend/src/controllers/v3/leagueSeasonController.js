@@ -5,7 +5,7 @@ import dbV3 from '../../config/database_v3.js';
  */
 export const getLeagueSeasonsStatus = (req, res) => {
     try {
-        const { leagueId } = req.params;
+        const { id: leagueId } = req.params;
 
         // Verify League Exists
         const league = dbV3.get('SELECT * FROM V3_Leagues WHERE league_id = ?', [leagueId]);

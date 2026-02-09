@@ -90,7 +90,25 @@ export const getSeasonOverview = async (req, res) => {
             LIMIT 5
         `, [leagueId, season]);
 
-        // 5. Available Years for this League
+        // 5. Top Rated Players
+        const topRated = dbV3.all(`
+            SELECT 
+                p.player_id, 
+                p.name as player_name, 
+                p.photo_url, 
+                t.name as team_name, 
+                t.logo_url as team_logo,
+                ps.games_rating,
+                ps.games_appearences as appearances
+            FROM V3_Player_Stats ps
+            JOIN V3_Players p ON ps.player_id = p.player_id
+            JOIN V3_Teams t ON ps.team_id = t.team_id
+            WHERE ps.league_id = ? AND ps.season_year = ? AND ps.games_rating IS NOT NULL AND ps.games_rating != ''
+            ORDER BY CAST(ps.games_rating AS FLOAT) DESC
+            LIMIT 5
+        `, [leagueId, season]);
+
+        // 6. Available Years for this League
         const availableYears = dbV3.all(`
             SELECT season_year 
             FROM V3_League_Seasons 
@@ -103,12 +121,63 @@ export const getSeasonOverview = async (req, res) => {
             standings: standings,
             topScorers: topScorers,
             topAssists: topAssists,
+            topRated: topRated,
             availableYears: availableYears
         });
 
     } catch (error) {
         console.error("Error fetching V3 Season Overview:", error);
         res.status(500).json({ error: "Failed to fetch season overview" });
+    }
+};
+
+// Helper to clean SQL parameters (prevents "tried to bind a value of an unknown type (undefined)")
+const cleanParams = (params) => params.map(p => p === undefined ? null : p);
+
+/**
+ * Get all players for a season with optional filters
+ * GET /api/v3/league/:id/season/:year/players?teamId=X&position=Y
+ */
+export const getSeasonPlayers = async (req, res) => {
+    try {
+        const { id: leagueId, year } = req.params;
+        const { teamId, position } = req.query;
+
+        console.log(`🔍 getSeasonPlayers: leagueId=${leagueId}, year=${year}, teamId=${teamId}, position=${position}`);
+
+
+        let sql = `
+            SELECT 
+                p.player_id, p.name, p.photo_url, ps.games_position as position,
+                ps.games_appearences as appearances, ps.games_lineups as lineups,
+                ps.games_minutes as minutes, ps.goals_total as goals, ps.goals_assists as assists,
+                ps.cards_yellow as yellow, ps.cards_red as red, ps.games_rating as rating,
+                t.name as team_name, t.logo_url as team_logo
+            FROM V3_Player_Stats ps
+            JOIN V3_Players p ON ps.player_id = p.player_id
+            JOIN V3_Teams t ON ps.team_id = t.team_id
+            WHERE ps.league_id = ? AND ps.season_year = ?
+        `;
+        const params = [leagueId, year];
+
+        if (teamId) {
+            sql += ` AND ps.team_id = ?`;
+            params.push(teamId);
+        }
+
+        if (position && position !== 'ALL') {
+            sql += ` AND ps.games_position = ?`;
+            params.push(position);
+        }
+
+        sql += ` ORDER BY ps.games_appearences DESC, ps.goals_total DESC`;
+
+        console.log(`📡 Executing SQL for season players...`);
+        const players = dbV3.all(sql, cleanParams(params));
+        res.json(players);
+    } catch (error) {
+        console.error("❌ Error fetching season players:", error);
+        res.status(500).json({ error: "Failed to fetch players", details: error.message });
     }
 };
 
@@ -124,7 +193,10 @@ export const getTeamSquad = async (req, res) => {
                 p.player_id, p.name, p.firstname, p.lastname, p.age, p.photo_url,
                 ps.games_position as position,
                 ps.games_appearences as appearances,
-                ps.goals_total as goals
+                ps.games_minutes as minutes,
+                ps.goals_total as goals,
+                ps.goals_assists as assists,
+                ps.games_rating as rating
             FROM V3_Player_Stats ps
             JOIN V3_Players p ON ps.player_id = p.player_id
             WHERE ps.league_id = ? AND ps.season_year = ? AND ps.team_id = ?
@@ -135,7 +207,7 @@ export const getTeamSquad = async (req, res) => {
                     WHEN 'Midfielder' THEN 3 
                     WHEN 'Attacker' THEN 4 
                     ELSE 5 
-                END ASC, p.name ASC
+                END ASC, ps.games_appearences DESC
         `, [leagueId, year, teamId]);
         res.json(squad);
     } catch (error) {
