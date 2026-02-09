@@ -56,4 +56,15 @@ router.get('/competitions/:id', competitionController.getCompetitionBasicInfo);
 router.get('/competitions/:id/seasons', competitionController.getCompetitionSeasons);
 router.get('/competitions/:id/season/:year', competitionController.getCompetitionSeasonDetails);
 
+import { importLeagueV3, getCountriesV3, getLeaguesV3, importBatchV3 } from '../controllers/v3/importControllerV3.js';
+import { getV3Stats, getImportedLeagues } from '../controllers/v3/dashboardController.js';
+
+// V3 Routes
+router.get('/v3/stats', getV3Stats);
+router.get('/v3/leagues/imported', getImportedLeagues);
+router.get('/v3/countries', getCountriesV3);
+router.get('/v3/leagues', getLeaguesV3);
+router.post('/v3/import/league', importLeagueV3);
+router.post('/v3/import/batch', importBatchV3);
+
 export default router;

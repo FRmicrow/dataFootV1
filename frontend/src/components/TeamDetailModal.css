@@ -294,7 +294,7 @@
     padding: 1.5rem;
     background: var(--gradient-accent);
     border-radius: var(--radius-md);
-    textAlign: center;
+    text-align: center;
     box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 }
 

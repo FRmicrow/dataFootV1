@@ -1,0 +1,178 @@
+.v3-leagues-page {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.v3-leagues-page .v3-header {
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1.5rem;
+}
+
+.v3-leagues-page .v3-header h1 {
+    font-size: 2.5rem;
+    margin: 0;
+    color: #fff;
+    font-weight: 800;
+}
+
+.leagues-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+}
+
+.country-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.country-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.8rem;
+    color: #ffd700;
+    /* Golden for ranked countries */
+    border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+    padding-bottom: 0.5rem;
+}
+
+.country-flag {
+    width: 32px;
+    height: 22px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.leagues-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.v3-league-card {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.v3-league-card:hover {
+    transform: translateY(-8px);
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+.v3-league-logo-wrap {
+    height: 160px;
+    background: white;
+    padding: 2rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.v3-league-logo {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.v3-season-badge {
+    position: absolute;
+    bottom: -10px;
+    right: 20px;
+    background: #6366f1;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+}
+
+.v3-league-info {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.v3-country {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.v3-league-info h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.25rem;
+    color: #f8fafc;
+    flex: 1;
+}
+
+.btn-view-stats {
+    display: block;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.5);
+    color: #6366f1;
+    padding: 10px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-view-stats:hover {
+    background: #6366f1;
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: rgba(30, 41, 59, 0.3);
+    border-radius: 24px;
+    border: 2px dashed rgba(255, 255, 255, 0.05);
+}
+
+.empty-state .icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    display: block;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #64748b;
+    margin-bottom: 2rem;
+}
+
+.btn-v3-primary {
+    background: #6366f1;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    display: inline-block;
+}

@@ -30,6 +30,9 @@ const AdminLayout = () => {
                         <NavLink to="/admin/import-league-optimized" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
                             🚀 Optimized League Import
                         </NavLink>
+                        <NavLink to="/v3/import" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+                            🧪 V3 POC Mass Import
+                        </NavLink>
                     </div>
 
                     <div className="admin-nav-section">

@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import apiRoutes from './routes/api.js';
 import adminRoutes from './routes/adminRoutes.js';
 import db from './config/database.js';
+import dbV3 from './config/database_v3.js';
+import v3Routes from './routes/v3_routes.js';
 
 dotenv.config();
 
@@ -11,7 +13,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Initialize database
+// Initialize database
 await db.init();
+await dbV3.init();
 
 // Middleware
 app.use(cors());
@@ -26,6 +30,7 @@ app.use((req, res, next) => {
 // API routes
 app.use('/api', apiRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/v3', v3Routes);
 
 // Health check
 app.get('/health', (req, res) => {
