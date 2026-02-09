@@ -102,6 +102,9 @@ Football players.
 | `birth_place` | TEXT | City of birth |
 | `is_active` | BOOLEAN | Currently active |
 | `api_id` | INTEGER | External API reference |
+| `fully_imported` | BOOLEAN | Basic info imported flag |
+| `last_full_sync` | DATETIME | Timestamp of last career audit/sync |
+| `is_history_complete` | BOOLEAN | Flag for fully backfilled career |
 | `created_at` | DATETIME | Creation timestamp |
 | `updated_at` | DATETIME | Last update timestamp |
 

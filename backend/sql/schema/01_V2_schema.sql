@@ -33,12 +33,14 @@ CREATE TABLE V2_competitions (
     is_active BOOLEAN DEFAULT 1,
     start_year INTEGER, -- When competition was founded
     end_year INTEGER NULL, -- NULL if still active
+    api_id INTEGER, -- API-Football ID
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (trophy_type_id) REFERENCES V2_trophy_types(trophy_type_id),
     FOREIGN KEY (country_id) REFERENCES V2_countries(country_id)
 );
 CREATE INDEX idx_V2_competition_country ON V2_competitions(country_id);
 CREATE INDEX idx_V2_competition_type ON V2_competitions(trophy_type_id);
+CREATE INDEX idx_V2_competitions_api_id ON V2_competitions(api_id);
 
 -- ============================================
 -- CLUBS
@@ -55,12 +57,14 @@ CREATE TABLE V2_clubs (
     founded_year INTEGER,
     club_logo_url TEXT,
     is_active BOOLEAN DEFAULT 1,
+    api_id INTEGER, -- API-Football ID
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (country_id) REFERENCES V2_countries(country_id)
 );
 CREATE INDEX idx_V2_club_country ON V2_clubs(country_id);
 CREATE INDEX idx_V2_club_name ON V2_clubs(club_name);
+CREATE INDEX idx_V2_clubs_api_id ON V2_clubs(api_id);
 
 -- ============================================
 -- PLAYERS
@@ -76,13 +80,21 @@ CREATE TABLE V2_players (
     position TEXT, -- GK, DEF, MID, FWD
     preferred_foot TEXT, -- Left, Right, Both
     height_cm INTEGER,
+    weight_kg INTEGER,
+    birth_country TEXT,
+    birth_place TEXT,
     is_active BOOLEAN DEFAULT 1,
+    api_id INTEGER, -- API-Football ID
+    fully_imported BOOLEAN NOT NULL DEFAULT 0,
+    last_full_sync DATETIME, -- Tracking for career sync
+    is_history_complete BOOLEAN DEFAULT 0, -- Fully backfilled career flag
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (nationality_id) REFERENCES V2_countries(country_id)
 );
 CREATE INDEX idx_V2_player_nationality ON V2_players(nationality_id);
 CREATE INDEX idx_V2_player_name ON V2_players(last_name, first_name);
+CREATE INDEX idx_V2_players_api_id ON V2_players(api_id);
 
 -- Player Secondary Nationalities (for dual citizenship)
 CREATE TABLE V2_player_nationalities (
@@ -156,6 +168,8 @@ CREATE INDEX idx_V2_player_stats ON V2_player_statistics(player_id, year);
 CREATE INDEX idx_V2_club_stats ON V2_player_statistics(club_id, year);
 CREATE INDEX idx_V2_season_stats ON V2_player_statistics(season);
 CREATE INDEX idx_V2_player_stats_year_club ON V2_player_statistics(year, club_id, player_id);
+CREATE INDEX idx_V2_player_statistics_player_season ON V2_player_statistics(player_id, season);
+CREATE UNIQUE INDEX idx_player_stats_unique ON V2_player_statistics(player_id, club_id, competition_id, season);
 
 -- ============================================
 -- CLUB TROPHIES
