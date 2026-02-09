@@ -184,3 +184,59 @@ export const getPlayerClubDetails = (req, res) => {
         res.status(500).json({ error: 'Failed to fetch player details' });
     }
 };
+
+/**
+ * Get a club's competition history by year
+ */
+export const getClubHistory = (req, res) => {
+    try {
+        const { clubId } = req.params;
+
+        const history = db.all(`
+            SELECT 
+                ps.season,
+                ps.year,
+                comp.competition_name,
+                comp.competition_id,
+                COUNT(DISTINCT ps.player_id) as squad_size,
+                SUM(ps.goals) as total_goals,
+                SUM(ps.assists) as total_assists
+            FROM V2_player_statistics ps
+            LEFT JOIN V2_competitions comp ON ps.competition_id = comp.competition_id
+            WHERE ps.club_id = ?
+            GROUP BY ps.year, ps.competition_id
+            ORDER BY ps.year DESC, comp.competition_name ASC
+        `, [clubId]);
+
+        res.json(history);
+    } catch (error) {
+        console.error('Error fetching club history:', error);
+        res.status(500).json({ error: 'Failed to fetch club history' });
+    }
+};
+
+/**
+ * Get club's trophy cabinet
+ */
+export const getClubTrophies = (req, res) => {
+    try {
+        const { clubId } = req.params;
+
+        const trophies = db.all(`
+            SELECT 
+                ct.*,
+                comp.competition_name,
+                comp.competition_logo_url,
+                comp.level as competition_level
+            FROM V2_club_trophies ct
+            LEFT JOIN V2_competitions comp ON ct.competition_id = comp.competition_id
+            WHERE ct.club_id = ?
+            ORDER BY ct.year DESC
+        `, [clubId]);
+
+        res.json(trophies);
+    } catch (error) {
+        console.error('Error fetching club trophies:', error);
+        res.status(500).json({ error: 'Failed to fetch club trophies' });
+    }
+};
