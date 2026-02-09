@@ -1,0 +1,112 @@
+.v3-layout {
+    display: flex;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: #e2e8f0;
+    background: #1a1a2e;
+}
+
+/* Sidebar */
+.v3-sidebar {
+    width: 260px;
+    background: #16213e;
+    border-right: 1px solid #334155;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+}
+
+.v3-sidebar-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #334155;
+}
+
+.v3-badge {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.v3-sidebar-header h3 {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.v3-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.v3-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.v3-nav-item:hover,
+.v3-nav-item.active {
+    background: rgba(99, 102, 241, 0.1);
+    color: #fff;
+}
+
+.v3-nav-item.active {
+    background: rgba(99, 102, 241, 0.2);
+    border-left: 3px solid #6366f1;
+}
+
+.icon {
+    font-size: 1.2rem;
+}
+
+.v3-sidebar-footer {
+    border-top: 1px solid #334155;
+    padding-top: 1rem;
+}
+
+.v3-exit-link {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+}
+
+.v3-exit-link:hover {
+    color: #ef4444;
+}
+
+/* Main Content Wrapper */
+.v3-main-content {
+    flex: 1;
+    overflow-y: auto;
+    background: #0f172a;
+    /* Main background */
+}
+
+/* Remove padding from pages that had it hardcoded if wrapped in layout */
+.v3-import-page {
+    height: 100%;
+    /* Fill the container */
+    padding: 2rem;
+    /* Restore padding inside the layout context */
+    /* background is handled by layout or page itself */
+}

@@ -136,14 +136,21 @@ class FootballApi {
     }
 
     /**
-     * Get all leagues for a specific season
-     * GET /leagues?season={season}
+     * Get leagues with flexible parameters
+     * GET /leagues?id={id}&season={season}&country={country}...
      */
-    async getLeagues(season) {
-        const requestId = `leagues-${season}`;
-        return this.makeRequest('/leagues', {
-            season: season
-        }, requestId);
+    async getLeagues(params) {
+        // backward compatibility for season-only call
+        if (typeof params === 'string' || typeof params === 'number') {
+            params = { season: params };
+        }
+
+        // Create a deterministic requestId based on sorted keys
+        const paramKeys = Object.keys(params).sort();
+        const paramString = paramKeys.map(k => `${k}-${params[k]}`).join('_');
+        const requestId = `leagues-${paramString}`;
+
+        return this.makeRequest('/leagues', params, requestId);
     }
 
     /**
@@ -265,6 +272,30 @@ class FootballApi {
     async getTeamsByLeague(leagueId, season) {
         const requestId = `teams-league-${leagueId}-${season}`;
         return this.makeRequest('/teams', {
+            league: leagueId,
+            season: season
+        }, requestId);
+    }
+
+    /**
+     * Get standings for a specific league and season
+     * GET /standings?league={id}&season={season}
+     */
+    async getStandings(leagueId, season) {
+        const requestId = `standings-league-${leagueId}-${season}`;
+        return this.makeRequest('/standings', {
+            league: leagueId,
+            season: season
+        }, requestId);
+    }
+
+    /**
+     * Get fixtures for a specific league and season
+     * GET /fixtures?league={id}&season={season}
+     */
+    async getFixtures(leagueId, season) {
+        const requestId = `fixtures-league-${leagueId}-${season}`;
+        return this.makeRequest('/fixtures', {
             league: leagueId,
             season: season
         }, requestId);

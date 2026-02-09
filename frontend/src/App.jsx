@@ -9,7 +9,15 @@ import AdminLayout from './components/admin/AdminLayout';
 import FootballDataPage from './components/FootballDataPage';
 import ClubDetailPage from './components/ClubDetailPage';
 import CompetitionPortal from './components/CompetitionPortal';
+import ImportV3Page from './components/v3/ImportV3Page';
+import SeasonOverviewPage from './components/v3/SeasonOverviewPage';
+import V3Layout from './components/v3/V3Layout';
+import V3Dashboard from './components/v3/V3Dashboard';
+import V3LeaguesList from './components/v3/V3LeaguesList';
+import PlayerProfilePageV3 from './components/v3/PlayerProfilePageV3';
 import './App.css';
+
+
 
 
 function App() {
@@ -31,6 +39,9 @@ function App() {
                         <NavLink to="/admin" className="nav-link">
                             Administration
                         </NavLink>
+                        <NavLink to="/v3/dashboard" className="nav-link v3-nav-btn">
+                            🧪 V3 POC
+                        </NavLink>
                     </div>
                 </nav>
 
@@ -45,6 +56,16 @@ function App() {
                     <Route path="/club/:id" element={<ClubDetailPage />} />
                     <Route path="/competition/:id" element={<CompetitionPortal />} />
                     <Route path="/competition/:id/:year" element={<CompetitionPortal />} />
+                    {/* V3 Experimental Section */}
+                    <Route path="/v3" element={<V3Layout />}>
+                        <Route path="dashboard" element={<V3Dashboard />} />
+                        <Route path="import" element={<ImportV3Page />} />
+                        <Route path="leagues" element={<V3LeaguesList />} />
+                        <Route path="league/:id" element={<SeasonOverviewPage />} />
+                        <Route path="league/:id/season/:year" element={<SeasonOverviewPage />} />
+                        <Route path="player/:id" element={<PlayerProfilePageV3 />} />
+                    </Route>
+
                     <Route path="/admin/*" element={<AdminLayout />} />
                 </Routes>
             </div>
