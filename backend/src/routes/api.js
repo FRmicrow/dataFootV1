@@ -4,7 +4,9 @@ import { getAllPlayers, getNationalities, getPlayerDetail, getTeamDetail, search
 import { getPalmaresHierarchy, getTrophyHistory, updateTrophyWinner } from '../controllers/palmaresController.js';
 import { getTeamsByLeague, getTeamById, getTeamPlayers, searchTeams as searchTeamsV2, getCountriesForTeams, getLeaguesMetadata, getTeamsByCompetition } from '../controllers/teamController.js';
 import { searchPlayers as searchPlayersData, searchClubs as searchClubsData, getAllCountries, getAllClubs } from '../controllers/footballDataController.js';
-import { getClubDetails, getClubPlayers, getPlayerClubDetails } from '../controllers/clubController.js';
+import { getClubDetails, getClubPlayers, getPlayerClubDetails, getClubHistory, getClubTrophies } from '../controllers/clubController.js';
+import * as competitionController from '../controllers/competitionController.js';
+
 
 const router = express.Router();
 
@@ -46,5 +48,12 @@ router.get('/football-data/clubs', getAllClubs);
 router.get('/clubs/:clubId', getClubDetails);
 router.get('/clubs/:clubId/players', getClubPlayers);
 router.get('/clubs/:clubId/players/:playerId/details', getPlayerClubDetails);
+router.get('/clubs/:clubId/history', getClubHistory);
+router.get('/clubs/:clubId/trophies', getClubTrophies);
+
+// Competition routes
+router.get('/competitions/:id', competitionController.getCompetitionBasicInfo);
+router.get('/competitions/:id/seasons', competitionController.getCompetitionSeasons);
+router.get('/competitions/:id/season/:year', competitionController.getCompetitionSeasonDetails);
 
 export default router;

@@ -8,7 +8,9 @@ import PalmaresPage from './components/PalmaresPage';
 import AdminLayout from './components/admin/AdminLayout';
 import FootballDataPage from './components/FootballDataPage';
 import ClubDetailPage from './components/ClubDetailPage';
+import CompetitionPortal from './components/CompetitionPortal';
 import './App.css';
+
 
 function App() {
     return (
@@ -41,6 +43,8 @@ function App() {
                     <Route path="/player/:id" element={<PlayerDetail />} />
                     <Route path="/team/:id" element={<TeamDetail />} />
                     <Route path="/club/:id" element={<ClubDetailPage />} />
+                    <Route path="/competition/:id" element={<CompetitionPortal />} />
+                    <Route path="/competition/:id/:year" element={<CompetitionPortal />} />
                     <Route path="/admin/*" element={<AdminLayout />} />
                 </Routes>
             </div>

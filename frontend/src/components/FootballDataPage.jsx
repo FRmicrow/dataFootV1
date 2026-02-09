@@ -235,6 +235,12 @@ const FootballDataPage = () => {
                 >
                     Clubs
                 </button>
+                <button
+                    className={`tab ${activeTab === 'competitions' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('competitions')}
+                >
+                    Competitions
+                </button>
             </div>
 
             {/* Players Tab */}
@@ -450,8 +456,71 @@ const FootballDataPage = () => {
                     )}
                 </div>
             )}
+
+            {/* Competitions Tab */}
+            {activeTab === 'competitions' && (
+                <div className="tab-content">
+                    <CompetitionList />
+                </div>
+            )}
+        </div>
+    );
+};
+
+const CompetitionList = () => {
+    const [competitions, setCompetitions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        const fetchCompetitions = async () => {
+            try {
+                const res = await axios.get('http://localhost:3001/api/teams/leagues-metadata');
+                setCompetitions(res.data);
+            } catch (err) {
+                console.error("Error fetching competitions:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCompetitions();
+    }, []);
+
+    const filtered = competitions.filter(c =>
+        c.competition_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.country_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (loading) return <div className="loading">Loading competitions...</div>;
+
+    return (
+        <div className="competition-list-container">
+            <div className="search-form">
+                <input
+                    type="text"
+                    placeholder="Search competitions or countries..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: 'white' }}
+                />
+            </div>
+
+            <div className="cards-grid">
+                {filtered.map(comp => (
+                    <Link key={comp.competition_id} to={`/competition/${comp.competition_id}`} className="club-card competition-card">
+                        <div className="card-content">
+                            <h3 className="club-name">{comp.competition_name}</h3>
+                            <p className="club-country">{comp.country_name}</p>
+                            <div className="stats-row" style={{ marginTop: '10px', fontSize: '0.8rem', color: '#94a3b8' }}>
+                                <span>Level: {comp.league_level}</span> • <span>{comp.team_count} Teams</span>
+                            </div>
+                        </div>
+                    </Link>
+                ))}
+            </div>
         </div>
     );
 };
 
 export default FootballDataPage;
+
