@@ -33,7 +33,7 @@ Base regions.
 
 ### 🏟️ **V3_Teams** & **V3_Venues**
 Clubs and their primary stadiums.
-- `V3_Teams`: Linked to `V3_Venues`. Stores `api_id` and basic info.
+- `V3_Teams`: Linked to `V3_Venues`. Stores `api_id`, `is_national_team` (flag for club vs country), and basic info.
 
 ### 👤 **V3_Players** & **V3_Player_Stats**
 - **`V3_Players`**: Global profile snapshot.

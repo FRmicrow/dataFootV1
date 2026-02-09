@@ -73,6 +73,9 @@ const ImportV3Page = () => {
             return;
         }
 
+        const leagueObj = leagues.find(l => l.league.id === parseInt(selectedLeague));
+        if (!leagueObj) return;
+
         const start = parseInt(fromYear);
         const end = parseInt(toYear);
 
@@ -87,7 +90,6 @@ const ImportV3Page = () => {
         }
 
         // Find league name for display
-        const leagueObj = leagues.find(l => l.league.id === parseInt(selectedLeague));
         const leagueName = leagueObj ? leagueObj.league.name : 'Unknown League';
 
         const queueItem = {
@@ -107,6 +109,7 @@ const ImportV3Page = () => {
 
     const handleBatchImport = async () => {
         if (importQueue.length === 0) return;
+
 
         setIsImporting(true);
         setLogs([{ type: 'info', message: `🚀 Starting Batch V3 Import with ${importQueue.length} items...` }]);
@@ -175,6 +178,7 @@ const ImportV3Page = () => {
     }
 
     // --- Render ---
+
 
     return (
         <div className="v3-import-page">

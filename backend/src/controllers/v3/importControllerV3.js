@@ -1,4 +1,5 @@
 import dbV3 from '../../config/database_v3.js';
+import dbV2 from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
 
 /**
@@ -40,6 +41,7 @@ const Mappers = {
         country: api.country,
         founded: api.founded,
         national: api.national ? 1 : 0,
+        is_national_team: api.national ? 1 : 0,
         logo_url: api.logo
     }),
     player: (api) => ({
@@ -55,7 +57,8 @@ const Mappers = {
         height: api.height,
         weight: api.weight,
         injured: api.injured ? 1 : 0,
-        photo_url: api.photo
+        photo_url: api.photo,
+        preferred_foot: api.foot
     }),
     stats: (stat, playerId, teamId, leagueId, season) => ({
         player_id: playerId,
@@ -169,12 +172,12 @@ const DB = {
     upsertTeam: (data, venueId) => {
         let team = dbV3.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([data.api_id]));
         if (team) {
-            dbV3.run(`UPDATE V3_Teams SET name=?, code=?, logo_url=?, venue_id=? WHERE team_id=?`,
-                cleanParams([data.name, data.code, data.logo_url, venueId, team.team_id]));
+            dbV3.run(`UPDATE V3_Teams SET name=?, code=?, logo_url=?, venue_id=?, is_national_team=? WHERE team_id=?`,
+                cleanParams([data.name, data.code, data.logo_url, venueId, data.is_national_team, team.team_id]));
             return team.team_id;
         } else {
-            const info = dbV3.run(`INSERT INTO V3_Teams (api_id, name, code, country, founded, national, logo_url, venue_id) VALUES (?,?,?,?,?,?,?,?)`,
-                cleanParams([data.api_id, data.name, data.code, data.country, data.founded, data.national, data.logo_url, venueId]));
+            const info = dbV3.run(`INSERT INTO V3_Teams (api_id, name, code, country, founded, national, is_national_team, logo_url, venue_id) VALUES (?,?,?,?,?,?,?,?,?)`,
+                cleanParams([data.api_id, data.name, data.code, data.country, data.founded, data.national, data.is_national_team, data.logo_url, venueId]));
             return info.lastInsertRowid;
         }
     },
@@ -182,10 +185,12 @@ const DB = {
         let player = dbV3.get("SELECT player_id FROM V3_Players WHERE api_id = ?", cleanParams([data.api_id]));
         if (player) {
             // Update critical fields if needed
+            dbV3.run(`UPDATE V3_Players SET age=?, height=?, weight=?, injured=?, photo_url=?, preferred_foot=? WHERE player_id=?`,
+                cleanParams([data.age, data.height, data.weight, data.injured, data.photo_url, data.preferred_foot, player.player_id]));
             return player.player_id;
         } else {
-            const info = dbV3.run(`INSERT INTO V3_Players (api_id, name, firstname, lastname, age, birth_date, birth_place, birth_country, nationality, height, weight, injured, photo_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-                cleanParams([data.api_id, data.name, data.firstname, data.lastname, data.age, data.birth_date, data.birth_place, data.birth_country, data.nationality, data.height, data.weight, data.injured, data.photo_url]));
+            const info = dbV3.run(`INSERT INTO V3_Players (api_id, name, firstname, lastname, age, birth_date, birth_place, birth_country, nationality, height, weight, injured, photo_url, preferred_foot) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                cleanParams([data.api_id, data.name, data.firstname, data.lastname, data.age, data.birth_date, data.birth_place, data.birth_country, data.nationality, data.height, data.weight, data.injured, data.photo_url, data.preferred_foot]));
             return info.lastInsertRowid;
         }
     },
@@ -486,22 +491,30 @@ export const getFixturesV3 = async (req, res) => {
  */
 export const getCountriesV3 = async (req, res) => {
     try {
-        // Primary source: footballApi
-        const response = await footballApi.getCountries();
+        // Use V2_countries as the primary source for the full, ranked list
+        const countries = dbV2.all(`
+            SELECT country_name as name, country_code as code, flag_url as flag
+            FROM V2_countries
+            ORDER BY importance_rank ASC, country_name ASC
+        `);
 
+        if (countries && countries.length > 0) {
+            return res.json(countries);
+        }
+
+        // Fallback: footballApi
+        const response = await footballApi.getCountries();
         if (response.response && response.response.length > 0) {
-            // Map to unified format if needed, though API already has { name, code, flag }
             return res.json(response.response);
         }
 
-        // Fallback: If API fails, try V3_Countries (already imported ones)
-        const countries = dbV3.all(`
+        // Final Fallback: V3_Countries
+        const v3countries = dbV3.all(`
             SELECT name, code, flag_url as flag
             FROM V3_Countries
             ORDER BY name ASC
         `);
-
-        res.json(countries);
+        res.json(v3countries);
     } catch (error) {
         console.error("Error in getCountriesV3:", error);
         res.status(500).json({ error: error.message });

@@ -36,18 +36,41 @@ export const getPlayerProfileV3 = async (req, res) => {
             ORDER BY ps.season_year DESC, l.type ASC
         `, [id]);
 
-        // Group stats by season for easier frontend processing if needed, 
-        // but we can also do it on frontend. Let's send raw and grouped by season.
-        const career = stats.reduce((acc, curr) => {
-            const season = curr.season_year;
-            if (!acc[season]) acc[season] = [];
-            acc[season].push(curr);
+        // 3. Aggregate Stats by Club (US-010)
+        const aggregatedStats = stats.reduce((acc, curr) => {
+            const teamId = curr.team_id;
+            if (!acc[teamId]) {
+                acc[teamId] = {
+                    team_id: teamId,
+                    team_name: curr.team_name,
+                    team_logo: curr.team_logo,
+                    total_matches: 0,
+                    total_goals: 0,
+                    total_assists: 0,
+                    total_rating: 0,
+                    rating_count: 0
+                };
+            }
+            acc[teamId].total_matches += (curr.games_appearences || 0);
+            acc[teamId].total_goals += (curr.goals_total || 0);
+            acc[teamId].total_assists += (curr.goals_assists || 0);
+            if (curr.games_rating) {
+                acc[teamId].total_rating += (parseFloat(curr.games_rating) * (curr.games_appearences || 1));
+                acc[teamId].rating_count += (curr.games_appearences || 1);
+            }
             return acc;
         }, {});
 
+        // Calculate avg ratings
+        const clubTotals = Object.values(aggregatedStats).map(club => ({
+            ...club,
+            avg_rating: club.rating_count > 0 ? (club.total_rating / club.rating_count).toFixed(2) : 'N/A'
+        }));
+
         res.json({
             player,
-            career: stats // Sending flat list for flexibility, frontend can group
+            career: stats,
+            clubTotals: clubTotals
         });
     } catch (error) {
         console.error("Error fetching V3 Player Profile:", error);

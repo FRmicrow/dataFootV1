@@ -22,6 +22,30 @@ const SeasonOverviewPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Squad Explorer State (US-008)
+    const [explorerTeamId, setExplorerTeamId] = useState('');
+    const [explorerPosition, setExplorerPosition] = useState('ALL');
+    const [explorerPlayers, setExplorerPlayers] = useState([]);
+    const [explorerLoading, setExplorerLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchExplorerData = async () => {
+            if (activeTab !== 'overview') return;
+            setExplorerLoading(true);
+            try {
+                const res = await axios.get(`/api/v3/league/${id}/season/${year}/players`, {
+                    params: { teamId: explorerTeamId, position: explorerPosition }
+                });
+                setExplorerPlayers(res.data);
+            } catch (err) {
+                console.error("Failed to fetch explorer players:", err);
+            } finally {
+                setExplorerLoading(false);
+            }
+        };
+        if (id && year) fetchExplorerData();
+    }, [id, year, activeTab, explorerTeamId, explorerPosition]);
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -31,7 +55,8 @@ const SeasonOverviewPage = () => {
 
                 if (!year) {
                     const res = await axios.get(`/api/v3/leagues/${id}/seasons`);
-                    const imported = res.data.filter(s => s.imported_players === 1);
+                    const seasonsList = res.data.seasons || [];
+                    const imported = seasonsList.filter(s => s.imported_players === 1);
                     if (imported.length > 0) {
                         targetYear = imported[0].season_year;
                         navigate(`/v3/league/${id}/season/${targetYear}`, { replace: true });
@@ -107,7 +132,7 @@ const SeasonOverviewPage = () => {
 
     if (!data) return null;
 
-    const { league, standings: simulatedStandings, topScorers, topAssists, availableYears } = data;
+    const { league, standings: simulatedStandings, topScorers, topAssists, topRated, availableYears } = data;
 
     // Group real standings by group_name
     const groupMap = standings.reduce((acc, curr) => {
@@ -177,81 +202,223 @@ const SeasonOverviewPage = () => {
 
                 {/* 1. OVERVIEW TAB */}
                 {activeTab === 'overview' && (
-                    <div className="dash-grid animate-slide-up">
-                        <div className="dash-card card-standings">
-                            <div className="card-title">
-                                <span>Simulated Performance</span>
-                                <span className="subtitle">Proxy data from player stats</span>
+                    <div className="overview-tab-content animate-slide-up">
+
+                        <div className="dash-grid">
+                            {/* Squad Explorer (US-008) */}
+                            <div className="dash-card squad-explorer">
+                                <div className="card-header-flex">
+                                    <div className="card-title">
+                                        <span>🔍 Squad Explorer</span>
+                                        <span className="subtitle">Filter and analyze player performance across the league</span>
+                                    </div>
+                                    <div className="explorer-filters">
+                                        <select
+                                            value={explorerTeamId}
+                                            onChange={(e) => setExplorerTeamId(e.target.value)}
+                                            className="v3-select-mini"
+                                        >
+                                            <option value="">All Teams</option>
+                                            {standings.map(t => (
+                                                <option key={t.team_id} value={t.team_id}>{t.team_name}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            value={explorerPosition}
+                                            onChange={(e) => setExplorerPosition(e.target.value)}
+                                            className="v3-select-mini"
+                                        >
+                                            <option value="ALL">All Positions</option>
+                                            <option value="Goalkeeper">Goalkeepers</option>
+                                            <option value="Defender">Defenders</option>
+                                            <option value="Midfielder">Midfielders</option>
+                                            <option value="Attacker">Attackers</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="explorer-table-wrapper">
+                                    {explorerLoading ? (
+                                        <div className="table-loader">
+                                            <div className="spinner-mini"></div>
+                                            <p>Querying V3 Dataset...</p>
+                                        </div>
+                                    ) : (
+                                        <table className="explorer-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Player</th>
+                                                    <th>Team</th>
+                                                    <th className="center">Pos</th>
+                                                    <th className="center">Apps</th>
+                                                    <th className="center">Mins</th>
+                                                    <th className="center">G</th>
+                                                    <th className="center">A</th>
+                                                    <th className="center">Y</th>
+                                                    <th className="center">R</th>
+                                                    <th className="center">Rating</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {explorerPlayers.slice(0, 15).map(player => (
+                                                    <tr key={player.player_id}>
+                                                        <td className="p-cell">
+                                                            <Link to={`/v3/player/${player.player_id}`} className="p-link">
+                                                                <img src={player.photo_url} alt="" className="p-img-tiny" />
+                                                                <span>{player.name}</span>
+                                                            </Link>
+                                                        </td>
+                                                        <td className="t-cell">
+                                                            <div className="t-info-mini">
+                                                                <img src={player.team_logo} alt="" className="t-img-tiny" />
+                                                                <span>{player.team_name}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="center pos-badge">{player.position?.substring(0, 3).toUpperCase()}</td>
+                                                        <td className="center">{player.appearances}</td>
+                                                        <td className="center">{player.minutes}'</td>
+                                                        <td className="center highlight-goals">{player.goals}</td>
+                                                        <td className="center">{player.assists}</td>
+                                                        <td className="center">{player.yellow}</td>
+                                                        <td className="center">{player.red}</td>
+                                                        <td className="center">
+                                                            <span className={`rating-chip ${parseFloat(player.rating) > 7.5 ? 'elite' : ''}`}>
+                                                                {player.rating || 'N/A'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                    <div className="view-more-hint">Showing top 15 results. Refine filters for more specific data.</div>
+                                </div>
                             </div>
-                            <table className="standings-table">
-                                <thead>
-                                    <tr>
-                                        <th className="col-rank">#</th>
-                                        <th>Team</th>
-                                        <th>Goals</th>
-                                        <th>Assists</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {simulatedStandings.slice(0, 10).map((team, index) => (
-                                        <tr key={team.team_id}>
-                                            <td className="col-rank">{index + 1}</td>
-                                            <td className="col-team">
-                                                <img src={team.team_logo} alt="" className="team-mini-logo" />
-                                                {team.team_name}
-                                            </td>
-                                            <td className="stat-val stat-primary">{team.total_goals}</td>
-                                            <td className="stat-val">{team.total_assists}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <div className="view-more-hint">Showing top 10 teams by goals. Use Standings tab for official ranking.</div>
+
+                            <div className="leaders-column">
+                                {/* Golden Boot Section */}
+                                <div className="leaders-section">
+                                    <h3 className="section-hdr">🥇 Golden Boot</h3>
+                                    <div className="leader-cards-grid">
+                                        {topScorers.slice(0, 3).map((player, idx) => (
+                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
+                                                <div className="p-badge">#{idx + 1}</div>
+                                                <div className="p-photo-container">
+                                                    <img src={player.photo_url} alt="" className="p-photo" />
+                                                </div>
+                                                <div className="p-info">
+                                                    <div className="p-name">{player.player_name}</div>
+                                                    <div className="p-team">{player.team_name}</div>
+                                                    <div className="p-micro-stats">{player.appearances} Apps</div>
+                                                </div>
+                                                <div className="p-stat-large">
+                                                    <span className="val">{player.goals_total}</span>
+                                                    <span className="lbl">Goals</span>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Top Assists Section */}
+                                <div className="leaders-section">
+                                    <h3 className="section-hdr">🅰️ Top Playmakers</h3>
+                                    <div className="leader-cards-grid">
+                                        {topAssists.slice(0, 3).map((player, idx) => (
+                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
+                                                <div className="p-badge">#{idx + 1}</div>
+                                                <div className="p-photo-container">
+                                                    <img src={player.photo_url} alt="" className="p-photo" />
+                                                </div>
+                                                <div className="p-info">
+                                                    <div className="p-name">{player.player_name}</div>
+                                                    <div className="p-team">{player.team_name}</div>
+                                                    <div className="p-micro-stats">{player.appearances} Apps</div>
+                                                </div>
+                                                <div className="p-stat-large">
+                                                    <span className="val">{player.goals_assists}</span>
+                                                    <span className="lbl">Assists</span>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                                {/* Top Rated Section */}
+                                <div className="leaders-section">
+                                    <h3 className="section-hdr">✨ MVP Candidates</h3>
+                                    <div className="leader-cards-grid">
+                                        {(topRated || []).slice(0, 3).map((player, idx) => (
+                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
+                                                <div className="p-badge">#{idx + 1}</div>
+                                                <div className="p-photo-container">
+                                                    <img src={player.photo_url} alt="" className="p-photo" />
+                                                </div>
+                                                <div className="p-info">
+                                                    <div className="p-name">{player.player_name}</div>
+                                                    <div className="p-team">{player.team_name}</div>
+                                                    <div className="p-micro-stats">{player.appearances} Apps</div>
+                                                </div>
+                                                <div className="p-stat-large">
+                                                    <span className="val">{player.games_rating}</span>
+                                                    <span className="lbl">Rating</span>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <aside className="top-performers">
-                            {/* Golden Boot */}
-                            <div className="dash-card performer-card">
-                                <div className="card-title">🥇 Golden Boot</div>
-                                <div className="player-list">
-                                    {topScorers.map((player, idx) => (
-                                        <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className="player-row-mini">
-                                            <div className="p-rank">{idx + 1}</div>
-                                            <img src={player.photo_url} alt="" className="p-photo" />
-                                            <div className="p-info">
-                                                <div className="p-name">{player.player_name}</div>
-                                                <div className="p-team">{player.team_name}</div>
-                                            </div>
-                                            <div className="p-stat">
-                                                <span className="p-val">{player.goals_total}</span>
-                                                <span className="p-lbl">G</span>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
+                        {/* Squad Directory Section */}
+                        <div className="squad-directory-section">
+                            <div className="section-header-v3">
+                                <span className="icon">👥</span>
+                                <h2>Participating Squads Directory</h2>
                             </div>
+                            <div className="squads-accordion-grid">
+                                {simulatedStandings.map(team => (
+                                    <div key={team.team_id} className={`squad-accordion-item ${selectedTeamId === team.team_id ? 'expanded' : ''}`}>
+                                        <div
+                                            className="team-accordion-header"
+                                            onClick={() => setSelectedTeamId(selectedTeamId === team.team_id ? null : team.team_id)}
+                                        >
+                                            <div className="team-meta">
+                                                <img src={team.team_logo} alt="" className="team-logo-acc" />
+                                                <span className="team-name-acc">{team.team_name}</span>
+                                                <span className="player-count-acc">{team.squad_size} Players</span>
+                                            </div>
+                                            <div className="accordion-toggle">
+                                                {selectedTeamId === team.team_id ? '−' : '+'}
+                                            </div>
+                                        </div>
 
-                            {/* Top Assists */}
-                            <div className="dash-card performer-card">
-                                <div className="card-title">🅰️ Top Assists</div>
-                                <div className="player-list">
-                                    {topAssists.map((player, idx) => (
-                                        <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className="player-row-mini">
-                                            <div className="p-rank">{idx + 1}</div>
-                                            <img src={player.photo_url} alt="" className="p-photo" />
-                                            <div className="p-info">
-                                                <div className="p-name">{player.player_name}</div>
-                                                <div className="p-team">{player.team_name}</div>
+                                        {selectedTeamId === team.team_id && (
+                                            <div className="squad-content-inline animate-slide-down">
+                                                {squadLoading ? (
+                                                    <div className="inline-loader">Initializing roster matrix...</div>
+                                                ) : (
+                                                    <div className="roster-inline-grid">
+                                                        {teamSquad.map(player => (
+                                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className="roster-item-mini">
+                                                                <img src={player.photo_url} alt="" className="mini-photo" />
+                                                                <div className="mini-p-info">
+                                                                    <div className="name">{player.name}</div>
+                                                                    <div className="pos">{player.position}</div>
+                                                                </div>
+                                                                <div className="mini-p-stats">
+                                                                    <span>{player.appearances} GP</span>
+                                                                    <span className="primary">{player.goals} G</span>
+                                                                </div>
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="p-stat">
-                                                <span className="p-val">{player.goals_assists}</span>
-                                                <span className="p-lbl">A</span>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                        </aside>
+                        </div>
                     </div>
                 )}
 
@@ -378,14 +545,15 @@ const SeasonOverviewPage = () => {
                         </div>
                     </div>
                 )}
-                {/* 4. SQUADS TAB */}
+
+                {/* 4. SQUADS TAB (Keeping for legacy/direct access if needed, but Consolidated on Overview now) */}
                 {activeTab === 'squads' && (
                     <div className="squads-container animate-slide-up">
                         <div className="squads-layout">
                             <aside className="team-sidebar">
                                 <h3>Participating Teams</h3>
                                 <div className="team-list-nav">
-                                    {simulatedStandings.map(team => (
+                                    {(standings || []).map(team => (
                                         <button
                                             key={team.team_id}
                                             className={`team-nav-btn ${selectedTeamId === team.team_id ? 'active' : ''}`}
@@ -402,43 +570,68 @@ const SeasonOverviewPage = () => {
                                 {!selectedTeamId ? (
                                     <div className="empty-squad-state">
                                         <span className="icon">👥</span>
-                                        <p>Select a team to view their roster</p>
+                                        <p>Select a team to view their detailed roster</p>
                                     </div>
                                 ) : squadLoading ? (
                                     <div className="squad-loading">
                                         <div className="spinner-mini"></div>
-                                        <p>Loading roster...</p>
+                                        <p>Assembling squad data...</p>
                                     </div>
                                 ) : (
                                     <div className="roster-view">
                                         <div className="roster-header">
-                                            <h2>{simulatedStandings.find(t => t.team_id === selectedTeamId)?.team_name} Roster</h2>
-                                            <span className="squad-count">{teamSquad.length} Players</span>
+                                            <div className="team-brand">
+                                                <img src={standings.find(t => t.team_id === selectedTeamId)?.team_logo} alt="" className="team-logo-main" />
+                                                <h2>{standings.find(t => t.team_id === selectedTeamId)?.team_name} Roster</h2>
+                                            </div>
+                                            <span className="squad-count-badge">{teamSquad.length} Players</span>
                                         </div>
-                                        <div className="roster-grid">
-                                            {teamSquad.map(player => (
-                                                <Link to={`/player/${player.player_id}`} key={player.player_id} className="player-card-v3">
-                                                    <div className="p-photo-wrap">
-                                                        <img src={player.photo_url} alt={player.name} />
-                                                        <div className="p-pos-badge">{player.position}</div>
+
+                                        {['Goalkeeper', 'Defender', 'Midfielder', 'Attacker'].map(pos => {
+                                            const filtered = teamSquad.filter(p => p.position === pos).sort((a, b) => b.appearances - a.appearances);
+                                            if (filtered.length === 0) return null;
+
+                                            return (
+                                                <div key={pos} className="position-section">
+                                                    <h3 className="pos-group-title">{pos}s</h3>
+                                                    <div className="mini-card-grid">
+                                                        {filtered.map(player => (
+                                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className="player-mini-card">
+                                                                <div className="p-avatar-wrap">
+                                                                    <img src={player.photo_url} alt="" className="p-avatar" />
+                                                                    {player.rating && <div className="p-rating-tag">{player.rating}</div>}
+                                                                </div>
+                                                                <div className="p-info">
+                                                                    <div className="p-name">{player.name}</div>
+                                                                    <div className="p-activity">
+                                                                        <div className="activity-bar">
+                                                                            <div className="bar-fill" style={{ width: `${Math.min((player.minutes / 3420) * 100, 100)}%` }}></div>
+                                                                        </div>
+                                                                        <span className="activity-text">{player.appearances} Apps</span>
+                                                                    </div>
+                                                                    <div className="p-key-stats">
+                                                                        {pos === 'Attacker' ? (
+                                                                            <>
+                                                                                <span className="stat">{player.goals} ⚽</span>
+                                                                                <span className="stat">{player.assists} 🅰️</span>
+                                                                            </>
+                                                                        ) : pos === 'Goalkeeper' ? (
+                                                                            <>
+                                                                                <span className="stat">Clean Sheets: TBD</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <span className="stat">{player.minutes}' Mins</span>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </Link>
+                                                        ))}
                                                     </div>
-                                                    <div className="p-main-info">
-                                                        <div className="p-name">{player.name}</div>
-                                                        <div className="p-details">Age: {player.age}</div>
-                                                    </div>
-                                                    <div className="p-stats-row">
-                                                        <div className="p-stat">
-                                                            <span className="val">{player.appearances}</span>
-                                                            <span className="lbl">Apps</span>
-                                                        </div>
-                                                        <div className="p-stat">
-                                                            <span className="val">{player.goals}</span>
-                                                            <span className="lbl">Goals</span>
-                                                        </div>
-                                                    </div>
-                                                </Link>
-                                            ))}
-                                        </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </main>
