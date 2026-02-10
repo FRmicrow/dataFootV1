@@ -1,5 +1,5 @@
 import express from 'express';
-import { getLeagueSeasonsStatus, initializeSeasons } from '../controllers/v3/leagueSeasonController.js';
+import { getLeagueSeasonsStatus, initializeSeasons, getSyncStatus } from '../controllers/v3/leagueSeasonController.js';
 
 const router = express.Router();
 
@@ -8,6 +8,7 @@ const router = express.Router();
  * @desc Get the Granular Tracker status for a league
  */
 router.get('/leagues/:id/seasons', getLeagueSeasonsStatus);
+router.get('/league/:id/sync-status', getSyncStatus);
 
 /**
  * @route POST /api/v3/leagues/seasons/init
