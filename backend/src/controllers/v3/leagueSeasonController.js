@@ -45,6 +45,37 @@ export const getLeagueSeasonsStatus = (req, res) => {
 };
 
 /**
+ * Get simple sync status for a league (used by import form)
+ */
+export const getSyncStatus = (req, res) => {
+    try {
+        const { id } = req.params;
+        const seasons = dbV3.all(`
+            SELECT 
+                season_year as year,
+                imported_players as players,
+                imported_fixtures as fixtures,
+                imported_standings as standings
+            FROM V3_League_Seasons
+            WHERE league_id = ?
+        `, [id]);
+
+        // Convert 1/0 to true/false
+        const formatted = seasons.map(s => ({
+            year: s.year,
+            players: !!s.players,
+            fixtures: !!s.fixtures,
+            standings: !!s.standings
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error('V3 Sync Status Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
  * Initialize new seasons for a league (e.g. 2010-2025)
  */
 export const initializeSeasons = (req, res) => {

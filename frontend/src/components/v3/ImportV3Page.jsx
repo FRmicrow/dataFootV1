@@ -9,11 +9,13 @@ const ImportV3Page = () => {
 
     const [leagues, setLeagues] = useState([]);
     const [selectedLeague, setSelectedLeague] = useState('');
+    const [availableSeasons, setAvailableSeasons] = useState([]);
 
     // Season Range State
-    const currentYear = new Date().getFullYear();
-    const [fromYear, setFromYear] = useState(currentYear);
-    const [toYear, setToYear] = useState(currentYear);
+    const [fromYear, setFromYear] = useState('');
+    const [toYear, setToYear] = useState('');
+    const [skipExisting, setSkipExisting] = useState(true);
+    const [leagueSyncStatus, setLeagueSyncStatus] = useState([]); // Array of {year, players, fixtures, standings}
 
     // Queue State
     const [importQueue, setImportQueue] = useState([]);
@@ -45,6 +47,28 @@ const ImportV3Page = () => {
         }
     }, [logs, autoScroll]);
 
+    // Update available seasons when league changes
+    useEffect(() => {
+        if (selectedLeague && leagues.length > 0) {
+            const leagueObj = leagues.find(l => l.league.id === parseInt(selectedLeague));
+            if (leagueObj && leagueObj.seasons) {
+                const years = leagueObj.seasons.map(s => s.year).sort((a, b) => b - a);
+                setAvailableSeasons(years);
+                // Smart Defaulting: oldest to newest
+                if (years.length > 0) {
+                    setFromYear(years[years.length - 1]);
+                    setToYear(years[0]);
+                }
+                fetchSyncStatus(selectedLeague);
+            }
+        } else {
+            setAvailableSeasons([]);
+            setFromYear('');
+            setToYear('');
+            setLeagueSyncStatus([]);
+        }
+    }, [selectedLeague, leagues]);
+
     // --- API Calls ---
 
     const fetchCountries = async () => {
@@ -62,6 +86,15 @@ const ImportV3Page = () => {
             setLeagues(res.data);
         } catch (error) {
             console.error("Failed to fetch leagues", error);
+        }
+    };
+
+    const fetchSyncStatus = async (leagueId) => {
+        try {
+            const res = await axios.get(`/api/v3/league/${leagueId}/sync-status`);
+            setLeagueSyncStatus(res.data);
+        } catch (error) {
+            console.error("Failed to fetch sync status", error);
         }
     };
 
@@ -86,18 +119,40 @@ const ImportV3Page = () => {
 
         const selectedSeasons = [];
         for (let y = start; y <= end; y++) {
-            selectedSeasons.push(y);
+            if (skipExisting) {
+                const status = leagueSyncStatus.find(s => s.year === y);
+                const isFullyImported = status && status.players && status.fixtures && status.standings;
+                if (!isFullyImported) {
+                    selectedSeasons.push(y);
+                }
+            } else {
+                selectedSeasons.push(y);
+            }
+        }
+
+        if (selectedSeasons.length === 0) {
+            alert("No new seasons to add (all already imported or skipped).");
+            return;
         }
 
         // Find league name for display
         const leagueName = leagueObj ? leagueObj.league.name : 'Unknown League';
+
+        const queueSeasons = selectedSeasons.map(y => {
+            const status = leagueSyncStatus.find(s => s.year === y);
+            return {
+                year: y,
+                isFull: !!(status && status.players && status.fixtures && status.standings),
+                isPartial: !!(status && (status.players || status.fixtures || status.standings) && !(status.players && status.fixtures && status.standings))
+            };
+        });
 
         const queueItem = {
             id: Date.now(),
             country: selectedCountry,
             leagueId: parseInt(selectedLeague),
             leagueName: leagueName,
-            seasons: selectedSeasons
+            seasons: queueSeasons
         };
 
         setImportQueue(prev => [...prev, queueItem]);
@@ -116,7 +171,7 @@ const ImportV3Page = () => {
 
         const selection = importQueue.map(item => ({
             leagueId: item.leagueId,
-            seasons: item.seasons
+            seasons: item.seasons.map(s => s.year)
         }));
 
         try {
@@ -172,10 +227,7 @@ const ImportV3Page = () => {
 
     // --- Helpers ---
 
-    const seasonOptions = [];
-    for (let year = new Date().getFullYear(); year >= 2010; year--) {
-        seasonOptions.push(year);
-    }
+    const seasonOptions = availableSeasons;
 
     // --- Render ---
 
@@ -230,8 +282,9 @@ const ImportV3Page = () => {
                             <select
                                 value={fromYear}
                                 onChange={(e) => setFromYear(e.target.value)}
-                                disabled={isImporting}
+                                disabled={isImporting || !selectedLeague}
                             >
+                                <option value="">Select</option>
                                 {seasonOptions.map(year => (
                                     <option key={year} value={year}>{year}</option>
                                 ))}
@@ -242,14 +295,48 @@ const ImportV3Page = () => {
                             <select
                                 value={toYear}
                                 onChange={(e) => setToYear(e.target.value)}
-                                disabled={isImporting}
+                                disabled={isImporting || !selectedLeague}
                             >
+                                <option value="">Select</option>
                                 {seasonOptions.map(year => (
                                     <option key={year} value={year}>{year}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
+
+                    <div className="skip-toggle-container">
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={skipExisting}
+                                onChange={(e) => setSkipExisting(e.target.checked)}
+                            />
+                            Skip years already fully imported
+                        </label>
+                    </div>
+
+                    {selectedLeague && leagueSyncStatus.length > 0 && fromYear && toYear && (() => {
+                        const start = parseInt(fromYear);
+                        const end = parseInt(toYear);
+                        const alreadyInDb = leagueSyncStatus.filter(s =>
+                            s.year >= Math.min(start, end) &&
+                            s.year <= Math.max(start, end) &&
+                            s.players && s.fixtures && s.standings
+                        ).length;
+
+                        return alreadyInDb > 0 ? (
+                            <div className="sync-summary-note">
+                                ℹ️ Note: {alreadyInDb} season(s) in this range are already in the DB.
+                            </div>
+                        ) : null;
+                    })()}
+
+                    {availableSeasons.length > 0 && (
+                        <div className="availability-hint">
+                            📊 Available: {availableSeasons.length} seasons ({availableSeasons[availableSeasons.length - 1]} - {availableSeasons[0]})
+                        </div>
+                    )}
 
                     <button
                         className="btn-add-queue"
@@ -270,11 +357,19 @@ const ImportV3Page = () => {
                                         <div className="queue-info">
                                             <span className="queue-league">{item.leagueName}</span>
                                             <span className="queue-country">{item.country}</span>
-                                            <span className="queue-seasons">
-                                                Season(s): {item.seasons.length > 1
-                                                    ? `${Math.min(...item.seasons)} - ${Math.max(...item.seasons)}`
-                                                    : item.seasons[0]}
-                                            </span>
+                                            <div className="queue-seasons-pills">
+                                                {item.seasons.map(s => {
+                                                    let className = "season-pill";
+                                                    if (s.isFull) className += " pill-full";
+                                                    else if (s.isPartial) className += " pill-partial";
+
+                                                    return (
+                                                        <span key={s.year} className={className}>
+                                                            {s.year} {s.isFull ? '✅' : s.isPartial ? '⚠️' : ''}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                         <button
                                             className="btn-remove"
