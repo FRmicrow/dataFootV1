@@ -1,0 +1,214 @@
+/* Main Container */
+.export-container {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: radial-gradient(circle at center, rgba(0, 242, 96, 0.05) 0%, rgba(30, 30, 35, 0.0) 70%);
+}
+
+/* Viewport - Hidden but functional */
+.recording-viewport {
+    position: relative;
+    border: 3px solid #00f260;
+    margin: 2rem 0;
+    box-shadow: 0 0 80px rgba(0, 242, 96, 0.15);
+    background: #000;
+    max-width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Overlay */
+.recording-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 242, 96, 0.4);
+    padding: 2.5rem;
+    border-radius: 20px;
+    color: white;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.rec-indicator {
+    font-size: 1.5rem;
+    color: #ff4b4b;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rec-indicator::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    background: #ff4b4b;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #ff4b4b;
+    animation: blink 1s infinite alternate;
+}
+
+@keyframes blink {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0.4;
+        transform: scale(0.8);
+    }
+}
+
+/* Success Card */
+.success-card {
+    background: linear-gradient(145deg, rgba(30, 30, 35, 0.9) 0%, rgba(20, 20, 25, 1) 100%);
+    border: 1px solid rgba(0, 242, 96, 0.3);
+    padding: 3rem;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 24px;
+    text-align: center;
+    margin-bottom: 3rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.success-card h3 {
+    font-size: 2rem;
+    background: linear-gradient(to right, #fff, #bbb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 2rem;
+}
+
+.file-info {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    font-size: 1.1rem;
+    color: #888;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1.5rem;
+}
+
+.file-info span {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-family: monospace;
+    color: #ccc;
+}
+
+.download-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+/* Buttons */
+.btn-download {
+    background: #00f260;
+    color: #000;
+    padding: 1.2rem 2.5rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-decoration: none;
+    box-shadow: 0 10px 25px rgba(0, 242, 96, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-download:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0, 242, 96, 0.5);
+    background: #33ff88;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 2px solid #333;
+    color: #888;
+    padding: 1.2rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    border-color: #666;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Initial State */
+.init-actions {
+    text-align: center;
+    background: rgba(30, 30, 35, 0.6);
+    padding: 3rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.init-actions p {
+    color: #888;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.init-actions strong {
+    color: #fff;
+    margin: 0 0.5rem;
+}
+
+.btn-record {
+    background: linear-gradient(135deg, #ff4b4b 0%, #ff9068 100%);
+    width: 250px;
+    padding: 1.2rem;
+    font-size: 1.2rem;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(255, 75, 75, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-record:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 40px rgba(255, 75, 75, 0.5);
+}
+
+.preview-video {
+    margin-top: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #2a2a2a;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
