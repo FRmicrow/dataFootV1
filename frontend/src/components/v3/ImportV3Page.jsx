@@ -23,6 +23,11 @@ const ImportV3Page = () => {
     const [isImporting, setIsImporting] = useState(false);
     const [logs, setLogs] = useState([]);
     const [autoScroll, setAutoScroll] = useState(true);
+    const [discoveredLeagues, setDiscoveredLeagues] = useState([]);
+    const [expandedDiscovery, setExpandedDiscovery] = useState({});
+    const [discoverySeasons, setDiscoverySeasons] = useState({});
+    const [discoverySelected, setDiscoverySelected] = useState({});
+    const [discoveryLoading, setDiscoveryLoading] = useState({});
 
     const logsEndRef = useRef(null);
 
@@ -30,6 +35,7 @@ const ImportV3Page = () => {
 
     useEffect(() => {
         fetchCountries();
+        fetchDiscoveredLeagues();
     }, []);
 
     useEffect(() => {
@@ -96,6 +102,83 @@ const ImportV3Page = () => {
         } catch (error) {
             console.error("Failed to fetch sync status", error);
         }
+    };
+
+    const fetchDiscoveredLeagues = async () => {
+        try {
+            const res = await axios.get('/api/v3/leagues/discovered');
+            setDiscoveredLeagues(res.data);
+        } catch (error) {
+            console.error("Failed to fetch discovered leagues", error);
+        }
+    };
+
+    const handleToggleExpand = async (apiId) => {
+        const isExpanded = expandedDiscovery[apiId];
+        if (isExpanded) {
+            setExpandedDiscovery(prev => ({ ...prev, [apiId]: false }));
+            return;
+        }
+
+        setExpandedDiscovery(prev => ({ ...prev, [apiId]: true }));
+
+        // Fetch if not cached
+        if (!discoverySeasons[apiId]) {
+            setDiscoveryLoading(prev => ({ ...prev, [apiId]: true }));
+            try {
+                const res = await axios.get(`/api/v3/league/${apiId}/available-seasons`);
+                setDiscoverySeasons(prev => ({ ...prev, [apiId]: res.data.seasons }));
+                // Pre-select all missing
+                const missing = res.data.seasons.filter(s => s.status !== 'FULL').map(s => s.year);
+                setDiscoverySelected(prev => ({ ...prev, [apiId]: new Set(missing) }));
+            } catch (error) {
+                console.error("Failed to fetch available seasons", error);
+            }
+            setDiscoveryLoading(prev => ({ ...prev, [apiId]: false }));
+        }
+    };
+
+    const handleToggleSeasonSelect = (apiId, year) => {
+        setDiscoverySelected(prev => {
+            const current = new Set(prev[apiId] || []);
+            if (current.has(year)) {
+                current.delete(year);
+            } else {
+                current.add(year);
+            }
+            return { ...prev, [apiId]: current };
+        });
+    };
+
+    const handleImportSelected = (apiId, leagueName, countryName) => {
+        const selected = discoverySelected[apiId];
+        if (!selected || selected.size === 0) return;
+
+        const queueItem = {
+            id: Date.now(),
+            country: countryName,
+            leagueId: apiId,
+            leagueName: leagueName,
+            seasons: Array.from(selected).sort((a, b) => a - b).map(y => ({ year: y, isFull: false, isPartial: false }))
+        };
+        setImportQueue(prev => [...prev, queueItem]);
+    };
+
+    const handleImportAllMissing = (apiId, leagueName, countryName) => {
+        const seasons = discoverySeasons[apiId];
+        if (!seasons) return;
+
+        const missing = seasons.filter(s => s.status !== 'FULL').map(s => s.year);
+        if (missing.length === 0) return;
+
+        const queueItem = {
+            id: Date.now(),
+            country: countryName,
+            leagueId: apiId,
+            leagueName: leagueName,
+            seasons: missing.sort((a, b) => a - b).map(y => ({ year: y, isFull: false, isPartial: false }))
+        };
+        setImportQueue(prev => [...prev, queueItem]);
     };
 
     // --- Handlers ---
@@ -391,6 +474,95 @@ const ImportV3Page = () => {
                     >
                         {isImporting ? 'Processing Batch...' : 'Start Batch Import'}
                     </button>
+                </div>
+
+                {/* Discovery Panel (IMPROVEMENT-25) */}
+                <div className="v3-panel discovery-panel">
+                    <div className="discovery-header-main">
+                        <h2>🕵️ Discovery Archive</h2>
+                        <p className="panel-desc">Leagues found via Deep Sync. Expand to see all available seasons.</p>
+                    </div>
+
+                    {discoveredLeagues.length === 0 ? (
+                        <div className="empty-state">No discovered leagues pending review.</div>
+                    ) : (
+                        <div className="discovery-list">
+                            {discoveredLeagues.map(countryGroup => (
+                                <div key={countryGroup.name} className="discovery-group">
+                                    <div className="discovery-country-header">
+                                        {countryGroup.flag && <img src={countryGroup.flag} alt="" className="mini-flag" />}
+                                        {countryGroup.name}
+                                    </div>
+                                    {countryGroup.leagues.map(l => (
+                                        <div key={l.league_id} className="discovery-card">
+                                            <div className="discovery-item">
+                                                <img src={l.logo_url} alt="" className="league-logo-mini" />
+                                                <div className="discovery-info">
+                                                    <div className="discovery-name">{l.name}</div>
+                                                    <div className="discovery-seasons">
+                                                        {l.seasons.map(y => (
+                                                            <span key={y} className="discovery-tag">🟡 {y}</span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    className="btn-expand-seasons"
+                                                    onClick={() => handleToggleExpand(l.api_id)}
+                                                    disabled={discoveryLoading[l.api_id]}
+                                                >
+                                                    {discoveryLoading[l.api_id] ? '⏳' : expandedDiscovery[l.api_id] ? '▲ Hide' : '▼ All Seasons'}
+                                                </button>
+                                            </div>
+
+                                            {expandedDiscovery[l.api_id] && discoverySeasons[l.api_id] && (
+                                                <div className="expanded-seasons">
+                                                    <div className="expanded-seasons-grid">
+                                                        {discoverySeasons[l.api_id].map(s => {
+                                                            const isSelected = discoverySelected[l.api_id]?.has(s.year);
+                                                            const badge = s.status === 'FULL' ? '✅' : (s.status === 'PARTIAL_DISCOVERY' || s.status === 'PARTIAL') ? '🟡' : '⬜';
+                                                            const isFull = s.status === 'FULL';
+
+                                                            return (
+                                                                <label
+                                                                    key={s.year}
+                                                                    className={`season-select-item ${isFull ? 'status-full' : isSelected ? 'status-selected' : ''}`}
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={isSelected || false}
+                                                                        disabled={isFull}
+                                                                        onChange={() => handleToggleSeasonSelect(l.api_id, s.year)}
+                                                                    />
+                                                                    <span className="season-badge">{badge}</span>
+                                                                    <span className="season-year">{s.year}</span>
+                                                                    {s.is_current && <span className="current-badge">LIVE</span>}
+                                                                </label>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div className="expanded-actions">
+                                                        <button
+                                                            className="btn-import-selected"
+                                                            onClick={() => handleImportSelected(l.api_id, l.name, countryGroup.name)}
+                                                            disabled={!discoverySelected[l.api_id] || discoverySelected[l.api_id].size === 0}
+                                                        >
+                                                            📥 Import Selected ({discoverySelected[l.api_id]?.size || 0})
+                                                        </button>
+                                                        <button
+                                                            className="btn-import-all-missing"
+                                                            onClick={() => handleImportAllMissing(l.api_id, l.name, countryGroup.name)}
+                                                        >
+                                                            🚀 All Missing
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Log Console */}

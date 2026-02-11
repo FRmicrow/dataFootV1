@@ -281,6 +281,7 @@
 .log-link:hover {
     color: #81d4fa;
 }
+
 .availability-hint {
     font-size: 0.75rem;
     color: #ffd700;
@@ -340,4 +341,265 @@
     background: rgba(255, 152, 0, 0.2);
     border-color: #ff9800;
     color: #ff9800;
+}
+
+/* Discovery Panel (IMPROVEMENT-25) */
+.discovery-panel {
+    flex: 1;
+    min-width: 300px;
+    max-width: 500px;
+    background: #16213e;
+    overflow-y: auto;
+    border-left: 1px solid #333;
+}
+
+.panel-desc {
+    color: #a0a0a0;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    margin-top: -10px;
+}
+
+.discovery-group {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.discovery-country-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    color: #e0e0e0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.mini-flag {
+    width: 20px;
+    height: 15px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+.discovery-card {
+    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: border-color 0.3s;
+}
+
+.discovery-card:hover {
+    border-color: rgba(0, 188, 212, 0.3);
+}
+
+.discovery-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+}
+
+.league-logo-mini {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.discovery-info {
+    flex: 1;
+}
+
+.discovery-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #fff;
+}
+
+.discovery-seasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.discovery-tag {
+    font-size: 0.7rem;
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
+.btn-expand-seasons {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #a0cfff;
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-expand-seasons:hover {
+    background: rgba(0, 188, 212, 0.15);
+    border-color: #00bcd4;
+    color: #00d4ff;
+}
+
+.btn-expand-seasons:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+/* Expanded Seasons Grid */
+.expanded-seasons {
+    background: rgba(0, 0, 0, 0.25);
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+
+    to {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+.expanded-seasons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.season-select-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    color: #ccc;
+    padding: 5px 8px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.season-select-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.season-select-item.status-full {
+    opacity: 0.45;
+    cursor: default;
+    background: rgba(76, 175, 80, 0.08);
+}
+
+.season-select-item.status-selected {
+    background: rgba(0, 188, 212, 0.12);
+    border-color: rgba(0, 188, 212, 0.4);
+    color: #fff;
+}
+
+.season-select-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: #00bcd4;
+    cursor: pointer;
+}
+
+.season-badge {
+    font-size: 0.75rem;
+}
+
+.season-year {
+    font-weight: 500;
+}
+
+.current-badge {
+    font-size: 0.6rem;
+    background: #e91e63;
+    color: white;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.expanded-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 10px;
+}
+
+.btn-import-selected {
+    background: #00bcd4;
+    border: none;
+    color: white;
+    font-size: 0.78rem;
+    padding: 7px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-import-selected:hover {
+    background: #00acc1;
+    transform: translateY(-1px);
+}
+
+.btn-import-selected:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-import-all-missing {
+    background: linear-gradient(135deg, #e91e63, #9c27b0);
+    border: none;
+    color: white;
+    font-size: 0.78rem;
+    padding: 7px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-import-all-missing:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
 }

@@ -15,13 +15,15 @@ router.get('/league/:id/sync-status', getSyncStatus);
  * @desc Initialize season trackers for a league (e.g. 2010-2025)
  * @body { leagueId, startYear, endYear }
  */
-import { importLeagueV3, getCountriesV3, getLeaguesV3, importBatchV3, getStandingsV3, getFixturesV3 } from '../controllers/v3/importControllerV3.js';
+import { importLeagueV3, getCountriesV3, getLeaguesV3, importBatchV3, getStandingsV3, getFixturesV3, syncPlayerCareerV3, getAvailableSeasons } from '../controllers/v3/importControllerV3.js';
 import { getSeasonOverview, getTeamSquad, getSeasonPlayers } from '../controllers/v3/seasonController.js';
 import { getPlayerProfileV3 } from '../controllers/v3/playerController.js';
-import { getV3Stats, getImportedLeagues } from '../controllers/v3/dashboardController.js';
+import { getV3Stats, getImportedLeagues, getDiscoveredLeagues } from '../controllers/v3/dashboardController.js';
+import { searchV3, getClubProfile, getSearchCountries } from '../controllers/v3/searchController.js';
 
 router.get('/stats', getV3Stats);
 router.get('/leagues/imported', getImportedLeagues);
+router.get('/leagues/discovered', getDiscoveredLeagues);
 router.post('/leagues/seasons/init', initializeSeasons);
 
 /**
@@ -62,10 +64,29 @@ router.get('/league/:id/standings', getStandingsV3);
 router.get('/league/:id/fixtures', getFixturesV3);
 
 /**
+ * @route GET /api/v3/league/:apiId/available-seasons
+ * @desc Get all available seasons from API for a league, cross-referenced with local DB
+ */
+router.get('/league/:apiId/available-seasons', getAvailableSeasons);
+
+/**
  * @route GET /api/v3/player/:id
  * @desc Get player profile and career history
  */
 router.get('/player/:id', getPlayerProfileV3);
+
+/**
+ * @route GET /api/v3/search
+ * @desc Search players & clubs
+ */
+router.get('/search', searchV3);
+router.get('/search/countries', getSearchCountries);
+
+/**
+ * @route GET /api/v3/club/:id
+ * @desc Get club profile with seasons & roster
+ */
+router.get('/club/:id', getClubProfile);
 
 /**
  * @route POST /api/v3/import/league
@@ -78,5 +99,12 @@ router.post('/import/league', importLeagueV3);
  * @desc Batch import multiple leagues
  */
 router.post('/import/batch', importBatchV3);
+
+
+/**
+ * @route POST /api/v3/player/:id/sync-career
+ * @desc Deep-career backfill for a player
+ */
+router.post('/player/:id/sync-career', syncPlayerCareerV3);
 
 export default router;
