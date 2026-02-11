@@ -58,7 +58,7 @@ const ImportV3Page = () => {
         if (selectedLeague && leagues.length > 0) {
             const leagueObj = leagues.find(l => l.league.id === parseInt(selectedLeague));
             if (leagueObj && leagueObj.seasons) {
-                const years = leagueObj.seasons.map(s => s.year).sort((a, b) => b - a);
+                const years = [...new Set(leagueObj.seasons.map(s => s.year))].sort((a, b) => b - a);
                 setAvailableSeasons(years);
                 // Smart Defaulting: oldest to newest
                 if (years.length > 0) {

@@ -139,6 +139,35 @@ export const searchStudioPlayers = (req, res) => {
 };
 
 /**
+ * GET /api/v3/studio/meta/teams
+ * Search endpoint for Club selection
+ */
+export const searchStudioTeams = (req, res) => {
+    const { search } = req.query;
+
+    if (!search || search.length < 2) {
+        return res.json([]);
+    }
+
+    try {
+        const sql = `
+            SELECT t.team_id, t.name, t.logo_url, c.name as country_name
+            FROM V3_Teams t
+            JOIN V3_Countries c ON t.country = c.name
+            WHERE t.name LIKE ?
+            ORDER BY c.importance_rank ASC, t.name ASC
+            LIMIT 20
+        `;
+        const params = [`%${search}%`];
+        const rows = db.all(sql, params);
+        res.json(rows);
+    } catch (error) {
+        console.error('Error searching studio teams:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
  * POST /api/v3/studio/query
  * The Data Aggregation Engine - Strict Contract Implementation
  */
@@ -184,6 +213,13 @@ export const queryStudioData = (req, res) => {
             const placeholders = filters.countries.map(() => '?').join(',');
             whereClauses.push(`p.nationality IN (${placeholders})`);
             params.push(...filters.countries);
+        }
+
+        // Team Filter (Club)
+        if (filters.teams && filters.teams.length > 0) {
+            const placeholders = filters.teams.map(() => '?').join(',');
+            whereClauses.push(`s.team_id IN (${placeholders})`);
+            params.push(...filters.teams);
         }
 
         // Manual Players Filter
