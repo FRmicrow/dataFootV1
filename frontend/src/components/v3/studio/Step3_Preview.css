@@ -1,0 +1,87 @@
+/* Main Column */
+.preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+}
+
+/* Canvas Wrapper - Device Mockup Feel */
+.canvas-wrapper {
+    background: #000;
+    border: 4px solid #1a1a1a;
+    border-radius: 20px;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px #333;
+    margin: 2rem 0;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.3s;
+}
+
+.canvas-wrapper:hover {
+    transform: scale(1.02);
+    box-shadow: 0 30px 100px rgba(0, 0, 0, 0.9), 0 0 0 2px #4facfe;
+}
+
+/* Control Bar */
+.preview-controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    background: rgba(30, 30, 35, 0.7);
+    backdrop-filter: blur(16px);
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 3rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.ctrl-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    transition: all 0.2s;
+}
+
+.ctrl-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #4facfe;
+}
+
+.playback-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: #888;
+    padding-left: 1.5rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Specific styling for the D3 Chart */
+.d3-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #000;
+    /* Fallback */
+}
+
+/* Step Actions override */
+.step-actions .btn-back {
+    color: #888;
+    border-color: transparent;
+    transition: color 0.3s;
+}
+
+.step-actions .btn-back:hover {
+    color: #fff;
+}

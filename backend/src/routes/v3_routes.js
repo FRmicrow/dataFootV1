@@ -102,6 +102,19 @@ router.post('/import/batch', importBatchV3);
 
 
 /**
+ * @route Studio Data Engine
+ * @desc Endpoints for the Content Studio visualization feature
+ */
+import { getStudioStats, getStudioLeagues, searchStudioPlayers, queryStudioData, getStudioNationalities } from '../controllers/v3/studioController.js';
+
+router.get('/studio/meta/stats', getStudioStats);
+router.get('/studio/meta/leagues', getStudioLeagues);
+router.get('/studio/meta/nationalities', getStudioNationalities);
+router.get('/studio/meta/players', searchStudioPlayers);
+router.post('/studio/query', queryStudioData);
+
+
+/**
  * @route POST /api/v3/player/:id/sync-career
  * @desc Deep-career backfill for a player
  */

@@ -17,6 +17,7 @@ import V3LeaguesList from './components/v3/V3LeaguesList';
 import PlayerProfilePageV3 from './components/v3/PlayerProfilePageV3';
 import SearchPageV3 from './components/v3/SearchPageV3';
 import ClubProfilePageV3 from './components/v3/ClubProfilePageV3';
+import ContentStudioV3 from './components/v3/ContentStudioV3';
 import './App.css';
 
 
@@ -68,6 +69,7 @@ function App() {
                         <Route path="player/:id" element={<PlayerProfilePageV3 />} />
                         <Route path="search" element={<SearchPageV3 />} />
                         <Route path="club/:id" element={<ClubProfilePageV3 />} />
+                        <Route path="studio" element={<ContentStudioV3 />} />
                     </Route>
 
                     <Route path="/admin/*" element={<AdminLayout />} />
