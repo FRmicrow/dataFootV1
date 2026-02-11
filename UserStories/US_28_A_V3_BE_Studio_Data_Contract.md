@@ -15,6 +15,8 @@ Build the robust backend engine that adheres to the strict V3 Studio Data Contra
 ### 1. Metadata Endpoints (Input for Filters)
 - `GET /api/v3/studio/meta/stats` -> Returns list of stat keys available in `V3_Player_Stats` with metadata (label, unit, category).
 - `GET /api/v3/studio/meta/leagues` -> Returns active leagues grouped by country.
+- `GET /api/v3/studio/meta/nationalities` -> Returns distinct nationalities for filtering.
+- `GET /api/v3/studio/meta/teams?search=...` -> Returns clubs matching search query (sorted by country rank).
 - `GET /api/v3/studio/meta/players?search=...` -> Returns player candidates for manual selection.
 
 ### 2. Aggregation Endpoint (The Engine)
@@ -26,6 +28,8 @@ Build the robust backend engine that adheres to the strict V3 Studio Data Contra
   "stat": "goals_total",         // string (column name)
   "filters": {
     "leagues": [1, 2],           // array<int> (optional)
+    "countries": ["Argentina"],  // array<string> (optional)
+    "teams": [10, 20],           // array<int> (optional - Club Filter)
     "years": [2010, 2024]        // [min, max] (required)
   },
   "selection": {

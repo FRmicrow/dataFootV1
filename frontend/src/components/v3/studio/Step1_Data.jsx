@@ -25,6 +25,11 @@ const Step1_Data = () => {
     const [playerSearchQuery, setPlayerSearchQuery] = useState('');
     const [playerSearchResults, setPlayerSearchResults] = useState([]);
 
+    // Club State
+    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [teamSearchQuery, setTeamSearchQuery] = useState('');
+    const [teamSearchResults, setTeamSearchResults] = useState([]);
+
     // Fetch initial metadata
     useEffect(() => {
         const fetchMeta = async () => {
@@ -71,6 +76,26 @@ const Step1_Data = () => {
 
         return () => clearTimeout(timer);
     }, [playerSearchQuery]);
+
+    // Team Search Effect
+    useEffect(() => {
+        if (teamSearchQuery.length < 2) {
+            setTeamSearchResults([]);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/v3/studio/meta/teams?search=${teamSearchQuery}`);
+                const data = await res.json();
+                setTeamSearchResults(data);
+            } catch (err) {
+                console.error("Team Search failed", err);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [teamSearchQuery]);
 
 
     // Handlers
@@ -138,6 +163,11 @@ const Step1_Data = () => {
                 payloadFilters.countries = [selectedCountry];
                 payloadSelection.mode = 'top_n';
                 contextLabel = selectedCountry;
+            } else if (mode === 'club') {
+                if (!selectedTeam) throw new Error("Please select a club.");
+                payloadFilters.teams = [parseInt(selectedTeam.id)];
+                payloadSelection.mode = 'top_n';
+                contextLabel = selectedTeam.name;
             }
 
             // Update filters with context label for Step 3 Title
@@ -208,6 +238,12 @@ const Step1_Data = () => {
                     onClick={() => setMode('country')}
                 >
                     🌍 National Talent
+                </button>
+                <button
+                    className={`mode-btn ${mode === 'club' ? 'active' : ''}`}
+                    onClick={() => setMode('club')}
+                >
+                    🛡️ Specific Club
                 </button>
             </div>
 
@@ -280,6 +316,39 @@ const Step1_Data = () => {
                                 </option>
                             ))}
                         </select>
+                    </div>
+                )}
+
+                {mode === 'club' && (
+                    <div className="team-search input-wrapper">
+                        {!selectedTeam ? (
+                            <div className="search-container">
+                                <input
+                                    type="text"
+                                    placeholder="Type club name..."
+                                    value={teamSearchQuery}
+                                    onChange={(e) => setTeamSearchQuery(e.target.value)}
+                                    className="search-input full-width"
+                                />
+                                {teamSearchResults.length > 0 && (
+                                    <ul className="search-results dropdown">
+                                        {teamSearchResults.map(t => (
+                                            <li key={t.team_id} onClick={() => { setSelectedTeam({ id: t.team_id, name: t.name, logo: t.logo_url }); setTeamSearchQuery(''); setTeamSearchResults([]); }}>
+                                                <img src={t.logo_url} alt="" className="avatar-mini" />
+                                                <span>{t.name}</span>
+                                                <small className="muted">{t.country_name}</small>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="selected-item-card">
+                                <img src={selectedTeam.logo} alt="" className="avatar-small" />
+                                <span className="label">{selectedTeam.name}</span>
+                                <button className="btn-small btn-danger" onClick={() => setSelectedTeam(null)}>Change</button>
+                            </div>
+                        )}
                     </div>
                 )}
 
