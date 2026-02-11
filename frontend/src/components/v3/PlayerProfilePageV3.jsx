@@ -9,13 +9,23 @@ const PlayerProfilePageV3 = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [syncStatus, setSyncStatus] = useState('idle'); // 'idle', 'syncing', 'complete', 'resolving'
+    const [syncStats, setSyncStats] = useState({ updated: 0, new: 0 });
+    const [syncProgress, setSyncProgress] = useState(0);
+    const [unresolvedCompetitions, setUnresolvedCompetitions] = useState([]);
+    const [allLeagues, setAllLeagues] = useState([]);
+    const [syncLogs, setSyncLogs] = useState([]); // Added this state based on the instruction snippet
 
     useEffect(() => {
         const fetchPlayerProfile = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`/api/v3/player/${id}`);
-                setData(res.data);
+                const [playerRes, leaguesRes] = await Promise.all([
+                    axios.get(`/api/v3/player/${id}`),
+                    axios.get('/api/v3/leagues')
+                ]);
+                setData(playerRes.data);
+                setAllLeagues(leaguesRes.data || []);
             } catch (err) {
                 console.error("Error fetching player profile:", err);
                 setError(err.response?.data?.error || "Failed to load player profile.");
@@ -28,6 +38,68 @@ const PlayerProfilePageV3 = () => {
             fetchPlayerProfile();
         }
     }, [id]);
+
+    const handleDeepSync = async () => {
+        setSyncStatus('syncing');
+        setSyncLogs([]);
+        setSyncStats({ updated: 0, new: 0 });
+        setSyncProgress(0);
+        setUnresolvedCompetitions([]);
+
+        try {
+            const response = await fetch(`/api/v3/player/${id}/sync-career`, {
+                method: 'POST',
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                lines.forEach(line => {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const eventData = JSON.parse(line.slice(6));
+                            setSyncLogs(prev => [...prev, eventData]);
+
+                            if (eventData.type === 'stat_updated') {
+                                setSyncStats(prev => ({ ...prev, updated: prev.updated + 1 }));
+                            } else if (eventData.type === 'stat_new') {
+                                setSyncStats(prev => ({ ...prev, new: prev.new + 1 }));
+                            } else if (eventData.type === 'fetching') {
+                                const pct = Math.round((eventData.current / eventData.total) * 100);
+                                setSyncProgress(pct);
+                            } else if (eventData.type === 'unresolved') {
+                                setUnresolvedCompetitions(eventData.competitions || []);
+                            } else if (eventData.type === 'complete') {
+                                setSyncProgress(100);
+                                if (eventData.unresolved?.length > 0) {
+                                    setUnresolvedCompetitions(eventData.unresolved);
+                                    setSyncStatus('resolving');
+                                } else {
+                                    setSyncStatus('complete');
+                                    setTimeout(() => setSyncStatus('idle'), 5000);
+                                }
+                                // Trigger refresh of the page data
+                                axios.get(`/api/v3/player/${id}`).then(res => setData(res.data));
+                            }
+                        } catch (e) {
+                            console.error("SSE Parse Error", e);
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("Deep Sync Failed:", err);
+            setSyncStatus('idle');
+        }
+    };
+
 
     const [careerView, setCareerView] = useState('year'); // 'year', 'club', 'country'
 
@@ -121,6 +193,54 @@ const PlayerProfilePageV3 = () => {
                                 <span className="value foot-val">{player.preferred_foot || 'N/A'}</span>
                             </span>
                         </div>
+
+                        <div className="sync-container-inline">
+                            {syncStatus === 'idle' && (
+                                <button className="btn-deep-sync-v2" onClick={handleDeepSync}>
+                                    <span className="icon">🔄</span>
+                                    Deep Sync History
+                                </button>
+                            )}
+
+                            {syncStatus === 'syncing' && (
+                                <div className="sync-active-strip">
+                                    <div className="sync-progress-info">
+                                        <span className="status-label">Synchronizing...</span>
+                                        <div className="dynamic-counters">
+                                            <span className="counter updated">Updated: {syncStats.updated}</span>
+                                            <span className="counter new">New: {syncStats.new}</span>
+                                        </div>
+                                    </div>
+                                    <div className="sync-bar-container">
+                                        <div className="sync-bar-fill"></div>
+                                    </div>
+                                    <div className="sync-mini-log">
+                                        {syncLogs.length > 0 && syncLogs[syncLogs.length - 1].message}
+                                    </div>
+                                </div>
+                            )}
+
+                            {syncStatus === 'complete' && (
+                                <div className="sync-complete-strip">
+                                    <span className="icon">✅</span>
+                                    <span className="msg">Bio-History Synchronized!</span>
+                                    <div className="final-stats">
+                                        {syncStats.updated} records updated, {syncStats.new} new added.
+                                    </div>
+                                </div>
+                            )}
+
+                            {syncStatus === 'resolving' && (
+                                <div className="sync-alert-strip">
+                                    <span className="icon">⚠️</span>
+                                    <span className="msg">Unknown Competitions Found</span>
+                                    <button className="btn-resolve-now" onClick={() => {
+                                        const resolver = document.getElementById('entity-resolver-anchor');
+                                        resolver?.scrollIntoView({ behavior: 'smooth' });
+                                    }}>Resolve Mapping Now</button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -139,6 +259,64 @@ const PlayerProfilePageV3 = () => {
                     </div>
                 </div>
             </header>
+
+            {/* Entity Resolver Section (US-V3-FE-016) */}
+            {syncStatus === 'resolving' && unresolvedCompetitions.length > 0 && (
+                <section id="entity-resolver-anchor" className="entity-resolver-dashboard animate-slide-up">
+                    <div className="resolver-header">
+                        <div className="title-wrap">
+                            <span className="icon">🧠</span>
+                            <div>
+                                <h2>Entity Resolution Required</h2>
+                                <p>We found {unresolvedCompetitions.length} competition(s) not yet in our V3 taxonomy. Map them to maintain clean data.</p>
+                            </div>
+                        </div>
+                        <button className="btn-close-resolver" onClick={() => setSyncStatus('idle')}>✕</button>
+                    </div>
+
+                    <div className="unresolved-list">
+                        {unresolvedCompetitions.map((comp, idx) => (
+                            <div key={idx} className="resolver-row">
+                                <div className="source-info">
+                                    <div className="source-label">API-Football Entry:</div>
+                                    <div className="source-name">{comp.name}</div>
+                                    <div className="source-meta">ID: {comp.api_id}</div>
+                                </div>
+                                <div className="mapping-action">
+                                    <div className="mapping-input-wrap">
+                                        <input
+                                            type="text"
+                                            placeholder="Search existing V3 Competition..."
+                                            className="v3-autocomplete-input"
+                                            list={`leagues-list-${idx}`}
+                                        />
+                                        <datalist id={`leagues-list-${idx}`}>
+                                            {allLeagues.map(l => (
+                                                <option key={l.api_id} value={l.name} />
+                                            ))}
+                                        </datalist>
+                                    </div>
+                                    <button className="btn-v3-map" onClick={() => {
+                                        // TODO: Implement actual mapping API call
+                                        alert(`Mapping ${comp.name} to existing league...`);
+                                        setUnresolvedCompetitions(prev => prev.filter((_, i) => i !== idx));
+                                        if (unresolvedCompetitions.length === 1) setSyncStatus('complete');
+                                    }}>Link Entity</button>
+                                    <button className="btn-v3-create" onClick={() => {
+                                        // TODO: Implement actual creation API call
+                                        const confirmCreate = window.confirm(`Create '${comp.name}' as a new V3 Competition?`);
+                                        if (confirmCreate) {
+                                            alert(`Created ${comp.name} as new V3 Competition.`);
+                                            setUnresolvedCompetitions(prev => prev.filter((_, i) => i !== idx));
+                                            if (unresolvedCompetitions.length === 1) setSyncStatus('complete');
+                                        }
+                                    }}>Create New</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             <div className="profile-grid">
                 {/* Career History Table */}

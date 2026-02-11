@@ -1,0 +1,565 @@
+.club-profile-premium {
+    min-height: 100vh;
+    padding: 2rem;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Base Styles */
+.loading-state,
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+}
+
+.spinner-v3 {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(99, 102, 241, 0.1);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 2rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ================= HERO SECTION ================= */
+.club-ultra-hero {
+    position: relative;
+    border-radius: 32px;
+    padding: 3rem;
+    margin-bottom: 3rem;
+    overflow: hidden;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hero-background-fx {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.fx-circle {
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 60%;
+    height: 150%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+}
+
+.fx-mesh {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.5;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-top {
+    margin-bottom: 2.5rem;
+}
+
+.hero-back-hint {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+}
+
+.hero-back-hint:hover {
+    color: #6366f1;
+}
+
+.hero-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.club-identifier {
+    display: flex;
+    align-items: flex-end;
+    gap: 3rem;
+}
+
+.club-crest-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+}
+
+.crest-glow {
+    position: absolute;
+    inset: -20px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+    filter: blur(20px);
+    opacity: 0.3;
+}
+
+.club-crest-large {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+}
+
+.club-identity-info {
+    padding-bottom: 0.5rem;
+}
+
+.club-tag-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 1.2rem;
+}
+
+.club-country-tag {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.club-year-tag {
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.club-title-big {
+    font-size: 4.5rem;
+    font-weight: 800;
+    margin: 0 0 0.8rem 0;
+    letter-spacing: -3px;
+    line-height: 1;
+    background: linear-gradient(to bottom, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.club-venue-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #64748b;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.club-venue-row .dot {
+    opacity: 0.3;
+}
+
+.hero-stats-panel {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.h-stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1.5rem 2rem;
+    border-radius: 20px;
+    text-align: center;
+    min-width: 140px;
+}
+
+.h-val {
+    display: block;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.h-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+/* ================= GRID LAYOUT ================= */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2.5rem;
+    margin-bottom: 2.5rem;
+}
+
+@media (max-width: 1100px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.profile-panel-v3 {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 2rem;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.p-icon {
+    font-size: 1.5rem;
+}
+
+.panel-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+    color: #e2e8f0;
+    flex: 1;
+}
+
+/* ================= TABLES ================= */
+.premium-table-container {
+    overflow-x: auto;
+}
+
+.premium-compact-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.premium-compact-table th {
+    text-align: left;
+    padding: 1rem;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.04);
+}
+
+.premium-compact-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.year-cell {
+    font-weight: 800;
+    color: #6366f1;
+    font-size: 1rem;
+}
+
+.league-cell-premium .l-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.league-cell-premium img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.center {
+    text-align: center;
+}
+
+.right {
+    text-align: right;
+}
+
+.stat-num {
+    font-weight: 700;
+    color: #94a3b8;
+    font-size: 1rem;
+}
+
+.stat-num.high {
+    color: #4ade80;
+}
+
+.rating-pill-v3 {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #fbbf24;
+}
+
+.rating-pill-v3.gold {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fcd34d;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.1);
+}
+
+.btn-view-sm {
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+}
+
+.btn-view-sm:hover {
+    color: #818cf8;
+    transform: translateX(3px);
+    display: inline-block;
+}
+
+/* ================= SIDEBAR PANELS ================= */
+.venue-img-wrap {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    height: 180px;
+}
+
+.venue-img-full {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.img-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, #0f172a, transparent);
+}
+
+.venue-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.v-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.v-label {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.v-value {
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.premium-select-v3 {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #fff;
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    font-family: inherit;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+}
+
+.squad-info-p {
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ================= ROSTER SECTION ================= */
+.roster-full-section {
+    margin-top: 1rem;
+}
+
+.premium-roster-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+}
+
+.pos-group-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pos-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+}
+
+.pos-indicator.goalkeeper {
+    background: #f59e0b;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.pos-indicator.defender {
+    background: #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+.pos-indicator.midfielder {
+    background: #22c55e;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+}
+
+.pos-indicator.attacker {
+    background: #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.pos-group-header h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    flex: 1;
+    color: #f8fafc;
+}
+
+.pos-count {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #64748b;
+}
+
+.pos-grid-v3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1.2rem;
+}
+
+.premium-player-card {
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    padding: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.premium-player-card:hover {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(99, 102, 241, 0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.4);
+}
+
+.p-photo-v3 {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-right: 1.5rem;
+}
+
+.p-photo-v3 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.p-data-v3 {
+    flex: 1;
+}
+
+.p-name {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.p-meta {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 0.8rem;
+}
+
+.p-stats-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.p-stat {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.p-stat strong {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-right: 2px;
+}
+
+.p-stat.high strong {
+    color: #22c55e;
+}
+
+.p-stat.rating span {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 800;
+    color: #fbbf24;
+}
+
+.p-stat.rating span.good {
+    background: rgba(34, 197, 94, 0.1);
+    color: #4ade80;
+}

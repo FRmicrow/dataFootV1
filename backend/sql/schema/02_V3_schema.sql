@@ -9,7 +9,10 @@ CREATE TABLE IF NOT EXISTS V3_Countries (
     name TEXT NOT NULL UNIQUE,
     code TEXT,
     flag_url TEXT,
+    flag_small_url TEXT,
     api_id INTEGER UNIQUE,
+    importance_rank INTEGER DEFAULT 999, -- Synced from V2: 1=top priority, 999=unranked
+    continent TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -20,6 +23,7 @@ CREATE TABLE IF NOT EXISTS V3_Leagues (
     type TEXT, -- League, Cup
     logo_url TEXT,
     country_id INTEGER,
+    is_discovered BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (country_id) REFERENCES V3_Countries(country_id)
 );
