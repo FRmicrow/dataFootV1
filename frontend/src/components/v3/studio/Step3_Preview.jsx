@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStudio } from './StudioContext';
 import './Step3_Preview.css';
 import BarChartRace from './charts/BarChartRace';
+import LineChartRace from './charts/LineChartRace';
 
 const Step3_Preview = () => {
     const {
@@ -70,16 +71,29 @@ const Step3_Preview = () => {
                 maxWidth: visual.format === '9:16' ? '500px' : '800px',
                 aspectRatio: visual.format === '9:16' ? '9/16' : (visual.format === '1:1' ? '1/1' : '16/9')
             }}>
-                <BarChartRace
-                    data={chartData.timeline}
-                    width={layout.width}
-                    height={layout.height}
-                    barCount={layout.barCount} // Dynamic Player Count
-                    isPlaying={isPlaying}
-                    speed={visual.speed}
-                    onComplete={() => setIsPlaying(false)}
-                    title={chartTitle}
-                />
+                {visual.type === 'line' ? (
+                    <LineChartRace
+                        data={chartData.timeline}
+                        width={layout.width}
+                        height={layout.height}
+                        barCount={layout.barCount}
+                        isPlaying={isPlaying}
+                        speed={visual.speed}
+                        onComplete={() => setIsPlaying(false)}
+                        title={chartTitle}
+                    />
+                ) : (
+                    <BarChartRace
+                        data={chartData.timeline}
+                        width={layout.width}
+                        height={layout.height}
+                        barCount={layout.barCount}
+                        isPlaying={isPlaying}
+                        speed={visual.speed}
+                        onComplete={() => setIsPlaying(false)}
+                        title={chartTitle}
+                    />
+                )}
             </div>
             <div className="preview-controls">
                 <button className="ctrl-btn" onClick={togglePlay}>
