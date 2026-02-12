@@ -131,4 +131,15 @@ router.post('/admin/health/fix', fixDbHealth);
 router.get('/admin/health/leagues', getLeagueNames);
 router.post('/admin/health/check-league', checkLeagueHealthName);
 
+/**
+ * @route Trophies System
+ */
+import { importPlayerTrophies, getPlayersMissingTrophies, getPlayerTrophiesLocal, getNationalities, getPlayersByNationality } from '../controllers/v3/trophyController.js';
+
+router.post('/import/trophies', importPlayerTrophies);
+router.get('/import/trophies/candidates', getPlayersMissingTrophies);
+router.get('/player/:id/trophies', getPlayerTrophiesLocal);
+router.get('/players/nationalities', getNationalities);
+router.get('/players/by-nationality', getPlayersByNationality);
+
 export default router;

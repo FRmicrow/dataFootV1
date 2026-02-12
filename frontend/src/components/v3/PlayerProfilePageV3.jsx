@@ -14,18 +14,21 @@ const PlayerProfilePageV3 = () => {
     const [syncProgress, setSyncProgress] = useState(0);
     const [unresolvedCompetitions, setUnresolvedCompetitions] = useState([]);
     const [allLeagues, setAllLeagues] = useState([]);
-    const [syncLogs, setSyncLogs] = useState([]); // Added this state based on the instruction snippet
+    const [syncLogs, setSyncLogs] = useState([]);
+    const [trophies, setTrophies] = useState([]);
 
     useEffect(() => {
         const fetchPlayerProfile = async () => {
             setLoading(true);
             try {
-                const [playerRes, leaguesRes] = await Promise.all([
+                const [playerRes, leaguesRes, trophiesRes] = await Promise.all([
                     axios.get(`/api/v3/player/${id}`),
-                    axios.get('/api/v3/leagues')
+                    axios.get('/api/v3/leagues'),
+                    axios.get(`/api/v3/player/${id}/trophies`)
                 ]);
                 setData(playerRes.data);
                 setAllLeagues(leaguesRes.data || []);
+                setTrophies(trophiesRes.data || []);
             } catch (err) {
                 console.error("Error fetching player profile:", err);
                 setError(err.response?.data?.error || "Failed to load player profile.");
@@ -155,6 +158,86 @@ const PlayerProfilePageV3 = () => {
         sortedKeys = Object.keys(groupedCareer).sort((a, b) => groupedCareer[b].latest - groupedCareer[a].latest);
     }
 
+    const renderTrophies = () => {
+        if (trophies.length === 0) return null;
+
+        // Step 1: Filter only Winners
+        const winners = trophies.filter(t => t.place === 'Winner' || t.place === '1st Place');
+        if (winners.length === 0) return null;
+
+        // Step 2: Group by Country
+        const countryGroups = winners.reduce((acc, t) => {
+            const country = t.country || 'International';
+            if (!acc[country]) {
+                acc[country] = {
+                    name: country,
+                    flag: t.country_flag,
+                    rank: (t.importance_rank !== undefined && t.importance_rank !== null) ? t.importance_rank : 999,
+                    trophies: []
+                };
+            }
+            acc[country].trophies.push(t);
+            return acc;
+        }, {});
+
+        // Step 3: Process items within each country (Group by Competition Name)
+        const processedGroups = Object.values(countryGroups).map(group => {
+            // Group by trophy name/league
+            const compMap = group.trophies.reduce((map, t) => {
+                const name = t.league_name || t.trophy;
+                if (!map[name]) map[name] = { name, count: 0, seasons: [] };
+                map[name].count++;
+                map[name].seasons.push(t.season); // Collect seasons
+                return map;
+            }, {});
+
+            // Convert map to array and sort seasons
+            const compList = Object.values(compMap).map(c => {
+                c.seasons.sort((a, b) => b.toString().localeCompare(a.toString())); // Descending seasons
+                return c;
+            });
+
+            // Sort competitions by count DESC
+            compList.sort((a, b) => b.count - a.count);
+
+            return { ...group, items: compList };
+        });
+
+        // Step 4: Sort Countries by Importance Rank ASC
+        processedGroups.sort((a, b) => a.rank - b.rank);
+
+        return (
+            <div className="dash-card" style={{ marginBottom: '20px' }}>
+                <div className="card-title">🏆 Honours</div>
+                <div className="trophy-list-container">
+                    {processedGroups.map((group) => (
+                        <div key={group.name} className="country-group">
+                            <div className="country-group-header">
+                                {group.flag && <img src={group.flag} alt={group.name} className="country-header-flag" />}
+                                <span className="country-header-name">{group.name}</span>
+                            </div>
+                            <div className="country-trophies-list">
+                                {group.items.map((item) => (
+                                    <div key={item.name} className="trophy-item-row">
+                                        <div className="trophy-badge-col">
+                                            <span className="trophy-count-badge">{item.count}</span>
+                                        </div>
+                                        <div className="trophy-details-col">
+                                            <div className="trophy-name">{item.name}</div>
+                                            <div className="trophy-years">
+                                                {item.seasons.join(', ')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="v3-player-profile animate-fade-in">
             {/* Premium Hero Section */}
@@ -201,7 +284,6 @@ const PlayerProfilePageV3 = () => {
                                     Deep Sync History
                                 </button>
                             )}
-
                             {syncStatus === 'syncing' && (
                                 <div className="sync-active-strip">
                                     <div className="sync-progress-info">
@@ -260,7 +342,7 @@ const PlayerProfilePageV3 = () => {
                 </div>
             </header>
 
-            {/* Entity Resolver Section (US-V3-FE-016) */}
+            {/* Entity Resolver Section (RESTORED) */}
             {syncStatus === 'resolving' && unresolvedCompetitions.length > 0 && (
                 <section id="entity-resolver-anchor" className="entity-resolver-dashboard animate-slide-up">
                     <div className="resolver-header">
@@ -321,7 +403,7 @@ const PlayerProfilePageV3 = () => {
             <div className="profile-grid">
                 {/* Career History Table */}
                 <main className="career-history">
-                    {/* Club Totals Section (US-010) */}
+                    {/* Club Totals Section */}
                     <div className="dash-card club-totals-card animate-slide-up">
                         <div className="card-title">🛡️ Club Career Totals</div>
                         <table className="club-totals-table">
@@ -440,6 +522,7 @@ const PlayerProfilePageV3 = () => {
 
                 {/* Sidebar Info */}
                 <aside className="player-sidebar">
+                    {renderTrophies()}
                     <div className="dash-card">
                         <div className="card-title">Bio Details</div>
                         <div className="bio-list">
