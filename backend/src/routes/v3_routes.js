@@ -121,4 +121,14 @@ router.post('/studio/query', queryStudioData);
  */
 router.post('/player/:id/sync-career', syncPlayerCareerV3);
 
+/**
+ * @route DB Health Check
+ */
+import { getDbHealth, fixDbHealth, getLeagueNames, checkLeagueHealthName } from '../controllers/v3/adminController.js';
+
+router.get('/admin/health', getDbHealth);
+router.post('/admin/health/fix', fixDbHealth);
+router.get('/admin/health/leagues', getLeagueNames);
+router.post('/admin/health/check-league', checkLeagueHealthName);
+
 export default router;
