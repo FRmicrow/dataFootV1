@@ -15,6 +15,9 @@ const V3Layout = () => {
                     <NavLink to="/v3/dashboard" className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}>
                         <span className="icon">📊</span> Dashboard
                     </NavLink>
+                    <NavLink to="/v3/studio" className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}>
+                        <span className="icon">🎬</span> Content Studio
+                    </NavLink>
                     <NavLink to="/v3/import" className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}>
                         <span className="icon">📥</span> Import Tool
                     </NavLink>
@@ -23,6 +26,9 @@ const V3Layout = () => {
                     </NavLink>
                     <NavLink to="/v3/search" className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}>
                         <span className="icon">🔍</span> Search
+                    </NavLink>
+                    <NavLink to="/v3/health" className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}>
+                        <span className="icon">🩺</span> DB Health
                     </NavLink>
                 </nav>
 
