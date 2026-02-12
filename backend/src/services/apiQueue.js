@@ -13,10 +13,8 @@ class ApiQueue {
         this.queue = [];
         this.processing = false;
         this.requestsInLastMinute = [];
-        // API-Football Pro Plan: ~30 req/sec. 
-        // We set a safe burst limit of 450/min (7.5/sec) to stay well within limits
-        // while maximizing throughput.
-        this.MAX_REQUESTS_PER_MINUTE = 450;
+        // API-Football Pro Limit: ~450/min. We set 440 to be safe.
+        this.MAX_REQUESTS_PER_MINUTE = 440;
         this.MINUTE_MS = 60 * 1000;
     }
 
