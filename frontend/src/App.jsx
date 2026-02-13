@@ -20,6 +20,7 @@ import ClubProfilePageV3 from './components/v3/ClubProfilePageV3';
 import ContentStudioV3 from './components/v3/ContentStudioV3';
 import HealthCheckPage from './components/v3/HealthCheckPage';
 import ImportTrophiesPage from './components/v3/ImportTrophiesPage';
+import ImportEventsPage from './components/v3/ImportEventsPage';
 import './App.css';
 
 
@@ -74,6 +75,7 @@ function App() {
                         <Route path="studio" element={<ContentStudioV3 />} />
                         <Route path="health" element={<HealthCheckPage />} />
                         <Route path="trophies" element={<ImportTrophiesPage />} />
+                        <Route path="events" element={<ImportEventsPage />} />
                     </Route>
 
                     <Route path="/admin/*" element={<AdminLayout />} />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './SeasonOverviewPage.css';
+import './SeasonOverviewPage_Events.css';
 
 const SeasonOverviewPage = () => {
     const { id, year } = useParams();
@@ -17,6 +18,11 @@ const SeasonOverviewPage = () => {
     const [standings, setStandings] = useState([]);
     const [fixturesData, setFixturesData] = useState({ fixtures: [], rounds: [] });
     const [selectedRound, setSelectedRound] = useState('');
+
+    // Fixture Events State (US-Feature request)
+    const [expandedFixtureId, setExpandedFixtureId] = useState(null);
+    const [fixtureEvents, setFixtureEvents] = useState({}); // Cache: { fixtureId: [events] }
+    const [loadingEvents, setLoadingEvents] = useState({}); // { fixtureId: boolean }
 
     // UI State
     const [loading, setLoading] = useState(true);
@@ -113,6 +119,41 @@ const SeasonOverviewPage = () => {
     const handleSeasonChange = (e) => {
         const newYear = e.target.value;
         navigate(`/v3/league/${id}/season/${newYear}`);
+    };
+
+    const handleFixtureToggle = async (fixtureId) => {
+        if (expandedFixtureId === fixtureId) {
+            setExpandedFixtureId(null);
+            return;
+        }
+
+        setExpandedFixtureId(fixtureId);
+
+        // Check cache
+        if (fixtureEvents[fixtureId]) return;
+
+        // Fetch events
+        setLoadingEvents(prev => ({ ...prev, [fixtureId]: true }));
+        try {
+            const res = await axios.get(`/api/v3/fixtures/${fixtureId}/events`);
+            setFixtureEvents(prev => ({ ...prev, [fixtureId]: res.data }));
+        } catch (err) {
+            console.error(`Failed to fetch events for fixture ${fixtureId}`, err);
+        } finally {
+            setLoadingEvents(prev => ({ ...prev, [fixtureId]: false }));
+        }
+    };
+
+    const renderEventIcon = (type, detail) => {
+        if (type === 'Goal') return '⚽';
+        if (type === 'Card') {
+            if (detail === 'Yellow Card') return '🟨';
+            if (detail === 'Red Card') return '🟥';
+            return '🎴';
+        }
+        if (type === 'subst') return '⇄';
+        if (type === 'Var') return '📺';
+        return '•';
     };
 
     if (loading) return (
@@ -507,38 +548,93 @@ const SeasonOverviewPage = () => {
                                 <div className="empty-state">No fixtures found for this round.</div>
                             ) : (
                                 filteredFixtures.map(f => (
-                                    <div key={f.fixture_id} className="match-row">
-                                        <div className="m-time">
-                                            {new Date(f.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                            <br />
-                                            <span className="m-hour">{new Date(f.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                                    <div key={f.fixture_id} className={`match-card ${expandedFixtureId === f.fixture_id ? 'expanded' : ''}`}>
+                                        <div className="match-row" onClick={() => handleFixtureToggle(f.fixture_id)}>
+                                            <div className="m-time">
+                                                {new Date(f.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                <br />
+                                                <span className="m-hour">{new Date(f.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                            <div className="m-team home">
+                                                <span className="m-name">{f.home_team_name}</span>
+                                                <img src={f.home_team_logo} alt="" />
+                                            </div>
+                                            <div className="m-score">
+                                                {f.status_short === 'FT' || f.status_short === 'AET' || f.status_short === 'PEN' ? (
+                                                    <div className="final-score">
+                                                        <span className="score-val">{f.goals_home}</span>
+                                                        <span className="score-sep">-</span>
+                                                        <span className="score-val">{f.goals_away}</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="live-status">
+                                                        <span className="m-status">{f.status_short}</span>
+                                                        {f.elapsed && <span className="m-elapsed">{f.elapsed}'</span>}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="m-team away">
+                                                <img src={f.away_team_logo} alt="" />
+                                                <span className="m-name">{f.away_team_name}</span>
+                                            </div>
+                                            <div className="m-venue-info hide-mobile">
+                                                <span className="v-name">{f.venue_name}</span>
+                                                <span className="v-city">{f.venue_city}</span>
+                                            </div>
                                         </div>
-                                        <div className="m-team home">
-                                            <span className="m-name">{f.home_team_name}</span>
-                                            <img src={f.home_team_logo} alt="" />
-                                        </div>
-                                        <div className="m-score">
-                                            {f.status_short === 'FT' || f.status_short === 'AET' || f.status_short === 'PEN' ? (
-                                                <div className="final-score">
-                                                    <span className="score-val">{f.goals_home}</span>
-                                                    <span className="score-sep">-</span>
-                                                    <span className="score-val">{f.goals_away}</span>
-                                                </div>
-                                            ) : (
-                                                <div className="live-status">
-                                                    <span className="m-status">{f.status_short}</span>
-                                                    {f.elapsed && <span className="m-elapsed">{f.elapsed}'</span>}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="m-team away">
-                                            <img src={f.away_team_logo} alt="" />
-                                            <span className="m-name">{f.away_team_name}</span>
-                                        </div>
-                                        <div className="m-venue-info hide-mobile">
-                                            <span className="v-name">{f.venue_name}</span>
-                                            <span className="v-city">{f.venue_city}</span>
-                                        </div>
+
+                                        {/* Expanded Events Panel */}
+                                        {expandedFixtureId === f.fixture_id && (
+                                            <div className="match-events-panel">
+                                                {loadingEvents[f.fixture_id] ? (
+                                                    <div className="events-loader">
+                                                        <div className="spinner-mini"></div>
+                                                        <span>Loading match events...</span>
+                                                    </div>
+                                                ) : fixtureEvents[f.fixture_id] && fixtureEvents[f.fixture_id].length > 0 ? (
+                                                    <div className="events-timeline">
+                                                        {fixtureEvents[f.fixture_id].map((ev, idx) => {
+                                                            const isHome = ev.is_home_team === 1;
+                                                            return (
+                                                                <div key={idx} className="event-timeline-row">
+                                                                    <div className={`event-side home-side ${isHome ? 'active' : ''}`}>
+                                                                        {isHome && (
+                                                                            <>
+                                                                                <div className="ev-detail">
+                                                                                    <span className="ev-player">{ev.player_name}</span>
+                                                                                    {ev.assist_name && <span className="ev-assist">({ev.assist_name})</span>}
+                                                                                    <span className="ev-type-text">{ev.detail}</span>
+                                                                                </div>
+                                                                                <div className="ev-icon">{renderEventIcon(ev.type, ev.detail)}</div>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="event-time-axis">
+                                                                        <div className="ev-time-badge">{ev.time_elapsed}{ev.extra_minute ? `+${ev.extra_minute}` : ''}'</div>
+                                                                    </div>
+
+                                                                    <div className={`event-side away-side ${!isHome ? 'active' : ''}`}>
+                                                                        {!isHome && (
+                                                                            <>
+                                                                                <div className="ev-icon">{renderEventIcon(ev.type, ev.detail)}</div>
+                                                                                <div className="ev-detail">
+                                                                                    <span className="ev-player">{ev.player_name}</span>
+                                                                                    {ev.assist_name && <span className="ev-assist">({ev.assist_name})</span>}
+                                                                                    <span className="ev-type-text">{ev.detail}</span>
+                                                                                </div>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="no-events">No detailed events available for this match.</div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}
