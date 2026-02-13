@@ -1,6 +1,7 @@
 import dbV3 from '../../config/database_v3.js';
 import dbV2 from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
+import { syncLeagueEventsService } from './fixtureController.js';
 
 /**
  * V3 POC - Real Data Import Logic
@@ -491,6 +492,20 @@ export const runImportJob = async (leagueId, seasonYear, sendLog) => {
 
     // Mark season as FULL sync
     dbV3.run("UPDATE V3_League_Seasons SET sync_status = 'FULL' WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+
+    // 7. Auto-Sync Fixture Events (Catch-Up)
+    try {
+        sendLog('⚡ Syncing match events (Goals, Cards, Subs)...', 'info');
+        // Use a high limit since we are in a batch job context
+        const syncRes = await syncLeagueEventsService(localLeagueId, seasonYear, 2000);
+        if (syncRes.success > 0) {
+            sendLog(`✅ Synced events for ${syncRes.success} fixtures.`, 'success');
+        } else {
+            sendLog(`ℹ️ No new events found to sync.`, 'info');
+        }
+    } catch (evtErr) {
+        sendLog(`⚠️ Event sync warning: ${evtErr.message}`, 'warning');
+    }
 
     // Return metadata for frontend dashboard links
     return { leagueId: targetApiId, season: seasonYear };

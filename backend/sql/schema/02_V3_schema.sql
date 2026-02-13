@@ -251,3 +251,26 @@ CREATE TABLE IF NOT EXISTS V3_Fixtures (
 CREATE INDEX idx_v3_fixtures_league_season ON V3_Fixtures(league_id, season_year);
 CREATE INDEX idx_v3_fixtures_date ON V3_Fixtures(date);
 CREATE INDEX idx_v3_standings_league_season ON V3_Standings(league_id, season_year);
+
+-- 5. MATCH EVENTS (US_33_V3_DB_Fixture_Events_Schema)
+CREATE TABLE IF NOT EXISTS V3_Fixture_Events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fixture_id INTEGER NOT NULL,
+    time_elapsed INTEGER NOT NULL,
+    extra_minute INTEGER,
+    team_id INTEGER,
+    player_id INTEGER,
+    player_name TEXT,
+    assist_id INTEGER,
+    assist_name TEXT,
+    type TEXT NOT NULL, -- 'Goal', 'Card', 'subst', 'Var'
+    detail TEXT,        -- 'Normal Goal', 'Yellow Card'
+    comments TEXT,
+    
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_v3_fixture_events_fixture ON V3_Fixture_Events(fixture_id);
+-- Optimization for filtering/counting specific event types (Catch-up logic)
+CREATE INDEX idx_v3_fixture_events_fixture_type ON V3_Fixture_Events(fixture_id, type);

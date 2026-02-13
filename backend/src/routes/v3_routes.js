@@ -64,6 +64,16 @@ router.get('/league/:id/standings', getStandingsV3);
 router.get('/league/:id/fixtures', getFixturesV3);
 
 /**
+ * @route Fixture Events (Data Engine)
+ * @desc Sync and Serve Match Events
+ */
+import { getEventCandidates, syncFixtureEvents, getFixtureEvents } from '../controllers/v3/fixtureController.js';
+
+router.get('/fixtures/events/candidates', getEventCandidates);
+router.post('/fixtures/events/sync', syncFixtureEvents);
+router.get('/fixtures/:id/events', getFixtureEvents);
+
+/**
  * @route GET /api/v3/league/:apiId/available-seasons
  * @desc Get all available seasons from API for a league, cross-referenced with local DB
  */
