@@ -159,75 +159,114 @@ const PlayerProfilePageV3 = () => {
     }
 
     const renderTrophies = () => {
-        if (trophies.length === 0) return null;
+        if (!trophies || trophies.length === 0) return null;
 
-        // Step 1: Filter only Winners
-        const winners = trophies.filter(t => t.place === 'Winner' || t.place === '1st Place');
-        if (winners.length === 0) return null;
-
-        // Step 2: Group by Country
-        const countryGroups = winners.reduce((acc, t) => {
+        // Step 1: Initial Grouping by Country
+        const countryGroups = trophies.reduce((acc, t) => {
             const country = t.country || 'International';
             if (!acc[country]) {
                 acc[country] = {
                     name: country,
                     flag: t.country_flag,
                     rank: (t.importance_rank !== undefined && t.importance_rank !== null) ? t.importance_rank : 999,
-                    trophies: []
+                    leagues: {}
                 };
             }
-            acc[country].trophies.push(t);
+
+            // Step 2: Group by League within Country
+            const leagueName = t.league_name || t.trophy;
+            if (!acc[country].leagues[leagueName]) {
+                acc[country].leagues[leagueName] = {
+                    name: leagueName,
+                    items: []
+                };
+            }
+            acc[country].leagues[leagueName].items.push(t);
             return acc;
         }, {});
 
-        // Step 3: Process items within each country (Group by Competition Name)
-        const processedGroups = Object.values(countryGroups).map(group => {
-            // Group by trophy name/league
-            const compMap = group.trophies.reduce((map, t) => {
-                const name = t.league_name || t.trophy;
-                if (!map[name]) map[name] = { name, count: 0, seasons: [] };
-                map[name].count++;
-                map[name].seasons.push(t.season); // Collect seasons
-                return map;
-            }, {});
+        // Step 3: Sort Countries by Rank
+        const sortedCountries = Object.values(countryGroups).sort((a, b) => a.rank - b.rank);
 
-            // Convert map to array and sort seasons
-            const compList = Object.values(compMap).map(c => {
-                c.seasons.sort((a, b) => b.toString().localeCompare(a.toString())); // Descending seasons
-                return c;
+        // Process internal structure for each country
+        const processedList = sortedCountries.map(country => {
+            const leaguesList = Object.values(country.leagues).map(league => {
+                // Step 4: Group items by Place within League
+                const placeMap = league.items.reduce((pAcc, item) => {
+                    const place = item.place || 'Winner';
+                    if (!pAcc[place]) pAcc[place] = { place, seasons: [], count: 0 };
+                    if (item.season && String(item.season).trim() !== '') {
+                        pAcc[place].seasons.push(item.season);
+                    }
+                    pAcc[place].count++;
+                    return pAcc;
+                }, {});
+
+                // Helper for Ranking Places
+                const getRank = (place) => {
+                    const p = (place || '').toLowerCase();
+                    if (p.includes('winner') || p.includes('1st') || p.includes('champion')) return 1;
+                    if (p.includes('2nd') || p.includes('runner') || p.includes('finalist')) return 2;
+                    if (p.includes('3rd')) return 3;
+                    return 99;
+                };
+
+                // Create sorted array of place groups
+                const placeGroups = Object.values(placeMap).map(pg => {
+                    // Sort seasons desc
+                    pg.seasons.sort((a, b) => String(b).localeCompare(String(a)));
+                    return pg;
+                }).sort((a, b) => getRank(a.place) - getRank(b.place));
+
+                return {
+                    name: league.name,
+                    placeGroups: placeGroups
+                };
             });
 
-            // Sort competitions by count DESC
-            compList.sort((a, b) => b.count - a.count);
+            // Sort Leagues Alphabetically (or by count if preferred, utilizing US: League ASC)
+            leaguesList.sort((a, b) => a.name.localeCompare(b.name));
 
-            return { ...group, items: compList };
+            return { ...country, leagues: leaguesList };
         });
-
-        // Step 4: Sort Countries by Importance Rank ASC
-        processedGroups.sort((a, b) => a.rank - b.rank);
 
         return (
             <div className="dash-card" style={{ marginBottom: '20px' }}>
                 <div className="card-title">🏆 Honours</div>
                 <div className="trophy-list-container">
-                    {processedGroups.map((group) => (
-                        <div key={group.name} className="country-group">
+                    {processedList.map((country) => (
+                        <div key={country.name} className="country-group">
                             <div className="country-group-header">
-                                {group.flag && <img src={group.flag} alt={group.name} className="country-header-flag" />}
-                                <span className="country-header-name">{group.name}</span>
+                                {country.flag && <img src={country.flag} alt={country.name} className="country-header-flag" />}
+                                <span className="country-header-name">{country.name}</span>
                             </div>
                             <div className="country-trophies-list">
-                                {group.items.map((item) => (
-                                    <div key={item.name} className="trophy-item-row">
-                                        <div className="trophy-badge-col">
-                                            <span className="trophy-count-badge">{item.count}</span>
+                                {country.leagues.map((comp) => (
+                                    <div key={comp.name} className="trophy-competition-block" style={{ marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                                        <div className="trophy-name-header" style={{ marginBottom: '6px', fontSize: '0.95rem', fontWeight: '700', color: '#f1f5f9' }}>
+                                            {comp.name}
                                         </div>
-                                        <div className="trophy-details-col">
-                                            <div className="trophy-name">{item.name}</div>
-                                            <div className="trophy-years">
-                                                {item.seasons.join(', ')}
-                                            </div>
-                                        </div>
+                                        {comp.placeGroups.map((pg) => {
+                                            const getBadgeClass = (place) => {
+                                                const p = (place || '').toLowerCase();
+                                                if (p.includes('2nd') || p.includes('runner') || p.includes('finalist')) return 'silver';
+                                                if (p.includes('3rd')) return 'bronze';
+                                                return 'gold';
+                                            };
+                                            const badgeClass = getBadgeClass(pg.place);
+                                            const uniqueKey = `${comp.name}-${pg.place}`;
+
+                                            return (
+                                                <div key={uniqueKey} className="trophy-place-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                                                    <span className={`trophy-count-badge ${badgeClass}`} style={{ minWidth: '80px' }}>
+                                                        {pg.count}x {pg.place}
+                                                    </span>
+                                                    <span className="trophy-years-list" style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                                        {pg.seasons.join(', ')}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 ))}
                             </div>

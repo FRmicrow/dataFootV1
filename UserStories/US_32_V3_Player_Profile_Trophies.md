@@ -1,66 +1,83 @@
-# US_32_V3_Player_Profile_Trophies_Display
+# US_32_V3_Player_Profile_Trophies
 
-## 1. Objective
-**As a** football analyst or fan,
-**I want to** see a player's trophies organized by country and sorted by the country's importance,
-**So that I can** easily understand the prestige and geographical context of their achievements.
+## 1. User Story
+**As a** football analyst,
+**I want to** view a structured breakdown of a player's career titles,
+**So that I can** easily compare their achievements across different countries and competitions.
 
 ## 2. Technical Context
-- **Target Page**: `PlayerProfilePageV3.jsx`
-- **Data Source**: `GET /api/v3/player/:id/trophies`
+- **Target Page**: `PlayerProfilePageV3.jsx` (Frontend)
+- **Data Source**: `GET /api/v3/player/:id/trophies` (Backend)
+- **Database Tables**:
+    -   `V3_Trophies` (Contains `league`, `country`, `season`, `place`)
+    -   `V3_Countries` (Contains `importance_rank`)
 
-## 3. Implementation Plan (By Domain)
+## 3. Data Requirements (Backend)
+The API endpoint MUST return trophies enriched with country importance.
+**SQL Logic**:
+-   Join `V3_Trophies` with `V3_Countries` on `country = country_name`.
+-   **Ordering**:
+    1.  `V3_Countries.importance_rank` ASC (Most important countries first).
+    2.  `V3_Trophies.league` ASC (Group by league).
+    3.  `V3_Trophies.season` DESC (Newest wins first).
 
-### 3.1 [BACKEND] Database & API
-- **Endpoint**: Update `/api/v3/player/:id/trophies` (`trophyController.js`).
-- **Query Logic**:
-  - `V3_Trophies` **JOIN** `V3_Countries` on `country` name.
-  - **Select**: `t.*`, `c.flag_url` (or `flag_small_url`), `c.importance_rank`.
-  - **Sort**: `ORDER BY c.importance_rank ASC, t.season DESC`.
-- **Response**: JSON Array of trophy objects enriched with rank and flag.
-
-### 3.2 [FRONTEND] Data Fetching & Processing
-- **File**: `PlayerProfilePageV3.jsx`.
-- **Fetch**: Retrieve trophies for the player ID.
-- **Processing**:
-  - **Group Data**: Create a structure where trophies are grouped by `country`.
-  - **Filter**: Display **only** "Winner" / "1st Place" items.
-  - **Sort Groups**: Ensure country groups are rendered in `importance_rank` ASC order (Rank 1 first).
-  - **Aggregate**: Within each country group, count wins per competition (e.g. "3x Premier League").
-
-### 3.3 [FRONTEND] UI Component ("Honours Card")
-- **Visual Design**:
-  - **Country Header**: Display `flag_url` and Country Name for each group.
-  - **Trophy List**: Indented list under each country.
-  - **Items**: Show "Count", "Trophy Name", and "Seasons List" (e.g., "2018, 2019").
-- **Styling**: `PlayerProfilePageV3.css`.
-  - Use `.country-group-header` for flag/name.
-  - Use `.trophy-item-row` for the list.
-
-## 4. Acceptance Criteria
-- [ ] [Backend] API returns `importance_rank` and `flag_url`.
-- [ ] [Frontend] Identify groups by Country.
-- [ ] [Frontend] Sort groups by Country Importance (Rank 1 on top).
-- [ ] [Frontend] Display Flag in Country Header.
-- [ ] [Frontend] Only "Winner" placements are shown.
-
-## 5. Mockup / Data Example
+**Response Structure (Example)**:
 ```json
 [
   {
-    "country": "England",
-    "rank": 1,
+    "country": "Spain",
+    "country_flag": "...",
+    "importance": 2,
     "trophies": [
-      { "name": "Premier League", "count": 2, "seasons": ["2018", "2019"] },
-      { "name": "FA Cup", "count": 1, "seasons": ["2018"] }
+      {
+        "league": "La Liga",
+        "items": [
+           { "place": "Winner", "season": "2022/2023" },
+           { "place": "Winner", "season": "2018/2019" }
+        ]
+      },
+      {
+        "league": "Copa del Rey",
+        "items": [...]
+      }
     ]
   },
   {
-    "country": "France",
-    "rank": 5,
-    "trophies": [
-      { "name": "Ligue 1", "count": 4, "seasons": ["2014", "2015", "2016", "2017"] }
-    ]
+    "country": "Brazil",
+    "importance": 8,
+    "trophies": [...]
   }
 ]
 ```
+
+## 4. Frontend Implementation Requirements
+
+### 4.1 Display Logic
+The trophies should be rendered in a **List or Card Layout** grouped by **Country**.
+
+**Hierarchy**:
+1.  **Country Header**: Flag + Name (e.g., 🇪🇸 Spain).
+2.  **League Row**: Name of the competition (e.g., "La Liga").
+3.  **Achievement Badge**:
+    -   Display a unified badge for the standing.
+    -   **Format**: `<BadgeColor> <Count>x <PlaceName>` (e.g., "🥇 2x Winner").
+    -   **Tooltip/Subtext**: List the seasons (e.g., "2022/23, 2018/19").
+
+### 4.2 Handling "Place" (Gold/Silver/Bronze)
+The `place` field from DB determines the badge style.
+-   **Gold** 🥇: `Winner`, `1st Place`, `Champion`.
+-   **Silver** 🥈: `2nd Place`, `Runner-up`, `Finalist`.
+-   **Bronze** 🥉: `3rd Place`.
+
+### 4.3 Grouping Strategy (Frontend)
+If the backend doesn't return the perfectly nested structure above, the Frontend **MUST** perform the grouping:
+1.  **Group by Country**: Use `country` field. Sort these groups by `importance_rank` (if available) or predefined list (Europe Top 5 > Others).
+2.  **Group by League**: Inside each country, group by `league`.
+3.  **Group by Place**: Inside each league, group by `place` (Winner vs 2nd Place).
+
+## 5. Acceptance Criteria
+- [ ] **Grouping**: Trophies are visually separated by Country.
+- [ ] **Ordering**: "Important" countries (Spain, England) appear at the top.
+- [ ] **Badges**: Winners get Gold, 2nd Place gets Silver.
+- [ ] **Data**: "2x" counts are accurate based on the number of seasons.
+- [ ] **Seasons**: The specific years are visible (either inline or on hover).
