@@ -215,3 +215,31 @@ export const getTeamSquad = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch team squad" });
     }
 };
+import StatsEngine from '../../services/v3/StatsEngine.js';
+
+/**
+ * Get Dynamic Standings for a specific range of rounds
+ * GET /api/v3/standings/dynamic?league_id=X&season=Y&from_round=1&to_round=5
+ */
+export const getDynamicStandings = async (req, res) => {
+    try {
+        const { league_id, season, from_round, to_round } = req.query;
+
+        if (!league_id || !season) {
+            return res.status(400).json({ error: "Missing league_id or season year" });
+        }
+
+        console.log(`📊 Fetching Dynamic Standings for League ${league_id}, Season ${season}, Rounds ${from_round}-${to_round}`);
+
+        // Currently logic is in the service file we just created
+        // But wait, the previous code block didn't import the service yet.
+        // I need to add import at top and method here.
+
+        const table = await StatsEngine.getDynamicStandings(league_id, season, parseInt(from_round) || 1, parseInt(to_round) || 50);
+        res.json(table);
+
+    } catch (error) {
+        console.error("Error fetching dynamic standings:", error);
+        res.status(500).json({ error: "Failed to fetch standings" });
+    }
+};

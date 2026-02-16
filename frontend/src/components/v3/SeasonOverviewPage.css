@@ -1530,3 +1530,112 @@
     font-weight: 800;
     color: #fde047;
 }
+
+/* Dynamic Controls (US-40) */
+.standings-filters-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.v3-input-group {
+    display: flex;
+    align-items: center;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 40px;
+    transition: border-color 0.2s;
+}
+
+.v3-input-group:focus-within {
+    border-color: #6366f1;
+}
+
+.input-label-addon {
+    background: #1e293b;
+    color: #94a3b8;
+    padding: 0 16px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-right: 1px solid #334155;
+}
+
+.v3-input-control {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 60px;
+    height: 100%;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: inherit;
+    padding: 0 8px;
+}
+
+.v3-input-control:focus {
+    outline: none;
+    background: #152033;
+}
+
+/* Button overrides for this context */
+.standings-filters-bar .btn-v3-primary,
+.standings-filters-bar .btn-v3-secondary {
+    height: 40px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    width: auto;
+    /* Fix full width issue */
+}
+
+/* Legacy Button Classes (Global) */
+.btn-v3-primary {
+    width: 100%;
+    padding: 12px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-v3-primary:hover {
+    background: #4f46e5;
+    transform: translateY(-2px);
+}
+
+.btn-v3-secondary {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-v3-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-color: white;
+}

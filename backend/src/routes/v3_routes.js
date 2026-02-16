@@ -52,9 +52,10 @@ router.get('/league/:id/season/:year/players', getSeasonPlayers);
 router.get('/league/:leagueId/season/:year/team/:teamId/squad', getTeamSquad);
 
 /**
- * @route GET /api/v3/league/:id/standings
  * @desc Get standings for a league/season
  */
+import { getDynamicStandings } from '../controllers/v3/seasonController.js';
+router.get('/standings/dynamic', getDynamicStandings);
 router.get('/league/:id/standings', getStandingsV3);
 
 /**
