@@ -19,6 +19,11 @@ const SeasonOverviewPage = () => {
     const [fixturesData, setFixturesData] = useState({ fixtures: [], rounds: [] });
     const [selectedRound, setSelectedRound] = useState('');
 
+    // Dynamic Standings State (US-40)
+    const [rangeStart, setRangeStart] = useState(1);
+    const [rangeEnd, setRangeEnd] = useState(38);
+    const [isDynamicMode, setIsDynamicMode] = useState(false);
+
     // Fixture Events State (US-Feature request)
     const [expandedFixtureId, setExpandedFixtureId] = useState(null);
     const [fixtureEvents, setFixtureEvents] = useState({}); // Cache: { fixtureId: [events] }
@@ -79,6 +84,16 @@ const SeasonOverviewPage = () => {
                 // 2. Fetch Real Standings
                 const stRes = await axios.get(`/api/v3/league/${id}/standings?year=${targetYear}`);
                 setStandings(stRes.data);
+
+                // Auto-set max round based on data (US-40 Refinement)
+                if (stRes.data && stRes.data.length > 0) {
+                    const maxPlayed = Math.max(...stRes.data.map(t => t.played));
+                    // Only set if user hasn't touched it (heuristic: if it's default 38 or very high)
+                    // Or just always set it on fresh load if not dynamic mode
+                    if (!isDynamicMode) {
+                        setRangeEnd(maxPlayed || 38);
+                    }
+                }
 
                 // 3. Fetch Fixtures
                 const fixRes = await axios.get(`/api/v3/league/${id}/fixtures?year=${targetYear}`);
@@ -141,6 +156,31 @@ const SeasonOverviewPage = () => {
             console.error(`Failed to fetch events for fixture ${fixtureId}`, err);
         } finally {
             setLoadingEvents(prev => ({ ...prev, [fixtureId]: false }));
+        }
+    };
+
+    const handleRangeUpdate = async () => {
+        setIsDynamicMode(true);
+        setLoading(true);
+        try {
+            const res = await axios.get('/api/v3/standings/dynamic', {
+                params: {
+                    league_id: id,
+                    season: year,
+                    from_round: rangeStart,
+                    to_round: rangeEnd
+                }
+            });
+            const dynamicData = res.data.map(t => ({
+                ...t,
+                group_name: `Custom Range (Rounds ${rangeStart}-${rangeEnd})`
+            }));
+            setStandings(dynamicData);
+        } catch (err) {
+            console.error("Dynamic fetch failed", err);
+            setError("Failed to update standings.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -466,6 +506,7 @@ const SeasonOverviewPage = () => {
                 {/* 2. STANDINGS TAB */}
                 {activeTab === 'standings' && (
                     <div className="standings-container animate-slide-up">
+
                         {Object.keys(groupMap).length === 0 ? (
                             <div className="empty-state">
                                 <span className="icon">📊</span>
@@ -473,9 +514,54 @@ const SeasonOverviewPage = () => {
                                 <p>Ingest real standings from API-Football to see the official table.</p>
                             </div>
                         ) : (
-                            Object.entries(groupMap).map(([groupName, teams]) => (
+                            Object.entries(groupMap).map(([groupName, teams], idx) => (
                                 <div key={groupName} className="dash-card standing-group">
                                     <h3 className="group-title">{groupName}</h3>
+
+                                    {/* Dynamic Controls (US-40) */}
+                                    {idx === 0 && (
+                                        <div className="standings-filters-bar">
+                                            <div className="v3-input-group">
+                                                <div className="input-label-addon">From</div>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max="50"
+                                                    value={rangeStart}
+                                                    onChange={e => setRangeStart(e.target.value)}
+                                                    className="v3-input-control"
+                                                />
+                                            </div>
+
+                                            <div className="v3-input-group">
+                                                <div className="input-label-addon">To</div>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max="50"
+                                                    value={rangeEnd}
+                                                    onChange={e => setRangeEnd(e.target.value)}
+                                                    className="v3-input-control"
+                                                />
+                                            </div>
+
+                                            <button
+                                                onClick={handleRangeUpdate}
+                                                className="btn-v3-primary"
+                                            >
+                                                Apply
+                                            </button>
+
+                                            {isDynamicMode && (
+                                                <button
+                                                    onClick={() => window.location.reload()}
+                                                    className="btn-v3-secondary"
+                                                >
+                                                    Reset
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                     <table className="v3-table standings-real">
                                         <thead>
                                             <tr>
