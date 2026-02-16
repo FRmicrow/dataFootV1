@@ -30,9 +30,9 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
     // Layout Config
     const margin = {
         top: height * 0.15,
-        right: width * 0.40, // Increased to 40% for long names + points
+        right: width * (isBump ? 0.35 : 0.40),
         bottom: height * 0.1,
-        left: width * 0.05
+        left: width * (isBump ? 0.15 : 0.05) // Increase left margin for Bump (Rank # space)
     };
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
@@ -84,18 +84,17 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
         data.forEach(frame => {
             frame.records.forEach(r => {
                 const cur = playerMaxVals.get(r.id) || 0;
-                // For bump chart (rank), usually we want to track who was ever in top N?
-                // Let's stick to value heuristic or rank heuristic.
-                // If it's rank data, maybe we want teams that spent time in top N?
-                // For simplicty, let's use peak value (points) or peak rank?
-                // Using value is safer for now.
                 if (r.value > cur) playerMaxVals.set(r.id, r.value);
             });
         });
 
         // Sort by max value
         const allIds = Array.from(playerMaxVals.keys()).sort((a, b) => playerMaxVals.get(b) - playerMaxVals.get(a));
-        const topIds = new Set(allIds.slice(0, barCount));
+
+        // Fix: For Bump Charts (League Rankings), we want ALL teams, not limited by barCount.
+        // Or at least a high enough number (e.g. 25).
+        const limit = isBump ? 25 : barCount;
+        const topIds = new Set(allIds.slice(0, limit));
         setTopPlayers(Array.from(topIds));
 
         // 2. Preload Images
@@ -194,6 +193,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 
         if (isBump) {
             // Rank Logic: 1 to MaxRank (e.g. 20)
+            // Fix: Should be total teams in league, not just top N
             globalMax = 20;
             // Scan for exact max rank
             topPlayers.forEach(pid => {
@@ -204,6 +204,8 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
                     });
                 }
             });
+            // Ensure we show at least 20 for league tables usually
+            if (globalMax < 20) globalMax = 20;
             globalMin = 1;
 
         } else {
