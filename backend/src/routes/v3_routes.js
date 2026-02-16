@@ -134,12 +134,17 @@ router.post('/player/:id/sync-career', syncPlayerCareerV3);
 /**
  * @route DB Health Check
  */
-import { getDbHealth, fixDbHealth, getLeagueNames, checkLeagueHealthName } from '../controllers/v3/adminController.js';
+import { getDbHealth, fixDbHealth, getLeagueNames, checkLeagueHealthName, revertCleanup, checkDeepHealth, fixAllIssues, getCleanupHistory } from '../controllers/v3/adminController.js';
 
 router.get('/admin/health', getDbHealth);
 router.post('/admin/health/fix', fixDbHealth);
+router.post('/admin/health/fix-all', fixAllIssues);
+router.get('/admin/health/history', getCleanupHistory);
+router.post('/admin/health/revert/:groupId', revertCleanup);
+router.post('/admin/health/revert/id/:groupId', revertCleanup); // Supporting both formats
 router.get('/admin/health/leagues', getLeagueNames);
 router.post('/admin/health/check-league', checkLeagueHealthName);
+router.post('/admin/health/check-deep', checkDeepHealth);
 
 /**
  * @route Trophies System
