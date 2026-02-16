@@ -141,6 +141,7 @@ const Step4_Export = () => {
                                 speed={1.0}
                                 isBump={visual.type === 'bump'}
                                 leagueLogo={chartData.meta.league_logo}
+                                barCount={chartData.meta.type === 'league_rankings' ? 20 : 10}
                             />
                         ) : (
                             <BarChartRace

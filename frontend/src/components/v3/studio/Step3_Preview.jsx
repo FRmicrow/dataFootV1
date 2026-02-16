@@ -37,14 +37,15 @@ const Step3_Preview = () => {
 
     // Determine configuration based on format - HD Canvas Resolution
     const getLayoutConfig = () => {
-        // If Bump chart, we generally want to see the whole league (e.g. 20 teams)
+        // If Bump chart or League Rankings, we generally want to see the whole league (e.g. 20-25 teams)
         // regardless of aspect ratio, as lines are thinner than bars.
-        const defaultBarCount = (visual.type === 'bump' || visual.meta?.type === 'league_rankings') ? 25 : 15;
+        const isBumpOrRankings = (visual.type === 'bump' || (chartData.meta && chartData.meta.type === 'league_rankings'));
+        const defaultBarCount = isBumpOrRankings ? 25 : 15;
 
         switch (visual.format) {
-            case '9:16': return { width: 1080, height: 1920, barCount: (visual.type === 'bump') ? 25 : 25 };
-            case '1:1': return { width: 1080, height: 1080, barCount: (visual.type === 'bump') ? 25 : 20 };
-            case '16:9': return { width: 1920, height: 1080, barCount: (visual.type === 'bump') ? 25 : 15 };
+            case '9:16': return { width: 1080, height: 1920, barCount: isBumpOrRankings ? 25 : 15 };
+            case '1:1': return { width: 1080, height: 1080, barCount: isBumpOrRankings ? 25 : 15 };
+            case '16:9': return { width: 1920, height: 1080, barCount: isBumpOrRankings ? 25 : 15 };
             default: return { width: 1920, height: 1080, barCount: defaultBarCount };
         }
     };
