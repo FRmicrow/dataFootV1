@@ -1,15 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './HealthCheckPage.css';
+import IntegrityTimeline from './IntegrityTimeline';
+import RevertManager from './RevertManager';
 
 const HealthCheckPage = () => {
     // --- State ---
-    const [leagues, setLeagues] = useState([]);
-    const [scanState, setScanState] = useState('IDLE'); // IDLE, RUNNING, PAUSED, COMPLETED
-    const [scanIndex, setScanIndex] = useState(0);
+    const [scanState, setScanState] = useState('IDLE'); // IDLE, SCANNING, COMPLETED
+    const [activeMilestone, setActiveMilestone] = useState(null);
+    const [milestones, setMilestones] = useState([
+        { id: 1, title: 'League Naming Check', status: 'PENDING', count: 0, details: null },
+        { id: 2, title: 'Duplicate Stats Discovery', status: 'PENDING', count: 0, details: null },
+        { id: 3, title: 'Orphan/Broken Link Audit', status: 'PENDING', count: 0, details: null },
+        { id: 4, title: 'Country/Nationality Matching', status: 'PENDING', count: 0, details: null }
+    ]);
     const [logs, setLogs] = useState([]);
-    const [issuesFound, setIssuesFound] = useState([]);
     const [fixing, setFixing] = useState(false);
+    const [namingCollisions, setNamingCollisions] = useState([]);
 
     // Auto-scroll logs
     const logsEndRef = useRef(null);
@@ -17,273 +24,205 @@ const HealthCheckPage = () => {
         logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [logs]);
 
-    // Initial Load
-    useEffect(() => {
-        fetchLeagues();
-    }, []);
-
-    const fetchLeagues = async () => {
-        try {
-            const res = await axios.get('/api/v3/admin/health/leagues');
-            const data = res.data.map(l => ({ ...l, status: 'PENDING' }));
-            setLeagues(data);
-            addLog(`📋 Loaded ${data.length} leagues.`);
-        } catch (e) {
-            addLog(`❌ Failed to load leagues: ${e.message}`);
-        }
+    const addLog = (msg) => {
+        setLogs(prev => [...prev.slice(-99), `[${new Date().toLocaleTimeString()}] ${msg}`]);
     };
 
     // --- Actions ---
 
-    const handleToggleScan = () => {
-        if (scanState === 'RUNNING') {
-            setScanState('PAUSED');
-            addLog("⏸️ Scan Paused.");
-        } else {
-            // Start or Resume
-            if (scanState === 'IDLE' || scanState === 'COMPLETED') {
-                const pendingCount = leagues.filter(l => l.status === 'PENDING').length;
+    const startDeepScan = async () => {
+        setScanState('SCANNING');
+        addLog("🚀 Starting Deep Integrity Scan...");
 
-                if (pendingCount === 0) {
-                    if (window.confirm("All leagues checked. Reset statuses to re-scan?")) {
-                        handleReset();
-                        setTimeout(() => {
-                            setScanState('RUNNING');
-                            addLog("🔄 Starting Full Scan...");
-                        }, 100);
-                    }
-                    return;
+        let updatedMilestones = milestones.map(m => ({ ...m, status: 'PENDING', count: 0 }));
+        setMilestones(updatedMilestones);
+
+        for (let i = 0; i < updatedMilestones.length; i++) {
+            const m = updatedMilestones[i];
+            setActiveMilestone(m.id);
+            addLog(`🔍 Running Milestone ${m.id}: ${m.title}...`);
+
+            try {
+                const res = await axios.post('/api/v3/admin/health/check-deep', { milestone: m.id });
+                const result = res.data;
+
+                updatedMilestones[i] = {
+                    ...m,
+                    status: result.status,
+                    count: result.count,
+                    details: result.details
+                };
+
+                if (m.id === 1 && result.status === 'ISSUES') {
+                    setNamingCollisions(result.details);
                 }
 
-                // Resume from first pending
-                const firstPending = leagues.findIndex(l => l.status === 'PENDING');
-                if (firstPending !== -1) setScanIndex(firstPending);
-                else setScanIndex(0);
-
-                setScanState('RUNNING');
-                addLog("▶️ Scan Started/Resumed.");
-
-            } else {
-                setScanState('RUNNING');
-                addLog("▶️ Scan Resumed.");
+                setMilestones([...updatedMilestones]);
+                addLog(`✅ Milestone ${m.id} complete. Found ${result.count} issues.`);
+            } catch (e) {
+                addLog(`❌ Milestone ${m.id} failed: ${e.message}`);
+                updatedMilestones[i].status = 'ERROR';
+                setMilestones([...updatedMilestones]);
             }
+
+            // Subtle delay for UI feel
+            await new Promise(r => setTimeout(r, 600));
         }
+
+        setScanState('COMPLETED');
+        setActiveMilestone(null);
+        addLog("🏁 Deep Integrity Scan Finished.");
     };
 
-    const handleReset = () => {
-        if (scanState === 'RUNNING') return;
-        setLeagues(prev => prev.map(l => ({ ...l, status: 'PENDING' })));
-        setScanIndex(0);
-        setIssuesFound([]);
-        setScanState('IDLE');
-        addLog("🔄 State Reset.");
-    };
+    const handleFixAll = async () => {
+        const issuesToFix = milestones
+            .filter(m => m.status === 'ISSUES')
+            .map(m => {
+                if (m.id === 1) return 'LEAGUE_COLLISION';
+                if (m.id === 2) return 'DUPLICATE_STATS';
+                if (m.id === 3) return 'RELATIONAL_ORPHANS';
+                return null;
+            }).filter(Boolean);
 
-    const handleGlobalFix = async () => {
-        if (!window.confirm("This will fix ALL duplicate stats in the database. Continue?")) return;
+        if (issuesToFix.length === 0) {
+            addLog("ℹ️ No fixable issues currently detected.");
+            return;
+        }
+
+        if (!window.confirm(`This will apply fixes for: ${issuesToFix.join(', ')}. Continue?`)) return;
 
         setFixing(true);
-        addLog("🛠️ Starting Global Clean...");
+        addLog("🛠️ Starting Fix-All sequence...");
+
         try {
-            const res = await axios.post('/api/v3/admin/health/fix', { issueId: 'DUPLICATE_STATS' });
-            addLog(`✅ Clean Complete: ${res.data.message}`);
-            alert(res.data.message);
-            handleReset();
+            for (const issueId of issuesToFix) {
+                addLog(`⚙️ Fixing ${issueId}...`);
+                await axios.post('/api/v3/admin/health/fix', { issueId });
+                addLog(`✅ Successfully resolved ${issueId}.`);
+            }
+            addLog("⭐ All possible fixes applied.");
+            // Re-scan to confirm
+            startDeepScan();
         } catch (e) {
-            addLog(`❌ Fix Failed: ${e.message}`);
-            alert("Error: " + e.message);
+            addLog(`❌ Fix-All sequence interrupted: ${e.message}`);
         } finally {
             setFixing(false);
         }
     };
 
-    // --- Scanner Logic ---
-
-    useEffect(() => {
-        if (scanState !== 'RUNNING') return;
-
-        // Completion Check
-        if (scanIndex >= leagues.length) {
-            setScanState('COMPLETED');
-            addLog("🏁 Full Scan Completed.");
-            return;
+    const applyIndividualFix = async (issueId) => {
+        setFixing(true);
+        addLog(`🛠️ Fixing ${issueId}...`);
+        try {
+            await axios.post('/api/v3/admin/health/fix', { issueId });
+            addLog(`✅ ${issueId} resolved.`);
+            startDeepScan();
+        } catch (e) {
+            addLog(`❌ Failed to fix ${issueId}: ${e.message}`);
+        } finally {
+            setFixing(false);
         }
-
-        const current = leagues[scanIndex];
-
-        // Guard: Only process PENDING
-        if (current.status !== 'PENDING') {
-            if (['CLEAN', 'ISSUES', 'ERROR'].includes(current.status)) {
-                setTimeout(() => setScanIndex(prev => prev + 1), 0);
-            }
-            return;
-        }
-
-        const runCheck = async () => {
-            updateLeagueStatus(scanIndex, 'CHECKING');
-
-            try {
-                const res = await axios.post('/api/v3/admin/health/check-league', { leagueName: current.name });
-                const result = res.data;
-
-                if (result.status === 'CLEAN') {
-                    updateLeagueStatus(scanIndex, 'CLEAN');
-                } else {
-                    updateLeagueStatus(scanIndex, 'ISSUES', result);
-                    setIssuesFound(prev => [...prev, { league: current.name, ...result }]);
-                    addLog(`⚠️ Issues in ${current.name}: ${result.count} duplicates detected.`);
-                }
-            } catch (e) {
-                updateLeagueStatus(scanIndex, 'ERROR');
-                addLog(`❌ Error checking ${current.name}: ${e.message}`);
-            }
-
-            if (scanState === 'RUNNING') {
-                setTimeout(() => setScanIndex(prev => prev + 1), 20);
-            }
-        };
-
-        runCheck();
-
-    }, [scanIndex, scanState, leagues]);
-
-    // Helper
-    const updateLeagueStatus = (index, status, data = null) => {
-        setLeagues(prev => {
-            const next = [...prev];
-            if (next[index]) {
-                next[index] = { ...next[index], status, issueData: data };
-            }
-            return next;
-        });
-    };
-
-    const addLog = (msg) => {
-        setLogs(prev => [...prev.slice(-99), `[${new Date().toLocaleTimeString()}] ${msg}`]);
     };
 
     // --- Render ---
-    const progressPercent = leagues.length > 0 ? (scanIndex / leagues.length) * 100 : 0;
-    const cleanCount = leagues.filter(l => l.status === 'CLEAN').length;
-    const issuesCount = issuesFound.length;
 
     return (
-        <div className="health-page">
+        <div className="health-page v2">
             <header className="health-header">
-                <h1>
-                    <span>🩺</span> DB Health Check
-                </h1>
-                <p>Granular league-by-league analysis and repair system.</p>
+                <div className="title-area">
+                    <h1><span>🛡️</span> System Health V2</h1>
+                    <p>Milestone-based integrity auditing and data recovery.</p>
+                </div>
+                <div className="header-actions">
+                    <button
+                        className={`btn btn-scan ${scanState === 'SCANNING' ? 'loading' : ''}`}
+                        onClick={startDeepScan}
+                        disabled={scanState === 'SCANNING'}
+                    >
+                        {scanState === 'SCANNING' ? '🔄 Scanning...' : '🔍 Deep Scan'}
+                    </button>
+                    <button
+                        className="btn btn-fix-all"
+                        onClick={handleFixAll}
+                        disabled={scanState !== 'COMPLETED' || fixing}
+                    >
+                        🛠️ Fix All Issues
+                    </button>
+                </div>
             </header>
 
-            <div className="control-panel">
-                <div className="stats-row">
-                    <div className="stat-item">
-                        <span>📊</span>
-                        <span>Total:</span>
-                        <span className="stat-value">{leagues.length}</span>
-                    </div>
-                    <div className="stat-item">
-                        <span>✅</span>
-                        <span>Clean:</span>
-                        <span className="stat-value clean">{cleanCount}</span>
-                    </div>
-                    <div className="stat-item">
-                        <span>⚠️</span>
-                        <span>Issues:</span>
-                        <span className="stat-value issues">{issuesCount}</span>
-                    </div>
-                    <div className="stat-item">
-                        <span>⏱️</span>
-                        <span>Status:</span>
-                        <span className="stat-value">{scanState}</span>
-                    </div>
-                </div>
+            <div className="dashboard-grid">
+                {/* Left: Scan Progress & Results */}
+                <div className="main-scan-panel">
+                    <section className="health-card">
+                        <div className="health-card-header">Scan Progress</div>
+                        <IntegrityTimeline milestones={milestones} activeMilestone={activeMilestone} />
+                    </section>
 
-                <div className="progress-section">
-                    <div className="progress-track">
-                        <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
-                        <div className="progress-label">
-                            <span className={progressPercent > 50 ? 'progress-text-white' : ''}>
-                                {Math.round(progressPercent)}% ({scanIndex}/{leagues.length})
-                            </span>
+                    <section className="health-card naming-tool-card">
+                        <div className="health-card-header">
+                            League Naming Tool
+                            {namingCollisions.length > 0 && <span className="badge-warn">{namingCollisions.length} Collisions</span>}
                         </div>
-                    </div>
-                </div>
-
-                <div className="actions-row">
-                    <button
-                        className={`btn ${scanState === 'RUNNING' ? 'btn-warning' : 'btn-primary'}`}
-                        onClick={handleToggleScan}
-                    >
-                        {scanState === 'RUNNING' ? '⏸️ Pause Scan' : (scanState === 'IDLE' ? '▶️ Start Scan' : '▶️ Resume Scan')}
-                    </button>
-
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleReset}
-                        disabled={scanState === 'RUNNING'}
-                    >
-                        🔄 Reset
-                    </button>
-
-                    {issuesFound.length > 0 && (
-                        <button
-                            className="btn btn-danger"
-                            onClick={handleGlobalFix}
-                            disabled={fixing}
-                        >
-                            {fixing ? '🛠️ Fixing...' : `🛠️ Fix All (${issuesFound.length})`}
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            <div className="panels-grid">
-
-                {/* Logs */}
-                <div className="panel-card">
-                    <div className="panel-header">
-                        <h3>🖥️ Live Logs</h3>
-                    </div>
-                    <div className="panel-body logs-container">
-                        {logs.map((log, i) => (
-                            <div key={i} className="log-entry">
-                                <span className="log-time">{log.split(']')[0] + ']'}</span>
-                                {log.split(']').slice(1).join(']')}
-                            </div>
-                        ))}
-                        <div ref={logsEndRef} />
-                    </div>
-                </div>
-
-                {/* Issues */}
-                <div className="panel-card">
-                    <div className="panel-header">
-                        <h3>⚠️ Issues Detected</h3>
-                    </div>
-                    <div className="panel-body">
-                        {issuesFound.length === 0 ? (
-                            <div className="empty-state">
-                                No issues found yet.
-                            </div>
-                        ) : (
-                            <ul className="issues-list">
-                                {issuesFound.map((issue, idx) => (
-                                    <li key={idx} className="issue-item">
-                                        <div className="issue-header">
-                                            <span>{issue.league}</span>
-                                            <span className="issue-count">{issue.count} Duplicates</span>
+                        <div className="naming-tool-body">
+                            {namingCollisions.length === 0 ? (
+                                <p className="empty-msg">No naming collisions detected.</p>
+                            ) : (
+                                <div className="collision-list">
+                                    {namingCollisions.map((c, i) => (
+                                        <div key={i} className="collision-row">
+                                            <div className="naming-preview">
+                                                <span className="old-name">{c.old}</span>
+                                                <span className="arrow">→</span>
+                                                <span className="new-name">{c.suggested}</span>
+                                            </div>
                                         </div>
-                                        <div className="issue-details">
-                                            Sample: {issue.sample?.[0]?.player_name} ({issue.sample?.[0]?.season_year})
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
+                                    ))}
+                                    <button
+                                        className="btn btn-apply-naming"
+                                        onClick={() => applyIndividualFix('LEAGUE_COLLISION')}
+                                        disabled={fixing}
+                                    >
+                                        ✅ Apply Renaming
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    <section className="health-card logs-card">
+                        <div className="health-card-header">Activity Logs</div>
+                        <div className="logs-view">
+                            {logs.map((log, i) => (
+                                <div key={i} className="log-line">{log}</div>
+                            ))}
+                            <div ref={logsEndRef} />
+                        </div>
+                    </section>
                 </div>
+
+                {/* Right: History & Quick Stats */}
+                <aside className="side-panel">
+                    <section className="health-card stats-card">
+                        <div className="health-card-header">Database Health</div>
+                        <div className="quick-stats">
+                            <div className="stat-pill">
+                                <label>Issues</label>
+                                <span className={`value ${milestones.some(m => m.status === 'ISSUES') ? 'danger' : 'success'}`}>
+                                    {milestones.reduce((acc, m) => acc + m.count, 0)}
+                                </span>
+                            </div>
+                            <div className="stat-pill">
+                                <label>Environment</label>
+                                <span className="value">Production V3</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="health-card history-card">
+                        <RevertManager />
+                    </section>
+                </aside>
             </div>
         </div>
     );

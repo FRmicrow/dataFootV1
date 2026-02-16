@@ -274,3 +274,18 @@ CREATE TABLE IF NOT EXISTS V3_Fixture_Events (
 CREATE INDEX idx_v3_fixture_events_fixture ON V3_Fixture_Events(fixture_id);
 -- Optimization for filtering/counting specific event types (Catch-up logic)
 CREATE INDEX idx_v3_fixture_events_fixture_type ON V3_Fixture_Events(fixture_id, type);
+
+-- 6. CLEANUP & AUDIT (US_35_V3_DB_Cleanup_Schema_Optimization)
+CREATE TABLE IF NOT EXISTS V3_Cleanup_History (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id TEXT NOT NULL,         -- To group deletions from a single action
+    table_name TEXT NOT NULL,       -- e.g., 'V3_Player_Stats'
+    original_pk_id INTEGER,         -- The ID it had in the source table
+    raw_data TEXT NOT NULL,         -- The full JSON representation
+    reason TEXT,                    -- e.g., 'Duplicate Stat', 'Orphan Trophy'
+    deleted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_v3_cleanup_group ON V3_Cleanup_History(group_id);
+CREATE INDEX idx_v3_leagues_name_country ON V3_Leagues(name, country_id);
+CREATE INDEX idx_v3_trophies_player_id ON V3_Trophies(player_id);
