@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStudio } from './StudioContext';
 import BarChartRace from './charts/BarChartRace';
 import './Step4_Export.css';
@@ -7,17 +7,16 @@ const Step4_Export = () => {
     const { chartData, visual, goToStep, filters } = useStudio();
 
     const [isRecording, setIsRecording] = useState(false);
-    const [progress, setProgress] = useState(0);
     const [recordUrl, setRecordUrl] = useState(null);
     const [fileSize, setFileSize] = useState(0);
+    const [animationKey, setAnimationKey] = useState(0); // For resetting animation
 
-    // Automation Ref
+    const canvasRef = useRef(null);
     const recorderRef = useRef(null);
     const chunksRef = useRef([]);
 
-    // Determine dimensions
+    // Determine dimensions (HD Resolution)
     const getDimensions = () => {
-        // High Quality dimensions
         switch (visual.format) {
             case '9:16': return { width: 1080, height: 1920 };
             case '1:1': return { width: 1080, height: 1080 };
@@ -27,29 +26,32 @@ const Step4_Export = () => {
     };
     const { width, height } = getDimensions();
 
-    const startRecording = () => {
+    const startRecording = async () => {
         setRecordUrl(null);
         chunksRef.current = [];
-        setProgress(0);
 
-        // 1. Get Canvas Stream
-        const canvas = document.querySelector('.export-canvas');
+        // 1. Reset Animation by changing key (remounts BarChartRace)
+        setAnimationKey(prev => prev + 1);
+
+        // 2. Wait 500ms for resources and layout stability
+        await new Promise(r => setTimeout(r, 500));
+
+        // 3. Setup MediaRecorder
+        const canvas = canvasRef.current;
         if (!canvas) {
-            console.error("Canvas not found");
+            console.error("Canvas ref not found");
             return;
         }
 
-        const stream = canvas.captureStream(30); // 30 FPS
-
-        // 2. Init Recorder
+        const stream = canvas.captureStream(60); // 60 FPS for smooth video
         let mimeType = 'video/webm;codecs=vp9';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = 'video/webm'; // Fallback
+            mimeType = 'video/webm';
         }
 
         const recorder = new MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: 5000000 // 5 Mbps
+            videoBitsPerSecond: 8000000 // 8 Mbps for high quality
         });
 
         recorder.ondataavailable = (e) => {
@@ -60,91 +62,123 @@ const Step4_Export = () => {
             const blob = new Blob(chunksRef.current, { type: 'video/webm' });
             const url = URL.createObjectURL(blob);
             setRecordUrl(url);
-            setFileSize((blob.size / 1024 / 1024).toFixed(2)); // MB
+            setFileSize((blob.size / 1024 / 1024).toFixed(2));
             setIsRecording(false);
         };
 
         recorderRef.current = recorder;
         recorder.start();
-
-        // 3. Start Animation
-        // We set isRecording=true, which corresponds to isPlaying=true in the chart
         setIsRecording(true);
     };
 
     const handleAnimationComplete = () => {
         if (isRecording && recorderRef.current && recorderRef.current.state === 'recording') {
-            // Stop recording
-            // Add slight buffer (500ms) to catch the final frame fully
+            // Buffer to catch the final stationary frame
             setTimeout(() => {
-                recorderRef.current.stop();
-            }, 500);
+                if (recorderRef.current && recorderRef.current.state === 'recording') {
+                    recorderRef.current.stop();
+                }
+            }, 1000);
         }
     };
 
-    // Auto-start recording on mount? Maybe better manual button.
-    // Let's use Manual "Start Export" button.
+    const generateFilename = () => {
+        const stat = filters.stat || 'stats';
+        const range = chartData.meta?.range || '2010-2024';
+        return `bar_race_${stat}_${range}.webm`;
+    };
 
     return (
         <div className="step-container export-container">
-            <h2>Export Video</h2>
+            <header className="export-header">
+                <h2>Export Manager</h2>
+                <p>Record your animation and download high-quality video for social media.</p>
+            </header>
 
-            {/* Hidden/Visible Canvas for Recording */}
-            {/* We scale it down visually via CSS but keep internal res high */}
-            <div className="recording-viewport">
-                <BarChartRace
-                    data={chartData.timeline}
-                    width={width}
-                    height={height}
-                    isPlaying={isRecording}
-                    onComplete={handleAnimationComplete}
-                    speed={1.0} // Always record at 1.0x for consistency? Or user speed? Let's use user speed.
-                    className="export-canvas" // This prop doesn't exist yet on BarChartRace, need to add it or wrap it
-                />
+            <div className="export-main">
+                <div className="recording-preview-box">
+                    <div className="canvas-wrapper" style={{
+                        aspectRatio: width / height,
+                        maxWidth: height > width ? '300px' : '600px',
+                        margin: '0 auto'
+                    }}>
+                        <BarChartRace
+                            key={animationKey}
+                            ref={canvasRef}
+                            data={chartData.timeline}
+                            width={width}
+                            height={height}
+                            isPlaying={isRecording}
+                            onComplete={handleAnimationComplete}
+                            title={`${filters.stat.toUpperCase()} Evolution`}
+                            speed={1.0}
+                        />
 
-                {/* Overlay while recording */}
-                {isRecording && (
-                    <div className="recording-overlay">
-                        <div className="rec-indicator">🔴 Recording...</div>
-                        <p>Please wait while your video is rendering.</p>
+                        {isRecording && (
+                            <div className="rec-overlay">
+                                <div className="rec-dot"></div>
+                                <span>RECORDING...</span>
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
+
+                <div className="export-sidebar">
+                    <div className="format-info">
+                        <div className="info-item">
+                            <span className="label">Format</span>
+                            <span className="value">{visual.format}</span>
+                        </div>
+                        <div className="info-item">
+                            <span className="label">Resolution</span>
+                            <span className="value">{width} x {height}</span>
+                        </div>
+                    </div>
+
+                    {!recordUrl && !isRecording && (
+                        <div className="export-actions">
+                            <button className="btn-primary btn-record" onClick={startRecording}>
+                                ⏺ Start Rendering
+                            </button>
+                            <p className="hint">The animation will play once to record. Don't close this tab.</p>
+                        </div>
+                    )}
+
+                    {isRecording && (
+                        <div className="export-status">
+                            <div className="spinner"></div>
+                            <p>Capturing frames...</p>
+                            <button className="btn-secondary" onClick={() => {
+                                recorderRef.current?.stop();
+                                setIsRecording(false);
+                            }}>Cancel</button>
+                        </div>
+                    )}
+
+                    {recordUrl && (
+                        <div className="result-card">
+                            <div className="success-badge">✅ Recording Complete</div>
+                            <div className="file-details">
+                                <span>{fileSize} MB</span>
+                                <span className="dot"></span>
+                                <span>WEBM</span>
+                            </div>
+
+                            <a
+                                href={recordUrl}
+                                download={generateFilename()}
+                                className="btn-primary btn-download"
+                            >
+                                💾 Download Video
+                            </a>
+
+                            <button className="btn-text" onClick={() => setRecordUrl(null)}>
+                                🔄 Re-record
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
-
-            {/* Success State */}
-            {recordUrl && (
-                <div className="success-card">
-                    <h3>✅ Video Ready!</h3>
-                    <div className="file-info">
-                        <span>{fileSize} MB</span> • <span>.webm</span>
-                    </div>
-
-                    <div className="download-actions">
-                        <a
-                            href={recordUrl}
-                            download={`statfoot_chart_${filters.stat}_${visual.format}.webm`}
-                            className="btn-download"
-                        >
-                            ⬇ Download Video
-                        </a>
-                        <button className="btn-secondary" onClick={() => setRecordUrl(null)}>
-                            🔄 Create Another
-                        </button>
-                    </div>
-
-                    <video src={recordUrl} controls className="preview-video" />
-                </div>
-            )}
-
-            {/* Initial State */}
-            {!isRecording && !recordUrl && (
-                <div className="init-actions">
-                    <p>Format: <strong>{visual.format}</strong> • Resolution: <strong>{width}x{height}</strong></p>
-                    <button className="btn-record" onClick={startRecording}>
-                        🎬 Start Rendering
-                    </button>
-                </div>
-            )}
 
             <div className="step-actions">
                 <button className="btn-back" onClick={() => goToStep(3)} disabled={isRecording}>

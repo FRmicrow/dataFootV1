@@ -287,6 +287,11 @@ const ImportTrophiesPage = () => {
                 </div>
                 {/* Visualizing Rate Limit */}
                 <div className="progress-info">
+                    {isImporting && (
+                        <span>
+                            Estimated Time Remaining: {Math.max(0, Math.ceil((queueLength - currentIdx) * 0.136))}s
+                        </span>
+                    )}
                     <span>Speed: ~440 req/min enforced by backend.</span>
                 </div>
             </div>

@@ -77,3 +77,51 @@ export const getPlayerProfileV3 = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch player profile" });
     }
 };
+
+/**
+ * GET /api/v3/players/nationalities
+ * Return distinct nationalities and count of players
+ */
+export const getPlayerNationalities = async (req, res) => {
+    try {
+        const sql = `
+            SELECT nationality, COUNT(*) as count 
+            FROM V3_Players 
+            WHERE nationality IS NOT NULL AND nationality != ''
+            GROUP BY nationality 
+            ORDER BY count DESC
+        `;
+        const nationalities = dbV3.all(sql);
+        res.json(nationalities);
+    } catch (error) {
+        console.error("Error fetching player nationalities:", error);
+        res.status(500).json({ error: "Failed to fetch nationalities" });
+    }
+};
+
+/**
+ * GET /api/v3/players/by-nationality
+ * Return players for a specific nationality with trophy status
+ */
+export const getPlayersByNationality = async (req, res) => {
+    try {
+        const { country } = req.query;
+        if (!country) {
+            return res.status(400).json({ error: "Missing country parameter" });
+        }
+
+        const sql = `
+            SELECT p.player_id, p.api_id, p.name, p.photo_url, 
+                (CASE WHEN t.player_id IS NOT NULL THEN 1 ELSE 0 END) as has_trophies
+            FROM V3_Players p
+            LEFT JOIN (SELECT DISTINCT player_id FROM V3_Trophies) t ON p.player_id = t.player_id
+            WHERE p.nationality = ?
+            ORDER BY p.name ASC
+        `;
+        const players = dbV3.all(sql, [country]);
+        res.json(players);
+    } catch (error) {
+        console.error(`Error fetching players for ${country}:`, error);
+        res.status(500).json({ error: `Failed to fetch players for ${country}` });
+    }
+};
