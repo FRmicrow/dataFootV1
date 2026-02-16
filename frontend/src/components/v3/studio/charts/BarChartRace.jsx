@@ -5,7 +5,10 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
     const internalCanvasRef = useRef(null);
     const canvasRef = ref || internalCanvasRef;
     const animationRef = useRef(null);
-    const timeRef = useRef(data[0].season);
+    // Helper to get time key (season or round)
+    const getTime = (frame) => frame.season !== undefined ? frame.season : frame.round;
+
+    const timeRef = useRef(getTime(data[0]));
 
     // Image Cache & Colors
     const imagesRef = useRef({});
@@ -85,8 +88,8 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
                 timeRef.current += (deltaTime / duration);
             }
 
-            if (timeRef.current >= data[data.length - 1].season) {
-                timeRef.current = data[data.length - 1].season;
+            if (timeRef.current >= getTime(data[data.length - 1])) {
+                timeRef.current = getTime(data[data.length - 1]);
                 if (isPlaying && onComplete) {
                     onComplete();
                     return; // Stop loop
@@ -109,12 +112,13 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
             context.fillRect(0, 0, width, height);
 
             const currentYear = Math.floor(t);
-            const nextYear = Math.min(Math.ceil(t), data[data.length - 1].season);
+            const maxTime = getTime(data[data.length - 1]);
+            const nextYear = Math.min(Math.ceil(t), maxTime);
             const alpha = t - currentYear;
             const easeAlpha = ease(alpha);
 
-            const frameA = data.find(f => f.season === currentYear);
-            const frameB = data.find(f => f.season === nextYear) || frameA;
+            const frameA = data.find(f => getTime(f) === currentYear) || data[0];
+            const frameB = data.find(f => getTime(f) === nextYear) || frameA;
 
             const playerMap = new Map();
             const addPlayer = (rec, isStart) => {
@@ -148,7 +152,10 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
             context.font = `bold ${watermarkSize}px 'Inter', sans-serif`;
             context.textAlign = 'right';
             context.textBaseline = 'bottom';
-            context.fillText(Math.floor(t), width - width * 0.05, height - height * 0.05);
+            // Use 'Day' or 'Round' explicitly based on data type
+            const isRoundData = data[0].round !== undefined;
+            const label = isRoundData ? `Day ${Math.floor(t)}` : Math.floor(t);
+            context.fillText(label, width - width * 0.05, height - height * 0.05);
             context.restore();
 
             const headerY = height * 0.06;
@@ -164,7 +171,11 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
 
             context.fillStyle = '#aaa';
             context.font = `600 ${height * 0.025}px 'Inter', sans-serif`;
-            context.fillText(Math.floor(t), width / 2, headerY + (height * 0.035));
+            const subLabel = data[0].round !== undefined ? `Matchday ${Math.floor(t)}` : Math.floor(t);
+            // If it's round data, we want the subLabel to be redundant or show the Year?
+            // Actually user asked for "Y the day of the season". The watermark is "Day X".
+            // Let's keep subLabel as "Matchday X" to be safe.
+            context.fillText(subLabel, width / 2, headerY + (height * 0.035));
 
             const maxValue = d3.max(visible, d => d.value) || 100;
             const xScale = d3.scaleLinear().domain([0, maxValue]).range([0, chartWidth]);
@@ -191,7 +202,8 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
                 if (barY > height + 100 || barY < -100) return;
 
                 let teamData = teamColorsRef.current[p.id];
-                let color = teamData?.color || `hsl(${(p.id * 137.5) % 360}, 70%, 55%)`;
+                // Try extracted color, then specific team mapping if we had it, then hash based color
+                let color = (teamData && teamData.color) ? teamData.color : `hsl(${(p.id * 137.508) % 360}, 75%, 50%)`;
                 context.fillStyle = color;
 
                 const radius = barHeight / 2;

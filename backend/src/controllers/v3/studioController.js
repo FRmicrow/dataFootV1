@@ -52,6 +52,7 @@ export const getStudioLeagues = (req, res) => {
                 l.league_id, 
                 l.name as league_name, 
                 l.logo_url,
+                l.type as league_type,
                 c.country_id,
                 c.name as country_name,
                 c.flag_url,
@@ -75,7 +76,8 @@ export const getStudioLeagues = (req, res) => {
             acc[row.country_name].leagues.push({
                 id: row.league_id,
                 name: row.league_name,
-                logo: row.logo_url
+                logo: row.logo_url,
+                type: row.league_type
             });
             return acc;
         }, {});
@@ -400,6 +402,172 @@ export const queryStudioData = (req, res) => {
 
     } catch (error) {
         console.error('Error in queryStudioData:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+/**
+ * POST /api/v3/studio/query/league-rankings
+ * Specialized engine for "Racing Standings" animation
+ * Calculates cumulative points, GD, and ranking matchday by matchday
+ */
+export const queryLeagueRankings = (req, res) => {
+    const { league_id, season } = req.body;
+
+    if (!league_id || !season) {
+        return res.status(400).json({ error: 'league_id and season are required' });
+    }
+
+    try {
+        // 1. Fetch all finished fixtures
+        const fixturesSql = `
+            SELECT 
+                f.fixture_id,
+                f.round,
+                f.date,
+                f.home_team_id,
+                f.away_team_id,
+                f.goals_home,
+                f.goals_away,
+                t1.name as home_team_name,
+                t1.logo_url as home_team_logo,
+                t2.name as away_team_name,
+                t2.logo_url as away_team_logo
+            FROM V3_Fixtures f
+            JOIN V3_Teams t1 ON f.home_team_id = t1.team_id
+            JOIN V3_Teams t2 ON f.away_team_id = t2.team_id
+            WHERE f.league_id = ? AND f.season_year = ? AND f.status_short = 'FT'
+            ORDER BY f.date ASC
+        `;
+        const fixtures = db.all(fixturesSql, [league_id, season]);
+
+        // Fetch League Details for Metadata (Name, Logo)
+        const leagueSql = `SELECT name, logo_url FROM V3_Leagues WHERE league_id = ?`;
+        const leagueRow = db.get(leagueSql, [league_id]);
+        const leagueLogo = leagueRow ? leagueRow.logo_url : null;
+        const leagueName = leagueRow ? leagueRow.name : null;
+
+        if (fixtures.length === 0) {
+            return res.json({
+                meta: {
+                    type: 'league_rankings',
+                    league_logo: leagueLogo,
+                    league_name: leagueName
+                },
+                timeline: []
+            });
+        }
+
+        // 2. Helper to parse round number from string (e.g. "Regular Season - 18")
+        const getRoundNumber = (roundStr) => {
+            const match = roundStr.match(/(\d+)$/);
+            return match ? parseInt(match[1]) : 0;
+        };
+
+        // 3. Process data into Rounds
+        // Map to store current state of each team
+        const teamsStats = {};
+        const roundsData = {};
+
+        fixtures.forEach(f => {
+            const rd = getRoundNumber(f.round);
+            if (rd === 0) return;
+
+            if (!roundsData[rd]) roundsData[rd] = [];
+            roundsData[rd].push(f);
+
+            // Initialize teams if not present
+            [f.home_team_id, f.away_team_id].forEach((tid, idx) => {
+                if (!teamsStats[tid]) {
+                    teamsStats[tid] = {
+                        id: tid,
+                        label: idx === 0 ? f.home_team_name : f.away_team_name,
+                        image: idx === 0 ? f.home_team_logo : f.away_team_logo,
+                        points: 0,
+                        gd: 0,
+                        gf: 0
+                    };
+                }
+            });
+        });
+
+        const timeline = [];
+        const sortedRounds = Object.keys(roundsData).map(Number).sort((a, b) => a - b);
+
+        // Add Day 0 (Start state)
+        timeline.push({
+            round: 0,
+            records: Object.values(teamsStats).map((t, idx) => ({
+                ...t,
+                value: 0,
+                rank: idx + 1
+            }))
+        });
+
+        // 4. Cumulative Tally Round by Round
+        sortedRounds.forEach(rd => {
+            const matches = roundsData[rd];
+
+            matches.forEach(m => {
+                const home = teamsStats[m.home_team_id];
+                const away = teamsStats[m.away_team_id];
+
+                // Points & GD
+                home.gf += (m.goals_home || 0);
+                away.gf += (m.goals_away || 0);
+                home.gd += ((m.goals_home || 0) - (m.goals_away || 0));
+                away.gd += ((m.goals_away || 0) - (m.goals_home || 0));
+
+                if (m.goals_home > m.goals_away) {
+                    home.points += 3;
+                } else if (m.goals_home < m.goals_away) {
+                    away.points += 3;
+                } else if (m.goals_home !== null && m.goals_away !== null) {
+                    home.points += 1;
+                    away.points += 1;
+                }
+            });
+
+            // Calculate Ranking for this Round
+            const frameRecords = Object.values(teamsStats).map(t => ({
+                id: t.id,
+                label: t.label,
+                image: t.image,
+                team_logo: t.image, // Using the same logo for color extraction
+                value: t.points,
+                gd: t.gd,
+                gf: t.gf
+            }));
+
+            // Tie-breaking: Points -> GD -> GF
+            frameRecords.sort((a, b) => {
+                if (b.value !== a.value) return b.value - a.value;
+                if (b.gd !== a.gd) return b.gd - a.gd;
+                return b.gf - a.gf;
+            });
+
+            // Assign Ranks
+            frameRecords.forEach((r, idx) => {
+                r.rank = idx + 1;
+            });
+
+            timeline.push({ round: rd, records: frameRecords });
+        });
+
+        // 5. Response
+        res.json({
+            meta: {
+                type: 'league_rankings',
+                league_id,
+                league_name: leagueName,
+                league_logo: leagueLogo,
+                season,
+                total_rounds: sortedRounds.length
+            },
+            timeline
+        });
+
+    } catch (error) {
+        console.error('Error in queryLeagueRankings:', error);
         res.status(500).json({ error: error.message });
     }
 };
