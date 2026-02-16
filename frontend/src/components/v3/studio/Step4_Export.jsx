@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useStudio } from './StudioContext';
 import BarChartRace from './charts/BarChartRace';
+import LineChartRace from './charts/LineChartRace';
 import './Step4_Export.css';
 
 const Step4_Export = () => {
@@ -25,6 +26,27 @@ const Step4_Export = () => {
         }
     };
     const { width, height } = getDimensions();
+
+    // Construct Dynamic Title (Mirrored from Step3)
+    const formatStat = (key) => {
+        if (!key) return 'Data';
+        return key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    };
+
+    const statName = formatStat(filters.stat);
+    const range = `${filters.years[0]}-${filters.years[1]}`;
+
+    let chartTitle = `Top ${statName} during ${range}`;
+    if (chartData.meta.type === 'league_rankings') {
+        const seasonYear = chartData.meta.season;
+        const seasonDisplay = `${seasonYear - 1}/${seasonYear}`;
+        const leagueName = chartData.meta.league_name || filters.contextLabel || "League";
+        chartTitle = `${leagueName} (${seasonDisplay})`;
+    } else if (filters.contextType === 'league' && filters.contextLabel) {
+        chartTitle = `Top ${statName} in ${filters.contextLabel} during ${range}`;
+    } else if (filters.contextType === 'country' && filters.contextLabel) {
+        chartTitle = `Top ${statName} for ${filters.contextLabel} during ${range}`;
+    }
 
     const startRecording = async () => {
         setRecordUrl(null);
@@ -102,17 +124,40 @@ const Step4_Export = () => {
                         maxWidth: height > width ? '300px' : '600px',
                         margin: '0 auto'
                     }}>
-                        <BarChartRace
-                            key={animationKey}
-                            ref={canvasRef}
-                            data={chartData.timeline}
-                            width={width}
-                            height={height}
-                            isPlaying={isRecording}
-                            onComplete={handleAnimationComplete}
-                            title={`${filters.stat.toUpperCase()} Evolution`}
-                            speed={1.0}
-                        />
+                        {(visual.type === 'line' || visual.type === 'bump') ? (
+                            <LineChartRace
+                                key={animationKey}
+                                ref={canvasRef}
+                                data={chartData.timeline}
+                                width={width}
+                                height={height}
+                                isPlaying={isRecording}
+                                onComplete={() => {
+                                    handleAnimationComplete();
+                                    setIsRecording(false); // Ensure state update on completion
+                                    setIsRecording(false); // Ensure state update on completion
+                                }}
+                                title={chartTitle}
+                                speed={1.0}
+                                isBump={visual.type === 'bump'}
+                                leagueLogo={chartData.meta.league_logo}
+                            />
+                        ) : (
+                            <BarChartRace
+                                key={animationKey}
+                                ref={canvasRef}
+                                data={chartData.timeline}
+                                width={width}
+                                height={height}
+                                isPlaying={isRecording}
+                                onComplete={() => {
+                                    handleAnimationComplete();
+                                    setIsRecording(false);
+                                }}
+                                title={chartTitle}
+                                speed={1.0}
+                            />
+                        )}
 
                         {isRecording && (
                             <div className="rec-overlay">

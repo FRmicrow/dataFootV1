@@ -37,11 +37,15 @@ const Step3_Preview = () => {
 
     // Determine configuration based on format - HD Canvas Resolution
     const getLayoutConfig = () => {
+        // If Bump chart, we generally want to see the whole league (e.g. 20 teams)
+        // regardless of aspect ratio, as lines are thinner than bars.
+        const defaultBarCount = (visual.type === 'bump' || visual.meta?.type === 'league_rankings') ? 25 : 15;
+
         switch (visual.format) {
-            case '9:16': return { width: 1080, height: 1920, barCount: 25 }; // HD Vertical
-            case '1:1': return { width: 1080, height: 1080, barCount: 20 };   // HD Square
-            case '16:9': return { width: 1920, height: 1080, barCount: 15 };  // HD Landscape
-            default: return { width: 1920, height: 1080, barCount: 15 };
+            case '9:16': return { width: 1080, height: 1920, barCount: (visual.type === 'bump') ? 25 : 25 };
+            case '1:1': return { width: 1080, height: 1080, barCount: (visual.type === 'bump') ? 25 : 20 };
+            case '16:9': return { width: 1920, height: 1080, barCount: (visual.type === 'bump') ? 25 : 15 };
+            default: return { width: 1920, height: 1080, barCount: defaultBarCount };
         }
     };
 
@@ -57,7 +61,12 @@ const Step3_Preview = () => {
     const range = `${filters.years[0]}-${filters.years[1]}`;
 
     let chartTitle = `Top ${statName} during ${range}`;
-    if (filters.contextType === 'league' && filters.contextLabel) {
+    if (chartData.meta.type === 'league_rankings') {
+        const seasonYear = chartData.meta.season;
+        const seasonDisplay = `${seasonYear - 1}/${seasonYear}`;
+        const leagueName = chartData.meta.league_name || filters.contextLabel || "League";
+        chartTitle = `${leagueName} (${seasonDisplay})`;
+    } else if (filters.contextType === 'league' && filters.contextLabel) {
         chartTitle = `Top ${statName} in ${filters.contextLabel} during ${range}`;
     } else if (filters.contextType === 'country' && filters.contextLabel) {
         chartTitle = `Top ${statName} for ${filters.contextLabel} during ${range}`;
@@ -71,7 +80,7 @@ const Step3_Preview = () => {
                 maxWidth: visual.format === '9:16' ? '500px' : '800px',
                 aspectRatio: visual.format === '9:16' ? '9/16' : (visual.format === '1:1' ? '1/1' : '16/9')
             }}>
-                {visual.type === 'line' ? (
+                {visual.type === 'line' || visual.type === 'bump' ? (
                     <LineChartRace
                         data={chartData.timeline}
                         width={layout.width}
@@ -81,6 +90,8 @@ const Step3_Preview = () => {
                         speed={visual.speed}
                         onComplete={() => setIsPlaying(false)}
                         title={chartTitle}
+                        isBump={visual.type === 'bump'}
+                        leagueLogo={chartData.meta.league_logo}
                     />
                 ) : (
                     <BarChartRace

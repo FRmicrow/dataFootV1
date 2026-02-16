@@ -36,16 +36,25 @@ const Step2_Config = () => {
                     >
                         <div className="card-icon">📈</div>
                         <h4>Line Evolution</h4>
-                        <p>Compare player progress season by season.</p>
+                        <p>Compare progress (Points) over time (Matchdays).</p>
                     </div>
 
                     <div
-                        className={`config-card ${visual.type === 'radar' ? 'active' : ''}`}
-                        onClick={() => handleTypeChange('radar')}
+                        className={`config-card ${visual.type === 'league_race' ? 'active' : ''}`}
+                        onClick={() => handleTypeChange('league_race')}
                     >
-                        <div className="card-icon">🕸️</div>
-                        <h4>Radar Comparison</h4>
-                        <p>Detailed stat breakdown (single season).</p>
+                        <div className="card-icon">🏁</div>
+                        <h4>Racing Standings</h4>
+                        <p>League table evolution with jumping positions.</p>
+                    </div>
+
+                    <div
+                        className={`config-card ${visual.type === 'bump' ? 'active' : ''}`}
+                        onClick={() => handleTypeChange('bump')}
+                    >
+                        <div className="card-icon">🎢</div>
+                        <h4>Bump Ranking</h4>
+                        <p>Rank evolution flow (Round by Round).</p>
                     </div>
                 </div>
             </div>
