@@ -178,7 +178,8 @@ const ImportV3Page = () => {
 
         const selection = importQueue.map(item => ({
             leagueId: item.leagueId,
-            seasons: item.seasons.map(s => s.year)
+            seasons: item.seasons.map(s => s.year),
+            forceApiId: true
         }));
 
         try {

@@ -182,7 +182,7 @@ const DB = {
         }
 
         // 2. Naming Convention: Handle Generics
-        const GENERIC_NAMES = ["Cup", "Premier League", "Super Cup", "Play-offs", "Championship", "League 1", "League 2", "Super League", "Challenge League", "First Division", "Second Division"];
+        const GENERIC_NAMES = ["Cup", "Premier League", "Super Cup", "Play-offs", "Championship", "League 1", "League 2", "Super League", "Challenge League", "First Division", "Second Division", "Serie A", "Serie B"];
         let finalName = data.name;
 
         if (countryName && countryName !== 'World') {
@@ -317,19 +317,26 @@ const DB = {
 
 // --- Core Import Function ---
 
-export const runImportJob = async (leagueId, seasonYear, sendLog) => {
+export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = false) => {
     sendLog(`🚀 V3 Import Started for League ID ${leagueId}, Season ${seasonYear}`, 'info');
 
     // 1. Resolve ID & Fetch League Info
     let targetApiId = leagueId;
 
-    // Check if this is a local ID (e.g. from Discovered Panel)
-    const localCheck = dbV3.get("SELECT api_id FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
-    if (localCheck && localCheck.api_id) {
-        targetApiId = localCheck.api_id;
-        if (targetApiId !== leagueId) {
-            sendLog(`   ℹ️ Resolved Local ID ${leagueId} -> API ID ${targetApiId}`, 'info');
+    if (!forceApiId) {
+        // Check if this is a local ID (e.g. from Discovered Panel)
+        const localCheck = dbV3.get("SELECT api_id FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
+        // Only resolve to local api_id if the input ID doesn't match the found api_id (avoid self-mapping efficiency)
+        // actually self-mapping is fine.
+        // The issue is collision.
+        if (localCheck && localCheck.api_id) {
+            targetApiId = localCheck.api_id;
+            if (targetApiId !== leagueId) {
+                sendLog(`   ℹ️ Resolved Local ID ${leagueId} -> API ID ${targetApiId}`, 'info');
+            }
         }
+    } else {
+        sendLog(`   ℹ️ Treating ID ${leagueId} as Strict API ID.`, 'info');
     }
 
     const leagueResponse = await footballApi.getLeagues({ id: targetApiId, season: seasonYear });
@@ -709,9 +716,9 @@ export const importLeagueV3 = async (req, res) => {
         res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
     };
 
-    const { leagueId, season } = req.body;
+    const { leagueId, season, forceApiId = true } = req.body;
     try {
-        const meta = await runImportJob(leagueId, parseInt(season), sendLog);
+        const meta = await runImportJob(leagueId, parseInt(season), sendLog, forceApiId);
         res.write(`data: ${JSON.stringify({ type: 'complete', ...meta })}\n\n`);
         res.end();
     } catch (error) {
@@ -747,10 +754,10 @@ export const importBatchV3 = async (req, res) => {
         let lastMeta = null;
 
         for (const item of selection) {
-            const { leagueId, seasons } = item;
+            const { leagueId, seasons, forceApiId = true } = item;
             for (const season of seasons) {
                 try {
-                    lastMeta = await runImportJob(leagueId, parseInt(season), sendLog);
+                    lastMeta = await runImportJob(leagueId, parseInt(season), sendLog, forceApiId);
                 } catch (err) {
                     console.error(`Error in batch for League ${leagueId} Season ${season}:`, err);
                     sendLog(`❌ Error importing League ${leagueId} Season ${season}: ${err.message || String(err)}`, 'error');

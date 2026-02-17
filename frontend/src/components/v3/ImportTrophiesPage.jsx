@@ -252,6 +252,32 @@ const ImportTrophiesPage = () => {
                         </div>
                     )}
 
+                {/* Candidates List with Visual Indicators */}
+                {candidates.length > 0 && !isImporting && (
+                    <div className="candidates-preview" style={{ marginBottom: '20px', maxHeight: '300px', overflowY: 'auto', border: '1px solid #ddd', padding: '10px', borderRadius: '8px', background: '#f9f9f9' }}>
+                        <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#666' }}>
+                            Player Status Preview ({candidates.length})
+                        </h4>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+                            {candidates.slice(0, 100).map(p => (
+                                <li key={p.player_id} style={{ display: 'flex', alignItems: 'center', background: '#fff', padding: '5px', borderRadius: '4px', border: '1px solid #eee', fontSize: '0.85rem' }}>
+                                    <span style={{ marginRight: '8px', fontSize: '1.2rem' }}>
+                                        {p.has_trophies ? '✅' : '❌'}
+                                    </span>
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {p.name}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                        {candidates.length > 100 && (
+                            <div style={{ textAlign: 'center', padding: '5px', color: '#888', fontSize: '0.8rem' }}>
+                                ... and {candidates.length - 100} more
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className="stat-box">
                     <span className="stat-number">{queueLength}</span>
                     <span className="stat-label">Queue Size</span>

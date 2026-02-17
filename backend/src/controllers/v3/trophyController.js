@@ -29,6 +29,11 @@ export const importPlayerTrophies = async (req, res) => {
         let inserted = 0;
 
         for (const t of trophies) {
+            // Check for valid season
+            if (!t.season || t.season === 'NULL') {
+                continue;
+            }
+
             const sql = `
                 INSERT INTO V3_Trophies (player_id, league_name, country, season, place, trophy)
                 VALUES (?, ?, ?, ?, ?, ?)
