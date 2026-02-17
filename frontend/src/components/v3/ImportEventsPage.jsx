@@ -183,10 +183,10 @@ const ImportEventsPage = () => {
                                     </div>
                                     <div className="col-status">
                                         {allComplete ? (
-                                            <span className="badge badge-success">Data Complete</span>
+                                            <span className="badge badge-success">✅ Complete</span>
                                         ) : (
                                             <span className="badge badge-warning">
-                                                {totalMissing} Total Matches Missing
+                                                ❌ {totalMissing} Missing
                                             </span>
                                         )}
                                     </div>

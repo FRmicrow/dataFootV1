@@ -25,6 +25,10 @@
   --radius-sm: 8px;
 }
 
+html {
+  font-size: 18px;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
