@@ -1,0 +1,270 @@
+.betting-labs-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #0f172a;
+    min-height: 100vh;
+}
+
+.labs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.labs-title h1 {
+    font-size: 2rem;
+    margin: 0;
+    color: #e2e8f0;
+}
+
+.labs-title p {
+    color: #94a3b8;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.btn-sync-labs {
+    background: #8b5cf6;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-sync-labs:hover:not(:disabled) {
+    background: #7c3aed;
+    transform: translateY(-2px);
+}
+
+.btn-sync-labs:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.labs-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.tab-btn.active {
+    background: #6366f1;
+    color: white;
+    border-color: #6366f1;
+}
+
+/* Predictions Grid */
+.predictions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.prediction-card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.prediction-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+    border-color: #6366f1;
+}
+
+.pred-league {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 5px;
+}
+
+.pred-flag {
+    width: 20px;
+    height: 15px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+.pred-match {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f172a;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.p-team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    text-align: center;
+    width: 40%;
+}
+
+.p-team img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.p-team span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    line-height: normal;
+}
+
+.vs {
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: #475569;
+}
+
+.pred-main {
+    text-align: center;
+}
+
+.label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.value {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.comment {
+    display: block;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.pred-probs {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    background: #0f172a;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.prob-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 30%;
+}
+
+.prob-box .lbl {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.prob-box .val {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+}
+
+/* Confidence Colors */
+.confidence-high .val {
+    color: #10b981;
+}
+
+/* Green */
+.confidence-med .val {
+    color: #f59e0b;
+}
+
+/* Amber */
+.confidence-low .val {
+    color: #ef4444;
+}
+
+/* Red */
+
+.pred-advice {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    padding: 10px;
+    border-radius: 8px;
+    color: #818cf8;
+    font-size: 0.85rem;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.sync-status-card {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #10b981;
+}
+
+.sync-status-card h3 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    color: #e2e8f0;
+}
+
+.sync-status-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+/* Loader */
+.labs-loader {
+    text-align: center;
+    grid-column: 1 / -1;
+    padding: 40px;
+    color: #64748b;
+    font-style: italic;
+}
+
+.labs-empty {
+    text-align: center;
+    grid-column: 1 / -1;
+    padding: 40px;
+    background: #1e293b;
+    border-radius: 12px;
+    color: #94a3b8;
+    border: 1px dashed #334155;
+}

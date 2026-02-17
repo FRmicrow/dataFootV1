@@ -24,6 +24,9 @@ const V3Layout = () => {
                     <NavLink to="/v3/leagues" className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}>
                         <span className="icon">🏆</span> Leagues Data
                     </NavLink>
+                    <NavLink to="/v3/betting-labs" className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}>
+                        <span className="icon">🧠</span> Betting Labs
+                    </NavLink>
                     <NavLink to="/v3/trophies" className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}>
                         <span className="icon">🎖️</span> Trophies (Import)
                     </NavLink>
