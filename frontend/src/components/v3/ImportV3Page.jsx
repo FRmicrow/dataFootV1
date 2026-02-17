@@ -247,6 +247,11 @@ const ImportV3Page = () => {
             <header className="v3-header">
                 <h1>🧪 V3 Schema POC Import</h1>
                 <p>Multi-Criteria Mass Import System</p>
+                <div className="sub-nav-links" style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                    <a href="/v3/events" className="btn-v3-secondary btn-sm">Manage Events Sync</a>
+                    <a href="/v3/lineups-import" className="btn-v3-secondary btn-sm">Manage Lineups Sync</a>
+                    <a href="/v3/trophies" className="btn-v3-secondary btn-sm">Manage Trophies</a>
+                </div>
             </header>
 
             <div className="v3-content">

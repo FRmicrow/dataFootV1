@@ -68,11 +68,24 @@ router.get('/league/:id/fixtures', getFixturesV3);
  * @route Fixture Events (Data Engine)
  * @desc Sync and Serve Match Events
  */
-import { getEventCandidates, syncFixtureEvents, getFixtureEvents } from '../controllers/v3/fixtureController.js';
+import { getEventCandidates, syncFixtureEvents, getFixtureEvents, getFixtureDetails } from '../controllers/v3/fixtureController.js';
+import { getLineups, getLineupCandidates, importLineupsBatch } from '../controllers/v3/lineupController.js';
 
 router.get('/fixtures/events/candidates', getEventCandidates);
 router.post('/fixtures/events/sync', syncFixtureEvents);
 router.get('/fixtures/:id/events', getFixtureEvents);
+router.get('/fixtures/:id', getFixtureDetails); // New Header Route
+router.get('/fixtures/:id/lineups', getLineups);
+
+router.get('/fixtures/lineups/candidates', getLineupCandidates);
+router.post('/fixtures/lineups/import', importLineupsBatch);
+
+/**
+ * @route Predictions System
+ */
+import { syncUpcomingProps, getPredictions } from '../controllers/v3/predictionController.js';
+router.post('/predictions/sync', syncUpcomingProps);
+router.get('/predictions', getPredictions);
 
 /**
  * @route GET /api/v3/league/:apiId/available-seasons

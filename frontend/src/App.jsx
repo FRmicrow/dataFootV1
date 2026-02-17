@@ -21,6 +21,9 @@ import ContentStudioV3 from './components/v3/ContentStudioV3';
 import HealthCheckPage from './components/v3/HealthCheckPage';
 import ImportTrophiesPage from './components/v3/ImportTrophiesPage';
 import ImportEventsPage from './components/v3/ImportEventsPage';
+import ImportLineupsPage from './components/v3/ImportLineupsPage';
+import BettingLabsPage from './components/v3/BettingLabsPage';
+import MatchDetailPage from './components/v3/MatchDetailPage';
 import './App.css';
 
 
@@ -76,6 +79,9 @@ function App() {
                         <Route path="health" element={<HealthCheckPage />} />
                         <Route path="trophies" element={<ImportTrophiesPage />} />
                         <Route path="events" element={<ImportEventsPage />} />
+                        <Route path="lineups-import" element={<ImportLineupsPage />} />
+                        <Route path="betting-labs" element={<BettingLabsPage />} />
+                        <Route path="match/:id" element={<MatchDetailPage />} />
                     </Route>
 
                     <Route path="/admin/*" element={<AdminLayout />} />
