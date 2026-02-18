@@ -1,5 +1,7 @@
 import express from 'express';
 import { getLeagueSeasonsStatus, initializeSeasons, getSyncStatus } from '../controllers/v3/leagueSeasonController.js';
+import { validateRequest } from '../middleware/validateRequest.js';
+import { importLeagueSchema, importBatchSchema, searchSchema } from '../schemas/v3Schemas.js';
 
 const router = express.Router();
 
@@ -103,26 +105,20 @@ router.get('/player/:id', getPlayerProfileV3);
  * @route GET /api/search
  * @desc Search players & clubs
  */
-router.get('/search', searchV3);
+// Search System
+router.get('/search', validateRequest(searchSchema), searchV3);
 router.get('/search/countries', getSearchCountries);
 
 /**
  * @route GET /api/club/:id
- * @desc Get club profile with seasons & roster
  */
 router.get('/club/:id', getClubProfile);
 
-/**
- * @route POST /api/import/league
- * @desc Import full league data for a season to V3 tables
+/** 
+ * Import System with Validation 
  */
-router.post('/import/league', importLeagueV3);
-
-/**
- * @route POST /api/import/batch
- * @desc Batch import multiple leagues
- */
-router.post('/import/batch', importBatchV3);
+router.post('/import/league', validateRequest(importLeagueSchema), importLeagueV3);
+router.post('/import/batch', validateRequest(importBatchSchema), importBatchV3);
 
 
 /**
