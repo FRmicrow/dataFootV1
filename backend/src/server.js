@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 import db from './config/database.js';
 import v3Routes from './routes/v3_routes.js';
 
@@ -12,8 +13,29 @@ const PORT = process.env.PORT || 3001;
 // Initialize database
 await db.init();
 
-// Middleware
-app.use(cors());
+// --- P4: Security & Rate Limiting ---
+
+// 1. Rate Limiter (Global)
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5000, // Generous limit for dashboard/import operations
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please wait a moment.' }
+});
+app.use(globalLimiter);
+
+// 2. CORS Configuration (Restrict Access)
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production'
+        ? process.env.FRONTEND_URL || false
+        : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
 // Request logging
