@@ -1,4 +1,4 @@
-import db from '../../config/database_v3.js';
+import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
 import axios from 'axios';
 

@@ -34,9 +34,9 @@ const Step1_Data = () => {
         const fetchMeta = async () => {
             try {
                 const [statsRes, leaguesRes, natsRes] = await Promise.all([
-                    fetch('/api/v3/studio/meta/stats'),
-                    fetch('/api/v3/studio/meta/leagues'),
-                    fetch('/api/v3/studio/meta/nationalities')
+                    fetch('/api/studio/meta/stats'),
+                    fetch('/api/studio/meta/leagues'),
+                    fetch('/api/studio/meta/nationalities')
                 ]);
 
                 const stats = await statsRes.json();
@@ -65,7 +65,7 @@ const Step1_Data = () => {
 
         const timer = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/v3/studio/meta/players?search=${playerSearchQuery}`);
+                const res = await fetch(`/api/studio/meta/players?search=${playerSearchQuery}`);
                 const data = await res.json();
                 setPlayerSearchResults(data);
             } catch (err) {
@@ -85,7 +85,7 @@ const Step1_Data = () => {
 
         const timer = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/v3/studio/meta/teams?search=${teamSearchQuery}`);
+                const res = await fetch(`/api/studio/meta/teams?search=${teamSearchQuery}`);
                 const data = await res.json();
                 setTeamSearchResults(data);
             } catch (err) {
@@ -131,7 +131,7 @@ const Step1_Data = () => {
                 if (!selectedLeague) throw new Error("Please select a league.");
                 const season = filters.years[1];
 
-                const res = await fetch('/api/v3/studio/query/league-rankings', {
+                const res = await fetch('/api/studio/query/league-rankings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ league_id: parseInt(selectedLeague), season })
@@ -191,7 +191,7 @@ const Step1_Data = () => {
                 options: { cumulative: filters.cumulative }
             };
 
-            const res = await fetch('/api/v3/studio/query', {
+            const res = await fetch('/api/studio/query', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

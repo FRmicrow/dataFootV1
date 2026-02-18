@@ -13,8 +13,8 @@ const Step1Data = () => {
         const fetchMeta = async () => {
             try {
                 // Mocking API calls for now if backend isn't fully ready
-                // const statsRes = await axios.get('/api/v3/studio/meta/stats');
-                // const leaguesRes = await axios.get('/api/v3/studio/meta/leagues');
+                // const statsRes = await axios.get('/api/studio/meta/stats');
+                // const leaguesRes = await axios.get('/api/studio/meta/leagues');
 
                 // setStats(statsRes.data);
                 // setLeagues(leaguesRes.data);

@@ -46,7 +46,7 @@ const SeasonOverviewPage = () => {
             if (activeTab !== 'overview') return;
             setExplorerLoading(true);
             try {
-                const res = await axios.get(`/api/v3/league/${id}/season/${year}/players`, {
+                const res = await axios.get(`/api/league/${id}/season/${year}/players`, {
                     params: { teamId: explorerTeamId, position: explorerPosition }
                 });
                 setExplorerPlayers(res.data);
@@ -67,12 +67,12 @@ const SeasonOverviewPage = () => {
                 let targetYear = year;
 
                 if (!year) {
-                    const res = await axios.get(`/api/v3/leagues/${id}/seasons`);
+                    const res = await axios.get(`/api/leagues/${id}/seasons`);
                     const seasonsList = res.data.seasons || [];
                     const imported = seasonsList.filter(s => s.imported_players === 1);
                     if (imported.length > 0) {
                         targetYear = imported[0].season_year;
-                        navigate(`/v3/league/${id}/season/${targetYear}`, { replace: true });
+                        navigate(`/league/${id}/season/${targetYear}`, { replace: true });
                         return; // Let the next cycle handle it
                     } else {
                         throw new Error("No imported seasons found for this league.");
@@ -80,11 +80,11 @@ const SeasonOverviewPage = () => {
                 }
 
                 // 1. Fetch Overview (Leaders & Simulated Table + Available Years)
-                const res = await axios.get(`/api/v3/league/${id}/season/${targetYear}`);
+                const res = await axios.get(`/api/league/${id}/season/${targetYear}`);
                 setData(res.data);
 
                 // 2. Fetch Real Standings
-                const stRes = await axios.get(`/api/v3/league/${id}/standings?year=${targetYear}`);
+                const stRes = await axios.get(`/api/league/${id}/standings?year=${targetYear}`);
                 setStandings(stRes.data);
 
                 // Auto-set max round based on data (US-40 Refinement)
@@ -98,7 +98,7 @@ const SeasonOverviewPage = () => {
                 }
 
                 // 3. Fetch Fixtures
-                const fixRes = await axios.get(`/api/v3/league/${id}/fixtures?year=${targetYear}`);
+                const fixRes = await axios.get(`/api/league/${id}/fixtures?year=${targetYear}`);
                 setFixturesData(fixRes.data || { fixtures: [], rounds: [] });
                 if (fixRes.data?.rounds?.length > 0) {
                     setSelectedRound(fixRes.data.rounds[0]);
@@ -122,7 +122,7 @@ const SeasonOverviewPage = () => {
             if (!selectedTeamId || activeTab !== 'squads') return;
             setSquadLoading(true);
             try {
-                const res = await axios.get(`/api/v3/league/${id}/season/${year}/team/${selectedTeamId}/squad`);
+                const res = await axios.get(`/api/league/${id}/season/${year}/team/${selectedTeamId}/squad`);
                 setTeamSquad(res.data);
             } catch (err) {
                 console.error("Failed to fetch squad:", err);
@@ -135,7 +135,7 @@ const SeasonOverviewPage = () => {
 
     const handleSeasonChange = (e) => {
         const newYear = e.target.value;
-        navigate(`/v3/league/${id}/season/${newYear}`);
+        navigate(`/league/${id}/season/${newYear}`);
     };
 
     const handleFixtureToggle = async (fixtureId) => {
@@ -152,7 +152,7 @@ const SeasonOverviewPage = () => {
         // Fetch events
         setLoadingEvents(prev => ({ ...prev, [fixtureId]: true }));
         try {
-            const res = await axios.get(`/api/v3/fixtures/${fixtureId}/events`);
+            const res = await axios.get(`/api/fixtures/${fixtureId}/events`);
             setFixtureEvents(prev => ({ ...prev, [fixtureId]: res.data }));
         } catch (err) {
             console.error(`Failed to fetch events for fixture ${fixtureId}`, err);
@@ -165,7 +165,7 @@ const SeasonOverviewPage = () => {
         setIsDynamicMode(true);
         setLoading(true);
         try {
-            const res = await axios.get('/api/v3/standings/dynamic', {
+            const res = await axios.get('/api/standings/dynamic', {
                 params: {
                     league_id: id,
                     season: year,
@@ -209,7 +209,7 @@ const SeasonOverviewPage = () => {
         <div className="v3-dashboard error-state">
             <h2>⚠️ Analytics Offline</h2>
             <p>{error}</p>
-            <button onClick={() => navigate('/v3/import')} className="btn-v3-primary">Try Import Tool</button>
+            <button onClick={() => navigate('/import')} className="btn-v3-primary">Try Import Tool</button>
         </div>
     );
 
@@ -346,7 +346,7 @@ const SeasonOverviewPage = () => {
                                                 {explorerPlayers.slice(0, 15).map(player => (
                                                     <tr key={player.player_id}>
                                                         <td className="p-cell">
-                                                            <Link to={`/v3/player/${player.player_id}`} className="p-link">
+                                                            <Link to={`/player/${player.player_id}`} className="p-link">
                                                                 <img src={player.photo_url} alt="" className="p-img-tiny" />
                                                                 <span>{player.name}</span>
                                                             </Link>
@@ -384,7 +384,7 @@ const SeasonOverviewPage = () => {
                                     <h3 className="section-hdr">🥇 Golden Boot</h3>
                                     <div className="leader-cards-grid">
                                         {topScorers.slice(0, 3).map((player, idx) => (
-                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
+                                            <Link to={`/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
                                                 <div className="p-badge">#{idx + 1}</div>
                                                 <div className="p-photo-container">
                                                     <img src={player.photo_url} alt="" className="p-photo" />
@@ -408,7 +408,7 @@ const SeasonOverviewPage = () => {
                                     <h3 className="section-hdr">🅰️ Top Playmakers</h3>
                                     <div className="leader-cards-grid">
                                         {topAssists.slice(0, 3).map((player, idx) => (
-                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
+                                            <Link to={`/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
                                                 <div className="p-badge">#{idx + 1}</div>
                                                 <div className="p-photo-container">
                                                     <img src={player.photo_url} alt="" className="p-photo" />
@@ -431,7 +431,7 @@ const SeasonOverviewPage = () => {
                                     <h3 className="section-hdr">✨ MVP Candidates</h3>
                                     <div className="leader-cards-grid">
                                         {(topRated || []).slice(0, 3).map((player, idx) => (
-                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
+                                            <Link to={`/player/${player.player_id}`} key={player.player_id} className={`leader-card rank-${idx + 1}`}>
                                                 <div className="p-badge">#{idx + 1}</div>
                                                 <div className="p-photo-container">
                                                     <img src={player.photo_url} alt="" className="p-photo" />
@@ -482,7 +482,7 @@ const SeasonOverviewPage = () => {
                                                 ) : (
                                                     <div className="roster-inline-grid">
                                                         {teamSquad.map(player => (
-                                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className="roster-item-mini">
+                                                            <Link to={`/player/${player.player_id}`} key={player.player_id} className="roster-item-mini">
                                                                 <img src={player.photo_url} alt="" className="mini-photo" />
                                                                 <div className="mini-p-info">
                                                                     <div className="name">{player.name}</div>
@@ -585,7 +585,7 @@ const SeasonOverviewPage = () => {
                                                         <span className={`rank-indicator ${t.rank <= 3 ? 'top' : ''}`}>{t.rank}</span>
                                                     </td>
                                                     <td className="team-cell">
-                                                        <Link to={`/v3/team/${t.team_id}`} className="team-link">
+                                                        <Link to={`/team/${t.team_id}`} className="team-link">
                                                             <img src={t.team_logo} alt="" className="team-mini-logo" />
                                                             <span className="team-name">{t.team_name}</span>
                                                         </Link>
@@ -738,7 +738,7 @@ const SeasonOverviewPage = () => {
                                                     <h3 className="pos-group-title">{pos}s</h3>
                                                     <div className="mini-card-grid">
                                                         {filtered.map(player => (
-                                                            <Link to={`/v3/player/${player.player_id}`} key={player.player_id} className="player-mini-card">
+                                                            <Link to={`/player/${player.player_id}`} key={player.player_id} className="player-mini-card">
                                                                 <div className="p-avatar-wrap">
                                                                     <img src={player.photo_url} alt="" className="p-avatar" />
                                                                     {player.rating && <div className="p-rating-tag">{player.rating}</div>}

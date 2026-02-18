@@ -34,7 +34,7 @@ const BettingLabsPage = () => {
     const fetchPredictions = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/api/v3/predictions', { params: { status: view } });
+            const res = await axios.get('/api/predictions', { params: { status: view } });
             const data = res.data;
             setPredictions(data);
 
@@ -54,7 +54,7 @@ const BettingLabsPage = () => {
         setSyncing(true);
         setStats(null);
         try {
-            const res = await axios.post('/api/v3/predictions/sync');
+            const res = await axios.post('/api/predictions/sync');
             setStats(res.data);
             if (view === 'upcoming') fetchPredictions(); // Refresh if viewing upcoming
         } catch (error) {

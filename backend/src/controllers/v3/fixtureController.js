@@ -1,4 +1,4 @@
-import db from '../../config/database_v3.js';
+import db from '../../config/database.js';
 import axios from 'axios';
 
 const API_KEY = process.env.API_FOOTBALL_KEY;

@@ -11,7 +11,7 @@ const V3LeaguesList = () => {
     useEffect(() => {
         const fetchImportedLeagues = async () => {
             try {
-                const res = await axios.get('/api/v3/leagues/imported');
+                const res = await axios.get('/api/leagues/imported');
                 setLeagues(res.data);
             } catch (error) {
                 console.error("Failed to load imported leagues", error);
@@ -43,7 +43,7 @@ const V3LeaguesList = () => {
 
     const handleCardClick = (league) => {
         const latestSeason = league.years_imported[0];
-        navigate(`/v3/league/${league.league_id}/season/${latestSeason}`);
+        navigate(`/league/${league.league_id}/season/${latestSeason}`);
     };
 
     if (loading) return (
@@ -70,7 +70,7 @@ const V3LeaguesList = () => {
                     <span className="icon">📂</span>
                     <h3>No V3 Data Found</h3>
                     <p>It seems no leagues have been imported using the V3 tool yet.</p>
-                    <Link to="/v3/import" className="btn-v3-primary">Open Import Tool</Link>
+                    <Link to="/import" className="btn-v3-primary">Open Import Tool</Link>
                 </div>
             ) : (
                 <div className="leagues-container">

@@ -1,4 +1,4 @@
-import dbV3 from '../../config/database_v3.js';
+import db from '../../config/database.js';
 import footballApi from '../footballApi.js';
 /**
  * Stats Engine Service V3
@@ -17,7 +17,7 @@ class StatsEngine {
     static async getDynamicStandings(leagueId, season, fromRound = 1, toRound = 50) {
         // 1. Fetch Fixtures in Range
         // Optimization: SQLite handles thousands of rows easily, so fetching ~380 matches is fine.
-        const matches = dbV3.all(`
+        const matches = db.all(`
             SELECT 
                 f.round,
                 f.home_team_id, f.away_team_id,
@@ -145,7 +145,7 @@ class StatsEngine {
      */
     static async syncFixtureLineups(fixtureId) {
         // 1. Get API ID from Fixture
-        const fixture = await dbV3.get(
+        const fixture = await db.get(
             `SELECT api_id, home_team_id, away_team_id FROM V3_Fixtures WHERE fixture_id = ?`,
             [fixtureId]
         );
@@ -168,14 +168,14 @@ class StatsEngine {
 
         const teamsMap = new Map();
         // Get API IDs for the two teams involved
-        const teams = await dbV3.all(
+        const teams = await db.all(
             `SELECT team_id, api_id FROM V3_Teams WHERE team_id IN (?, ?)`,
             [fixture.home_team_id, fixture.away_team_id]
         );
         teams.forEach(t => teamsMap.set(t.api_id, t.team_id));
 
         // 4. Insert Transaction
-        await dbV3.run('BEGIN TRANSACTION');
+        await db.run('BEGIN TRANSACTION');
         try {
             for (const teamLineup of lineups) {
                 const apiTeamId = teamLineup.team.id;
@@ -193,7 +193,7 @@ class StatsEngine {
                 const subs = JSON.stringify(teamLineup.substitutes);
 
                 // Upsert
-                await dbV3.run(`
+                await db.run(`
                     INSERT INTO V3_Fixture_Lineups (
                         fixture_id, team_id, coach_id, coach_name, formation, starting_xi, substitutes
                     ) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -214,9 +214,9 @@ class StatsEngine {
                     subs
                 ]);
             }
-            await dbV3.run('COMMIT');
+            await db.run('COMMIT');
         } catch (e) {
-            await dbV3.run('ROLLBACK');
+            await db.run('ROLLBACK');
             throw e;
         }
 

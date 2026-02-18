@@ -36,7 +36,7 @@ const ImportTrophiesPage = () => {
 
     const fetchLeagues = async () => {
         try {
-            const res = await axios.get('/api/v3/leagues/imported');
+            const res = await axios.get('/api/leagues/imported');
             setLeagues(res.data);
         } catch (e) {
             addLog(`Error loading leagues: ${e.message}`);
@@ -45,7 +45,7 @@ const ImportTrophiesPage = () => {
 
     const fetchNationalities = async () => {
         try {
-            const res = await axios.get('/api/v3/players/nationalities');
+            const res = await axios.get('/api/players/nationalities');
             setNationalities(res.data);
         } catch (e) {
             addLog(`Error loading nationalities: ${e.message}`);
@@ -63,7 +63,7 @@ const ImportTrophiesPage = () => {
 
         try {
             addLog(`Fetching trophy-check candidates for League ID ${leagueId}...`);
-            const res = await axios.get(`/api/v3/import/trophies/candidates?leagueId=${leagueId}`);
+            const res = await axios.get(`/api/import/trophies/candidates?leagueId=${leagueId}`);
             // League endpoint returns ONLY missing players. So all candidates need import.
             // We verify structure: { player_id, name, ... }
             // We map to uniform structure
@@ -87,7 +87,7 @@ const ImportTrophiesPage = () => {
 
         try {
             addLog(`Fetching all players from ${country}...`);
-            const res = await axios.get(`/api/v3/players/by-nationality?country=${encodeURIComponent(country)}`);
+            const res = await axios.get(`/api/players/by-nationality?country=${encodeURIComponent(country)}`);
             setCandidates(res.data);
             setStats({ total: res.data.length, fetched: 0, updated: 0 });
             const existingCount = res.data.filter(c => c.has_trophies).length;
@@ -127,7 +127,7 @@ const ImportTrophiesPage = () => {
 
             try {
                 // Call Import API
-                const res = await axios.post('/api/v3/import/trophies', { playerId: player.player_id });
+                const res = await axios.post('/api/import/trophies', { playerId: player.player_id });
                 if (res.data.success) {
                     setProcessedCount(prev => prev + 1);
                     if (res.data.count > 0) {
