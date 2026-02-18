@@ -1,4 +1,4 @@
-import db from '../../config/database_v3.js';
+import db from '../../config/database.js';
 import StatsEngine from '../../services/v3/StatsEngine.js';
 
 export const getLineups = async (req, res) => {

@@ -64,7 +64,7 @@ const ImportV3Page = () => {
 
     const fetchCountries = async () => {
         try {
-            const res = await axios.get('/api/v3/countries');
+            const res = await axios.get('/api/countries');
             setCountries(res.data);
         } catch (error) {
             console.error("Failed to fetch countries", error);
@@ -73,7 +73,7 @@ const ImportV3Page = () => {
 
     const fetchLeagues = async (countryName) => {
         try {
-            const res = await axios.get(`/api/v3/leagues?country=${encodeURIComponent(countryName)}`);
+            const res = await axios.get(`/api/leagues?country=${encodeURIComponent(countryName)}`);
             setLeagues(res.data);
         } catch (error) {
             console.error("Failed to fetch leagues", error);
@@ -82,7 +82,7 @@ const ImportV3Page = () => {
 
     const fetchSyncStatus = async (leagueId) => {
         try {
-            const res = await axios.get(`/api/v3/league/${leagueId}/available-seasons`);
+            const res = await axios.get(`/api/league/${leagueId}/available-seasons`);
             // Creates a map for easy lookup or just stores the array
             // The endpoint returns { league: {}, seasons: [{ year, status, ... }] }
             const seasons = res.data.seasons || [];
@@ -183,7 +183,7 @@ const ImportV3Page = () => {
         }));
 
         try {
-            const response = await fetch('/api/v3/import/batch', {
+            const response = await fetch('/api/import/batch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ selection })
@@ -209,8 +209,8 @@ const ImportV3Page = () => {
                                 if (data.type === 'complete') {
                                     setLogs(prev => [...prev, {
                                         type: 'success',
-                                        message: `✅ Import Finished. View Dashboard: /v3/league/${data.leagueId}/season/${data.season}`,
-                                        link: `/v3/league/${data.leagueId}/season/${data.season}`
+                                        message: `✅ Import Finished. View Dashboard: /league/${data.leagueId}/season/${data.season}`,
+                                        link: `/league/${data.leagueId}/season/${data.season}`
                                     }]);
                                     setIsImporting(false);
                                     setImportQueue([]); // Clear queue on success
@@ -248,9 +248,9 @@ const ImportV3Page = () => {
                 <h1>🧪 V3 Schema POC Import</h1>
                 <p>Multi-Criteria Mass Import System</p>
                 <div className="sub-nav-links" style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                    <a href="/v3/events" className="btn-v3-secondary btn-sm">Manage Events Sync</a>
-                    <a href="/v3/lineups-import" className="btn-v3-secondary btn-sm">Manage Lineups Sync</a>
-                    <a href="/v3/trophies" className="btn-v3-secondary btn-sm">Manage Trophies</a>
+                    <a href="/events" className="btn-v3-secondary btn-sm">Manage Events Sync</a>
+                    <a href="/lineups-import" className="btn-v3-secondary btn-sm">Manage Lineups Sync</a>
+                    <a href="/trophies" className="btn-v3-secondary btn-sm">Manage Trophies</a>
                 </div>
             </header>
 

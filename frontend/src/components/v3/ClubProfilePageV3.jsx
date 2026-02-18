@@ -15,7 +15,7 @@ const ClubProfilePageV3 = () => {
         const fetchClubProfile = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`/api/v3/club/${id}`);
+                const res = await axios.get(`/api/club/${id}`);
                 setData(res.data);
                 setRoster(res.data.roster);
                 setSelectedYear(res.data.rosterYear);
@@ -30,7 +30,7 @@ const ClubProfilePageV3 = () => {
     const handleYearChange = async (year) => {
         setSelectedYear(year);
         try {
-            const res = await axios.get(`/api/v3/club/${id}?year=${year}`);
+            const res = await axios.get(`/api/club/${id}?year=${year}`);
             setRoster(res.data.roster);
         } catch (error) {
             console.error("Failed to load roster:", error);
@@ -58,7 +58,7 @@ const ClubProfilePageV3 = () => {
     if (!data || !data.club) return (
         <div className="club-profile-premium error-state">
             <h2>Club Not Found</h2>
-            <Link to="/v3/search" className="back-link">← Return to Universe</Link>
+            <Link to="/search" className="back-link">← Return to Universe</Link>
         </div>
     );
 
@@ -75,7 +75,7 @@ const ClubProfilePageV3 = () => {
 
                 <div className="hero-content">
                     <div className="hero-top">
-                        <Link to="/v3/search" className="hero-back-hint">Discovery / Clubs / {club.name}</Link>
+                        <Link to="/search" className="hero-back-hint">Discovery / Clubs / {club.name}</Link>
                     </div>
 
                     <div className="hero-main">
@@ -162,7 +162,7 @@ const ClubProfilePageV3 = () => {
                                                 </span>
                                             </td>
                                             <td className="right">
-                                                <Link to={`/v3/league/${s.league_id}/season/${s.season_year}`} className="btn-view-sm">
+                                                <Link to={`/league/${s.league_id}/season/${s.season_year}`} className="btn-view-sm">
                                                     Analyze →
                                                 </Link>
                                             </td>
@@ -242,7 +242,7 @@ const ClubProfilePageV3 = () => {
                                     <div
                                         key={`${player.player_id}-${player.league_name}`}
                                         className="premium-player-card"
-                                        onClick={() => navigate(`/v3/player/${player.player_id}`)}
+                                        onClick={() => navigate(`/player/${player.player_id}`)}
                                     >
                                         <div className="p-photo-v3">
                                             <img

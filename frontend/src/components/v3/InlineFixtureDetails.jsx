@@ -15,7 +15,7 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
     const fetchLineups = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`/api/v3/fixtures/${fixtureId}/lineups`);
+            const res = await axios.get(`/api/fixtures/${fixtureId}/lineups`);
             // The API returns { source: ..., lineups: [...] }
             setLineups(res.data.lineups || []);
         } catch (error) {

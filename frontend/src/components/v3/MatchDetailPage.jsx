@@ -21,7 +21,7 @@ const MatchDetailPage = () => {
     const fetchFixture = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`/api/v3/fixtures/${id}`);
+            const res = await axios.get(`/api/fixtures/${id}`);
             setFixture(res.data);
         } catch (e) {
             setError(e.message);

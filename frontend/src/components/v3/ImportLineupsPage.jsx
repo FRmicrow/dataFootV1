@@ -14,7 +14,7 @@ const ImportLineupsPage = () => {
     const fetchCandidates = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/api/v3/fixtures/lineups/candidates');
+            const res = await axios.get('/api/fixtures/lineups/candidates');
             setCandidates(res.data);
         } catch (error) {
             console.error("Error fetching lineup candidates", error);
@@ -66,7 +66,7 @@ const ImportLineupsPage = () => {
         try {
             for (const s of incompleteSeasons) {
                 try {
-                    await axios.post('/api/v3/fixtures/lineups/import', {
+                    await axios.post('/api/fixtures/lineups/import', {
                         league_id: leagueId,
                         season_year: s.year,
                         limit: 500 // Full season coverage
@@ -105,8 +105,8 @@ const ImportLineupsPage = () => {
                 <h1>Fixture Lineups Import Manager</h1>
                 <p>Select leagues below to sync team compositions (Lineups, Formations, Coaches, Subs).</p>
                 <div className="sub-nav-links" style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                    <a href="/v3/import" className="btn-v3-secondary btn-sm">League Import</a>
-                    <a href="/v3/events" className="btn-v3-secondary btn-sm">Events Import</a>
+                    <a href="/import" className="btn-v3-secondary btn-sm">League Import</a>
+                    <a href="/events" className="btn-v3-secondary btn-sm">Events Import</a>
                 </div>
             </header>
 

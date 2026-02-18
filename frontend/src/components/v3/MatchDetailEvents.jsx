@@ -14,7 +14,7 @@ const MatchDetailEvents = ({ fixtureId }) => {
     const fetchEvents = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`/api/v3/fixtures/${fixtureId}/events`);
+            const res = await axios.get(`/api/fixtures/${fixtureId}/events`);
             setEvents(res.data || []);
         } catch (e) {
             setError(e.message);

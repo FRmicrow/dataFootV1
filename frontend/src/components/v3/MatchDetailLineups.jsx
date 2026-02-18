@@ -14,7 +14,7 @@ const MatchDetailLineups = ({ fixtureId }) => {
     const fetchLineups = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`/api/v3/fixtures/${fixtureId}/lineups`);
+            const res = await axios.get(`/api/fixtures/${fixtureId}/lineups`);
             // res.data.lineups is array of 2
             setLineups(res.data.lineups || []);
         } catch (e) {

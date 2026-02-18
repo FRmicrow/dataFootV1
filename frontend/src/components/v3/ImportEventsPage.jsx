@@ -15,7 +15,7 @@ const ImportEventsPage = () => {
         setLoading(true);
         try {
             // Actual Backend Endpoint
-            const res = await axios.get('/api/v3/fixtures/events/candidates');
+            const res = await axios.get('/api/fixtures/events/candidates');
             setCandidates(res.data);
         } catch (error) {
             console.error("Error fetching event candidates", error);
@@ -103,7 +103,7 @@ const ImportEventsPage = () => {
             // For now, simple loop.
             for (const s of incompleteSeasons) {
                 try {
-                    await axios.post('/api/v3/fixtures/events/sync', {
+                    await axios.post('/api/fixtures/events/sync', {
                         league_id: leagueId,
                         season_year: s.year,
                         limit: 500 // Ensure we cover the full season
@@ -144,8 +144,8 @@ const ImportEventsPage = () => {
                 <h1>Fixture Events Import Manager</h1>
                 <p>Select leagues below to sync detailed match events (Goals, Cards, Subs). High API usage warning.</p>
                 <div className="sub-nav-links" style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                    <a href="/v3/import" className="btn-v3-secondary btn-sm">League Import</a>
-                    <a href="/v3/lineups-import" className="btn-v3-secondary btn-sm">Lineups Import</a>
+                    <a href="/import" className="btn-v3-secondary btn-sm">League Import</a>
+                    <a href="/lineups-import" className="btn-v3-secondary btn-sm">Lineups Import</a>
                 </div>
             </header>
 

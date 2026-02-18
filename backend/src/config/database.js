@@ -12,7 +12,7 @@ const tempDbPath = join(__dirname, '..', '..', 'database.sqlite.tmp');
 let SQL;
 let db;
 let saveTimeout = null;
-const SAVE_DEBOUNCE_MS = 1000; // Save to disk at most once per second
+const SAVE_DEBOUNCE_MS = 1000;
 
 // Initialize database connection
 async function initDatabase() {
@@ -26,9 +26,8 @@ async function initDatabase() {
             db = new SQL.Database(buffer);
         } catch (err) {
             console.error("❌ Failed to load database file:", err);
-            // Maybe try load backup or temp? For now let it throw or create new
             if (existsSync(tempDbPath)) {
-                console.log("⚠️ Attempting to recover from temp file...");
+                console.log("⚠️ Attempting to recover V3 from temp file...");
                 const buffer = readFileSync(tempDbPath);
                 db = new SQL.Database(buffer);
             } else {
@@ -36,24 +35,24 @@ async function initDatabase() {
             }
         }
     } else {
+        console.warn("⚠️ Database file not found, creating new empty (in-memory) DB.");
         db = new SQL.Database();
     }
 
-    console.log('📊 Database connected:', dbPath);
+    console.log('🧪 Database connected:', dbPath);
     return db;
 }
 
-// Save database to file (Debounced & Atomic)
+// Save database to file
 function saveDatabase(immediate = false) {
     if (!db) return;
 
     const doSave = () => {
         try {
-            saveTimeout = null; // Clear flag
+            saveTimeout = null;
             const data = db.export();
             writeFileSync(tempDbPath, data);
             renameSync(tempDbPath, dbPath);
-            // console.log('💾 Database saved to disk');
         } catch (err) {
             console.error('❌ Error saving database:', err);
         }
@@ -64,24 +63,18 @@ function saveDatabase(immediate = false) {
         saveTimeout = null;
         doSave();
     } else {
-        // If a save is already scheduled, don't reschedule (throttle/batch behavior)
-        // This ensures ensures we eventually save even if updates are constant
         if (!saveTimeout) {
             saveTimeout = setTimeout(doSave, SAVE_DEBOUNCE_MS);
         }
     }
 }
 
-// Wrapper for queries that returns results
+// Wrapper for queries
 function query(sql, params = []) {
-    if (!db) {
-        throw new Error('Database not initialized');
-    }
-
+    if (!db) throw new Error('Database not initialized');
     try {
         const stmt = db.prepare(sql);
         stmt.bind(params);
-
         const results = [];
         while (stmt.step()) {
             results.push(stmt.getAsObject());
@@ -94,16 +87,12 @@ function query(sql, params = []) {
     }
 }
 
-// Wrapper for executing statements (INSERT, UPDATE, DELETE)
+// Wrapper for execution
 function run(sql, params = []) {
-    if (!db) {
-        throw new Error('Database not initialized');
-    }
-
+    if (!db) throw new Error('Database not initialized');
     db.run(sql, params);
-    saveDatabase(false); // Debounced save
+    saveDatabase(false);
 
-    // Return lastInsertRowid equivalent
     try {
         const result = query('SELECT last_insert_rowid() as id');
         return { lastInsertRowid: result[0]?.id };
@@ -112,13 +101,11 @@ function run(sql, params = []) {
     }
 }
 
-// Get single row
 function get(sql, params = []) {
     const results = query(sql, params);
     return results[0] || null;
 }
 
-// Get all rows
 function all(sql, params = []) {
     return query(sql, params);
 }

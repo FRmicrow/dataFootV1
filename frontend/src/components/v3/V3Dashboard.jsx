@@ -10,7 +10,7 @@ const V3Dashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get('/api/v3/stats');
+                const res = await axios.get('/api/stats');
                 setStats(res.data);
             } catch (error) {
                 console.error("Failed to load V3 stats", error);
@@ -51,14 +51,14 @@ const V3Dashboard = () => {
             <div className="actions-section">
                 <h3>Quick Actions</h3>
                 <div className="actions-grid">
-                    <Link to="/v3/import" className="action-card import">
+                    <Link to="/import" className="action-card import">
                         <span className="icon">📥</span>
                         <div className="action-details">
                             <h4>Import Data</h4>
                             <p>Launch the new multi-threaded importer.</p>
                         </div>
                     </Link>
-                    <Link to="/v3/leagues" className="action-card explore">
+                    <Link to="/leagues" className="action-card explore">
                         <span className="icon">🏆</span>
                         <div className="action-details">
                             <h4>Explore Leagues</h4>

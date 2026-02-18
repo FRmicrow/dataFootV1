@@ -22,9 +22,9 @@ const PlayerProfilePageV3 = () => {
             setLoading(true);
             try {
                 const [playerRes, leaguesRes, trophiesRes] = await Promise.all([
-                    axios.get(`/api/v3/player/${id}`),
-                    axios.get('/api/v3/leagues'),
-                    axios.get(`/api/v3/player/${id}/trophies`)
+                    axios.get(`/api/player/${id}`),
+                    axios.get('/api/leagues'),
+                    axios.get(`/api/player/${id}/trophies`)
                 ]);
                 setData(playerRes.data);
                 setAllLeagues(leaguesRes.data || []);
@@ -50,7 +50,7 @@ const PlayerProfilePageV3 = () => {
         setUnresolvedCompetitions([]);
 
         try {
-            const response = await fetch(`/api/v3/player/${id}/sync-career`, {
+            const response = await fetch(`/api/player/${id}/sync-career`, {
                 method: 'POST',
             });
 
@@ -89,7 +89,7 @@ const PlayerProfilePageV3 = () => {
                                     setTimeout(() => setSyncStatus('idle'), 5000);
                                 }
                                 // Trigger refresh of the page data
-                                axios.get(`/api/v3/player/${id}`).then(res => setData(res.data));
+                                axios.get(`/api/player/${id}`).then(res => setData(res.data));
                             }
                         } catch (e) {
                             console.error("SSE Parse Error", e);
@@ -531,7 +531,7 @@ const PlayerProfilePageV3 = () => {
                                                         </td>
                                                     )}
                                                     <td className="league-cell">
-                                                        <Link to={`/v3/league/${row.league_id}/season/${row.season_year}`} className="league-link">
+                                                        <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="league-link">
                                                             {row.league_name}
                                                         </Link>
                                                     </td>

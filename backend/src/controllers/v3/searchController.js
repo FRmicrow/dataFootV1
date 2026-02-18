@@ -1,4 +1,4 @@
-import dbV3 from '../../config/database_v3.js';
+import db from '../../config/database.js';
 
 /**
  * V3 Search & Club Profile Controller
@@ -41,7 +41,7 @@ export const searchV3 = async (req, res) => {
             }
 
             playerSql += ` ORDER BY c.importance_rank ASC, p.name ASC LIMIT 20`;
-            players = dbV3.all(playerSql, cleanParams(playerParams));
+            players = db.all(playerSql, cleanParams(playerParams));
         }
 
         // --- Clubs ---
@@ -62,7 +62,7 @@ export const searchV3 = async (req, res) => {
             }
 
             clubSql += ` ORDER BY c.importance_rank ASC, t.name ASC LIMIT 20`;
-            clubs = dbV3.all(clubSql, cleanParams(clubParams));
+            clubs = db.all(clubSql, cleanParams(clubParams));
         }
 
         res.json({ players, clubs });
@@ -81,7 +81,7 @@ export const getClubProfile = async (req, res) => {
         const requestedYear = req.query.year ? parseInt(req.query.year) : null;
 
         // 1. Club info + Venue
-        const club = dbV3.get(`
+        const club = db.get(`
             SELECT 
                 t.team_id, t.api_id, t.name, t.logo_url, t.country, t.founded, t.code,
                 v.name as venue_name, v.city as venue_city, v.capacity as venue_capacity, 
@@ -96,7 +96,7 @@ export const getClubProfile = async (req, res) => {
         }
 
         // 2. Seasons overview: aggregate from V3_Player_Stats
-        const seasons = dbV3.all(`
+        const seasons = db.all(`
             SELECT 
                 ps.season_year,
                 ps.league_id,
@@ -121,7 +121,7 @@ export const getClubProfile = async (req, res) => {
         // 4. Roster for selected year
         let roster = [];
         if (rosterYear) {
-            roster = dbV3.all(`
+            roster = db.all(`
                 SELECT 
                     p.player_id, p.name, p.firstname, p.lastname, p.photo_url, p.nationality, p.age,
                     ps.games_position as position,
@@ -171,7 +171,7 @@ export const getClubProfile = async (req, res) => {
  */
 export const getSearchCountries = async (req, res) => {
     try {
-        const countries = dbV3.all(`
+        const countries = db.all(`
             SELECT DISTINCT t.country as name, 
                    COALESCE(c.importance_rank, 999) as importance_rank,
                    c.flag_url
