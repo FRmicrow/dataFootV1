@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 /**
  * Season Controller for V3 POC
@@ -131,8 +132,6 @@ export const getSeasonOverview = async (req, res) => {
     }
 };
 
-// Helper to clean SQL parameters (prevents "tried to bind a value of an unknown type (undefined)")
-const cleanParams = (params) => params.map(p => p === undefined ? null : p);
 
 /**
  * Get all players for a season with optional filters

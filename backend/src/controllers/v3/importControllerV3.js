@@ -1,6 +1,7 @@
 import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
 import { syncLeagueEventsService } from './fixtureController.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 /**
  * V3 POC - Real Data Import Logic
@@ -9,9 +10,6 @@ import { syncLeagueEventsService } from './fixtureController.js';
  */
 
 // --- Data Mapping (Expert-Grade Separation) ---
-
-// --- SQL Helper (Prevents "tried to bind a value of an unknown type (undefined)") ---
-const cleanParams = (params) => params.map(p => p === undefined ? null : p);
 
 const Mappers = {
     country: (api) => ({

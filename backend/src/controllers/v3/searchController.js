@@ -1,12 +1,10 @@
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 /**
  * V3 Search & Club Profile Controller
  * Feature 27 - Local DB only
  */
-
-// Helper: clean params for sql.js
-const cleanParams = (params) => params.map(p => (p === undefined || p === null) ? null : p);
 
 /**
  * GET /api/v3/search?q=term&type=all|player|club&country=France
