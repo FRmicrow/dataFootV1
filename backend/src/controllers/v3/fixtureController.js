@@ -1,4 +1,4 @@
-import db from '../../config/database_v3.js';
+import db from '../../config/database.js';
 import axios from 'axios';
 
 const API_KEY = process.env.API_FOOTBALL_KEY;
@@ -230,5 +230,33 @@ export const getFixtureEvents = (req, res) => {
     } catch (error) {
         console.error('Error fetching fixture events:', error);
         res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * GET /api/v3/fixtures/:id
+ * Get full fixture details (Header info)
+ */
+export const getFixtureDetails = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const fixture = await db.get(`
+            SELECT 
+                f.*,
+                th.name as home_name, th.logo_url as home_logo,
+                ta.name as away_name, ta.logo_url as away_logo,
+                l.name as league_name, l.logo_url as league_logo, c.flag_url as country_flag
+            FROM V3_Fixtures f
+            JOIN V3_Teams th ON f.home_team_id = th.team_id
+            JOIN V3_Teams ta ON f.away_team_id = ta.team_id
+            JOIN V3_Leagues l ON f.league_id = l.league_id
+            LEFT JOIN V3_Countries c ON l.country_id = c.country_id
+            WHERE f.fixture_id = ?
+        `, [id]);
+
+        if (!fixture) return res.status(404).json({ error: "Fixture not found" });
+        res.json(fixture);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 };

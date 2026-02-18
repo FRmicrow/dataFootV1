@@ -1,5 +1,5 @@
-import dbV3 from '../../config/database_v3.js';
-
+import db from '../../config/database.js';
+import footballApi from '../footballApi.js';
 /**
  * Stats Engine Service V3
  * Handles high-performance aggregation for dynamic standings and statistics.
@@ -17,7 +17,7 @@ class StatsEngine {
     static async getDynamicStandings(leagueId, season, fromRound = 1, toRound = 50) {
         // 1. Fetch Fixtures in Range
         // Optimization: SQLite handles thousands of rows easily, so fetching ~380 matches is fine.
-        const matches = dbV3.all(`
+        const matches = db.all(`
             SELECT 
                 f.round,
                 f.home_team_id, f.away_team_id,
@@ -135,6 +135,92 @@ class StatsEngine {
         result.forEach((r, i) => r.rank = i + 1);
 
         return result;
+    }
+
+
+    /**
+     * Sync Lineups for a specific fixture from API
+     * @param {number} fixtureId (Local DB ID)
+     * @returns {Promise<Array>} Synced data
+     */
+    static async syncFixtureLineups(fixtureId) {
+        // 1. Get API ID from Fixture
+        const fixture = await db.get(
+            `SELECT api_id, home_team_id, away_team_id FROM V3_Fixtures WHERE fixture_id = ?`,
+            [fixtureId]
+        );
+
+        if (!fixture || !fixture.api_id) {
+            throw new Error(`Fixture ${fixtureId} not found or missing API ID.`);
+        }
+
+        // 2. Fetch from API
+        const data = await footballApi.getFixtureLineups(fixture.api_id);
+        const lineups = data.response; // Array of 2 objects
+
+        if (!lineups || lineups.length === 0) return [];
+
+        // 3. Map API Team IDs to Local Team IDs
+        // We know home_team_id and away_team_id from fixture.
+        // We need to match which lineup belongs to which.
+        // We can fetch the API IDs of the teams from V3_Teams to be sure, or rely on API response ID matches?
+        // Let's resolve Team API IDs to Local IDs.
+
+        const teamsMap = new Map();
+        // Get API IDs for the two teams involved
+        const teams = await db.all(
+            `SELECT team_id, api_id FROM V3_Teams WHERE team_id IN (?, ?)`,
+            [fixture.home_team_id, fixture.away_team_id]
+        );
+        teams.forEach(t => teamsMap.set(t.api_id, t.team_id));
+
+        // 4. Insert Transaction
+        await db.run('BEGIN TRANSACTION');
+        try {
+            for (const teamLineup of lineups) {
+                const apiTeamId = teamLineup.team.id;
+                const localTeamId = teamsMap.get(apiTeamId);
+
+                if (!localTeamId) {
+                    console.warn(`[Sync] Could not map API Team ID ${apiTeamId} to Local Team ID. Skipping lineup.`);
+                    continue;
+                }
+
+                // Prepare Data
+                const coach = teamLineup.coach || {};
+                const formation = teamLineup.formation;
+                const startingXI = JSON.stringify(teamLineup.startXI); // API: startXI
+                const subs = JSON.stringify(teamLineup.substitutes);
+
+                // Upsert
+                await db.run(`
+                    INSERT INTO V3_Fixture_Lineups (
+                        fixture_id, team_id, coach_id, coach_name, formation, starting_xi, substitutes
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(fixture_id, team_id) DO UPDATE SET
+                        coach_id = excluded.coach_id,
+                        coach_name = excluded.coach_name,
+                        formation = excluded.formation,
+                        starting_xi = excluded.starting_xi,
+                        substitutes = excluded.substitutes,
+                        created_at = CURRENT_TIMESTAMP
+                `, [
+                    fixtureId,
+                    localTeamId,
+                    coach.id || null,
+                    coach.name || null,
+                    formation,
+                    startingXI,
+                    subs
+                ]);
+            }
+            await db.run('COMMIT');
+        } catch (e) {
+            await db.run('ROLLBACK');
+            throw e;
+        }
+
+        return lineups;
     }
 }
 

@@ -43,7 +43,7 @@ const HealthCheckPage = () => {
             addLog(`🔍 Running Milestone ${m.id}: ${m.title}...`);
 
             try {
-                const res = await axios.post('/api/v3/admin/health/check-deep', { milestone: m.id });
+                const res = await axios.post('/api/admin/health/check-deep', { milestone: m.id });
                 const result = res.data;
 
                 updatedMilestones[i] = {
@@ -97,7 +97,7 @@ const HealthCheckPage = () => {
         try {
             for (const issueId of issuesToFix) {
                 addLog(`⚙️ Fixing ${issueId}...`);
-                await axios.post('/api/v3/admin/health/fix', { issueId });
+                await axios.post('/api/admin/health/fix', { issueId });
                 addLog(`✅ Successfully resolved ${issueId}.`);
             }
             addLog("⭐ All possible fixes applied.");
@@ -114,7 +114,7 @@ const HealthCheckPage = () => {
         setFixing(true);
         addLog(`🛠️ Fixing ${issueId}...`);
         try {
-            await axios.post('/api/v3/admin/health/fix', { issueId });
+            await axios.post('/api/admin/health/fix', { issueId });
             addLog(`✅ ${issueId} resolved.`);
             startDeepScan();
         } catch (e) {

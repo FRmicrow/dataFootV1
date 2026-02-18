@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './ImportEventsPage.css';
+import './ImportEventsPage.css'; // Reusing styles as requested "exactly the same way"
 
-const ImportEventsPage = () => {
+const ImportLineupsPage = () => {
     const [candidates, setCandidates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState({}); // Map of leagueId -> boolean
@@ -14,43 +14,10 @@ const ImportEventsPage = () => {
     const fetchCandidates = async () => {
         setLoading(true);
         try {
-            // Actual Backend Endpoint
-            const res = await axios.get('/api/fixtures/events/candidates');
+            const res = await axios.get('/api/fixtures/lineups/candidates');
             setCandidates(res.data);
         } catch (error) {
-            console.error("Error fetching event candidates", error);
-            // Fallback for demo
-            setCandidates([
-                {
-                    league_id: 39,
-                    name: 'Premier League',
-                    season: 2023,
-                    logo: 'https://media.api-sports.io/football/leagues/39.png',
-                    missing_events: 45
-                },
-                {
-                    league_id: 39,
-                    name: 'Premier League',
-                    season: 2022,
-                    logo: 'https://media.api-sports.io/football/leagues/39.png',
-                    missing_events: 12
-                },
-                {
-                    league_id: 140,
-                    name: 'La Liga',
-                    season: 2023,
-                    logo: 'https://media.api-sports.io/football/leagues/140.png',
-                    missing_events: 102
-                },
-                {
-                    league_id: 135,
-                    name: 'Serie A',
-                    season: 2022,
-                    logo: 'https://media.api-sports.io/football/leagues/135.png',
-                    missing_events: 0,
-                    status: 'complete'
-                }
-            ]);
+            console.error("Error fetching lineup candidates", error);
         } finally {
             setLoading(false);
         }
@@ -71,14 +38,13 @@ const ImportEventsPage = () => {
         }
 
         const seasonYear = curr.season_year || curr.season;
-        const isComplete = curr.status === 'complete' || curr.missing_events === 0;
+        const isComplete = curr.missing_lineups === 0;
 
         acc[id].seasons.push({
             year: seasonYear,
-            missing: curr.missing_events,
+            missing: curr.missing_lineups,
             complete: isComplete,
-            status: curr.status,
-            raw: curr // store raw for updates
+            raw: curr
         });
 
         return acc;
@@ -98,35 +64,30 @@ const ImportEventsPage = () => {
         }
 
         try {
-            // Sequential sync to avoid rate limits? Or parallel?
-            // Let's do parallel but limited.
-            // For now, simple loop.
             for (const s of incompleteSeasons) {
                 try {
-                    await axios.post('/api/fixtures/events/sync', {
+                    await axios.post('/api/fixtures/lineups/import', {
                         league_id: leagueId,
                         season_year: s.year,
-                        limit: 500 // Ensure we cover the full season
+                        limit: 500 // Full season coverage
                     });
 
-                    // Optimistic update per season success
+                    // Optimistic update
                     setCandidates(prev => prev.map(c => {
                         const cSeason = c.season_year || c.season;
                         if (c.league_id === leagueId && cSeason === s.year) {
-                            return { ...c, missing_events: 0, status: 'complete' };
+                            return { ...c, missing_lineups: 0 };
                         }
                         return c;
                     }));
 
                 } catch (e) {
-                    console.error(`Failed to sync ${leagueId} season ${s.year}`, e);
-                    // Continue to next season even if one fails
+                    console.error(`Failed to sync lineups for ${leagueId} season ${s.year}`, e);
                 }
             }
-
         } catch (error) {
             console.error("Group sync failed", error);
-            alert("Some syncs failed for this league.");
+            alert("Some syncs failed.");
         } finally {
             setProcessing(prev => ({ ...prev, [leagueId]: false }));
         }
@@ -141,11 +102,11 @@ const ImportEventsPage = () => {
     return (
         <div className="import-events-page">
             <header className="page-header">
-                <h1>Fixture Events Import Manager</h1>
-                <p>Select leagues below to sync detailed match events (Goals, Cards, Subs). High API usage warning.</p>
+                <h1>Fixture Lineups Import Manager</h1>
+                <p>Select leagues below to sync team compositions (Lineups, Formations, Coaches, Subs).</p>
                 <div className="sub-nav-links" style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
                     <a href="/import" className="btn-v3-secondary btn-sm">League Import</a>
-                    <a href="/lineups-import" className="btn-v3-secondary btn-sm">Lineups Import</a>
+                    <a href="/events" className="btn-v3-secondary btn-sm">Events Import</a>
                 </div>
             </header>
 
@@ -161,7 +122,7 @@ const ImportEventsPage = () => {
                     </div>
 
                     {sortedGroups.length === 0 ? (
-                        <div className="empty-state">No incomplete leagues found. All caught up!</div>
+                        <div className="empty-state">No incomplete leagues found. All lineups caught up!</div>
                     ) : (
                         sortedGroups.map(group => {
                             const isProcessing = processing[group.league_id];
@@ -203,7 +164,7 @@ const ImportEventsPage = () => {
                                                 onClick={() => handleSyncGroup(group)}
                                                 disabled={isProcessing}
                                             >
-                                                {isProcessing ? 'Syncing Group...' : `Sync All (${group.seasons.filter(s => !s.complete).length})`}
+                                                {isProcessing ? 'Syncing...' : `Sync All`}
                                             </button>
                                         )}
                                         {isProcessing && <div className="spinner-mini"></div>}
@@ -218,4 +179,4 @@ const ImportEventsPage = () => {
     );
 };
 
-export default ImportEventsPage;
+export default ImportLineupsPage;

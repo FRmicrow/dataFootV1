@@ -1,4 +1,4 @@
-import dbV3 from '../../config/database_v3.js';
+import db from '../../config/database.js';
 
 /**
  * Player Controller for V3 POC
@@ -9,7 +9,7 @@ export const getPlayerProfileV3 = async (req, res) => {
         const { id } = req.params;
 
         // 1. Fetch Player Basic Info
-        const player = dbV3.get(`
+        const player = db.get(`
             SELECT p.*, c3.flag_url as nationality_flag 
             FROM V3_Players p
             LEFT JOIN V3_Countries c3 ON p.nationality = c3.name
@@ -21,7 +21,7 @@ export const getPlayerProfileV3 = async (req, res) => {
         }
 
         // 2. Fetch Career Stats with Team and League details
-        const stats = dbV3.all(`
+        const stats = db.all(`
             SELECT 
                 ps.*,
                 t.name as team_name, t.logo_url as team_logo,
@@ -91,7 +91,7 @@ export const getPlayerNationalities = async (req, res) => {
             GROUP BY nationality 
             ORDER BY count DESC
         `;
-        const nationalities = dbV3.all(sql);
+        const nationalities = db.all(sql);
         res.json(nationalities);
     } catch (error) {
         console.error("Error fetching player nationalities:", error);
@@ -118,7 +118,7 @@ export const getPlayersByNationality = async (req, res) => {
             WHERE p.nationality = ?
             ORDER BY p.name ASC
         `;
-        const players = dbV3.all(sql, [country]);
+        const players = db.all(sql, [country]);
         res.json(players);
     } catch (error) {
         console.error(`Error fetching players for ${country}:`, error);

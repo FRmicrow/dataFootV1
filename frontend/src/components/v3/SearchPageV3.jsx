@@ -17,7 +17,7 @@ const SearchPageV3 = () => {
 
     // Fetch countries for filter dropdown
     useEffect(() => {
-        axios.get('/api/v3/search/countries')
+        axios.get('/api/search/countries')
             .then(res => setCountries(res.data))
             .catch(err => console.error("Failed to fetch countries", err));
     }, []);
@@ -34,7 +34,7 @@ const SearchPageV3 = () => {
         try {
             const params = new URLSearchParams({ q: searchQuery, type: searchType });
             if (searchCountry) params.append('country', searchCountry);
-            const res = await axios.get(`/api/v3/search?${params}`);
+            const res = await axios.get(`/api/search?${params}`);
             setResults(res.data);
             setHasSearched(true);
         } catch (error) {
@@ -147,7 +147,7 @@ const SearchPageV3 = () => {
                                                 <div
                                                     key={c.team_id}
                                                     className="rich-card club-result"
-                                                    onClick={() => navigate(`/v3/club/${c.team_id}`)}
+                                                    onClick={() => navigate(`/club/${c.team_id}`)}
                                                 >
                                                     <div className="card-rank">
                                                         {c.country_rank < 999 ? `#${c.country_rank}` : ''}
@@ -191,7 +191,7 @@ const SearchPageV3 = () => {
                                                 <div
                                                     key={p.player_id}
                                                     className="rich-card player-result"
-                                                    onClick={() => navigate(`/v3/player/${p.player_id}`)}
+                                                    onClick={() => navigate(`/player/${p.player_id}`)}
                                                 >
                                                     <div className="card-rank">
                                                         {p.country_rank < 999 ? `#${p.country_rank}` : ''}
@@ -230,7 +230,7 @@ const SearchPageV3 = () => {
                                     <div className="empty-state-icon">🔎</div>
                                     <h3>No Data Found</h3>
                                     <p>We couldn't find any clubs or players matching "{query}".</p>
-                                    <button className="primary-btn-v3" onClick={() => navigate('/v3/import')}>Import More Leagues</button>
+                                    <button className="primary-btn-v3" onClick={() => navigate('/import')}>Import More Leagues</button>
                                 </div>
                             )}
                         </div>
