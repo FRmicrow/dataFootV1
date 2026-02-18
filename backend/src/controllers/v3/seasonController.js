@@ -1,4 +1,4 @@
-import dbV3 from '../../config/database_v3.js';
+import db from '../../config/database.js';
 
 /**
  * Season Controller for V3 POC
@@ -16,7 +16,7 @@ export const getSeasonOverview = async (req, res) => {
         console.log(`📊 Fetching V3 Season Overview for League ${leagueId}, Season ${season}`);
 
         // 1. Fetch League Metadata
-        const leagueInfo = dbV3.get(`
+        const leagueInfo = db.get(`
             SELECT 
                 l.league_id, l.name as league_name, l.logo_url, l.type,
                 c.name as country_name, c.flag_url,
@@ -33,7 +33,7 @@ export const getSeasonOverview = async (req, res) => {
 
         // 2. Simulated Standings (Aggregated by Team)
         // Note: casting boolean to integer for sqlite sum if needed, but goals are integers
-        const standings = dbV3.all(`
+        const standings = db.all(`
             SELECT 
                 t.team_id, 
                 t.name as team_name, 
@@ -53,7 +53,7 @@ export const getSeasonOverview = async (req, res) => {
         `, [leagueId, season]);
 
         // 3. Top Scorers
-        const topScorers = dbV3.all(`
+        const topScorers = db.all(`
             SELECT 
                 p.player_id, 
                 p.name as player_name, 
@@ -72,7 +72,7 @@ export const getSeasonOverview = async (req, res) => {
         `, [leagueId, season]);
 
         // 4. Top Assists
-        const topAssists = dbV3.all(`
+        const topAssists = db.all(`
             SELECT 
                 p.player_id, 
                 p.name as player_name, 
@@ -91,7 +91,7 @@ export const getSeasonOverview = async (req, res) => {
         `, [leagueId, season]);
 
         // 5. Top Rated Players
-        const topRated = dbV3.all(`
+        const topRated = db.all(`
             SELECT 
                 p.player_id, 
                 p.name as player_name, 
@@ -109,7 +109,7 @@ export const getSeasonOverview = async (req, res) => {
         `, [leagueId, season]);
 
         // 6. Available Years for this League
-        const availableYears = dbV3.all(`
+        const availableYears = db.all(`
             SELECT season_year 
             FROM V3_League_Seasons 
             WHERE league_id = ? AND imported_players = 1
@@ -173,7 +173,7 @@ export const getSeasonPlayers = async (req, res) => {
         sql += ` ORDER BY ps.games_appearences DESC, ps.goals_total DESC`;
 
         console.log(`📡 Executing SQL for season players...`);
-        const players = dbV3.all(sql, cleanParams(params));
+        const players = db.all(sql, cleanParams(params));
         res.json(players);
     } catch (error) {
         console.error("❌ Error fetching season players:", error);
@@ -188,7 +188,7 @@ export const getSeasonPlayers = async (req, res) => {
 export const getTeamSquad = async (req, res) => {
     try {
         const { leagueId, year, teamId } = req.params;
-        const squad = dbV3.all(`
+        const squad = db.all(`
             SELECT 
                 p.player_id, p.name, p.firstname, p.lastname, p.age, p.photo_url,
                 ps.games_position as position,

@@ -1,4 +1,4 @@
-import dbV3 from '../../config/database_v3.js';
+import db from '../../config/database.js';
 
 /**
  * Get the status of all seasons for a specific league
@@ -8,13 +8,13 @@ export const getLeagueSeasonsStatus = (req, res) => {
         const { id: leagueId } = req.params;
 
         // Verify League Exists
-        const league = dbV3.get('SELECT * FROM V3_Leagues WHERE league_id = ?', [leagueId]);
+        const league = db.get('SELECT * FROM V3_Leagues WHERE league_id = ?', [leagueId]);
         if (!league) {
             return res.status(404).json({ error: 'V3 League not found' });
         }
 
         // Get Seasons Status
-        const seasons = dbV3.all(`
+        const seasons = db.all(`
             SELECT 
                 ls.league_season_id,
                 ls.season_year,
@@ -50,7 +50,7 @@ export const getLeagueSeasonsStatus = (req, res) => {
 export const getSyncStatus = (req, res) => {
     try {
         const { id } = req.params;
-        const seasons = dbV3.all(`
+        const seasons = db.all(`
             SELECT 
                 season_year as year,
                 imported_players as players,
@@ -89,10 +89,10 @@ export const initializeSeasons = (req, res) => {
         const added = [];
         for (let year = startYear; year <= endYear; year++) {
             // Check if exists
-            const existing = dbV3.get('SELECT * FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?', [leagueId, year]);
+            const existing = db.get('SELECT * FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?', [leagueId, year]);
 
             if (!existing) {
-                dbV3.run(`
+                db.run(`
                     INSERT INTO V3_League_Seasons (league_id, season_year, is_current)
                     VALUES (?, ?, ?)
                 `, [leagueId, year, year === new Date().getFullYear() ? 1 : 0]);

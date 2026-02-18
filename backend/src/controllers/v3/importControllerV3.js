@@ -1,5 +1,4 @@
-import dbV3 from '../../config/database_v3.js';
-import dbV2 from '../../config/database.js';
+import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
 import { syncLeagueEventsService } from './fixtureController.js';
 
@@ -157,18 +156,18 @@ const Mappers = {
 
 const DB = {
     getOrInsertCountry: (data) => {
-        let country = dbV3.get("SELECT country_id FROM V3_Countries WHERE name = ?", cleanParams([data.name]));
+        let country = db.get("SELECT country_id FROM V3_Countries WHERE name = ?", cleanParams([data.name]));
         if (!country) {
-            const info = dbV3.run("INSERT INTO V3_Countries (name, code, flag_url) VALUES (?, ?, ?)", cleanParams([data.name, data.code, data.flag_url]));
+            const info = db.run("INSERT INTO V3_Countries (name, code, flag_url) VALUES (?, ?, ?)", cleanParams([data.name, data.code, data.flag_url]));
             return info.lastInsertRowid;
         }
         return country.country_id;
     },
     getOrInsertVenue: (data) => {
         if (!data.api_id) return null;
-        let venue = dbV3.get("SELECT venue_id FROM V3_Venues WHERE api_id = ?", cleanParams([data.api_id]));
+        let venue = db.get("SELECT venue_id FROM V3_Venues WHERE api_id = ?", cleanParams([data.api_id]));
         if (!venue) {
-            const info = dbV3.run(`INSERT INTO V3_Venues (api_id, name, address, city, capacity, surface, image_url) VALUES (?,?,?,?,?,?,?)`,
+            const info = db.run(`INSERT INTO V3_Venues (api_id, name, address, city, capacity, surface, image_url) VALUES (?,?,?,?,?,?,?)`,
                 cleanParams([data.api_id, data.name, data.address, data.city, data.capacity, data.surface, data.image_url]));
             return info.lastInsertRowid;
         }
@@ -176,7 +175,7 @@ const DB = {
     },
     upsertLeague: (data, countryId, countryName) => {
         // 1. Primary Check: API ID
-        let league = dbV3.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([data.api_id]));
+        let league = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([data.api_id]));
         if (league) {
             return league.league_id;
         }
@@ -193,27 +192,27 @@ const DB = {
         }
 
         // 3. Identity Check (Prevent Duplicates if API ID is missing/changed but Name+Country matches)
-        let existingIdentity = dbV3.get("SELECT league_id FROM V3_Leagues WHERE name = ? AND country_id = ?", cleanParams([finalName, countryId]));
+        let existingIdentity = db.get("SELECT league_id FROM V3_Leagues WHERE name = ? AND country_id = ?", cleanParams([finalName, countryId]));
         if (existingIdentity) {
             // Update API ID if missing? optionally
-            dbV3.run("UPDATE V3_Leagues SET api_id = ? WHERE league_id = ?", cleanParams([data.api_id, existingIdentity.league_id]));
+            db.run("UPDATE V3_Leagues SET api_id = ? WHERE league_id = ?", cleanParams([data.api_id, existingIdentity.league_id]));
             return existingIdentity.league_id;
         }
 
         // 4. Create New Discovered League
-        const info = dbV3.run(
+        const info = db.run(
             "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered) VALUES (?, ?, ?, ?, ?, 1)",
             cleanParams([data.api_id, finalName, data.type, data.logo_url, countryId])
         );
         return info.lastInsertRowid;
     },
     upsertLeagueSeason: (data) => {
-        let season = dbV3.get("SELECT league_season_id FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([data.league_id, data.season_year]));
+        let season = db.get("SELECT league_season_id FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([data.league_id, data.season_year]));
         if (season) {
             return season.league_season_id;
         } else {
             // New Season -> PARTIAL_DISCOVERY
-            const info = dbV3.run(`INSERT INTO V3_League_Seasons (
+            const info = db.run(`INSERT INTO V3_League_Seasons (
                 league_id, season_year, sync_status, is_current, 
                 coverage_standings, coverage_players, coverage_top_scorers, coverage_top_assists, coverage_top_cards, coverage_injuries, coverage_predictions, coverage_odds
             ) VALUES (?, ?, 'PARTIAL_DISCOVERY', 0, 0, 0, 0, 0, 0, 0, 0, 0)`,
@@ -222,35 +221,35 @@ const DB = {
         }
     },
     upsertTeam: (data, venueId) => {
-        let team = dbV3.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([data.api_id]));
+        let team = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([data.api_id]));
         if (team) {
-            dbV3.run(`UPDATE V3_Teams SET name=?, code=?, logo_url=?, venue_id=?, is_national_team=? WHERE team_id=?`,
+            db.run(`UPDATE V3_Teams SET name=?, code=?, logo_url=?, venue_id=?, is_national_team=? WHERE team_id=?`,
                 cleanParams([data.name, data.code, data.logo_url, venueId, data.is_national_team, team.team_id]));
             return team.team_id;
         } else {
-            const info = dbV3.run(`INSERT INTO V3_Teams (api_id, name, code, country, founded, national, is_national_team, logo_url, venue_id) VALUES (?,?,?,?,?,?,?,?,?)`,
+            const info = db.run(`INSERT INTO V3_Teams (api_id, name, code, country, founded, national, is_national_team, logo_url, venue_id) VALUES (?,?,?,?,?,?,?,?,?)`,
                 cleanParams([data.api_id, data.name, data.code, data.country, data.founded, data.national, data.is_national_team, data.logo_url, venueId]));
             return info.lastInsertRowid;
         }
     },
     upsertPlayer: (data) => {
-        let player = dbV3.get("SELECT player_id FROM V3_Players WHERE api_id = ?", cleanParams([data.api_id]));
+        let player = db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", cleanParams([data.api_id]));
         if (player) {
             // Update critical fields if needed
-            dbV3.run(`UPDATE V3_Players SET age=?, height=?, weight=?, injured=?, photo_url=?, preferred_foot=? WHERE player_id=?`,
+            db.run(`UPDATE V3_Players SET age=?, height=?, weight=?, injured=?, photo_url=?, preferred_foot=? WHERE player_id=?`,
                 cleanParams([data.age, data.height, data.weight, data.injured, data.photo_url, data.preferred_foot, player.player_id]));
             return player.player_id;
         } else {
-            const info = dbV3.run(`INSERT INTO V3_Players (api_id, name, firstname, lastname, age, birth_date, birth_place, birth_country, nationality, height, weight, injured, photo_url, preferred_foot) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            const info = db.run(`INSERT INTO V3_Players (api_id, name, firstname, lastname, age, birth_date, birth_place, birth_country, nationality, height, weight, injured, photo_url, preferred_foot) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 cleanParams([data.api_id, data.name, data.firstname, data.lastname, data.age, data.birth_date, data.birth_place, data.birth_country, data.nationality, data.height, data.weight, data.injured, data.photo_url, data.preferred_foot]));
             return info.lastInsertRowid;
         }
     },
     upsertPlayerStats: (s) => {
-        const existing = dbV3.get(`SELECT stat_id FROM V3_Player_Stats WHERE player_id=? AND team_id=? AND league_id=? AND season_year=?`,
+        const existing = db.get(`SELECT stat_id FROM V3_Player_Stats WHERE player_id=? AND team_id=? AND league_id=? AND season_year=?`,
             cleanParams([s.player_id, s.team_id, s.league_id, s.season_year]));
         if (existing) {
-            dbV3.run(`UPDATE V3_Player_Stats SET 
+            db.run(`UPDATE V3_Player_Stats SET 
                 games_appearences=?, games_lineups=?, games_minutes=?, games_number=?, games_position=?, games_rating=?, games_captain=?,
                 substitutes_in=?, substitutes_out=?, substitutes_bench=?, shots_total=?, shots_on=?, goals_total=?, goals_conceded=?, goals_assists=?, goals_saves=?,
                 passes_total=?, passes_key=?, passes_accuracy=?, tackles_total=?, tackles_blocks=?, tackles_interceptions=?, duels_total=?, duels_won=?,
@@ -263,7 +262,7 @@ const DB = {
                 s.dribbles_attempts, s.dribbles_success, s.dribbles_past, s.fouls_drawn, s.fouls_committed, s.cards_yellow, s.cards_yellowred, s.cards_red,
                 s.penalty_won, s.penalty_commited, s.penalty_scored, s.penalty_missed, s.penalty_saved, existing.stat_id]));
         } else {
-            dbV3.run(`INSERT INTO V3_Player_Stats (
+            db.run(`INSERT INTO V3_Player_Stats (
                 player_id, team_id, league_id, season_year, games_appearences, games_lineups, games_minutes, games_number, games_position, games_rating, games_captain,
                 substitutes_in, substitutes_out, substitutes_bench, shots_total, shots_on, goals_total, goals_conceded, goals_assists, goals_saves,
                 passes_total, passes_key, passes_accuracy, tackles_total, tackles_blocks, tackles_interceptions, duels_total, duels_won,
@@ -277,24 +276,24 @@ const DB = {
         }
     },
     upsertStanding: (s) => {
-        const existing = dbV3.get(`SELECT standings_id FROM V3_Standings WHERE league_id=? AND season_year=? AND team_id=? AND group_name=?`,
+        const existing = db.get(`SELECT standings_id FROM V3_Standings WHERE league_id=? AND season_year=? AND team_id=? AND group_name=?`,
             cleanParams([s.league_id, s.season_year, s.team_id, s.group_name]));
         if (existing) {
-            dbV3.run(`UPDATE V3_Standings SET 
+            db.run(`UPDATE V3_Standings SET 
                 rank=?, points=?, goals_diff=?, played=?, win=?, draw=?, lose=?, goals_for=?, goals_against=?, form=?, status=?, description=?, update_date=CURRENT_TIMESTAMP
                 WHERE standings_id=?`,
                 cleanParams([s.rank, s.points, s.goals_diff, s.played, s.win, s.draw, s.lose, s.goals_for, s.goals_against, s.form, s.status, s.description, existing.standings_id]));
         } else {
-            dbV3.run(`INSERT INTO V3_Standings (
+            db.run(`INSERT INTO V3_Standings (
                 league_id, season_year, team_id, rank, points, goals_diff, played, win, draw, lose, goals_for, goals_against, form, status, description, group_name
                 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 cleanParams([s.league_id, s.season_year, s.team_id, s.rank, s.points, s.goals_diff, s.played, s.win, s.draw, s.lose, s.goals_for, s.goals_against, s.form, s.status, s.description, s.group_name]));
         }
     },
     upsertFixture: (f) => {
-        const existing = dbV3.get(`SELECT fixture_id FROM V3_Fixtures WHERE api_id=?`, cleanParams([f.api_id]));
+        const existing = db.get(`SELECT fixture_id FROM V3_Fixtures WHERE api_id=?`, cleanParams([f.api_id]));
         if (existing) {
-            dbV3.run(`UPDATE V3_Fixtures SET 
+            db.run(`UPDATE V3_Fixtures SET 
                 round=?, date=?, timestamp=?, timezone=?, venue_id=?, status_long=?, status_short=?, elapsed=?, goals_home=?, goals_away=?, 
                 score_halftime_home=?, score_halftime_away=?, score_fulltime_home=?, score_fulltime_away=?, score_extratime_home=?, score_extratime_away=?, 
                 score_penalty_home=?, score_penalty_away=?, updated_at=CURRENT_TIMESTAMP
@@ -303,7 +302,7 @@ const DB = {
                 f.score_halftime_home, f.score_halftime_away, f.score_fulltime_home, f.score_fulltime_away, f.score_extratime_home, f.score_extratime_away,
                 f.score_penalty_home, f.score_penalty_away, existing.fixture_id]));
         } else {
-            dbV3.run(`INSERT INTO V3_Fixtures (
+            db.run(`INSERT INTO V3_Fixtures (
                 api_id, league_id, season_year, round, date, timestamp, timezone, venue_id, status_long, status_short, elapsed, home_team_id, away_team_id, 
                 goals_home, goals_away, score_halftime_home, score_halftime_away, score_fulltime_home, score_fulltime_away, score_extratime_home, score_extratime_away, 
                 score_penalty_home, score_penalty_away
@@ -325,7 +324,7 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
 
     if (!forceApiId) {
         // Check if this is a local ID (e.g. from Discovered Panel)
-        const localCheck = dbV3.get("SELECT api_id FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
+        const localCheck = db.get("SELECT api_id FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
         // Only resolve to local api_id if the input ID doesn't match the found api_id (avoid self-mapping efficiency)
         // actually self-mapping is fine.
         // The issue is collision.
@@ -347,14 +346,14 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
     const countryId = DB.getOrInsertCountry(apiData.country);
 
     // Check if we already have this league by API ID (Primary Truth)
-    let localLeague = dbV3.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([targetApiId]));
+    let localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([targetApiId]));
     let localLeagueId;
 
     if (!localLeague) {
         // Double Check: Did we pass in a Local ID that is missing its API_ID match? 
         // Just rely on targetApiId for creation.
 
-        const info = dbV3.run("INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id) VALUES (?,?,?,?,?)",
+        const info = db.run("INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id) VALUES (?,?,?,?,?)",
             cleanParams([apiData.league.id, apiData.league.name, apiData.league.type, apiData.league.logo, countryId]));
         localLeagueId = info.lastInsertRowid;
         sendLog(`✅ Created League: ${apiData.league.name}`, 'success');
@@ -364,10 +363,10 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
 
     // Season Tracker
     const apiSeason = apiData.seasons[0];
-    let leagueSeason = dbV3.get("SELECT * FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+    let leagueSeason = db.get("SELECT * FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
 
     if (!leagueSeason) {
-        dbV3.run(`INSERT INTO V3_League_Seasons (
+        db.run(`INSERT INTO V3_League_Seasons (
                 league_id, season_year, start_date, end_date, is_current, 
                 coverage_standings, coverage_players, coverage_top_scorers, coverage_top_assists, coverage_top_cards, coverage_injuries, coverage_predictions, coverage_odds
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -383,16 +382,16 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
     sendLog(`ℹ️ Found ${teams.length} teams. Importing...`, 'info');
 
     const localTeamMap = {};
-    dbV3.run('BEGIN TRANSACTION');
+    db.run('BEGIN TRANSACTION');
     try {
         for (const t of teams) {
             let venueId = t.venue?.id ? DB.getOrInsertVenue(Mappers.venue(t.venue)) : null;
             localTeamMap[t.team.id] = DB.upsertTeam(Mappers.team(t.team), venueId);
         }
-        dbV3.run('COMMIT');
+        db.run('COMMIT');
         sendLog(`✅ Imported ${teams.length} Teams and Venues.`, 'success');
     } catch (err) {
-        dbV3.run('ROLLBACK');
+        db.run('ROLLBACK');
         throw err;
     }
 
@@ -414,29 +413,29 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
             if (!playersRes.response?.length) break;
             totalPages = playersRes.paging.total;
 
-            dbV3.run('BEGIN TRANSACTION');
+            db.run('BEGIN TRANSACTION');
             try {
                 for (const p of playersRes.response) {
                     const localPlayerId = DB.upsertPlayer(Mappers.player(p.player));
                     const leagueStats = p.statistics.filter(s => s.league.id === targetApiId);
                     for (const s of leagueStats) {
-                        let statTeamId = localTeamMap[s.team.id] || dbV3.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([s.team.id]))?.team_id;
+                        let statTeamId = localTeamMap[s.team.id] || db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([s.team.id]))?.team_id;
                         if (localPlayerId && statTeamId) {
                             DB.upsertPlayerStats(Mappers.stats(s, localPlayerId, statTeamId, localLeagueId, seasonYear));
                         }
                     }
                     totalPlayers++;
                 }
-                dbV3.run('COMMIT');
+                db.run('COMMIT');
             } catch (err) {
-                dbV3.run('ROLLBACK');
+                db.run('ROLLBACK');
                 sendLog(`      ⚠️ Error on page ${page} for ${teamName}: ${err.message}`, 'error');
             }
             page++;
         }
     }
 
-    dbV3.run("UPDATE V3_League_Seasons SET imported_players = 1, last_imported_at = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+    db.run("UPDATE V3_League_Seasons SET imported_players = 1, last_imported_at = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
     sendLog(`🎉 League ${targetApiId} (${seasonYear}) Complete! Processed ${totalPlayers} players.`, 'success');
 
     // 4. Ingest Standings
@@ -445,18 +444,18 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
         const standingsRes = await footballApi.getStandings(targetApiId, seasonYear);
         if (standingsRes.response && standingsRes.response.length > 0) {
             const leagueData = standingsRes.response[0].league;
-            dbV3.run('BEGIN TRANSACTION');
+            db.run('BEGIN TRANSACTION');
             for (const group of leagueData.standings) {
                 for (const row of group) {
                     const teamApiId = row.team.id;
-                    const teamId = localTeamMap[teamApiId] || dbV3.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([teamApiId]))?.team_id;
+                    const teamId = localTeamMap[teamApiId] || db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([teamApiId]))?.team_id;
                     if (teamId) {
                         DB.upsertStanding(Mappers.standings(row, localLeagueId, teamId, seasonYear));
                     }
                 }
             }
-            dbV3.run('COMMIT');
-            dbV3.run("UPDATE V3_League_Seasons SET imported_standings = 1 WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+            db.run('COMMIT');
+            db.run("UPDATE V3_League_Seasons SET imported_standings = 1 WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
             sendLog(`✅ Standings imported.`, 'success');
         } else {
             sendLog(`ℹ️ No standings found for this league.`, 'info');
@@ -470,18 +469,18 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
     try {
         const fixturesRes = await footballApi.getFixtures(targetApiId, seasonYear);
         if (fixturesRes.response && fixturesRes.response.length > 0) {
-            dbV3.run('BEGIN TRANSACTION');
+            db.run('BEGIN TRANSACTION');
             for (const f of fixturesRes.response) {
-                const homeTeamId = localTeamMap[f.teams.home.id] || dbV3.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([f.teams.home.id]))?.team_id;
-                const awayTeamId = localTeamMap[f.teams.away.id] || dbV3.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([f.teams.away.id]))?.team_id;
+                const homeTeamId = localTeamMap[f.teams.home.id] || db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([f.teams.home.id]))?.team_id;
+                const awayTeamId = localTeamMap[f.teams.away.id] || db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([f.teams.away.id]))?.team_id;
                 const venueId = f.fixture.venue.id ? DB.getOrInsertVenue(Mappers.venue(f.fixture.venue)) : null;
 
                 if (homeTeamId && awayTeamId) {
                     DB.upsertFixture(Mappers.fixture(f, localLeagueId, venueId, homeTeamId, awayTeamId, seasonYear));
                 }
             }
-            dbV3.run('COMMIT');
-            dbV3.run("UPDATE V3_League_Seasons SET imported_fixtures = 1 WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+            db.run('COMMIT');
+            db.run("UPDATE V3_League_Seasons SET imported_fixtures = 1 WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
             sendLog(`✅ Fixtures imported.`, 'success');
         } else {
             sendLog(`ℹ️ No fixtures found for this league.`, 'info');
@@ -491,14 +490,14 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
     }
 
     // 6. Post-Import: Promote discovered league to Official
-    const discoveredCheck = dbV3.get("SELECT is_discovered FROM V3_Leagues WHERE league_id = ?", cleanParams([localLeagueId]));
+    const discoveredCheck = db.get("SELECT is_discovered FROM V3_Leagues WHERE league_id = ?", cleanParams([localLeagueId]));
     if (discoveredCheck && discoveredCheck.is_discovered === 1) {
-        dbV3.run("UPDATE V3_Leagues SET is_discovered = 0 WHERE league_id = ?", cleanParams([localLeagueId]));
+        db.run("UPDATE V3_Leagues SET is_discovered = 0 WHERE league_id = ?", cleanParams([localLeagueId]));
         sendLog(`🏅 League promoted to Official (is_discovered = 0).`, 'success');
     }
 
     // Mark season as FULL sync
-    dbV3.run("UPDATE V3_League_Seasons SET sync_status = 'FULL' WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+    db.run("UPDATE V3_League_Seasons SET sync_status = 'FULL' WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
 
     // 7. Auto-Sync Fixture Events (Catch-Up)
     try {
@@ -540,14 +539,14 @@ export const getAvailableSeasons = async (req, res) => {
         const apiData = leagueResponse.response[0];
 
         // 2. Get local league record (if exists)
-        const localLeague = dbV3.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([numericApiId]));
+        const localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([numericApiId]));
 
         // 3. Cross-reference each season with local DB
         const seasons = (apiData.seasons || []).map(s => {
             let status = 'NOT_IMPORTED';
 
             if (localLeague) {
-                const localSeason = dbV3.get(
+                const localSeason = db.get(
                     "SELECT sync_status, imported_players, imported_standings, imported_fixtures FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?",
                     cleanParams([localLeague.league_id, s.year])
                 );
@@ -600,7 +599,7 @@ export const getStandingsV3 = async (req, res) => {
             return res.status(400).json({ error: "Missing leagueId or year" });
         }
 
-        const standings = dbV3.all(`
+        const standings = db.all(`
             SELECT 
                 s.*, t.name as team_name, t.logo_url as team_logo
             FROM V3_Standings s
@@ -627,7 +626,7 @@ export const getFixturesV3 = async (req, res) => {
             return res.status(400).json({ error: "Missing leagueId or year" });
         }
 
-        const fixtures = dbV3.all(`
+        const fixtures = db.all(`
             SELECT 
                 f.*, 
                 ht.name as home_team_name, ht.logo_url as home_team_logo,
@@ -660,11 +659,11 @@ export const getFixturesV3 = async (req, res) => {
  */
 export const getCountriesV3 = async (req, res) => {
     try {
-        // Use V2_countries as the primary source for the full, ranked list
-        const countries = dbV2.all(`
-            SELECT country_name as name, country_code as code, flag_url as flag
-            FROM V2_countries
-            ORDER BY importance_rank ASC, country_name ASC
+        // Use V3_Countries as the primary source for the full, ranked list
+        const countries = db.all(`
+            SELECT name, code, flag_url as flag
+            FROM V3_Countries
+            ORDER BY importance_rank ASC, name ASC
         `);
 
         if (countries && countries.length > 0) {
@@ -677,13 +676,7 @@ export const getCountriesV3 = async (req, res) => {
             return res.json(response.response);
         }
 
-        // Final Fallback: V3_Countries
-        const v3countries = dbV3.all(`
-            SELECT name, code, flag_url as flag
-            FROM V3_Countries
-            ORDER BY name ASC
-        `);
-        res.json(v3countries);
+        res.json([]);
     } catch (error) {
         console.error("Error in getCountriesV3:", error);
         res.status(500).json({ error: error.message });
@@ -792,7 +785,7 @@ export const syncPlayerCareerV3 = async (req, res) => {
 
     try {
         // 1. Get Player API ID
-        const player = dbV3.get("SELECT api_id, name FROM V3_Players WHERE player_id = ?", [playerId]);
+        const player = db.get("SELECT api_id, name FROM V3_Players WHERE player_id = ?", [playerId]);
         if (!player) throw new Error("Player not found in local V3 database.");
 
         sendLog(`🔭 Starting Deep-Career Sync for ${player.name}...`, 'info');
@@ -835,7 +828,7 @@ export const syncPlayerCareerV3 = async (req, res) => {
                 continue;
             }
 
-            dbV3.run('BEGIN TRANSACTION');
+            db.run('BEGIN TRANSACTION');
             try {
                 // API-Football returns response: [ { player: {}, statistics: [] } ]
                 for (const item of statsRes.response) {
@@ -849,7 +842,7 @@ export const syncPlayerCareerV3 = async (req, res) => {
                         }));
 
                         // Check if league existed before upsert to log discovery
-                        const preLeague = dbV3.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [stat.league.id]);
+                        const preLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [stat.league.id]);
                         const localLeagueId = DB.upsertLeague(Mappers.league(stat), countryId, countryName);
 
                         if (!preLeague) {
@@ -861,7 +854,7 @@ export const syncPlayerCareerV3 = async (req, res) => {
                         const seasonId = DB.upsertLeagueSeason(Mappers.leagueSeason(localLeagueId, year));
 
                         // c. Reconciliation Check
-                        const existingStat = dbV3.get(`
+                        const existingStat = db.get(`
                             SELECT stat_id, games_appearences, goals_total, goals_assists 
                             FROM V3_Player_Stats 
                             WHERE player_id=? AND team_id=? AND league_id=? AND season_year=?
@@ -886,17 +879,17 @@ export const syncPlayerCareerV3 = async (req, res) => {
                         }
 
                         // Ensure Partial status stays accurate
-                        dbV3.run(`
+                        db.run(`
                             UPDATE V3_League_Seasons 
                             SET sync_status = 'PARTIAL' 
                             WHERE league_season_id = ? AND sync_status = 'NONE'
                         `, [seasonId]);
                     }
                 }
-                dbV3.run('COMMIT');
+                db.run('COMMIT');
                 sendLog(`   ✅ Year ${year} reconciliation complete.`, 'success');
             } catch (err) {
-                dbV3.run('ROLLBACK');
+                db.run('ROLLBACK');
                 sendLog(`   ❌ Error reconciling Year ${year}: ${err.message}`, 'error');
             }
         }

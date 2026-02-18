@@ -1,0 +1,131 @@
+.match-detail-page {
+    /* Main wrapper */
+    padding: 20px;
+}
+
+.match-header-card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.league-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 15px;
+}
+
+.league-icon-sm {
+    width: 20px;
+    height: 20px;
+}
+
+.match-date {
+    margin-left: auto;
+}
+
+.score-board {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.team-logo-lg {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 10px;
+}
+
+.team-name {
+    margin: 0;
+    font-size: 1.2rem;
+    text-align: center;
+    color: #e2e8f0;
+}
+
+.score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 20px;
+}
+
+.score {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #0ea5e9;
+}
+
+.divider {
+    font-size: 2rem;
+    color: #64748b;
+    margin: 0 5px;
+}
+
+.match-status {
+    background: #475569;
+    color: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.match-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1rem;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: #cbd5e1;
+}
+
+.tab-btn.active {
+    color: #0ea5e9;
+    border-bottom-color: #0ea5e9;
+    font-weight: bold;
+}
+
+.match-content {
+    /* Dynamic content */
+    min-height: 400px;
+    background: #0f172a;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.placeholder-tab {
+    color: #64748b;
+    text-align: center;
+    padding: 40px;
+}

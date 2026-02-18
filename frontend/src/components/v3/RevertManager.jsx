@@ -7,7 +7,7 @@ const RevertManager = () => {
 
     const fetchHistory = async () => {
         try {
-            const res = await axios.get('/api/v3/admin/health/history');
+            const res = await axios.get('/api/admin/health/history');
             setHistory(res.data);
         } catch (e) {
             console.error("Failed to fetch history:", e);
@@ -23,7 +23,7 @@ const RevertManager = () => {
 
         setLoading(true);
         try {
-            await axios.post(`/api/v3/admin/health/revert/${groupId}`);
+            await axios.post(`/api/admin/health/revert/${groupId}`);
             alert("Restoration successful!");
             fetchHistory();
         } catch (e) {

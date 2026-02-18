@@ -300,6 +300,38 @@ class FootballApi {
             season: season
         }, requestId);
     }
+    /**
+     * Get lineups for a specific fixture
+     * GET /fixtures/lineups?fixture={id}
+     */
+    async getFixtureLineups(fixtureId) {
+        const requestId = `lineups-fixture-${fixtureId}`;
+        return this.makeRequest('/fixtures/lineups', {
+            fixture: fixtureId
+        }, requestId);
+    }
+
+    /**
+     * Get events for a specific fixture
+     * GET /fixtures/events?fixture={id}
+     */
+    async getFixtureEvents(fixtureId) {
+        const requestId = `events-fixture-${fixtureId}`;
+        return this.makeRequest('/fixtures/events', {
+            fixture: fixtureId
+        }, requestId);
+    }
+
+    /**
+     * Get player statistics for a specific fixture
+     * GET /fixtures/players?fixture={id}
+     */
+    async getFixturePlayerStatistics(fixtureId) {
+        const requestId = `stats-fixture-${fixtureId}`;
+        return this.makeRequest('/fixtures/players', {
+            fixture: fixtureId
+        }, requestId);
+    }
 }
 
 const footballApi = new FootballApi();

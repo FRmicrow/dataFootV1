@@ -1,4 +1,4 @@
-import dbV3 from '../../config/database_v3.js';
+import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
 
 /**
@@ -14,7 +14,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  */
 export const getCountries = async (req, res) => {
     try {
-        const countries = dbV3.all("SELECT * FROM V3_Countries ORDER BY name ASC");
+        const countries = db.all("SELECT * FROM V3_Countries ORDER BY name ASC");
         res.json(countries);
     } catch (error) {
         console.error("Error fetching countries from DB:", error);
@@ -93,11 +93,11 @@ export const importLeagueData = async (req, res) => {
         // We assume country info is in leagueData.country
         let countryId = null;
         if (country.name && country.name !== 'World') {
-            const existingCountry = dbV3.get("SELECT country_id FROM V3_Countries WHERE name = ?", [country.name]);
+            const existingCountry = db.get("SELECT country_id FROM V3_Countries WHERE name = ?", [country.name]);
             if (existingCountry) {
                 countryId = existingCountry.country_id;
             } else {
-                const result = dbV3.run(`
+                const result = db.run(`
                     INSERT INTO V3_Countries (name, code, flag_url) VALUES (?, ?, ?)
                 `, [country.name, country.code, country.flag]);
                 countryId = result.lastInsertRowid;
@@ -106,12 +106,12 @@ export const importLeagueData = async (req, res) => {
 
         // 3. Insert/Update V3_Leagues
         let v3LeagueId = null;
-        const existingLeague = dbV3.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [league.id]);
+        const existingLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [league.id]);
 
         if (existingLeague) {
             v3LeagueId = existingLeague.league_id;
         } else {
-            const result = dbV3.run(`
+            const result = db.run(`
                 INSERT INTO V3_Leagues (name, type, logo_url, country_id, api_id) 
                 VALUES (?, ?, ?, ?, ?)
             `, [league.name, league.type, league.logo, countryId, league.id]);
@@ -120,13 +120,13 @@ export const importLeagueData = async (req, res) => {
 
         // 4. Insert/Update V3_League_Seasons
         // Check if exists
-        const existingSeason = dbV3.get(
+        const existingSeason = db.get(
             "SELECT ls_id FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?",
             [v3LeagueId, season]
         );
 
         if (!existingSeason) {
-            dbV3.run(`
+            db.run(`
                 INSERT INTO V3_League_Seasons (
                     league_id, season_year, start_date, end_date, 
                     coverage_events, coverage_lineups, coverage_players, coverage_top_scorers
@@ -154,11 +154,11 @@ export const importLeagueData = async (req, res) => {
             // Insert Venue
             let venueId = null;
             if (venue.id) {
-                const existingVenue = dbV3.get("SELECT venue_id FROM V3_Venues WHERE api_id = ?", [venue.id]);
+                const existingVenue = db.get("SELECT venue_id FROM V3_Venues WHERE api_id = ?", [venue.id]);
                 if (existingVenue) {
                     venueId = existingVenue.venue_id;
                 } else {
-                    const vRes = dbV3.run(`
+                    const vRes = db.run(`
                         INSERT INTO V3_Venues (name, address, city, capacity, surface, image_url, api_id)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
                     `, [venue.name, venue.address, venue.city, venue.capacity, venue.surface, venue.image, venue.id]);
@@ -168,12 +168,12 @@ export const importLeagueData = async (req, res) => {
 
             // Insert Team
             let teamId = null;
-            const existingTeam = dbV3.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", [team.id]);
+            const existingTeam = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", [team.id]);
             if (existingTeam) {
                 teamId = existingTeam.team_id;
                 // Optional: Update details
             } else {
-                const tRes = dbV3.run(`
+                const tRes = db.run(`
                     INSERT INTO V3_Teams (name, code, country_id, founded, national, logo_url, venue_id, api_id)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 `, [team.name, team.code, countryId, team.founded, team.national ? 1 : 0, team.logo, venueId, team.id]);
@@ -193,19 +193,19 @@ export const importLeagueData = async (req, res) => {
                     const playersData = playersResponse.response;
                     totalPages = playersResponse.paging.total;
 
-                    dbV3.run('BEGIN TRANSACTION'); // Batch insert per page
+                    db.run('BEGIN TRANSACTION'); // Batch insert per page
                     try {
                         for (const pData of playersData) {
                             const { player, statistics } = pData;
 
                             // Insert V3_Player
                             let v3PlayerId = null;
-                            const existingPlayer = dbV3.get("SELECT player_id FROM V3_Players WHERE api_id = ?", [player.id]);
+                            const existingPlayer = db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", [player.id]);
 
                             if (existingPlayer) {
                                 v3PlayerId = existingPlayer.player_id;
                             } else {
-                                const pRes = dbV3.run(`
+                                const pRes = db.run(`
                                     INSERT INTO V3_Players (
                                         firstname, lastname, name, age, birth_date, birth_place, 
                                         birth_country, nationality, height, weight, injured, photo_url, api_id
@@ -228,13 +228,13 @@ export const importLeagueData = async (req, res) => {
 
                             if (stats) {
                                 // Check duplicate
-                                const existingStat = dbV3.get(`
+                                const existingStat = db.get(`
                                     SELECT stat_id FROM V3_Player_Stats 
                                     WHERE player_id = ? AND team_id = ? AND league_id = ? AND season_year = ?
                                 `, [v3PlayerId, teamId, v3LeagueId, season]);
 
                                 if (!existingStat) {
-                                    dbV3.run(`
+                                    db.run(`
                                         INSERT INTO V3_Player_Stats (
                                             player_id, team_id, league_id, season_year, position, captain,
                                             appearances, lineups, minutes, rating,
@@ -274,9 +274,9 @@ export const importLeagueData = async (req, res) => {
                                 }
                             }
                         }
-                        dbV3.run('COMMIT');
+                        db.run('COMMIT');
                     } catch (err) {
-                        dbV3.run('ROLLBACK');
+                        db.run('ROLLBACK');
                         console.error(`Error processing page ${page} for team ${team.name}:`, err);
                         // Continue to next page?
                     }
@@ -289,7 +289,7 @@ export const importLeagueData = async (req, res) => {
         }
 
         // 7. Update Completion Flags
-        dbV3.run(`
+        db.run(`
             UPDATE V3_League_Seasons 
             Set imported_players = 1, last_imported_at = CURRENT_TIMESTAMP
             WHERE league_id = ? AND season_year = ?

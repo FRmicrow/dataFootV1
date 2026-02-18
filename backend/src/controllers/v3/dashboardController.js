@@ -1,4 +1,4 @@
-import dbV3 from '../../config/database_v3.js';
+import db from '../../config/database.js';
 
 /**
  * V3 Dashboard Controller
@@ -7,10 +7,10 @@ import dbV3 from '../../config/database_v3.js';
 
 export const getV3Stats = async (req, res) => {
     try {
-        const leagueCount = dbV3.get("SELECT COUNT(*) as count FROM V3_Leagues").count;
-        const playerCount = dbV3.get("SELECT COUNT(*) as count FROM V3_Players").count;
-        const teamCount = dbV3.get("SELECT COUNT(*) as count FROM V3_Teams").count;
-        const seasonCount = dbV3.get("SELECT COUNT(*) as count FROM V3_League_Seasons WHERE imported_players = 1").count;
+        const leagueCount = db.get("SELECT COUNT(*) as count FROM V3_Leagues").count;
+        const playerCount = db.get("SELECT COUNT(*) as count FROM V3_Players").count;
+        const teamCount = db.get("SELECT COUNT(*) as count FROM V3_Teams").count;
+        const seasonCount = db.get("SELECT COUNT(*) as count FROM V3_League_Seasons WHERE imported_players = 1").count;
 
         res.json({
             leagues: leagueCount,
@@ -29,7 +29,7 @@ export const getV3Stats = async (req, res) => {
  */
 export const getImportedLeagues = async (req, res) => {
     try {
-        const rows = dbV3.all(`
+        const rows = db.all(`
             SELECT 
                 l.league_id, l.api_id, l.name, l.type as league_type, l.logo_url, 
                 c.name as country_name, c.flag_url, c.importance_rank,
@@ -66,7 +66,7 @@ export const getImportedLeagues = async (req, res) => {
  */
 export const getDiscoveredLeagues = async (req, res) => {
     try {
-        const rows = dbV3.all(`
+        const rows = db.all(`
             SELECT 
                 l.league_id, l.api_id, l.name, l.logo_url, c.name as country_name, c.flag_url,
                 GROUP_CONCAT(ls.season_year) as years_csv
