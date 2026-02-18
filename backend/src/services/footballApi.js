@@ -123,18 +123,6 @@ class FootballApi {
         }, requestId);
     }
 
-    /**
-     * Get team statistics for a specific league and season
-     * GET /teams/statistics?team={id}&league={league}&season={season}
-     */
-    async getTeamStatistics(teamId, leagueId, season) {
-        const requestId = `team-stats-${teamId}-${leagueId}-${season}`;
-        return this.makeRequest('/teams/statistics', {
-            team: teamId,
-            league: leagueId,
-            season: season
-        }, requestId);
-    }
 
     /**
      * Get available seasons for a team
@@ -144,6 +132,45 @@ class FootballApi {
         const requestId = `seasons-team-${teamId}`;
         return this.makeRequest('/teams/seasons', {
             team: teamId
+        }, requestId);
+    }
+
+    /**
+     * Get leagues with flexible parameters
+     * GET /leagues?id={id}&season={season}&country={country}...
+     */
+    async getLeagues(params) {
+        // backward compatibility for season-only call
+        if (typeof params === 'string' || typeof params === 'number') {
+            params = { season: params };
+        }
+
+        // Create a deterministic requestId based on sorted keys
+        const paramKeys = Object.keys(params).sort();
+        const paramString = paramKeys.map(k => `${k}-${params[k]}`).join('_');
+        const requestId = `leagues-${paramString}`;
+
+        return this.makeRequest('/leagues', params, requestId);
+    }
+
+    /**
+     * Get all countries
+     * GET /countries
+     */
+    async getCountries() {
+        const requestId = 'all-countries';
+        return this.makeRequest('/countries', {}, requestId);
+    }
+
+    /**
+     * Get teams from a specific league and season
+     * GET /teams?league={id}&season={season}
+     */
+    async getTeamsFromLeague(leagueId, season) {
+        const requestId = `teams-league-${leagueId}-${season}`;
+        return this.makeRequest('/teams', {
+            league: leagueId,
+            season: season
         }, requestId);
     }
 
@@ -164,6 +191,145 @@ class FootballApi {
             team: teamId,
             season: season,
             page: page
+        }, requestId);
+    }
+
+    /**
+     * Get trophies for a specific player
+     * GET /trophies?player={playerId}
+     */
+    async getTrophies(playerId) {
+        const requestId = `trophies-player-${playerId}`;
+        return this.makeRequest('/trophies', {
+            player: playerId
+        }, requestId);
+    }
+
+    /**
+     * Get team information by name
+     * GET /teams?name={name}
+     */
+    async getTeamByName(teamName) {
+        const requestId = `team-name-${teamName.toLowerCase().replace(/\s+/g, '-')}`;
+        return this.makeRequest('/teams', {
+            name: teamName
+        }, requestId);
+    }
+
+    /**
+     * Get all countries available for teams
+     * GET /teams/countries
+     */
+    async getTeamCountries() {
+        const requestId = 'team-countries';
+        return this.makeRequest('/teams/countries', {}, requestId);
+    }
+
+    /**
+     * Get all teams from a specific country
+     * GET /teams?country={country}
+     */
+    async getTeamsByCountry(country) {
+        const requestId = `teams-country-${country.toLowerCase().replace(/\s+/g, '-')}`;
+        return this.makeRequest('/teams', {
+            country: country
+        }, requestId);
+    }
+
+    /**
+     * Get team statistics for a specific league and season
+     * GET /teams/statistics?league={leagueId}&team={teamId}&season={season}
+     */
+    async getTeamStatistics(teamId, leagueId, season, date = null) {
+        const requestId = `team-stats-${teamId}-${leagueId}-${season}`;
+        const params = {
+            team: teamId,
+            league: leagueId,
+            season: season
+        };
+        if (date) {
+            params.date = date;
+        }
+        return this.makeRequest('/teams/statistics', params, requestId);
+    }
+
+
+    /**
+     * Get complete team information by ID (includes trophies)
+     * GET /teams?id={id}
+     */
+    async getTeamById(teamId) {
+        const requestId = `team-id-${teamId}`;
+        return this.makeRequest('/teams', {
+            id: teamId
+        }, requestId);
+    }
+
+    /**
+     * Get all teams in a specific league and season
+     * GET /teams?league={leagueId}&season={season}
+     */
+    async getTeamsByLeague(leagueId, season) {
+        const requestId = `teams-league-${leagueId}-${season}`;
+        return this.makeRequest('/teams', {
+            league: leagueId,
+            season: season
+        }, requestId);
+    }
+
+    /**
+     * Get standings for a specific league and season
+     * GET /standings?league={id}&season={season}
+     */
+    async getStandings(leagueId, season) {
+        const requestId = `standings-league-${leagueId}-${season}`;
+        return this.makeRequest('/standings', {
+            league: leagueId,
+            season: season
+        }, requestId);
+    }
+
+    /**
+     * Get fixtures for a specific league and season
+     * GET /fixtures?league={id}&season={season}
+     */
+    async getFixtures(leagueId, season) {
+        const requestId = `fixtures-league-${leagueId}-${season}`;
+        return this.makeRequest('/fixtures', {
+            league: leagueId,
+            season: season
+        }, requestId);
+    }
+    /**
+     * Get lineups for a specific fixture
+     * GET /fixtures/lineups?fixture={id}
+     */
+    async getFixtureLineups(fixtureId) {
+        const requestId = `lineups-fixture-${fixtureId}`;
+        return this.makeRequest('/fixtures/lineups', {
+            fixture: fixtureId
+        }, requestId);
+    }
+
+    /**
+     * Get events for a specific fixture
+     * GET /fixtures/events?fixture={id}
+     */
+    async getFixtureEvents(fixtureId) {
+        const requestId = `events-fixture-${fixtureId}`;
+        return this.makeRequest('/fixtures/events', {
+            fixture: fixtureId
+        }, requestId);
+    }
+
+    /**
+     * Get player statistics for a specific fixture
+     * GET /fixtures/players?fixture={id}
+     */
+    async getFixturePlayerStatistics(fixtureId) {
+        const requestId = `stats-fixture-${fixtureId}`;
+        return this.makeRequest('/fixtures/players', {
+            fixture: fixtureId
         }, requestId);
     }
 }

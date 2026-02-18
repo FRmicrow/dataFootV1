@@ -1,0 +1,338 @@
+.health-page.v2 {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #e2e8f0;
+    min-height: 100vh;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Header */
+.health-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    background: #1e293b;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.title-area h1 {
+    font-size: 1.75rem;
+    margin: 0;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.title-area p {
+    color: #94a3b8;
+    margin: 4px 0 0 0;
+    font-size: 0.9rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Buttons */
+.health-page.v2 .btn {
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.btn-scan {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-scan:hover:not(:disabled) {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.btn-fix-all {
+    background: #10b981;
+    color: white;
+}
+
+.btn-fix-all:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #334155;
+}
+
+/* Grid Layout */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* Main Scan Panel */
+.main-scan-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+    /* Prevent overflow issue in grid */
+}
+
+/* Side Panel */
+.side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Card General */
+.health-card {
+    background: #1e293b;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 100%;
+}
+
+.health-card-header {
+    background: rgba(15, 23, 42, 0.4);
+    padding: 1rem 1.5rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Integrity Timeline */
+.integrity-timeline {
+    padding: 1.5rem;
+}
+
+.timeline-step {
+    display: flex;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    position: relative;
+}
+
+.timeline-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 36px;
+    width: 2px;
+    height: calc(100% - 36px);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #0f172a;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.timeline-step.active .step-number {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.timeline-step.completed .step-number {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.step-badge {
+    background: #f43f5e;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+/* Naming Tool */
+.naming-tool-body {
+    padding: 1.5rem;
+}
+
+.collision-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.collision-row {
+    background: #0f172a;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.naming-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.old-name {
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+.new-name {
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.arrow {
+    color: #475569;
+}
+
+.btn-apply-naming {
+    background: #f59e0b;
+    color: #0f172a;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+/* Logs */
+.logs-view {
+    background: #0f172a;
+    padding: 1rem;
+    height: 250px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #10b981;
+}
+
+/* History */
+.history-list {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.history-item {
+    background: #0f172a;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-revert {
+    background: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+    margin-top: 10px;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Stats */
+.quick-stats {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-pill {
+    background: #0f172a;
+    padding: 12px 16px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.stat-pill label {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.stat-pill .value {
+    font-weight: 700;
+    color: #10b981;
+}
+
+.stat-pill .value.danger {
+    color: #f43f5e;
+}
+
+.btn-small {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}

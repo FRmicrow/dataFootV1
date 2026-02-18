@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import apiRoutes from './routes/api.js';
 import db from './config/database.js';
+import v3Routes from './routes/v3_routes.js';
 
 dotenv.config();
 
@@ -22,8 +22,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// API routes
-app.use('/api', apiRoutes);
+// API routes (V3)
+app.use('/api', v3Routes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -45,11 +45,20 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log('⚽ Football Player Database API');
     console.log('================================');
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 Database: SQLite (sql.js)`);
+    console.log(`📊 Database: SQLite V3 (sql.js)`);
     console.log(`🔑 API: API-Football v3`);
     console.log('================================\n');
+});
+
+server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+        console.log(`❌ Port ${PORT} is in use. Trying to kill the process...`);
+        // We can't actually kill it easily from here without exec, but we can exit gracefully
+        console.error(`⚠️ Port ${PORT} is already busy. Please run: kill -9 $(lsof -t -i:${PORT})`);
+        process.exit(1);
+    }
 });

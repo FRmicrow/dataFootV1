@@ -1,0 +1,214 @@
+
+Auxerre	Ligue 1	1995–96
+Auxerre	Coupe de France	1993–94
+Auxerre	Coupe de France	1995–96
+Auxerre	Coupe de France	2002–03
+Auxerre	Coupe de France	2004–05
+Auxerre	Coupe de la Ligue	1995–96
+Auxerre	Trophée des Champions	1996
+Angers SCO	Ligue 2	1968–69
+Angers SCO	Ligue 2	1975–76
+AS Monaco	Ligue 1	1960–61
+AS Monaco	Ligue 1	1962–63
+AS Monaco	Ligue 1	1977–78
+AS Monaco	Ligue 1	1981–82
+AS Monaco	Ligue 1	1987–88
+AS Monaco	Ligue 1	1996–97
+AS Monaco	Ligue 1	1999–2000
+AS Monaco	Ligue 1	2016–17
+AS Monaco	Coupe de France	1960–61
+AS Monaco	Coupe de France	1962–63
+AS Monaco	Coupe de France	1979–80
+AS Monaco	Coupe de France	1984–85
+AS Monaco	Coupe de France	1990–91
+AS Monaco	Coupe de France	1991–92
+AS Monaco	Coupe de la Ligue	2002–03
+AS Monaco	Trophée des Champions	1961
+AS Monaco	Trophée des Champions	1985
+AS Monaco	Trophée des Champions	1997
+AS Monaco	Trophée des Champions	2000
+AS Monaco	Trophée des Champions	2017
+Stade Brestois 29	Ligue 2	1980–81
+Stade Brestois 29	Coupe Gambardella	1990
+Le Havre AC	Ligue 2	1990–91
+Le Havre AC	Ligue 2	1993–94
+Le Havre AC	Ligue 2	2007–08
+Le Havre AC	Ligue 2	2017–18
+Lille OSC	Ligue 1	1945–46
+Lille OSC	Ligue 1	1953–54
+Lille OSC	Ligue 1	2010–11
+Lille OSC	Ligue 1	2020–21
+Lille OSC	Coupe de France	1945–46
+Lille OSC	Coupe de France	1946–47
+Lille OSC	Coupe de France	1947–48
+Lille OSC	Coupe de France	1952–53
+Lille OSC	Coupe de France	1954–55
+Lille OSC	Coupe de France	2010–11
+Lille OSC	Trophée des Champions	1946
+Lille OSC	Trophée des Champions	1955
+Lille OSC	Trophée des Champions	2021
+RC Lens	Ligue 1	1997–98
+RC Lens	Ligue 2	1936–37
+RC Lens	Ligue 2	1948–49
+RC Lens	Ligue 2	1972–73
+RC Lens	Coupe de France	1998–99
+RC Lens	Coupe de la Ligue	1998–99
+RC Lens	Trophée des Champions	1998
+FC Lorient	Coupe de France	2001–02
+FC Lorient	Coupe de la Ligue	2001–02
+FC Lorient	Ligue 2	1994–95
+FC Lorient	Ligue 2	2005–06
+Olympique Lyonnais	Ligue 1	2001–02
+Olympique Lyonnais	Ligue 1	2002–03
+Olympique Lyonnais	Ligue 1	2003–04
+Olympique Lyonnais	Ligue 1	2004–05
+Olympique Lyonnais	Ligue 1	2005–06
+Olympique Lyonnais	Ligue 1	2006–07
+Olympique Lyonnais	Ligue 1	2007–08
+Olympique Lyonnais	Ligue 1	2008–09
+Olympique Lyonnais	Coupe de France	1963–64
+Olympique Lyonnais	Coupe de France	1966–67
+Olympique Lyonnais	Coupe de France	1972–73
+Olympique Lyonnais	Coupe de France	2007–08
+Olympique Lyonnais	Coupe de France	2011–12
+Olympique Lyonnais	Coupe de la Ligue	2000–01
+Olympique Lyonnais	Trophée des Champions	1973
+Olympique Lyonnais	Trophée des Champions	2002
+Olympique Lyonnais	Trophée des Champions	2003
+Olympique Lyonnais	Trophée des Champions	2004
+Olympique Lyonnais	Trophée des Champions	2005
+Olympique Lyonnais	Trophée des Champions	2006
+Olympique Lyonnais	Trophée des Champions	2007
+Olympique Lyonnais	Trophée des Champions	2012
+Olympique de Marseille	Ligue 1	1936–37
+Olympique de Marseille	Ligue 1	1947–48
+Olympique de Marseille	Ligue 1	1970–71
+Olympique de Marseille	Ligue 1	1971–72
+Olympique de Marseille	Ligue 1	1988–89
+Olympique de Marseille	Ligue 1	1989–90
+Olympique de Marseille	Ligue 1	1990–91
+Olympique de Marseille	Ligue 1	1991–92
+Olympique de Marseille	Ligue 1	1992–93
+Olympique de Marseille	Ligue 1	1993–94
+Olympique de Marseille	Coupe de France	1923–24
+Olympique de Marseille	Coupe de France	1924–25
+Olympique de Marseille	Coupe de France	1925–26
+Olympique de Marseille	Coupe de France	1926–27
+Olympique de Marseille	Coupe de France	1934–35
+Olympique de Marseille	Coupe de France	1937–38
+Olympique de Marseille	Coupe de France	1942–43
+Olympique de Marseille	Coupe de France	1968–69
+Olympique de Marseille	Coupe de France	1971–72
+Olympique de Marseille	Coupe de France	1975–76
+Olympique de Marseille	Coupe de France	1988–89
+Olympique de Marseille	Coupe de France	1989–90
+Olympique de Marseille	Coupe de France	1990–91
+Olympique de Marseille	Coupe de France	1991–92
+Olympique de Marseille	Coupe de France	1998–99
+Olympique de Marseille	Coupe de France	2005–06
+Olympique de Marseille	Coupe de la Ligue	2010–11
+Olympique de Marseille	Coupe de la Ligue	2011–12
+Olympique de Marseille	Coupe de la Ligue	2012–13
+Olympique de Marseille	Trophée des Champions	1971
+Olympique de Marseille	Trophée des Champions	2010
+Olympique de Marseille	Trophée des Champions	2011
+Olympique de Marseille	Trophée des Champions	2012
+Olympique de Marseille	Trophée des Champions	2013
+Olympique de Marseille	UEFA Champions League	1992–93
+FC Metz	Ligue 2	1933–34
+FC Metz	Ligue 2	2006–07
+FC Metz	Coupe de France	1983–84
+FC Metz	Coupe de France	1987–88
+FC Metz	Coupe de la Ligue	1995–96
+FC Metz	Trophée des Champions	1984
+FC Nantes	Ligue 1	1964–65
+FC Nantes	Ligue 1	1965–66
+FC Nantes	Ligue 1	1972–73
+FC Nantes	Ligue 1	1976–77
+FC Nantes	Ligue 1	1979–80
+FC Nantes	Ligue 1	1982–83
+FC Nantes	Ligue 1	1994–95
+FC Nantes	Ligue 1	2000–01
+FC Nantes	Coupe de France	1978–79
+FC Nantes	Coupe de France	1998–99
+FC Nantes	Coupe de France	1999–2000
+FC Nantes	Coupe de la Ligue	1964–65
+FC Nantes	Trophée des Champions	1965
+FC Nantes	Trophée des Champions	1966
+FC Nantes	Trophée des Champions	1973
+FC Nantes	Trophée des Champions	1977
+FC Nantes	Trophée des Champions	1999
+OGC Nice	Ligue 1	1950–51
+OGC Nice	Ligue 1	1951–52
+OGC Nice	Ligue 1	1955–56
+OGC Nice	Ligue 1	1958–59
+OGC Nice	Coupe de France	1951–52
+OGC Nice	Coupe de France	1953–54
+OGC Nice	Coupe de France	1963–64
+OGC Nice	Trophée des Champions	1952
+OGC Nice	Trophée des Champions	1956
+Paris Saint-Germain	Ligue 1	1985–86
+Paris Saint-Germain	Ligue 1	1993–94
+Paris Saint-Germain	Ligue 1	2012–13
+Paris Saint-Germain	Ligue 1	2013–14
+Paris Saint-Germain	Ligue 1	2014–15
+Paris Saint-Germain	Ligue 1	2015–16
+Paris Saint-Germain	Ligue 1	2017–18
+Paris Saint-Germain	Ligue 1	2018–19
+Paris Saint-Germain	Ligue 1	2019–20
+Paris Saint-Germain	Ligue 1	2021–22
+Paris Saint-Germain	Ligue 1	2022–23
+Paris Saint-Germain	Coupe de France	1981–82
+Paris Saint-Germain	Coupe de France	1982–83
+Paris Saint-Germain	Coupe de France	1992–93
+Paris Saint-Germain	Coupe de France	1994–95
+Paris Saint-Germain	Coupe de France	1997–98
+Paris Saint-Germain	Coupe de France	2003–04
+Paris Saint-Germain	Coupe de France	2005–06
+Paris Saint-Germain	Coupe de France	2009–10
+Paris Saint-Germain	Coupe de France	2014–15
+Paris Saint-Germain	Coupe de France	2015–16
+Paris Saint-Germain	Coupe de France	2016–17
+Paris Saint-Germain	Coupe de France	2017–18
+Paris Saint-Germain	Coupe de France	2019–20
+Paris Saint-Germain	Coupe de France	2020–21
+Paris Saint-Germain	Coupe de France	2022–23
+Paris Saint-Germain	Coupe de la Ligue	1994–95
+Paris Saint-Germain	Coupe de la Ligue	1997–98
+Paris Saint-Germain	Coupe de la Ligue	2007–08
+Paris Saint-Germain	Coupe de la Ligue	2013–14
+Paris Saint-Germain	Coupe de la Ligue	2014–15
+Paris Saint-Germain	Coupe de la Ligue	2015–16
+Paris Saint-Germain	Coupe de la Ligue	2016–17
+Paris Saint-Germain	Coupe de la Ligue	2017–18
+Paris Saint-Germain	Trophée des Champions	1995
+Paris Saint-Germain	Trophée des Champions	1998
+Paris Saint-Germain	Trophée des Champions	2013
+Paris Saint-Germain	Trophée des Champions	2014
+Paris Saint-Germain	Trophée des Champions	2015
+Paris Saint-Germain	Trophée des Champions	2016
+Paris Saint-Germain	Trophée des Champions	2017
+Paris Saint-Germain	Trophée des Champions	2018
+Paris Saint-Germain	Trophée des Champions	2019
+Paris Saint-Germain	Trophée des Champions	2020
+Paris Saint-Germain	Trophée des Champions	2022
+Paris Saint-Germain	UEFA Cup Winners’ Cup	1995–96
+Stade Rennais	Coupe de France	1964–65
+Stade Rennais	Coupe de France	1970–71
+Stade Rennais	Coupe de France	2018–19
+Stade Rennais	Trophée des Champions	1971
+RC Strasbourg	Ligue 1	1978–79
+RC Strasbourg	Ligue 2	1938–39
+RC Strasbourg	Ligue 2	1965–66
+RC Strasbourg	Coupe de France	1950–51
+RC Strasbourg	Coupe de France	1965–66
+RC Strasbourg	Coupe de France	2000–01
+RC Strasbourg	Coupe de la Ligue	1997–98
+RC Strasbourg	Trophée des Champions	1979
+Toulouse FC	Coupe de France	1956–57
+Toulouse FC	Coupe de France	1970–71
+Toulouse FC	Ligue 2	1953–54
+Toulouse FC	Ligue 2	1981–82
+Toulouse FC	Ligue 2	1982–83
+Toulouse FC	Ligue 2	2002–03
+Toulouse FC	Ligue 2	2006–07

@@ -13,7 +13,8 @@ class ApiQueue {
         this.queue = [];
         this.processing = false;
         this.requestsInLastMinute = [];
-        this.MAX_REQUESTS_PER_MINUTE = 10;
+        // API-Football Pro Limit: ~450/min. We set 440 to be safe.
+        this.MAX_REQUESTS_PER_MINUTE = 440;
         this.MINUTE_MS = 60 * 1000;
     }
 
@@ -28,7 +29,6 @@ class ApiQueue {
             // Check if request already in queue
             const existing = this.queue.find(item => item.id === requestId);
             if (existing) {
-                console.log(`⏭️  Request ${requestId} already in queue, skipping duplicate`);
                 // Attach to existing promise
                 existing.callbacks.push({ resolve, reject });
                 return;
@@ -44,7 +44,6 @@ class ApiQueue {
             };
 
             this.queue.push(queueItem);
-            console.log(`➕ Added to queue: ${requestId} (Queue size: ${this.queue.length})`);
 
             // Start processing if not already running
             if (!this.processing) {
@@ -69,15 +68,21 @@ class ApiQueue {
                 timestamp => now - timestamp < this.MINUTE_MS
             );
 
-            // Small sleep to prevent thread blocking (10ms)
-            await this.sleep(10);
+            // If we hit the limit, wait until a slot opens up
+            if (this.requestsInLastMinute.length >= this.MAX_REQUESTS_PER_MINUTE) {
+                const oldestRequest = this.requestsInLastMinute[0];
+                const waitTime = this.MINUTE_MS - (now - oldestRequest) + 100; // +100ms buffer
+                if (waitTime > 0) {
+                    console.log(`⏳ Rate limit reached (${this.requestsInLastMinute.length}/min). Waiting ${waitTime}ms...`);
+                    await this.sleep(waitTime);
+                    continue; // Re-evaluate logic
+                }
+            }
 
             // Get next item from queue
             const item = this.queue[0];
 
             try {
-                console.log(`🚀 Processing: ${item.id} (Attempt ${item.retryCount + 1})`);
-
                 // Execute the request
                 this.requestsInLastMinute.push(Date.now());
                 const result = await item.requestFn();
@@ -87,7 +92,6 @@ class ApiQueue {
 
                 // Remove from queue
                 this.queue.shift();
-                console.log(`✅ Completed: ${item.id} (Queue size: ${this.queue.length})`);
 
             } catch (error) {
                 // Check if it's a rate limit error
@@ -98,31 +102,25 @@ class ApiQueue {
                 if (isRateLimitError && item.retryCount < 3) {
                     // Rate limit error - retry after 60 seconds
                     item.retryCount++;
-                    console.log(`⚠️  Rate limit error for ${item.id}. Retrying in 60s... (Retry ${item.retryCount}/3)`);
+                    console.log(`⚠️  Rate limit error for ${item.id}. Retrying... (Retry ${item.retryCount}/3)`);
 
-                    // Move to end of queue and wait
-                    this.queue.shift();
-                    this.queue.push(item);
-
-                    await this.sleep(60000); // Wait exactly 60 seconds
+                    // Keep in queue but move to end? No, keep at front and wait.
+                    // Actually, if we hit 429, we must wait.
+                    await this.sleep(60000);
                 } else {
                     // Permanent failure or max retries reached
                     console.error(`❌ Failed: ${item.id}`, error.message);
-
-                    // Reject all waiting callbacks
                     item.callbacks.forEach(cb => cb.reject(error));
-
-                    // Remove from queue
                     this.queue.shift();
                 }
             }
 
-            // Small delay between requests (100ms)
-            await this.sleep(100);
+            // Minimal delay between requests to prevent immediate burst issues
+            // 75ms ~= 13 requests/second max burst speed
+            await this.sleep(75);
         }
 
         this.processing = false;
-        console.log('✅ Queue processing completed');
     }
 
     /**
