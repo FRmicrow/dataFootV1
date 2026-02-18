@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { Link } from 'react-router-dom';
 import './V3Dashboard.css';
 
@@ -10,8 +10,8 @@ const V3Dashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get('/api/stats');
-                setStats(res.data);
+                const data = await api.getStats();
+                setStats(data);
             } catch (error) {
                 console.error("Failed to load V3 stats", error);
             } finally {
