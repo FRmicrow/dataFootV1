@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import './SearchPageV3.css';
 
@@ -17,8 +17,8 @@ const SearchPageV3 = () => {
 
     // Fetch countries for filter dropdown
     useEffect(() => {
-        axios.get('/api/search/countries')
-            .then(res => setCountries(res.data))
+        api.getSearchCountries()
+            .then(data => setCountries(data))
             .catch(err => console.error("Failed to fetch countries", err));
     }, []);
 
@@ -32,10 +32,11 @@ const SearchPageV3 = () => {
 
         setLoading(true);
         try {
-            const params = new URLSearchParams({ q: searchQuery, type: searchType });
-            if (searchCountry) params.append('country', searchCountry);
-            const res = await axios.get(`/api/search?${params}`);
-            setResults(res.data);
+            const params = { q: searchQuery, type: searchType };
+            if (searchCountry) params.country = searchCountry;
+
+            const data = await api.search(params);
+            setResults(data);
             setHasSearched(true);
         } catch (error) {
             console.error("Search failed:", error);

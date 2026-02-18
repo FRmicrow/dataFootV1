@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import './PlayerProfilePageV3.css';
 
 const PlayerProfilePageV3 = () => {
@@ -21,14 +21,14 @@ const PlayerProfilePageV3 = () => {
         const fetchPlayerProfile = async () => {
             setLoading(true);
             try {
-                const [playerRes, leaguesRes, trophiesRes] = await Promise.all([
-                    axios.get(`/api/player/${id}`),
-                    axios.get('/api/leagues'),
-                    axios.get(`/api/player/${id}/trophies`)
+                const [playerData, leaguesData, trophiesData] = await Promise.all([
+                    api.getPlayer(id),
+                    api.getLeagues(),
+                    api.getPlayerTrophies(id)
                 ]);
-                setData(playerRes.data);
-                setAllLeagues(leaguesRes.data || []);
-                setTrophies(trophiesRes.data || []);
+                setData(playerData);
+                setAllLeagues(leaguesData || []);
+                setTrophies(trophiesData || []);
             } catch (err) {
                 console.error("Error fetching player profile:", err);
                 setError(err.response?.data?.error || "Failed to load player profile.");
@@ -89,7 +89,7 @@ const PlayerProfilePageV3 = () => {
                                     setTimeout(() => setSyncStatus('idle'), 5000);
                                 }
                                 // Trigger refresh of the page data
-                                axios.get(`/api/player/${id}`).then(res => setData(res.data));
+                                api.getPlayer(id).then(data => setData(data));
                             }
                         } catch (e) {
                             console.error("SSE Parse Error", e);

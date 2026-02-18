@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import './ImportV3Page.css';
 
 const ImportV3Page = () => {
@@ -64,8 +64,8 @@ const ImportV3Page = () => {
 
     const fetchCountries = async () => {
         try {
-            const res = await axios.get('/api/countries');
-            setCountries(res.data);
+            const data = await api.getCountries();
+            setCountries(data);
         } catch (error) {
             console.error("Failed to fetch countries", error);
         }
@@ -73,8 +73,8 @@ const ImportV3Page = () => {
 
     const fetchLeagues = async (countryName) => {
         try {
-            const res = await axios.get(`/api/leagues?country=${encodeURIComponent(countryName)}`);
-            setLeagues(res.data);
+            const data = await api.getLeagues(countryName);
+            setLeagues(data);
         } catch (error) {
             console.error("Failed to fetch leagues", error);
         }
@@ -82,10 +82,10 @@ const ImportV3Page = () => {
 
     const fetchSyncStatus = async (leagueId) => {
         try {
-            const res = await axios.get(`/api/league/${leagueId}/available-seasons`);
+            const data = await api.getAvailableSeasons(leagueId);
             // Creates a map for easy lookup or just stores the array
             // The endpoint returns { league: {}, seasons: [{ year, status, ... }] }
-            const seasons = res.data.seasons || [];
+            const seasons = data.seasons || [];
             setLeagueSyncStatus(seasons);
 
             // Also update availableSeasons (years list) from this source of truth
