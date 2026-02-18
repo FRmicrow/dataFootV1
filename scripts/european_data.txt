@@ -1,0 +1,237 @@
+1955–56	Real Madrid	UEFA Champions League
+1956–57	Real Madrid	UEFA Champions League
+1957–58	Real Madrid	UEFA Champions League
+1958–59	Real Madrid	UEFA Champions League
+1959–60	Real Madrid	UEFA Champions League
+1960–61	Benfica	UEFA Champions League
+1961–62	Benfica	UEFA Champions League
+1962–63	AC Milan	UEFA Champions League
+1963–64	Inter Milan	UEFA Champions League
+1964–65	Inter Milan	UEFA Champions League
+1965–66	Real Madrid	UEFA Champions League
+1966–67	Celtic	UEFA Champions League
+1967–68	Manchester United	UEFA Champions League
+1968–69	AC Milan	UEFA Champions League
+1969–70	Feyenoord	UEFA Champions League
+1970–71	Ajax	UEFA Champions League
+1971–72	Ajax	UEFA Champions League
+1972–73	Ajax	UEFA Champions League
+1973–74	Bayern Munich	UEFA Champions League
+1974–75	Bayern Munich	UEFA Champions League
+1975–76	Bayern Munich	UEFA Champions League
+1976–77	Liverpool	UEFA Champions League
+1977–78	Liverpool	UEFA Champions League
+1978–79	Nottingham Forest	UEFA Champions League
+1979–80	Nottingham Forest	UEFA Champions League
+1980–81	Liverpool	UEFA Champions League
+1981–82	Aston Villa	UEFA Champions League
+1982–83	Hamburg	UEFA Champions League
+1983–84	Liverpool	UEFA Champions League
+1984–85	Juventus	UEFA Champions League
+1985–86	Steaua Bucharest	UEFA Champions League
+1986–87	Porto	UEFA Champions League
+1987–88	PSV Eindhoven	UEFA Champions League
+1988–89	AC Milan	UEFA Champions League
+1989–90	AC Milan	UEFA Champions League
+1990–91	Red Star Belgrade	UEFA Champions League
+1991–92	Barcelona	UEFA Champions League
+1992–93	Marseille	UEFA Champions League
+1993–94	AC Milan	UEFA Champions League
+1994–95	Ajax	UEFA Champions League
+1995–96	Juventus	UEFA Champions League
+1996–97	Borussia Dortmund	UEFA Champions League
+1997–98	Real Madrid	UEFA Champions League
+1998–99	Manchester United	UEFA Champions League
+1999–2000	Real Madrid	UEFA Champions League
+2000–01	Bayern Munich	UEFA Champions League
+2001–02	Real Madrid	UEFA Champions League
+2002–03	AC Milan	UEFA Champions League
+2003–04	Porto	UEFA Champions League
+2004–05	Liverpool	UEFA Champions League
+2005–06	Barcelona	UEFA Champions League
+2006–07	AC Milan	UEFA Champions League
+2007–08	Manchester United	UEFA Champions League
+2008–09	Barcelona	UEFA Champions League
+2009–10	Inter Milan	UEFA Champions League
+2010–11	Barcelona	UEFA Champions League
+2011–12	Chelsea	UEFA Champions League
+2012–13	Bayern Munich	UEFA Champions League
+2013–14	Real Madrid	UEFA Champions League
+2014–15	Barcelona	UEFA Champions League
+2015–16	Real Madrid	UEFA Champions League
+2016–17	Real Madrid	UEFA Champions League
+2017–18	Real Madrid	UEFA Champions League
+2018–19	Liverpool	UEFA Champions League
+2019–20	Bayern Munich	UEFA Champions League
+2020–21	Chelsea	UEFA Champions League
+2021–22	Real Madrid	UEFA Champions League
+2022–23	Manchester City	UEFA Champions League
+2023–24	Real Madrid	UEFA Champions League
+1971–72	Tottenham	UEFA Europa League
+1972–73	Liverpool	UEFA Europa League
+1973–74	Feyenoord	UEFA Europa League
+1974–75	Borussia Mönchengladbach	UEFA Europa League
+1975–76	Liverpool	UEFA Europa League
+1976–77	Juventus	UEFA Europa League
+1977–78	PSV Eindhoven	UEFA Europa League
+1978–79	Borussia Mönchengladbach	UEFA Europa League
+1979–80	Eintracht Frankfurt	UEFA Europa League
+1980–81	Ipswich Town	UEFA Europa League
+1981–82	IFK Göteborg	UEFA Europa League
+1982–83	Anderlecht	UEFA Europa League
+1983–84	Tottenham	UEFA Europa League
+1984–85	Real Madrid	UEFA Europa League
+1985–86	Real Madrid	UEFA Europa League
+1986–87	IFK Göteborg	UEFA Europa League
+1987–88	Bayer Leverkusen	UEFA Europa League
+1988–89	Napoli	UEFA Europa League
+1989–90	Juventus	UEFA Europa League
+1990–91	Inter Milan	UEFA Europa League
+1991–92	Ajax	UEFA Europa League
+1992–93	Juventus	UEFA Europa League
+1993–94	Inter Milan	UEFA Europa League
+1994–95	Parma	UEFA Europa League
+1995–96	Bayern Munich	UEFA Europa League
+1996–97	Schalke 04	UEFA Europa League
+1997–98	Inter Milan	UEFA Europa League
+1998–99	Parma	UEFA Europa League
+1999–2000	Galatasaray	UEFA Europa League
+2000–01	Liverpool	UEFA Europa League
+2001–02	Feyenoord	UEFA Europa League
+2002–03	Porto	UEFA Europa League
+2003–04	Valencia	UEFA Europa League
+2004–05	CSKA Moscow	UEFA Europa League
+2005–06	Sevilla	UEFA Europa League
+2006–07	Sevilla	UEFA Europa League
+2007–08	Zenit	UEFA Europa League
+2008–09	Shakhtar Donetsk	UEFA Europa League
+2009–10	Atlético Madrid	UEFA Europa League
+2010–11	Porto	UEFA Europa League
+2011–12	Atlético Madrid	UEFA Europa League
+2012–13	Chelsea	UEFA Europa League
+2013–14	Sevilla	UEFA Europa League
+2014–15	Sevilla	UEFA Europa League
+2015–16	Sevilla	UEFA Europa League
+2016–17	Manchester United	UEFA Europa League
+2017–18	Atlético Madrid	UEFA Europa League
+2018–19	Chelsea	UEFA Europa League
+2019–20	Sevilla	UEFA Europa League
+2020–21	Villarreal	UEFA Europa League
+2021–22	Eintracht Frankfurt	UEFA Europa League
+2022–23	Sevilla	UEFA Europa League
+2023–24	Atalanta	UEFA Europa League
+2021–22	Roma	UEFA Europa Conference League
+2022–23	West Ham	UEFA Europa Conference League
+2023–24	Olympiacos	UEFA Europa Conference League
+1960–61	Fiorentina	UEFA Cup Winners Cup
+1961–62	Atlético Madrid	UEFA Cup Winners Cup
+1962–63	Tottenham	UEFA Cup Winners Cup
+1963–64	Sporting CP	UEFA Cup Winners Cup
+1964–65	West Ham	UEFA Cup Winners Cup
+1965–66	Borussia Dortmund	UEFA Cup Winners Cup
+1966–67	Bayern Munich	UEFA Cup Winners Cup
+1967–68	Milan	UEFA Cup Winners Cup
+1968–69	Slovan Bratislava	UEFA Cup Winners Cup
+1969–70	Manchester City	UEFA Cup Winners Cup
+1970–71	Chelsea	UEFA Cup Winners Cup
+1971–72	Rangers	UEFA Cup Winners Cup
+1972–73	Milan	UEFA Cup Winners Cup
+1973–74	Magdeburg	UEFA Cup Winners Cup
+1974–75	Dynamo Kyiv	UEFA Cup Winners Cup
+1975–76	Anderlecht	UEFA Cup Winners Cup
+1976–77	Hamburg	UEFA Cup Winners Cup
+1977–78	Anderlecht	UEFA Cup Winners Cup
+1978–79	Barcelona	UEFA Cup Winners Cup
+1979–80	Valencia	UEFA Cup Winners Cup
+1980–81	Dinamo Tbilisi	UEFA Cup Winners Cup
+1981–82	Barcelona	UEFA Cup Winners Cup
+1982–83	Aberdeen	UEFA Cup Winners Cup
+1983–84	Juventus	UEFA Cup Winners Cup
+1984–85	Everton	UEFA Cup Winners Cup
+1985–86	Dynamo Kyiv	UEFA Cup Winners Cup
+1986–87	Ajax	UEFA Cup Winners Cup
+1987–88	Mechelen	UEFA Cup Winners Cup
+1988–89	Barcelona	UEFA Cup Winners Cup
+1989–90	Sampdoria	UEFA Cup Winners Cup
+1990–91	Manchester United	UEFA Cup Winners Cup
+1991–92	Werder Bremen	UEFA Cup Winners Cup
+1992–93	Parma	UEFA Cup Winners Cup
+1993–94	Arsenal	UEFA Cup Winners Cup
+1994–95	Zaragoza	UEFA Cup Winners Cup
+1995–96	PSG	UEFA Cup Winners Cup
+1996–97	Barcelona	UEFA Cup Winners Cup
+1997–98	Chelsea	UEFA Cup Winners Cup
+1998–99	Lazio	UEFA Cup Winners Cup
+1972	Ajax	UEFA Super Cup
+1973	Ajax	UEFA Super Cup
+1974	Bayern Munich	UEFA Super Cup
+1975	Bayern Munich	UEFA Super Cup
+1976	Anderlecht	UEFA Super Cup
+1977	Liverpool	UEFA Super Cup
+1978	Anderlecht	UEFA Super Cup
+1979	Nottingham Forest	UEFA Super Cup
+1980	Valencia	UEFA Super Cup
+1981	Liverpool	UEFA Super Cup
+1982	Aston Villa	UEFA Super Cup
+1983	Hamburg	UEFA Super Cup
+1984	Juventus	UEFA Super Cup
+1985	Ajax	UEFA Super Cup
+1986	Steaua	UEFA Super Cup
+1987	Porto	UEFA Super Cup
+1988	Mechelen	UEFA Super Cup
+1989	Milan	UEFA Super Cup
+1990	Milan	UEFA Super Cup
+1991	Manchester United	UEFA Super Cup
+1992	Barcelona	UEFA Super Cup
+1993	Parma	UEFA Super Cup
+1994	Milan	UEFA Super Cup
+1995	Ajax	UEFA Super Cup
+1996	Juventus	UEFA Super Cup
+1997	Barcelona	UEFA Super Cup
+1998	Chelsea	UEFA Super Cup
+1999	Lazio	UEFA Super Cup
+2000	Galatasaray	UEFA Super Cup
+2001	Liverpool	UEFA Super Cup
+2002	Real Madrid	UEFA Super Cup
+2003	Milan	UEFA Super Cup
+2004	Valencia	UEFA Super Cup
+2005	Liverpool	UEFA Super Cup
+2006	Sevilla	UEFA Super Cup
+2007	Milan	UEFA Super Cup
+2008	Zenit	UEFA Super Cup
+2009	Barcelona	UEFA Super Cup
+2010	Atlético Madrid	UEFA Super Cup
+2011	Barcelona	UEFA Super Cup
+2012	Atlético Madrid	UEFA Super Cup
+2013	Bayern Munich	UEFA Super Cup
+2014	Real Madrid	UEFA Super Cup
+2015	Barcelona	UEFA Super Cup
+2016	Real Madrid	UEFA Super Cup
+2017	Real Madrid	UEFA Super Cup
+2018	Atlético Madrid	UEFA Super Cup
+2019	Liverpool	UEFA Super Cup
+2020	Bayern Munich	UEFA Super Cup
+2021	Chelsea	UEFA Super Cup
+2022	Real Madrid	UEFA Super Cup
+2023	Manchester City	UEFA Super Cup
+2024	Real Madrid	UEFA Super Cup
+2000	Corinthians	FIFA Club World Cup
+2005	São Paulo	FIFA Club World Cup
+2006	Internacional	FIFA Club World Cup
+2007	Milan	FIFA Club World Cup
+2008	Manchester United	FIFA Club World Cup
+2009	Barcelona	FIFA Club World Cup
+2010	Inter Milan	FIFA Club World Cup
+2011	Barcelona	FIFA Club World Cup
+2012	Corinthians	FIFA Club World Cup
+2013	Bayern Munich	FIFA Club World Cup
+2014	Real Madrid	FIFA Club World Cup
+2015	Barcelona	FIFA Club World Cup
+2016	Real Madrid	FIFA Club World Cup
+2017	Real Madrid	FIFA Club World Cup
+2018	Real Madrid	FIFA Club World Cup
+2019	Liverpool	FIFA Club World Cup
+2020	Bayern Munich	FIFA Club World Cup
+2021	Chelsea	FIFA Club World Cup
+2022	Real Madrid	FIFA Club World Cup
+2023	Manchester City	FIFA Club World Cup

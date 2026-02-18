@@ -1,0 +1,281 @@
+.v3-leagues-page {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.v3-leagues-page .v3-header {
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1.5rem;
+}
+
+.v3-leagues-page .v3-header h1 {
+    font-size: 2.5rem;
+    margin: 0;
+    color: #fff;
+    font-weight: 800;
+}
+
+.v3-leagues-page .v3-header p {
+    color: #94a3b8;
+    margin: 0.5rem 0 0 0;
+}
+
+/* Legend Bar */
+.legend-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-info {
+    margin-left: auto;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.leagues-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+}
+
+.country-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.country-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.6rem;
+    color: #e2e8f0;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 0.5rem;
+}
+
+.country-flag {
+    width: 32px;
+    height: 22px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.country-rank-badge {
+    font-size: 0.75rem;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-left: auto;
+    letter-spacing: 0.5px;
+}
+
+.leagues-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1.5rem;
+}
+
+/* --- Card --- */
+.v3-league-card {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.v3-league-card.clickable-card {
+    cursor: pointer;
+    outline: none;
+}
+
+.v3-league-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow:
+        0 20px 30px -8px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(99, 102, 241, 0.15);
+}
+
+.v3-league-card:focus-visible {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5);
+}
+
+/* Type Badge */
+.type-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+}
+
+.badge-league {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-cup {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.v3-league-logo-wrap {
+    height: 150px;
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    padding: 2rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.v3-league-logo {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: transform 0.3s ease;
+}
+
+.v3-league-card:hover .v3-league-logo {
+    transform: scale(1.08);
+}
+
+.v3-season-badge {
+    position: absolute;
+    bottom: -10px;
+    right: 20px;
+    background: #6366f1;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+}
+
+.v3-league-info {
+    padding: 1.25rem 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.v3-league-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.15rem;
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.season-list-hint {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0;
+    flex: 1;
+}
+
+.card-footer {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.explore-hint {
+    font-size: 0.85rem;
+    color: #6366f1;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.v3-league-card:hover .explore-hint {
+    color: #818cf8;
+}
+
+/* Empty & Loading */
+.empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: rgba(30, 41, 59, 0.3);
+    border-radius: 24px;
+    border: 2px dashed rgba(255, 255, 255, 0.05);
+}
+
+.empty-state .icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    display: block;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #64748b;
+    margin-bottom: 2rem;
+}
+
+.btn-v3-primary {
+    background: #6366f1;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.v3-leagues-page.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    gap: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(99, 102, 241, 0.2);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
