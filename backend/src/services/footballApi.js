@@ -206,6 +206,28 @@ class FootballApi {
     }
 
     /**
+     * Get injuries for a specific fixture
+     * GET /injuries?fixture={fixtureId}
+     */
+    async getInjuries(fixtureId) {
+        const requestId = `injuries-fixture-${fixtureId}`;
+        return this.makeRequest('/injuries', {
+            fixture: fixtureId
+        }, requestId);
+    }
+
+    /**
+     * Get squads for a specific team
+     * GET /players/squads?team={teamId}
+     */
+    async getSquads(teamId) {
+        const requestId = `squads-team-${teamId}`;
+        return this.makeRequest('/players/squads', {
+            team: teamId
+        }, requestId);
+    }
+
+    /**
      * Get team information by name
      * GET /teams?name={name}
      */
@@ -300,6 +322,18 @@ class FootballApi {
             season: season
         }, requestId);
     }
+
+    /**
+     * Get next N upcoming fixtures for a specific league (US_022)
+     * GET /fixtures?league={id}&next={count}
+     */
+    async getNextFixturesByLeague(leagueId, next = 10) {
+        const requestId = `next-fixtures-league-${leagueId}-${next}`;
+        return this.makeRequest('/fixtures', {
+            league: leagueId,
+            next
+        }, requestId);
+    }
     /**
      * Get lineups for a specific fixture
      * GET /fixtures/lineups?fixture={id}
@@ -323,6 +357,17 @@ class FootballApi {
     }
 
     /**
+     * Get team statistics for a specific fixture
+     * GET /fixtures/statistics?fixture={id}
+     */
+    async getFixtureStatistics(fixtureId) {
+        const requestId = `team-stats-fixture-${fixtureId}`;
+        return this.makeRequest('/fixtures/statistics', {
+            fixture: fixtureId
+        }, requestId);
+    }
+
+    /**
      * Get player statistics for a specific fixture
      * GET /fixtures/players?fixture={id}
      */
@@ -331,6 +376,56 @@ class FootballApi {
         return this.makeRequest('/fixtures/players', {
             fixture: fixtureId
         }, requestId);
+    }
+
+    /**
+     * Get fixtures for a specific date
+     * GET /fixtures?date={date}&timezone={timezone}
+     */
+    async getFixturesByDate(date, timezone = 'Europe/Paris') {
+        const requestId = `fixtures-date-${date}`;
+        return this.makeRequest('/fixtures', {
+            date,
+            timezone
+        }, requestId);
+    }
+
+    /**
+     * Get odds
+     * GET /odds?fixture={id} OR /odds?date={date}
+     */
+    async getOdds(params) {
+        // params: { fixture: id } OR { date: 'YYYY-MM-DD' }
+        const key = params.fixture ? `fixture-${params.fixture}` : `date-${params.date}`;
+        const requestId = `odds-${key}`;
+        return this.makeRequest('/odds', params, requestId);
+    }
+
+    /**
+     * Get predictions for a fixture
+     * GET /predictions?fixture={id}
+     */
+    async getPredictions(fixtureId) {
+        const requestId = `predictions-${fixtureId}`;
+        return this.makeRequest('/predictions', { fixture: fixtureId }, requestId);
+    }
+
+    /**
+     * Get head to head between two teams
+     * GET /fixtures/headtohead?h2h={team1}-{team2}
+     */
+    async getHeadToHead(team1, team2) {
+        const h2h = `${team1}-${team2}`;
+        const requestId = `h2h-${h2h}`;
+        return this.makeRequest('/fixtures/headtohead', { h2h }, requestId);
+    }
+
+    /**
+     * Get fixture by ID (Single)
+     */
+    async getFixtureById(id) {
+        const requestId = `fixture-${id}`;
+        return this.makeRequest('/fixtures', { id }, requestId);
     }
 }
 

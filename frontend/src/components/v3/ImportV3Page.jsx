@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
-import './ImportV3Page.css';
+import LeagueSelector from './import/LeagueSelector';
+import SeasonSelector from './import/SeasonSelector';
 
 const ImportV3Page = () => {
     // --- State ---
@@ -83,7 +84,6 @@ const ImportV3Page = () => {
     const fetchSyncStatus = async (leagueId) => {
         try {
             const data = await api.getAvailableSeasons(leagueId);
-            // Creates a map for easy lookup or just stores the array
             // The endpoint returns { league: {}, seasons: [{ year, status, ... }] }
             const seasons = data.seasons || [];
             setLeagueSyncStatus(seasons);
@@ -212,13 +212,12 @@ const ImportV3Page = () => {
                                         message: `✅ Import Finished. View Dashboard: /league/${data.leagueId}/season/${data.season}`,
                                         link: `/league/${data.leagueId}/season/${data.season}`
                                     }]);
-                                    setIsImporting(false);
-                                    setImportQueue([]); // Clear queue on success
                                     // Refresh status
                                     if (selectedLeague) fetchSyncStatus(selectedLeague);
                                 }
                                 if (data.type === 'error') {
-                                    setIsImporting(false);
+                                    // Don't stop fully, maybe subsequent items work? 
+                                    // For batch, usually we continue, but let's see.
                                 }
                             }
                         } catch (e) {
@@ -227,6 +226,8 @@ const ImportV3Page = () => {
                     }
                 });
             }
+            setIsImporting(false);
+            setImportQueue([]); // Clear queue on success
 
         } catch (error) {
             console.error("Import failed", error);
@@ -235,192 +236,100 @@ const ImportV3Page = () => {
         }
     };
 
-    // --- Helpers ---
-
-    const seasonOptions = availableSeasons;
-
-    // --- Render ---
-
-
     return (
-        <div className="v3-import-page">
-            <header className="v3-header">
-                <h1>🧪 V3 Schema POC Import</h1>
-                <p>Multi-Criteria Mass Import System</p>
-                <div className="sub-nav-links" style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                    <a href="/events" className="btn-v3-secondary btn-sm">Manage Events Sync</a>
-                    <a href="/lineups-import" className="btn-v3-secondary btn-sm">Manage Lineups Sync</a>
-                    <a href="/trophies" className="btn-v3-secondary btn-sm">Manage Trophies</a>
+        <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
+            {/* Header */}
+            <header className="bg-slate-800 border-b border-slate-700 px-8 py-6 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+                            🧪 V3 Schema POC Import
+                        </h1>
+                        <p className="text-slate-400 text-sm mt-1">Multi-Criteria Mass Import System</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <a href="/events" className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors border border-slate-600">Events Sync</a>
+                        <a href="/lineups-import" className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors border border-slate-600">Lineups Sync</a>
+                        <a href="/trophies" className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors border border-slate-600">Trophies</a>
+                    </div>
                 </div>
             </header>
 
-            <div className="v3-content">
-                {/* Control Panel */}
-                <div className="v3-panel control-panel">
-                    <h2>Configuration</h2>
+            <div className="flex-1 flex overflow-hidden p-6 gap-6">
 
-                    <div className="form-group">
-                        <label>Select Country</label>
-                        <select
-                            value={selectedCountry}
-                            onChange={(e) => setSelectedCountry(e.target.value)}
+                {/* Left Panel: Configuration */}
+                <div className="w-1/3 min-w-[400px] flex flex-col gap-6 bg-slate-800/50 rounded-xl border border-slate-700 p-6 shadow-lg overflow-y-auto">
+
+                    <h2 className="text-lg font-bold text-white border-b border-slate-700 pb-3">Configuration</h2>
+
+                    <LeagueSelector
+                        countries={countries}
+                        selectedCountry={selectedCountry}
+                        setSelectedCountry={setSelectedCountry}
+                        leagues={leagues}
+                        selectedLeague={selectedLeague}
+                        setSelectedLeague={setSelectedLeague}
+                        disabled={isImporting}
+                    />
+
+                    {selectedLeague && (
+                        <SeasonSelector
+                            availableSeasons={availableSeasons}
+                            fromYear={fromYear}
+                            setFromYear={setFromYear}
+                            toYear={toYear}
+                            setToYear={setToYear}
+                            skipExisting={skipExisting}
+                            setSkipExisting={setSkipExisting}
+                            leagueSyncStatus={leagueSyncStatus}
                             disabled={isImporting}
-                        >
-                            <option value="">-- Choose Country --</option>
-                            {countries.map(c => (
-                                <option key={c.name} value={c.name}>
-                                    {c.name} {c.code ? `(${c.code})` : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Select League</label>
-                        <select
-                            value={selectedLeague}
-                            onChange={(e) => setSelectedLeague(e.target.value)}
-                            disabled={!selectedCountry || isImporting}
-                        >
-                            <option value="">-- Choose League --</option>
-                            {leagues.map(l => (
-                                <option key={l.league.id} value={l.league.id}>
-                                    {l.league.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="form-row">
-                        <div className="form-group half">
-                            <label>From Season</label>
-                            <select
-                                value={fromYear}
-                                onChange={(e) => setFromYear(e.target.value)}
-                                disabled={isImporting || !selectedLeague}
-                            >
-                                <option value="">Select</option>
-                                {seasonOptions.map(year => (
-                                    <option key={year} value={year}>{year}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group half">
-                            <label>To Season</label>
-                            <select
-                                value={toYear}
-                                onChange={(e) => setToYear(e.target.value)}
-                                disabled={isImporting || !selectedLeague}
-                            >
-                                <option value="">Select</option>
-                                {seasonOptions.map(year => (
-                                    <option key={year} value={year}>{year}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="skip-toggle-container">
-                        <label className="checkbox-label">
-                            <input
-                                type="checkbox"
-                                checked={skipExisting}
-                                onChange={(e) => setSkipExisting(e.target.checked)}
-                            />
-                            Skip years already fully imported
-                        </label>
-                    </div>
-
-                    {/* Season Availability Grid (US-41) */}
-                    {selectedLeague && leagueSyncStatus.length > 0 && (
-                        <div className="season-grid-container" style={{ marginTop: '10px', marginBottom: '10px' }}>
-                            <label style={{ fontSize: '0.9rem', color: '#a0a0a0', marginBottom: '5px', display: 'block' }}>Availability Matrix:</label>
-                            <div className="expanded-seasons-grid">
-                                {leagueSyncStatus.map(s => {
-                                    const isFull = s.status === 'FULL';
-                                    const isPartial = s.status === 'PARTIAL' || s.status === 'PARTIAL_DISCOVERY';
-                                    const badge = isFull ? '✅' : isPartial ? '⚠️' : '❌';
-                                    const statusClass = isFull ? 'status-full' : isPartial ? 'status-selected' : ''; // Reuse classes for minimal css changes
-
-                                    // Determine if currently selected by range
-                                    const inRange = fromYear && toYear && s.year >= Math.min(fromYear, toYear) && s.year <= Math.max(fromYear, toYear);
-
-                                    return (
-                                        <div
-                                            key={s.year}
-                                            className={`season-select-item ${statusClass}`}
-                                            style={inRange ? { border: '1px solid #00d4ff', background: 'rgba(0, 212, 255, 0.1)' } : {}}
-                                            title={isFull ? "Fully Imported" : isPartial ? "Partially Imported" : "Not Imported"}
-                                            onClick={() => {
-                                                // Quick set range logic? Or just informational?
-                                                // For now just informational + range highlight.
-                                                // Maybe clicking sets 'From' if empty, then 'To'?
-                                                // Let's keep it simple: Status Indicator Only as per US.
-                                            }}
-                                        >
-                                            <span className="season-badge">{badge}</span>
-                                            <span className="season-year">{s.year}</span>
-                                            {s.is_current && <span className="current-badge">LIVE</span>}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                        />
                     )}
 
-                    {selectedLeague && leagueSyncStatus.length > 0 && fromYear && toYear && (() => {
-                        const start = parseInt(fromYear);
-                        const end = parseInt(toYear);
-                        const alreadyInDb = leagueSyncStatus.filter(s =>
-                            s.year >= Math.min(start, end) &&
-                            s.year <= Math.max(start, end) &&
-                            s.status === 'FULL'
-                        ).length;
-
-                        return alreadyInDb > 0 ? (
-                            <div className="sync-summary-note">
-                                ℹ️ Note: {alreadyInDb} season(s) in this range are already fully in the DB.
-                            </div>
-                        ) : null;
-                    })()}
-
                     <button
-                        className="btn-add-queue"
                         onClick={handleAddToQueue}
                         disabled={isImporting || !selectedLeague}
+                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-lg shadow-emerald-900/20 transition-all transform active:scale-95"
                     >
-                        + Add to Batch
+                        + Add to Batch Queue
                     </button>
 
-                    <div className="queue-list-container">
-                        <h3>Staging Queue ({importQueue.length})</h3>
-                        {importQueue.length === 0 ? (
-                            <p className="empty-queue">No items in queue.</p>
-                        ) : (
-                            <ul className="queue-list">
-                                {importQueue.map(item => (
-                                    <li key={item.id} className="queue-item">
-                                        <div className="queue-info">
-                                            <span className="queue-league">{item.leagueName}</span>
-                                            <span className="queue-country">{item.country}</span>
-                                            <div className="queue-seasons-pills">
-                                                {item.seasons.map(s => {
-                                                    let className = "season-pill";
-                                                    if (s.isFull) className += " pill-full";
-                                                    else if (s.isPartial) className += " pill-partial";
+                    <div className="mt-4 bg-slate-900 rounded-lg border border-slate-700 p-4 flex-1">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">
+                            Staging Queue ({importQueue.length})
+                        </h3>
 
-                                                    return (
-                                                        <span key={s.year} className={className}>
-                                                            {s.year} {s.isFull ? '✅' : s.isPartial ? '⚠️' : ''}
-                                                        </span>
-                                                    );
-                                                })}
+                        {importQueue.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-32 text-slate-600 italic text-sm">
+                                <span>Queue is empty</span>
+                            </div>
+                        ) : (
+                            <ul className="space-y-3">
+                                {importQueue.map(item => (
+                                    <li key={item.id} className="bg-slate-800 rounded-lg p-3 flex items-start justify-between group border border-slate-700 hover:border-blue-500/50 transition-colors">
+                                        <div>
+                                            <div className="font-bold text-white text-sm">{item.leagueName}</div>
+                                            <div className="text-xs text-slate-500 mb-2">{item.country}</div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {item.seasons.map(s => (
+                                                    <span
+                                                        key={s.year}
+                                                        className={`text-[10px] px-1.5 py-0.5 rounded border ${s.isFull
+                                                                ? 'bg-emerald-900/30 border-emerald-800 text-emerald-400'
+                                                                : s.isPartial
+                                                                    ? 'bg-amber-900/30 border-amber-800 text-amber-400'
+                                                                    : 'bg-slate-700 border-slate-600 text-slate-400'
+                                                            }`}
+                                                    >
+                                                        {s.year} {s.isFull ? '✓' : s.isPartial ? '!' : ''}
+                                                    </span>
+                                                ))}
                                             </div>
                                         </div>
                                         <button
-                                            className="btn-remove"
                                             onClick={() => handleRemoveFromQueue(item.id)}
                                             disabled={isImporting}
+                                            className="text-slate-500 hover:text-rose-500 transition-colors p-1"
                                         >
                                             ✕
                                         </button>
@@ -431,41 +340,84 @@ const ImportV3Page = () => {
                     </div>
 
                     <button
-                        className="btn-import-v3"
                         onClick={handleBatchImport}
                         disabled={isImporting || importQueue.length === 0}
+                        className={`
+                            w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all
+                            ${isImporting
+                                ? 'bg-slate-700 text-slate-400 cursor-wait'
+                                : importQueue.length === 0
+                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
+                                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transform hover:-translate-y-1 shadow-blue-900/20'
+                            }
+                        `}
                     >
-                        {isImporting ? 'Processing Batch...' : 'Start Batch Import'}
+                        {isImporting ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Processing Batch...
+                            </span>
+                        ) : 'Start Batch Import'}
                     </button>
                 </div>
 
-                {/* Log Console */}
-                <div className="v3-panel log-panel">
-                    <div className="log-header">
-                        <h2>Live Logs</h2>
-                        <label className="auto-scroll-toggle">
+                {/* Right Panel: Logs */}
+                <div className="flex-1 bg-black rounded-xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden font-mono text-sm relative">
+                    <div className="bg-slate-900 px-4 py-2 border-b border-slate-800 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1.5">
+                                <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+                                <div className="w-3 h-3 rounded-full bg-amber-500/50"></div>
+                                <div className="w-3 h-3 rounded-full bg-emerald-500/50"></div>
+                            </div>
+                            <span className="ml-3 text-slate-400 text-xs">import-cli — v3.0.1</span>
+                        </div>
+                        <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer hover:text-slate-300">
                             <input
                                 type="checkbox"
                                 checked={autoScroll}
                                 onChange={(e) => setAutoScroll(e.target.checked)}
+                                className="rounded border-slate-700 bg-slate-800 text-blue-500 focus:ring-0 focus:ring-offset-0"
                             />
                             Auto-scroll
                         </label>
                     </div>
-                    <div className="terminal-window">
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                        {logs.length === 0 && (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-700">
+                                <div className="text-4xl mb-4">⌨️</div>
+                                <p>Ready for input...</p>
+                            </div>
+                        )}
                         {logs.map((log, index) => (
-                            <div key={index} className={`log-line log-${log.type}`}>
-                                <span className="log-timestamp">[{new Date().toLocaleTimeString()}]</span>
-                                <span className="log-message">
+                            <div key={index} className="flex gap-3 font-mono text-xs md:text-sm">
+                                <span className="text-slate-600 shrink-0">[{new Date().toLocaleTimeString()}]</span>
+                                <span className={`break-words ${log.type === 'error' ? 'text-red-400' :
+                                        log.type === 'success' ? 'text-emerald-400 font-bold' :
+                                            log.type === 'warning' ? 'text-amber-400' :
+                                                log.type === 'complete' ? 'text-emerald-300 border-t border-emerald-900/30 pt-2 mt-2 block w-full' :
+                                                    'text-slate-300'
+                                    }`}>
+                                    {log.type === 'info' && <span className="text-blue-500 mr-2">ℹ</span>}
+                                    {log.type === 'success' && <span className="text-emerald-500 mr-2">✓</span>}
+                                    {log.type === 'error' && <span className="text-red-500 mr-2">✗</span>}
                                     {log.message}
-                                    {log.link && <a href={log.link} className="log-link" target="_blank" rel="noreferrer">Open Dashboard ↗</a>}
+                                    {log.link && (
+                                        <a href={log.link} target="_blank" rel="noreferrer" className="ml-2 text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                                            Open Dashboard ↗
+                                        </a>
+                                    )}
                                 </span>
                             </div>
                         ))}
-                        {logs.length === 0 && <div className="log-placeholder">Ready to start...</div>}
                         <div ref={logsEndRef} />
                     </div>
                 </div>
+
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import './MatchDetailEvents.css'; // Will create this
 
 const MatchDetailEvents = ({ fixtureId }) => {
@@ -14,8 +14,8 @@ const MatchDetailEvents = ({ fixtureId }) => {
     const fetchEvents = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`/api/fixtures/${fixtureId}/events`);
-            setEvents(res.data || []);
+            const res = await api.getFixtureEvents(fixtureId);
+            setEvents(res || []);
         } catch (e) {
             setError(e.message);
         } finally {

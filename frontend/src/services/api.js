@@ -35,7 +35,7 @@ export default {
     getLeagueSeasons: (id) => api.get(`/leagues/${id}/seasons`),
     getAvailableSeasons: (id) => api.get(`/league/${id}/available-seasons`),
     getSeasonOverview: (id, year) => api.get(`/league/${id}/season/${year}`),
-    getSeasonPlayers: (id, year) => api.get(`/league/${id}/season/${year}/players`),
+    getSeasonPlayers: (id, year, params) => api.get(`/league/${id}/season/${year}/players`, { params }),
     getStandings: (id, year) => api.get(`/league/${id}/standings?year=${year}`), // Note: Verify if query param or path param
     getDynamicStandings: (params) => api.get(`/standings/dynamic?${new URLSearchParams(params)}`),
 
@@ -81,6 +81,16 @@ export default {
     checkDeepHealth: (data) => api.post('/admin/health/check-deep', data),
     fixHealthIssue: (data) => api.post('/admin/health/fix', data),
     fixAllHealthIssues: () => api.post('/admin/health/fix-all'),
+
+    // --- Live Bet (US_010, US_011, US_012, US_016, US_022) ---
+    getLiveFixtures: (date) => api.get(`/live-bet/fixtures${date ? `?date=${date}` : ''}`),
+    getUpcomingFixtures: (leagueIds = []) => api.get(`/live-bet/upcoming${leagueIds.length ? `?leagues=${leagueIds.join(',')}` : ''}`),
+    getMatchDetails: (id) => api.get(`/live-bet/match/${id}`),
+    saveMatchOdds: (id) => api.post(`/live-bet/match/${id}/save-odds`),
+
+    // --- Preferences (US_017, US_018) ---
+    getPreferences: () => api.get('/preferences'),
+    updatePreferences: (data) => api.put('/preferences', data),
 
     // --- Studio ---
     getStudioStats: () => api.get('/studio/meta/stats'),
