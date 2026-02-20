@@ -20,10 +20,13 @@ export const validateRequest = (schema) => async (req, res, next) => {
         });
         next();
     } catch (error) {
-        if (error instanceof z.ZodError) {
+        // Handle Zod Errors
+        if (error instanceof z.ZodError || (error.errors && Array.isArray(error.errors))) {
+            const errorList = (error instanceof z.ZodError ? error.errors : error.errors) || [];
+
             // Format nice error messages
-            const issues = error.errors.map(e => {
-                const path = e.path.slice(1).join('.'); // Remove 'body'/'query' prefix root
+            const issues = errorList.map(e => {
+                const path = e.path && e.path.length > 1 ? e.path.slice(1).join('.') : (e.path || []).join('.'); // Remove 'body'/'query' prefix root if possible
                 return `${path ? path + ': ' : ''}${e.message}`;
             });
 

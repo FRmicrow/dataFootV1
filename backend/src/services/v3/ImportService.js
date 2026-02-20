@@ -111,7 +111,7 @@ export const Mappers = {
         form: api.form,
         status: api.status,
         description: api.description,
-        group_name: api.group
+        group_name: api.group || 'Regular Season'
     }),
     fixture: (api, leagueId, venueId, homeTeamId, awayTeamId, season) => ({
         api_id: api.fixture.id,

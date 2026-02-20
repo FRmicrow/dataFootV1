@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import MatchDetailEvents from './MatchDetailEvents';
 import './InlineFixtureDetails.css';
 
@@ -15,9 +15,9 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
     const fetchLineups = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`/api/fixtures/${fixtureId}/lineups`);
+            const res = await api.getFixtureLineups(fixtureId);
             // The API returns { source: ..., lineups: [...] }
-            setLineups(res.data.lineups || []);
+            setLineups(res.lineups || []);
         } catch (error) {
             console.error("Failed to load lineups", error);
         } finally {

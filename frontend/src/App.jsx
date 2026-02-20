@@ -15,11 +15,13 @@ import ImportEventsPage from './components/v3/ImportEventsPage';
 import ImportLineupsPage from './components/v3/ImportLineupsPage';
 import BettingLabsPage from './components/v3/BettingLabsPage';
 import MatchDetailPage from './components/v3/MatchDetailPage';
+import LiveBetDashboard from './components/v3/live-bet/LiveBetDashboard';
+import LiveBetMatchDetails from './components/v3/live-bet/LiveBetMatchDetails';
 import './App.css';
 
 function App() {
     return (
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div className="app">
                 <nav className="nav">
                     <div className="nav-content">
@@ -41,6 +43,9 @@ function App() {
                         </NavLink>
                         <NavLink to="/betting-labs" className="nav-link">
                             Betting Labs
+                        </NavLink>
+                        <NavLink to="/live-bet" className="nav-link" style={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                            🔥 Live Bet
                         </NavLink>
                         <NavLink to="/health" className="nav-link">
                             Health
@@ -68,6 +73,8 @@ function App() {
                         <Route path="/events" element={<ImportEventsPage />} />
                         <Route path="/lineups-import" element={<ImportLineupsPage />} />
                         <Route path="/betting-labs" element={<BettingLabsPage />} />
+                        <Route path="/live-bet" element={<LiveBetDashboard />} />
+                        <Route path="/live-bet/match/:id" element={<LiveBetMatchDetails />} />
                         <Route path="/match/:id" element={<MatchDetailPage />} />
                     </Route>
 

@@ -40,6 +40,12 @@ async function initDatabase() {
     }
 
     console.log('🧪 Database connected:', dbPath);
+
+    // Enable Foreign Keys (Critical for Integrity)
+    db.run("PRAGMA foreign_keys = ON;");
+    const fkStatus = db.exec("PRAGMA foreign_keys;")[0].values[0][0];
+    console.log(`🔒 Foreign Keys: ${fkStatus ? 'ENABLED' : 'DISABLED'}`);
+
     return db;
 }
 

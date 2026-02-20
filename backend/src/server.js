@@ -13,6 +13,17 @@ const PORT = process.env.PORT || 3001;
 // Initialize database
 await db.init();
 
+// --- DB Migrations ---
+try {
+    db.run("ALTER TABLE V3_System_Preferences ADD COLUMN tracked_leagues TEXT DEFAULT '[]'");
+    console.log('🔄 Migration: tracked_leagues column added to V3_System_Preferences');
+} catch (e) {
+    // Column likely already exists — ignore safely
+    if (!e.message?.includes('duplicate column')) {
+        console.warn('Migration note (tracked_leagues):', e.message);
+    }
+}
+
 // --- P4: Security & Rate Limiting ---
 
 // 1. Rate Limiter (Global)
@@ -30,7 +41,7 @@ const corsOptions = {
     origin: process.env.NODE_ENV === 'production'
         ? process.env.FRONTEND_URL || false
         : ['http://localhost:5173', 'http://127.0.0.1:5173'],
-    methods: ['GET', 'POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 };

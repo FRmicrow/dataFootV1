@@ -1,7 +1,25 @@
 import express from 'express';
 import { getLeagueSeasonsStatus, initializeSeasons, getSyncStatus } from '../controllers/v3/leagueSeasonController.js';
 import { validateRequest } from '../middleware/validateRequest.js';
-import { importLeagueSchema, importBatchSchema, searchSchema } from '../schemas/v3Schemas.js';
+import {
+    importLeagueSchema,
+    importBatchSchema,
+    searchSchema,
+    initSeasonsSchema,
+    syncEventsSchema,
+    importLineupsSchema,
+    predictionsSyncSchema,
+    studioQuerySchema,
+    studioRankingsSchema,
+    syncCareerSchema,
+    healthFixSchema,
+    healthFixAllSchema,
+    healthRevertSchema,
+    healthCheckLeagueSchema,
+    healthCheckDeepSchema,
+    importTrophiesSchema,
+    preferencesSchema
+} from '../schemas/v3Schemas.js';
 
 const router = express.Router();
 
@@ -26,7 +44,7 @@ import { searchV3, getClubProfile, getSearchCountries } from '../controllers/v3/
 router.get('/stats', getV3Stats);
 router.get('/leagues/imported', getImportedLeagues);
 router.get('/leagues/discovered', getDiscoveredLeagues);
-router.post('/leagues/seasons/init', initializeSeasons);
+router.post('/leagues/seasons/init', validateRequest(initSeasonsSchema), initializeSeasons);
 
 /**
  * @route GET /api/countries
@@ -74,19 +92,19 @@ import { getEventCandidates, syncFixtureEvents, getFixtureEvents, getFixtureDeta
 import { getLineups, getLineupCandidates, importLineupsBatch } from '../controllers/v3/lineupController.js';
 
 router.get('/fixtures/events/candidates', getEventCandidates);
-router.post('/fixtures/events/sync', syncFixtureEvents);
+router.post('/fixtures/events/sync', validateRequest(syncEventsSchema), syncFixtureEvents);
 router.get('/fixtures/:id/events', getFixtureEvents);
 router.get('/fixtures/:id', getFixtureDetails); // New Header Route
 router.get('/fixtures/:id/lineups', getLineups);
 
 router.get('/fixtures/lineups/candidates', getLineupCandidates);
-router.post('/fixtures/lineups/import', importLineupsBatch);
+router.post('/fixtures/lineups/import', validateRequest(importLineupsSchema), importLineupsBatch);
 
 /**
  * @route Predictions System
  */
 import { syncUpcomingProps, getPredictions } from '../controllers/v3/predictionController.js';
-router.post('/predictions/sync', syncUpcomingProps);
+router.post('/predictions/sync', validateRequest(predictionsSyncSchema), syncUpcomingProps);
 router.get('/predictions', getPredictions);
 
 /**
@@ -132,8 +150,8 @@ router.get('/studio/meta/leagues', getStudioLeagues);
 router.get('/studio/meta/nationalities', getStudioNationalities);
 router.get('/studio/meta/players', searchStudioPlayers);
 router.get('/studio/meta/teams', searchStudioTeams);
-router.post('/studio/query', queryStudioData);
-router.post('/studio/query/league-rankings', queryLeagueRankings);
+router.post('/studio/query', validateRequest(studioQuerySchema), queryStudioData);
+router.post('/studio/query/league-rankings', validateRequest(studioRankingsSchema), queryLeagueRankings);
 
 
 
@@ -141,7 +159,7 @@ router.post('/studio/query/league-rankings', queryLeagueRankings);
  * @route POST /api/player/:id/sync-career
  * @desc Deep-career backfill for a player
  */
-router.post('/player/:id/sync-career', syncPlayerCareerV3);
+router.post('/player/:id/sync-career', validateRequest(syncCareerSchema), syncPlayerCareerV3);
 
 /**
  * @route DB Health Check
@@ -149,24 +167,42 @@ router.post('/player/:id/sync-career', syncPlayerCareerV3);
 import { getDbHealth, fixDbHealth, getLeagueNames, checkLeagueHealthName, revertCleanup, checkDeepHealth, fixAllIssues, getCleanupHistory } from '../controllers/v3/adminController.js';
 
 router.get('/admin/health', getDbHealth);
-router.post('/admin/health/fix', fixDbHealth);
-router.post('/admin/health/fix-all', fixAllIssues);
+router.post('/admin/health/fix', validateRequest(healthFixSchema), fixDbHealth);
+router.post('/admin/health/fix-all', validateRequest(healthFixAllSchema), fixAllIssues);
 router.get('/admin/health/history', getCleanupHistory);
-router.post('/admin/health/revert/:groupId', revertCleanup);
-router.post('/admin/health/revert/id/:groupId', revertCleanup); // Supporting both formats
+router.post('/admin/health/revert/:groupId', validateRequest(healthRevertSchema), revertCleanup);
+router.post('/admin/health/revert/id/:groupId', validateRequest(healthRevertSchema), revertCleanup); // Supporting both formats
 router.get('/admin/health/leagues', getLeagueNames);
-router.post('/admin/health/check-league', checkLeagueHealthName);
-router.post('/admin/health/check-deep', checkDeepHealth);
+router.post('/admin/health/check-league', validateRequest(healthCheckLeagueSchema), checkLeagueHealthName);
+router.post('/admin/health/check-deep', validateRequest(healthCheckDeepSchema), checkDeepHealth);
 
 /**
  * @route Trophies System
  */
 import { importPlayerTrophies, getPlayersMissingTrophies, getPlayerTrophiesLocal, getNationalities, getPlayersByNationality } from '../controllers/v3/trophyController.js';
 
-router.post('/import/trophies', importPlayerTrophies);
+router.post('/import/trophies', validateRequest(importTrophiesSchema), importPlayerTrophies);
 router.get('/import/trophies/candidates', getPlayersMissingTrophies);
 router.get('/player/:id/trophies', getPlayerTrophiesLocal);
 router.get('/players/nationalities', getNationalities);
 router.get('/players/by-nationality', getPlayersByNationality);
+
+/**
+ * @route Live Bet System (US_010, US_011, US_012)
+ */
+import { getDailyFixtures, getUpcomingFixtures, getMatchDetails, saveMatchOdds } from '../controllers/v3/liveBetController.js';
+
+router.get('/live-bet/fixtures', getDailyFixtures);
+router.get('/live-bet/upcoming', getUpcomingFixtures);
+router.get('/live-bet/match/:id', getMatchDetails);
+router.post('/live-bet/match/:id/save-odds', saveMatchOdds);
+
+/**
+ * @route Preferences (US_017)
+ */
+import { getPreferences, updatePreferences } from '../controllers/v3/preferencesController.js';
+
+router.get('/preferences', getPreferences);
+router.put('/preferences', validateRequest(preferencesSchema), updatePreferences);
 
 export default router;

@@ -53,3 +53,23 @@ FROM V3_Leagues l
 JOIN V3_League_Seasons ls ON l.league_id = ls.league_id
 WHERE ls.season_year = 2023 AND ls.imported_players = 0;
 ```
+
+## 🎲 Odds & Simulations (US_013)
+
+### **V3_Odds**
+Stores historical betting odds for matches.
+- `fixture_id` (FK): Links to the match.
+- `bookmaker_id`, `market_id`: Source and type (e.g., 1N2, Over/Under).
+- `value_home_over`, `value_draw`, `value_away_under`: The decimal odds.
+- `handicap_value`: For markets like Asian Handicap.
+- **Uniqueness**: Enforced by `(fixture_id, bookmaker_id, market_id)` (with special handling for NULL handicap).
+
+### **V3_Simulations**
+Tracks backtesting results for betting strategies.
+- `strategy_name`: Identifier for the algorithm used.
+- `fixture_id` (FK): The match simulated.
+- `bet_type`: The pick ('1', 'N', '2', etc.).
+- `odds_used`, `stake`, `pnl`, `status`: Financial outcome.
+
+### **V3_Fixtures Update**
+- Added `has_odds` (Boolean) to quickly filter matches with available pricing data.

@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   /* Premium Dark Theme Palette */
   --bg-dark: #0f172a;
