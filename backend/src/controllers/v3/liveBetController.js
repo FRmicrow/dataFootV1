@@ -1,4 +1,10 @@
-import { getDailyFixturesService, getUpcomingByLeaguesService, getMatchDetailsService, saveMatchOddsService } from '../../services/v3/liveBetService.js';
+import {
+    getDailyFixturesService,
+    getUpcomingByLeaguesService,
+    getMatchDetailsService,
+    saveMatchOddsService,
+    saveCompetitionOddsService
+} from '../../services/v3/liveBetService.js';
 
 /**
  * Live Bet Controller (V3)
@@ -24,6 +30,26 @@ export const saveMatchOdds = async (req, res) => {
     } catch (error) {
         console.error(`Error saving odds for ${id}:`, error);
         res.status(500).json({ error: "Failed to save odds", details: error.message });
+    }
+};
+
+/**
+ * POST /api/v3/live-bet/competition/:leagueId/save-odds
+ * Manually saves odds for all matches in a competition (US_016).
+ */
+export const saveCompetitionOdds = async (req, res) => {
+    const { leagueId } = req.params;
+    if (!leagueId) return res.status(400).json({ error: "League ID is required" });
+
+    try {
+        const numericId = parseInt(leagueId, 10);
+        if (isNaN(numericId)) return res.status(400).json({ error: "Invalid League ID" });
+
+        const result = await saveCompetitionOddsService(numericId);
+        res.json(result);
+    } catch (error) {
+        console.error(`Error saving odds for league ${leagueId}:`, error);
+        res.status(500).json({ error: "Failed to save competition odds", details: error.message });
     }
 };
 

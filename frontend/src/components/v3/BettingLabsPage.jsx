@@ -4,11 +4,13 @@ import BettingLabsDetail from './BettingLabsDetail';
 import './BettingLabsPage.css';
 
 const BettingLabsPage = () => {
-    const [view, setView] = useState('upcoming'); // 'upcoming', 'history'
+    const [view, setView] = useState('upcoming'); // 'upcoming', 'history', 'ai'
     const [predictions, setPredictions] = useState([]);
+    const [mlPredictions, setMlPredictions] = useState([]);
     const [filteredPredictions, setFilteredPredictions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
+    const [scanning, setScanning] = useState(false);
     const [stats, setStats] = useState(null); // Sync result stats
 
     // Filters
@@ -19,7 +21,11 @@ const BettingLabsPage = () => {
     const [selectedPrediction, setSelectedPrediction] = useState(null);
 
     useEffect(() => {
-        fetchPredictions();
+        if (view === 'ai') {
+            fetchMLPredictions();
+        } else {
+            fetchPredictions();
+        }
     }, [view]);
 
     // Apply filters when predictions or selected league changes
@@ -50,6 +56,23 @@ const BettingLabsPage = () => {
         }
     };
 
+    const fetchMLPredictions = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getMLPredictions();
+            setMlPredictions(data || []);
+            setFilteredPredictions(data || []);
+
+            const uniqueLeagues = [...new Set((data || []).map(p => p.league_name))].sort();
+            setLeagues(uniqueLeagues);
+            setSelectedLeague('all');
+        } catch (error) {
+            console.error("Failed to load ML predictions", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSync = async () => {
         setSyncing(true);
         setStats(null);
@@ -62,6 +85,21 @@ const BettingLabsPage = () => {
             alert("Sync failed: " + error.message);
         } finally {
             setSyncing(false);
+        }
+    };
+
+    const handleAIScan = async () => {
+        setScanning(true);
+        setStats(null);
+        try {
+            const res = await api.triggerMLScan();
+            setStats({ synced: res.processed, total_candidates: res.processed });
+            fetchMLPredictions();
+        } catch (error) {
+            console.error("AI Scan failed", error);
+            alert("AI Scan failed: " + error.message);
+        } finally {
+            setScanning(false);
         }
     };
 
@@ -79,14 +117,26 @@ const BettingLabsPage = () => {
                     <h1>🧠 Betting Labs</h1>
                     <p>AI-Powered Prediction Engine & Analysis</p>
                 </div>
-                <div className="labs-actions">
-                    <button
-                        className="btn-sync-labs"
-                        onClick={handleSync}
-                        disabled={syncing}
-                    >
-                        {syncing ? 'Analyzing Market...' : '🔄 Scan Upcoming Matches (Top 10 Leagues)'}
-                    </button>
+                <div className="labs-actions" style={{ display: 'flex', gap: '10px' }}>
+                    {(view === 'upcoming' || view === 'history') && (
+                        <button
+                            className="btn-sync-labs"
+                            onClick={handleSync}
+                            disabled={syncing}
+                        >
+                            {syncing ? 'Analyzing Market...' : '🔄 Scan Market (API-Football)'}
+                        </button>
+                    )}
+                    {view === 'ai' && (
+                        <button
+                            className="btn-sync-labs"
+                            onClick={handleAIScan}
+                            disabled={scanning}
+                            style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', border: 'none' }}
+                        >
+                            {scanning ? '🤖 Model Thinking...' : '🧠 Scan Upcoming (Internal ML)'}
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -107,10 +157,16 @@ const BettingLabsPage = () => {
                         🔮 Upcoming Tips
                     </button>
                     <button
+                        className={`tab-btn ${view === 'ai' ? 'active' : ''}`}
+                        onClick={() => setView('ai')}
+                    >
+                        🧠 AI Augmented
+                    </button>
+                    <button
                         className={`tab-btn ${view === 'history' ? 'active' : ''}`}
                         onClick={() => setView('history')}
                     >
-                        📚 History & Results
+                        📚 History
                     </button>
                 </div>
 
@@ -138,10 +194,15 @@ const BettingLabsPage = () => {
                     filteredPredictions.map(p => (
                         <div
                             key={p.id}
-                            className="prediction-card clickable"
+                            className={`prediction-card clickable ${view === 'ai' ? 'ai-card' : ''}`}
                             onClick={() => setSelectedPrediction(p)}
                             title="Click for full analysis"
                         >
+                            {view === 'ai' && (
+                                <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', border: '1px solid #6366f1', padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold' }}>
+                                    INTERNAL MODEL
+                                </div>
+                            )}
                             <div className="pred-league">
                                 <img src={p.country_flag} alt="" className="pred-flag" />
                                 <span>{p.league_name}</span>

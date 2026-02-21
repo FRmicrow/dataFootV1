@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../../services/api';
 import GameCard from './GameCard';
 import LeagueSelector from './LeagueSelector';
@@ -10,6 +11,8 @@ const LiveBetDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
     const [showSelector, setShowSelector] = useState(false);
+    const [hasLoadedDaily, setHasLoadedDaily] = useState(false);
+    const [hasLoadedUpcoming, setHasLoadedUpcoming] = useState(false);
 
     // Preferences: favorite_leagues, favorite_teams, tracked_leagues
     const [preferences, setPreferences] = useState({ favorite_leagues: [], favorite_teams: [], tracked_leagues: [] });
@@ -51,9 +54,11 @@ const LiveBetDashboard = () => {
                 );
                 setAvailableLeagues(leagueList);
 
-                // Fetch upcoming by tracked leagues
-                const upcomingRes = await api.getUpcomingFixtures(prefs.tracked_leagues || []);
-                setUpcomingGroups((upcomingRes.data?.groups || upcomingRes?.groups) ?? []);
+                if (prefs.tracked_leagues?.length > 0 && mode === 'upcoming') {
+                    setHasLoadedUpcoming(true);
+                    const upcomingRes = await api.getUpcomingFixtures(prefs.tracked_leagues || []);
+                    setUpcomingGroups((upcomingRes.data?.groups || upcomingRes?.groups) ?? []);
+                }
             } catch (err) {
                 console.error('Failed to load dashboard data:', err);
             } finally {
@@ -78,7 +83,7 @@ const LiveBetDashboard = () => {
 
     // ── Re-fetch daily fixtures when date or mode changes ──
     useEffect(() => {
-        if (mode !== 'daily') return;
+        if (mode !== 'daily' || !hasLoadedDaily) return;
         const fetchDaily = async () => {
             setLoading(true);
             try {
@@ -177,6 +182,43 @@ const LiveBetDashboard = () => {
                             🗓️ Daily
                         </button>
                     </div>
+
+                    <Link
+                        to="/live-bet/data-empowerment"
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            background: 'rgba(99, 102, 241, 0.1)',
+                            border: '1px solid rgba(99, 102, 241, 0.3)',
+                            borderRadius: '8px',
+                            color: '#a5b4fc',
+                            padding: '6px 16px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            textDecoration: 'none',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        💎 Data Empowerment
+                    </Link>
+
+                    <button
+                        onClick={() => {
+                            if (mode === 'daily') { setHasLoadedDaily(true); }
+                            else { setHasLoadedUpcoming(true); refreshUpcoming(preferences.tracked_leagues); }
+                        }}
+                        style={{
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            border: '1px solid #10b981',
+                            borderRadius: '8px',
+                            color: '#10b981',
+                            padding: '6px 16px',
+                            fontSize: '0.85rem',
+                            fontWeight: '700',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🚀 {loading ? 'Scanning...' : 'Refresh Feed'}
+                    </button>
                 </div>
 
                 {/* Controls Row */}
@@ -240,7 +282,24 @@ const LiveBetDashboard = () => {
             ) : mode === 'upcoming' ? (
                 /* ── Upcoming: Grouped by Competition (AC 3) ── */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                    {filteredGroups.length === 0 && (
+                    {!hasLoadedUpcoming && (
+                        <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📅</div>
+                            <h2 style={{ color: '#f1f5f9' }}>Upcoming Match Analysis</h2>
+                            <p style={{ color: '#94a3b8', maxWidth: '400px', margin: '0 auto 20px' }}>
+                                Connect to the live market to pull the latest fixtures and pre-match stats.
+                            </p>
+                            <button
+                                onClick={() => { setHasLoadedUpcoming(true); refreshUpcoming(preferences.tracked_leagues); }}
+                                className="lb-search-input"
+                                style={{ width: 'auto', background: '#6366f1', color: '#fff', border: 'none', padding: '10px 30px', cursor: 'pointer' }}
+                            >
+                                🚀 Load Upcoming Matches
+                            </button>
+                        </div>
+                    )}
+
+                    {hasLoadedUpcoming && filteredGroups.length === 0 && (
                         <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
                             <div style={{ fontSize: '3rem', marginBottom: '12px' }}>⚽</div>
                             <div style={{ color: '#94a3b8', fontSize: '1rem' }}>
@@ -291,7 +350,24 @@ const LiveBetDashboard = () => {
             ) : (
                 /* ── Daily Mode: Flat list ── */
                 <div className="lb-game-feed">
-                    {filteredFixtures.length === 0 && (
+                    {!hasLoadedDaily && (
+                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px 20px', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.05)' }}>
+                            <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>🏟️</div>
+                            <h2 style={{ color: '#f1f5f9', marginBottom: '10px' }}>Live Betting Feed</h2>
+                            <p style={{ color: '#64748b', maxWidth: '450px', margin: '0 auto 30px', fontSize: '0.95rem' }}>
+                                Ready to scan the global markets for today's value bets?
+                                This avoids automatic API usage and only pulls data when you're ready.
+                            </p>
+                            <button
+                                onClick={() => setHasLoadedDaily(true)}
+                                style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: '#fff', border: 'none', padding: '12px 40px', borderRadius: '10px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)' }}
+                            >
+                                📡 Initialize Market Scan
+                            </button>
+                        </div>
+                    )}
+
+                    {hasLoadedDaily && filteredFixtures.length === 0 && (
                         <div className="empty-state">
                             <p>No matches found for {selectedDate || 'today'}.</p>
                         </div>

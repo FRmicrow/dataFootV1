@@ -544,19 +544,33 @@ export const getMatchDetailsService = async (fixtureId) => {
  * Save Match Odds (US_016)
  * Fetches odds from API and saves to V3_Odds.
  */
-export const saveMatchOddsService = async (fixtureId) => {
-    console.log(`💾 Saving odds for fixture ${fixtureId}...`);
+export const saveMatchOddsService = async (id) => {
+    console.log(`💾 Saving odds for fixture ${id}...`);
 
-    // 1. Fetch Latest Odds
-    const oddsRes = await footballApi.getOdds({ fixture: fixtureId });
+    // 1. Resolve ID (Input could be API_ID or Internal_ID)
+    const fix = db.get("SELECT fixture_id, api_id FROM V3_Fixtures WHERE fixture_id = ? OR api_id = ?", [id, id]);
+    if (!fix) {
+        return { success: false, message: "Fixture not found in local database" };
+    }
+    const internalId = fix.fixture_id;
+    const apiId = fix.api_id;
+
+    // 2. Fetch Latest Odds from API using API_ID
+    let oddsRes;
+    try {
+        oddsRes = await footballApi.getOdds({ fixture: apiId });
+    } catch (e) {
+        return { success: false, message: `API Error: ${e.message}` };
+    }
+
     if (!oddsRes.response || oddsRes.response.length === 0) {
-        throw new Error("No odds available for this fixture");
+        return { success: false, message: "No odds available for this fixture from API-Football" };
     }
 
     const oddsData = oddsRes.response[0];
     const bookmakers = oddsData.bookmakers;
     if (!bookmakers || bookmakers.length === 0) {
-        throw new Error("No bookmakers available");
+        return { success: false, message: "No bookmakers found for this fixture" };
     }
 
     // 2. Select Bookmaker (Winamax > Unibet > First)
@@ -629,13 +643,13 @@ export const saveMatchOddsService = async (fixtureId) => {
             }
 
             if (val1 || val2 || val3) {
-                db.run(sql, [fixtureId, bookmakerId, market.id, val1, val2, val3, handicap]);
+                db.run(sql, [internalId, bookmakerId, market.id, val1, val2, val3, handicap]);
                 count++;
             }
         }
     } catch (e) {
         console.error("Error during batch odds insert:", e);
-        throw e;
+        return { success: false, message: e.message };
     }
 
     console.log(`   ✅ Saved ${count} markets to V3_Odds`);
@@ -691,4 +705,40 @@ export const saveMatchOddsService = async (fixtureId) => {
     }
 
     return { success: true, count, bookmaker: selectedBookmaker.name };
+};
+
+/**
+ * Bulk saves odds for all matches in a specific competition (league).
+ * @param {number} leagueId 
+ */
+export const saveCompetitionOddsService = async (leagueId) => {
+    // 1. Find all fixtures for this league that are on the dashboard (Today or soon)
+    const today = new Date().toISOString().split('T')[0];
+    const fixtures = db.all(`
+        SELECT fixture_id 
+        FROM V3_Fixtures 
+        WHERE league_id = ? 
+        AND date >= ?
+        AND status_short NOT IN ('FT', 'AET', 'PEN', 'PST', 'CANC')
+        LIMIT 20
+    `, [leagueId, today]);
+
+    if (!fixtures.length) {
+        return { success: true, count: 0, message: "No upcoming fixtures found for this league." };
+    }
+
+    console.log(`🚀 Bulk saving odds for ${fixtures.length} matches in league ${leagueId}...`);
+
+    // 2. Map through and call saveMatchOddsService
+    const results = await Promise.allSettled(
+        fixtures.map(f => saveMatchOddsService(f.fixture_id))
+    );
+
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+
+    return {
+        success: true,
+        count: successful,
+        total: fixtures.length
+    };
 };

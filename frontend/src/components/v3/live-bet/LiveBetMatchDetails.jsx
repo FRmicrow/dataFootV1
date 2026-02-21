@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
+import MLPredictionPanel from './MLPredictionPanel';
 import './LiveBet.css';
 
 const LiveBetMatchDetails = () => {
@@ -151,11 +152,11 @@ const LiveBetMatchDetails = () => {
             {/* ML Context Header (US_019 AC 3) */}
             <div className="lb-ml-context-header" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
 
-                {/* Predictions Block */}
+                {/* Predictions Block — API-Football */}
                 {prediction && prediction.predictions && (
                     <div className="lb-context-card" style={{ background: 'linear-gradient(135deg, #312e81, #1e1b4b)', padding: '20px', borderRadius: '12px', border: '1px solid #4f46e5' }}>
                         <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            🤖 ML Predictions
+                            🤖 API Analysis
                             {isFinished && isPredictionCorrect === true && <span style={{ marginLeft: 'auto', background: 'rgba(16,185,129,0.2)', padding: '4px 8px', borderRadius: '4px', color: '#10b981', fontSize: '0.8rem' }}>Result: ✅ Correct</span>}
                             {isFinished && isPredictionCorrect === false && <span style={{ marginLeft: 'auto', background: 'rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', color: '#ef4444', fontSize: '0.8rem' }}>Result: ❌ Incorrect</span>}
                         </h3>
@@ -183,6 +184,22 @@ const LiveBetMatchDetails = () => {
                                 <div style={{ marginTop: '5px' }}><strong>Goal Line:</strong> {prediction.predictions.under_over || 'N/A'}</div>
                             </div>
                         </div>
+
+                        {/* 🧠 Internal Model block — augments the API block (US_028 AC 2) */}
+                        <MLPredictionPanel
+                            fixtureId={matchInfo.id}
+                            leagueId={league.id}
+                        />
+                    </div>
+                )}
+
+                {/* If no API prediction, still show internal model panel */}
+                {(!prediction || !prediction.predictions) && (
+                    <div className="lb-context-card" style={{ background: 'linear-gradient(135deg, #1a2336, #1e293b)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(99,102,241,0.3)' }}>
+                        <MLPredictionPanel
+                            fixtureId={matchInfo.id}
+                            leagueId={league.id}
+                        />
                     </div>
                 )}
 

@@ -196,6 +196,15 @@ router.get('/live-bet/fixtures', getDailyFixtures);
 router.get('/live-bet/upcoming', getUpcomingFixtures);
 router.get('/live-bet/match/:id', getMatchDetails);
 router.post('/live-bet/match/:id/save-odds', saveMatchOdds);
+router.post('/live-bet/competition/:leagueId/save-odds', async (req, res) => {
+    const { leagueId } = req.params;
+    try {
+        const { saveCompetitionOdds } = await import('../controllers/v3/liveBetController.js');
+        await saveCompetitionOdds(req, res);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 /**
  * @route Preferences (US_017)
@@ -204,5 +213,38 @@ import { getPreferences, updatePreferences } from '../controllers/v3/preferences
 
 router.get('/preferences', getPreferences);
 router.put('/preferences', validateRequest(preferencesSchema), updatePreferences);
+
+/**
+ * @route ML Intelligence (US_026, US_028)
+ */
+import {
+    getMatchPrediction,
+    getLeagueModelPerformance,
+    getMlServiceHealth,
+    getMLPredictions,
+    triggerMLScan,
+    startTraining,
+    getStatus,
+    getLogs,
+    stopTracking,
+    empowerLeagueController,
+    getLeagueEmpowermentInventory
+} from '../controllers/v3/mlController.js';
+
+router.get('/live-bet/match/:id/prediction', getMatchPrediction);
+router.get('/ml/predictions', getMLPredictions);
+router.post('/ml/scan', triggerMLScan);
+router.post('/ml/train', startTraining);
+router.get('/ml/train/status', getStatus);
+router.get('/ml/train/logs', getLogs);
+router.post('/ml/train/stop', stopTracking);
+router.get('/model/performance', getLeagueModelPerformance);
+router.get('/model/health', getMlServiceHealth);
+
+/**
+ * Empowerment & Inventory (US_030, US_031)
+ */
+router.post('/ml/empower/:id', empowerLeagueController);
+router.get('/ml/inventory', getLeagueEmpowermentInventory);
 
 export default router;

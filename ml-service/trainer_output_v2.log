@@ -1,0 +1,132 @@
+2026-02-21 12:33:45,199 [INFO] __main__ — Loading fixture data from DB: ...
+2026-02-21 12:33:45,267 [INFO] __main__ — Loaded 10000 completed fixtures
+2026-02-21 12:33:45,267 [INFO] __main__ — Building feature matrix (this may take several minutes)...
+2026-02-21 12:33:45,268 [INFO] __main__ — Building features: 0 / 10000
+2026-02-21 12:33:51,570 [INFO] __main__ — Building features: 100 / 10000
+2026-02-21 12:33:58,254 [INFO] __main__ — Building features: 200 / 10000
+2026-02-21 12:34:04,457 [INFO] __main__ — Building features: 300 / 10000
+2026-02-21 12:34:11,026 [INFO] __main__ — Building features: 400 / 10000
+2026-02-21 12:34:17,816 [INFO] __main__ — Building features: 500 / 10000
+2026-02-21 12:34:24,276 [INFO] __main__ — Building features: 600 / 10000
+2026-02-21 12:34:29,334 [INFO] __main__ — Building features: 700 / 10000
+2026-02-21 12:34:35,604 [INFO] __main__ — Building features: 800 / 10000
+2026-02-21 12:34:42,564 [INFO] __main__ — Building features: 900 / 10000
+2026-02-21 12:34:49,313 [INFO] __main__ — Building features: 1000 / 10000
+2026-02-21 12:34:57,282 [INFO] __main__ — Building features: 1100 / 10000
+2026-02-21 12:35:03,771 [INFO] __main__ — Building features: 1200 / 10000
+2026-02-21 12:35:10,263 [INFO] __main__ — Building features: 1300 / 10000
+2026-02-21 12:35:17,135 [INFO] __main__ — Building features: 1400 / 10000
+2026-02-21 12:35:22,751 [INFO] __main__ — Building features: 1500 / 10000
+2026-02-21 12:35:29,417 [INFO] __main__ — Building features: 1600 / 10000
+2026-02-21 12:35:35,333 [INFO] __main__ — Building features: 1700 / 10000
+2026-02-21 12:35:41,391 [INFO] __main__ — Building features: 1800 / 10000
+2026-02-21 12:35:47,595 [INFO] __main__ — Building features: 1900 / 10000
+2026-02-21 12:35:56,146 [INFO] __main__ — Building features: 2000 / 10000
+2026-02-21 12:36:03,576 [INFO] __main__ — Building features: 2100 / 10000
+2026-02-21 12:36:12,381 [INFO] __main__ — Building features: 2200 / 10000
+2026-02-21 12:36:18,389 [INFO] __main__ — Building features: 2300 / 10000
+2026-02-21 12:36:25,362 [INFO] __main__ — Building features: 2400 / 10000
+2026-02-21 12:36:32,506 [INFO] __main__ — Building features: 2500 / 10000
+2026-02-21 12:36:39,496 [INFO] __main__ — Building features: 2600 / 10000
+2026-02-21 12:36:46,139 [INFO] __main__ — Building features: 2700 / 10000
+2026-02-21 12:36:53,175 [INFO] __main__ — Building features: 2800 / 10000
+2026-02-21 12:37:00,080 [INFO] __main__ — Building features: 2900 / 10000
+2026-02-21 12:37:06,708 [INFO] __main__ — Building features: 3000 / 10000
+2026-02-21 12:37:13,004 [INFO] __main__ — Building features: 3100 / 10000
+2026-02-21 12:37:20,926 [INFO] __main__ — Building features: 3200 / 10000
+2026-02-21 12:37:27,635 [INFO] __main__ — Building features: 3300 / 10000
+2026-02-21 12:37:35,167 [INFO] __main__ — Building features: 3400 / 10000
+2026-02-21 12:37:42,133 [INFO] __main__ — Building features: 3500 / 10000
+2026-02-21 12:37:48,971 [INFO] __main__ — Building features: 3600 / 10000
+2026-02-21 12:37:56,691 [INFO] __main__ — Building features: 3700 / 10000
+2026-02-21 12:38:04,685 [INFO] __main__ — Building features: 3800 / 10000
+2026-02-21 12:38:10,681 [INFO] __main__ — Building features: 3900 / 10000
+2026-02-21 12:38:17,016 [INFO] __main__ — Building features: 4000 / 10000
+2026-02-21 12:38:24,471 [INFO] __main__ — Building features: 4100 / 10000
+2026-02-21 12:38:32,024 [INFO] __main__ — Building features: 4200 / 10000
+2026-02-21 12:38:37,587 [INFO] __main__ — Building features: 4300 / 10000
+2026-02-21 12:38:48,154 [INFO] __main__ — Building features: 4400 / 10000
+2026-02-21 12:39:02,954 [INFO] __main__ — Building features: 4500 / 10000
+2026-02-21 12:39:20,002 [INFO] __main__ — Building features: 4600 / 10000
+2026-02-21 12:39:43,795 [INFO] __main__ — Building features: 4700 / 10000
+2026-02-21 12:40:09,486 [INFO] __main__ — Building features: 4800 / 10000
+2026-02-21 12:40:31,762 [INFO] __main__ — Building features: 4900 / 10000
+2026-02-21 12:40:44,558 [INFO] __main__ — Building features: 5000 / 10000
+2026-02-21 12:40:56,477 [INFO] __main__ — Building features: 5100 / 10000
+2026-02-21 12:41:14,232 [INFO] __main__ — Building features: 5200 / 10000
+2026-02-21 12:41:35,489 [INFO] __main__ — Building features: 5300 / 10000
+2026-02-21 12:41:55,785 [INFO] __main__ — Building features: 5400 / 10000
+2026-02-21 12:42:17,846 [INFO] __main__ — Building features: 5500 / 10000
+2026-02-21 12:42:47,075 [INFO] __main__ — Building features: 5600 / 10000
+2026-02-21 12:43:27,424 [INFO] __main__ — Building features: 5700 / 10000
+2026-02-21 12:44:01,034 [INFO] __main__ — Building features: 5800 / 10000
+2026-02-21 12:44:26,663 [INFO] __main__ — Building features: 5900 / 10000
+2026-02-21 12:44:40,501 [INFO] __main__ — Building features: 6000 / 10000
+2026-02-21 12:45:03,829 [INFO] __main__ — Building features: 6100 / 10000
+2026-02-21 12:45:17,635 [INFO] __main__ — Building features: 6200 / 10000
+2026-02-21 12:45:45,819 [INFO] __main__ — Building features: 6300 / 10000
+2026-02-21 12:46:16,709 [INFO] __main__ — Building features: 6400 / 10000
+2026-02-21 12:46:45,327 [INFO] __main__ — Building features: 6500 / 10000
+2026-02-21 12:47:08,613 [INFO] __main__ — Building features: 6600 / 10000
+2026-02-21 12:47:40,378 [INFO] __main__ — Building features: 6700 / 10000
+2026-02-21 12:48:14,980 [INFO] __main__ — Building features: 6800 / 10000
+2026-02-21 12:48:57,425 [INFO] __main__ — Building features: 6900 / 10000
+2026-02-21 12:49:33,034 [INFO] __main__ — Building features: 7000 / 10000
+2026-02-21 12:49:55,499 [INFO] __main__ — Building features: 7100 / 10000
+2026-02-21 12:50:13,389 [INFO] __main__ — Building features: 7200 / 10000
+2026-02-21 12:50:34,332 [INFO] __main__ — Building features: 7300 / 10000
+2026-02-21 12:50:46,833 [INFO] __main__ — Building features: 7400 / 10000
+2026-02-21 12:51:08,559 [INFO] __main__ — Building features: 7500 / 10000
+2026-02-21 12:51:39,294 [INFO] __main__ — Building features: 7600 / 10000
+2026-02-21 12:52:07,238 [INFO] __main__ — Building features: 7700 / 10000
+2026-02-21 12:52:30,196 [INFO] __main__ — Building features: 7800 / 10000
+2026-02-21 12:53:01,519 [INFO] __main__ — Building features: 7900 / 10000
+2026-02-21 12:53:36,320 [INFO] __main__ — Building features: 8000 / 10000
+2026-02-21 12:54:11,623 [INFO] __main__ — Building features: 8100 / 10000
+2026-02-21 12:54:47,533 [INFO] __main__ — Building features: 8200 / 10000
+2026-02-21 12:55:08,391 [INFO] __main__ — Building features: 8300 / 10000
+2026-02-21 12:55:23,235 [INFO] __main__ — Building features: 8400 / 10000
+2026-02-21 12:55:40,445 [INFO] __main__ — Building features: 8500 / 10000
+2026-02-21 12:55:52,162 [INFO] __main__ — Building features: 8600 / 10000
+2026-02-21 12:56:05,961 [INFO] __main__ — Building features: 8700 / 10000
+2026-02-21 12:56:31,166 [INFO] __main__ — Building features: 8800 / 10000
+2026-02-21 12:56:55,244 [INFO] __main__ — Building features: 8900 / 10000
+2026-02-21 12:57:19,317 [INFO] __main__ — Building features: 9000 / 10000
+2026-02-21 12:57:44,494 [INFO] __main__ — Building features: 9100 / 10000
+2026-02-21 12:58:20,957 [INFO] __main__ — Building features: 9200 / 10000
+2026-02-21 12:58:46,912 [INFO] __main__ — Building features: 9300 / 10000
+2026-02-21 12:59:17,979 [INFO] __main__ — Building features: 9400 / 10000
+2026-02-21 12:59:34,440 [INFO] __main__ — Building features: 9500 / 10000
+2026-02-21 12:59:52,581 [INFO] __main__ — Building features: 9600 / 10000
+2026-02-21 13:00:10,076 [INFO] __main__ — Building features: 9700 / 10000
+2026-02-21 13:00:21,398 [INFO] __main__ — Building features: 9800 / 10000
+2026-02-21 13:00:30,301 [INFO] __main__ — Building features: 9900 / 10000
+2026-02-21 13:00:35,481 [INFO] __main__ — Feature matrix: 10000 rows, 36 columns
+2026-02-21 13:00:35,482 [INFO] __main__ — === Training 1X2 model ===
+2026-02-21 13:00:35,532 [INFO] __main__ — Split — train: 6800  val: 1200  test: 2000  classes: ['AWAY', 'DRAW', 'HOME']
+2026-02-21 13:00:46,207 [INFO] __main__ — 1X2 — log_loss train: 0.3788  test: 1.1117  accuracy: 0.4545  brier before: 0.2186  after: 0.2050
+2026-02-21 13:00:46,238 [INFO] __main__ — Model saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/1x2_v3.pkl
+2026-02-21 13:00:46,239 [INFO] __main__ — Feature importance saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/feature_importance_v3_1x2.json
+2026-02-21 13:00:46,241 [INFO] __main__ — Meta saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/1x2_v3_meta.json
+2026-02-21 13:00:46,244 [INFO] __main__ — === Training O/U 2.5 model ===
+2026-02-21 13:00:46,294 [INFO] __main__ — Split — train: 6800  val: 1200  test: 2000  class balance (OVER): 51.8%
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 455, in <module>
+    fixtures = _load_completed_fixtures(limit=args.limit)
+    ^^^^^^
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 440, in main
+    parser.add_argument(
+                         
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 362, in train_ou25
+    
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/calibrator.py", line 48, in calibrate_binary
+    calibrated.fit(X_val, y_val)
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/base.py", line 1329, in wrapper
+    estimator._validate_params()
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/base.py", line 492, in _validate_params
+    validate_parameter_constraints(
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/utils/_param_validation.py", line 98, in validate_parameter_constraints
+    raise InvalidParameterError(
+sklearn.utils._param_validation.InvalidParameterError: The 'cv' parameter of CalibratedClassifierCV must be an int in the range [2, inf), an object implementing 'split' and 'get_n_splits', an iterable or None. Got 'prefit' instead.

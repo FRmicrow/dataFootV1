@@ -17,6 +17,7 @@ import BettingLabsPage from './components/v3/BettingLabsPage';
 import MatchDetailPage from './components/v3/MatchDetailPage';
 import LiveBetDashboard from './components/v3/live-bet/LiveBetDashboard';
 import LiveBetMatchDetails from './components/v3/live-bet/LiveBetMatchDetails';
+import DataEmpowermentPage from './components/v3/live-bet/DataEmpowermentPage';
 import './App.css';
 
 function App() {
@@ -74,6 +75,7 @@ function App() {
                         <Route path="/lineups-import" element={<ImportLineupsPage />} />
                         <Route path="/betting-labs" element={<BettingLabsPage />} />
                         <Route path="/live-bet" element={<LiveBetDashboard />} />
+                        <Route path="/live-bet/data-empowerment" element={<DataEmpowermentPage />} />
                         <Route path="/live-bet/match/:id" element={<LiveBetMatchDetails />} />
                         <Route path="/match/:id" element={<MatchDetailPage />} />
                     </Route>

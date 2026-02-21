@@ -96,4 +96,17 @@ export default {
     getStudioStats: () => api.get('/studio/meta/stats'),
     getStudioLeagues: () => api.get('/studio/meta/leagues'),
     queryStudio: (data) => api.post('/studio/query', data),
+
+    // --- ML Intelligence (US_026, US_028, US_030, US_031) ---
+    getMatchPrediction: (fixtureId) => api.get(`/live-bet/match/${fixtureId}/prediction`),
+    getModelPerformance: (leagueId) => api.get(`/model/performance?league=${leagueId}`),
+    getMlServiceHealth: () => api.get('/model/health'),
+    getMLPredictions: () => api.get('/ml/predictions'),
+    triggerMLScan: () => api.post('/ml/scan'),
+    startTraining: (target, limit) => api.post('/ml/train', { target, limit }),
+    getTrainingStatus: () => api.get('/ml/train/status'),
+    getTrainingLogs: (lines) => api.get(`/ml/train/logs?lines=${lines}`),
+    stopTraining: () => api.post('/ml/train/stop'),
+    getMlInventory: () => api.get('/ml/inventory'),
+    empowerLeague: (leagueId, forceRebuild = false) => api.post(`/ml/empower/${leagueId}`, { force_rebuild: forceRebuild }),
 };

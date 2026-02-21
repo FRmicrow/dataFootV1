@@ -24,6 +24,73 @@ try {
     }
 }
 
+// --- ML Intelligence Tables (V4.0 — US_025, US_026, US_027) ---
+try {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS V3_ML_Models (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            model_type  TEXT    NOT NULL,
+            version     INTEGER NOT NULL,
+            file_path   TEXT,
+            log_loss    REAL,
+            brier_score REAL,
+            accuracy    REAL,
+            roi_backtest REAL,
+            is_active   INTEGER DEFAULT 0,
+            created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS V3_ML_Predictions (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            fixture_id    INTEGER NOT NULL,
+            model_version INTEGER,
+            prob_home     REAL,
+            prob_draw     REAL,
+            prob_away     REAL,
+            edge_home     REAL,
+            edge_draw     REAL,
+            edge_away     REAL,
+            value_bet     TEXT,
+            quarter_kelly REAL,
+            created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE
+        )
+    `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS V3_Backtest_Results (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            league_id    INTEGER,
+            model_version INTEGER,
+            period_start DATE,
+            period_end   DATE,
+            total_bets   INTEGER,
+            win_rate     REAL,
+            roi          REAL,
+            max_drawdown REAL,
+            brier_score  REAL,
+            created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS V3_ML_Feature_Store (
+            fixture_id     INTEGER PRIMARY KEY,
+            league_id      INTEGER NOT NULL,
+            feature_vector TEXT NOT NULL,
+            calculated_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE
+        )
+    `);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_ml_store_league ON V3_ML_Feature_Store(league_id)`);
+
+    console.log('✅ ML intelligence tables ensured (V3_ML_Models, V3_ML_Predictions, V3_Backtest_Results, V3_ML_Feature_Store)');
+} catch (e) {
+    console.warn('ML table migration note:', e.message);
+}
+
 // --- P4: Security & Rate Limiting ---
 
 // 1. Rate Limiter (Global)

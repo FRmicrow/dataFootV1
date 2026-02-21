@@ -1,0 +1,32 @@
+2026-02-21 12:01:33,776 [INFO] __main__ — Loading fixture data from DB: ...
+2026-02-21 12:01:33,795 [INFO] __main__ — Loaded 2000 completed fixtures
+2026-02-21 12:01:33,795 [INFO] __main__ — Building feature matrix (this may take several minutes)...
+2026-02-21 12:01:33,795 [INFO] __main__ — Building features: 0 / 2000
+2026-02-21 12:02:09,934 [INFO] __main__ — Building features: 100 / 2000
+2026-02-21 12:02:45,261 [INFO] __main__ — Building features: 200 / 2000
+2026-02-21 12:03:05,561 [INFO] __main__ — Building features: 300 / 2000
+2026-02-21 12:03:20,414 [INFO] __main__ — Building features: 400 / 2000
+2026-02-21 12:03:37,743 [INFO] __main__ — Building features: 500 / 2000
+2026-02-21 12:03:49,949 [INFO] __main__ — Building features: 600 / 2000
+2026-02-21 12:04:03,898 [INFO] __main__ — Building features: 700 / 2000
+2026-02-21 12:04:31,028 [INFO] __main__ — Building features: 800 / 2000
+2026-02-21 12:04:56,505 [INFO] __main__ — Building features: 900 / 2000
+2026-02-21 12:05:20,798 [INFO] __main__ — Building features: 1000 / 2000
+2026-02-21 12:05:48,289 [INFO] __main__ — Building features: 1100 / 2000
+2026-02-21 12:06:27,384 [INFO] __main__ — Building features: 1200 / 2000
+2026-02-21 12:06:55,211 [INFO] __main__ — Building features: 1300 / 2000
+2026-02-21 12:07:28,383 [INFO] __main__ — Building features: 1400 / 2000
+2026-02-21 12:07:46,417 [INFO] __main__ — Building features: 1500 / 2000
+2026-02-21 12:08:05,630 [INFO] __main__ — Building features: 1600 / 2000
+2026-02-21 12:08:25,050 [INFO] __main__ — Building features: 1700 / 2000
+2026-02-21 12:08:37,505 [INFO] __main__ — Building features: 1800 / 2000
+2026-02-21 12:08:47,607 [INFO] __main__ — Building features: 1900 / 2000
+2026-02-21 12:08:53,217 [INFO] __main__ — Feature matrix: 2000 rows, 36 columns
+2026-02-21 12:08:53,217 [INFO] __main__ — === Training 1X2 model ===
+2026-02-21 12:08:53,229 [INFO] __main__ — Split — train: 1360  val: 240  test: 400  classes: ['AWAY', 'DRAW', 'HOME']
+2026-02-21 12:09:02,393 [INFO] __main__ — 1X2 — log_loss train: 0.0165  test: 1.5094  accuracy: 0.4800  brier before: 0.2542  after: 0.2104
+2026-02-21 12:09:02,424 [INFO] __main__ — Model saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/1x2_v1.pkl
+2026-02-21 12:09:02,425 [INFO] __main__ — Feature importance saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/feature_importance_v1_1x2.json
+2026-02-21 12:09:02,432 [INFO] __main__ — Meta saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/1x2_v1_meta.json
+2026-02-21 12:09:02,434 [INFO] __main__ — === Training complete ===
+2026-02-21 12:09:02,434 [INFO] __main__ — [1X2 v1] log_loss_test=1.5094  brier=0.2104  accuracy=0.4800

@@ -1,0 +1,366 @@
+INFO:     Started server process [53176]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:5050 (Press CTRL+C to quit)
+INFO:     127.0.0.1:54629 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54638 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54642 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54646 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54869 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54877 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54869 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54925 - "POST /train HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54926 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+2026-02-21 12:46:25,694 [INFO] ml-service — Background training triggered for target: all
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54926 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54926 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54926 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54926 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54926 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54926 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "POST /train HTTP/1.1" 200 OK
+2026-02-21 12:46:56,593 [INFO] ml-service — Background training triggered for target: all
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54928 - "GET /model/train/status HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55039 - "GET /model/train/logs?lines=100 HTTP/1.1" 404 Not Found
+2026-02-21 13:14:02,743 [ERROR] ml-service — Training failed:
+2026-02-21 12:46:26,897 [INFO] __main__ — Loading fixture data from DB: ...
+2026-02-21 12:46:26,952 [INFO] __main__ — Loaded 10000 completed fixtures
+2026-02-21 12:46:26,952 [INFO] __main__ — Building feature matrix (this may take several minutes)...
+2026-02-21 12:46:26,954 [INFO] __main__ — Building features: 0 / 10000
+2026-02-21 12:46:32,786 [INFO] __main__ — Building features: 100 / 10000
+2026-02-21 12:46:39,037 [INFO] __main__ — Building features: 200 / 10000
+2026-02-21 12:46:45,493 [INFO] __main__ — Building features: 300 / 10000
+2026-02-21 12:46:52,207 [INFO] __main__ — Building features: 400 / 10000
+2026-02-21 12:46:59,706 [INFO] __main__ — Building features: 500 / 10000
+2026-02-21 12:47:06,491 [INFO] __main__ — Building features: 600 / 10000
+2026-02-21 12:47:11,644 [INFO] __main__ — Building features: 700 / 10000
+2026-02-21 12:47:18,439 [INFO] __main__ — Building features: 800 / 10000
+2026-02-21 12:47:25,842 [INFO] __main__ — Building features: 900 / 10000
+2026-02-21 12:47:33,029 [INFO] __main__ — Building features: 1000 / 10000
+2026-02-21 12:47:41,463 [INFO] __main__ — Building features: 1100 / 10000
+2026-02-21 12:47:48,426 [INFO] __main__ — Building features: 1200 / 10000
+2026-02-21 12:47:55,363 [INFO] __main__ — Building features: 1300 / 10000
+2026-02-21 12:48:02,444 [INFO] __main__ — Building features: 1400 / 10000
+2026-02-21 12:48:08,061 [INFO] __main__ — Building features: 1500 / 10000
+2026-02-21 12:48:15,109 [INFO] __main__ — Building features: 1600 / 10000
+2026-02-21 12:48:21,254 [INFO] __main__ — Building features: 1700 / 10000
+2026-02-21 12:48:27,457 [INFO] __main__ — Building features: 1800 / 10000
+2026-02-21 12:48:33,914 [INFO] __main__ — Building features: 1900 / 10000
+2026-02-21 12:48:42,832 [INFO] __main__ — Building features: 2000 / 10000
+2026-02-21 12:48:50,555 [INFO] __main__ — Building features: 2100 / 10000
+2026-02-21 12:49:00,059 [INFO] __main__ — Building features: 2200 / 10000
+2026-02-21 12:49:06,164 [INFO] __main__ — Building features: 2300 / 10000
+2026-02-21 12:49:13,388 [INFO] __main__ — Building features: 2400 / 10000
+2026-02-21 12:49:20,791 [INFO] __main__ — Building features: 2500 / 10000
+2026-02-21 12:49:27,777 [INFO] __main__ — Building features: 2600 / 10000
+2026-02-21 12:49:34,380 [INFO] __main__ — Building features: 2700 / 10000
+2026-02-21 12:49:41,565 [INFO] __main__ — Building features: 2800 / 10000
+2026-02-21 12:49:48,133 [INFO] __main__ — Building features: 2900 / 10000
+2026-02-21 12:49:54,466 [INFO] __main__ — Building features: 3000 / 10000
+2026-02-21 12:50:00,686 [INFO] __main__ — Building features: 3100 / 10000
+2026-02-21 12:50:08,690 [INFO] __main__ — Building features: 3200 / 10000
+2026-02-21 12:50:15,349 [INFO] __main__ — Building features: 3300 / 10000
+2026-02-21 12:50:22,916 [INFO] __main__ — Building features: 3400 / 10000
+2026-02-21 12:50:29,860 [INFO] __main__ — Building features: 3500 / 10000
+2026-02-21 12:50:36,587 [INFO] __main__ — Building features: 3600 / 10000
+2026-02-21 12:50:44,920 [INFO] __main__ — Building features: 3700 / 10000
+2026-02-21 12:50:53,206 [INFO] __main__ — Building features: 3800 / 10000
+2026-02-21 12:50:59,389 [INFO] __main__ — Building features: 3900 / 10000
+2026-02-21 12:51:06,261 [INFO] __main__ — Building features: 4000 / 10000
+2026-02-21 12:51:14,111 [INFO] __main__ — Building features: 4100 / 10000
+2026-02-21 12:51:21,805 [INFO] __main__ — Building features: 4200 / 10000
+2026-02-21 12:51:27,559 [INFO] __main__ — Building features: 4300 / 10000
+2026-02-21 12:51:38,872 [INFO] __main__ — Building features: 4400 / 10000
+2026-02-21 12:51:54,661 [INFO] __main__ — Building features: 4500 / 10000
+2026-02-21 12:52:13,019 [INFO] __main__ — Building features: 4600 / 10000
+2026-02-21 12:52:37,995 [INFO] __main__ — Building features: 4700 / 10000
+2026-02-21 12:53:04,933 [INFO] __main__ — Building features: 4800 / 10000
+2026-02-21 12:53:28,378 [INFO] __main__ — Building features: 4900 / 10000
+2026-02-21 12:53:41,728 [INFO] __main__ — Building features: 5000 / 10000
+2026-02-21 12:53:54,357 [INFO] __main__ — Building features: 5100 / 10000
+2026-02-21 12:54:13,035 [INFO] __main__ — Building features: 5200 / 10000
+2026-02-21 12:54:35,924 [INFO] __main__ — Building features: 5300 / 10000
+2026-02-21 12:54:58,006 [INFO] __main__ — Building features: 5400 / 10000
+2026-02-21 12:55:21,702 [INFO] __main__ — Building features: 5500 / 10000
+2026-02-21 12:55:50,136 [INFO] __main__ — Building features: 5600 / 10000
+2026-02-21 12:56:30,067 [INFO] __main__ — Building features: 5700 / 10000
+2026-02-21 12:57:04,545 [INFO] __main__ — Building features: 5800 / 10000
+2026-02-21 12:57:30,584 [INFO] __main__ — Building features: 5900 / 10000
+2026-02-21 12:57:44,542 [INFO] __main__ — Building features: 6000 / 10000
+2026-02-21 12:58:07,826 [INFO] __main__ — Building features: 6100 / 10000
+2026-02-21 12:58:21,376 [INFO] __main__ — Building features: 6200 / 10000
+2026-02-21 12:58:49,807 [INFO] __main__ — Building features: 6300 / 10000
+2026-02-21 12:59:21,174 [INFO] __main__ — Building features: 6400 / 10000
+2026-02-21 12:59:49,502 [INFO] __main__ — Building features: 6500 / 10000
+2026-02-21 13:00:11,875 [INFO] __main__ — Building features: 6600 / 10000
+2026-02-21 13:00:43,847 [INFO] __main__ — Building features: 6700 / 10000
+2026-02-21 13:01:18,275 [INFO] __main__ — Building features: 6800 / 10000
+2026-02-21 13:02:00,119 [INFO] __main__ — Building features: 6900 / 10000
+2026-02-21 13:02:35,098 [INFO] __main__ — Building features: 7000 / 10000
+2026-02-21 13:02:57,917 [INFO] __main__ — Building features: 7100 / 10000
+2026-02-21 13:03:16,629 [INFO] __main__ — Building features: 7200 / 10000
+2026-02-21 13:03:37,637 [INFO] __main__ — Building features: 7300 / 10000
+2026-02-21 13:03:49,752 [INFO] __main__ — Building features: 7400 / 10000
+2026-02-21 13:04:11,142 [INFO] __main__ — Building features: 7500 / 10000
+2026-02-21 13:04:40,279 [INFO] __main__ — Building features: 7600 / 10000
+2026-02-21 13:05:07,519 [INFO] __main__ — Building features: 7700 / 10000
+2026-02-21 13:05:30,942 [INFO] __main__ — Building features: 7800 / 10000
+2026-02-21 13:06:03,121 [INFO] __main__ — Building features: 7900 / 10000
+2026-02-21 13:06:38,327 [INFO] __main__ — Building features: 8000 / 10000
+2026-02-21 13:07:14,034 [INFO] __main__ — Building features: 8100 / 10000
+2026-02-21 13:07:49,430 [INFO] __main__ — Building features: 8200 / 10000
+2026-02-21 13:08:08,828 [INFO] __main__ — Building features: 8300 / 10000
+2026-02-21 13:08:24,261 [INFO] __main__ — Building features: 8400 / 10000
+2026-02-21 13:08:42,079 [INFO] __main__ — Building features: 8500 / 10000
+2026-02-21 13:08:54,288 [INFO] __main__ — Building features: 8600 / 10000
+2026-02-21 13:09:08,530 [INFO] __main__ — Building features: 8700 / 10000
+2026-02-21 13:09:35,366 [INFO] __main__ — Building features: 8800 / 10000
+2026-02-21 13:10:00,054 [INFO] __main__ — Building features: 8900 / 10000
+2026-02-21 13:10:25,128 [INFO] __main__ — Building features: 9000 / 10000
+2026-02-21 13:10:51,409 [INFO] __main__ — Building features: 9100 / 10000
+2026-02-21 13:11:29,431 [INFO] __main__ — Building features: 9200 / 10000
+2026-02-21 13:11:56,579 [INFO] __main__ — Building features: 9300 / 10000
+2026-02-21 13:12:28,942 [INFO] __main__ — Building features: 9400 / 10000
+2026-02-21 13:12:46,250 [INFO] __main__ — Building features: 9500 / 10000
+2026-02-21 13:13:05,164 [INFO] __main__ — Building features: 9600 / 10000
+2026-02-21 13:13:22,778 [INFO] __main__ — Building features: 9700 / 10000
+2026-02-21 13:13:34,113 [INFO] __main__ — Building features: 9800 / 10000
+2026-02-21 13:13:42,889 [INFO] __main__ — Building features: 9900 / 10000
+2026-02-21 13:13:48,026 [INFO] __main__ — Feature matrix cached to /Users/dominiqueparsis/statFootV3/ml-service/cache/feature_matrix_last.csv
+2026-02-21 13:13:48,029 [INFO] __main__ — Feature matrix: 10000 rows, 36 columns
+2026-02-21 13:13:48,029 [INFO] __main__ — === Training 1X2 model ===
+2026-02-21 13:13:48,076 [INFO] __main__ — Split — train: 6800  val: 1200  test: 2000  classes: ['AWAY', 'DRAW', 'HOME']
+2026-02-21 13:13:58,966 [INFO] __main__ — 1X2 — log_loss train: 0.3788  test: 1.1117  accuracy: 0.4545  brier before: 0.2186  after: 0.2050
+2026-02-21 13:13:58,996 [INFO] __main__ — Model saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/1x2_v4.pkl
+2026-02-21 13:13:58,997 [INFO] __main__ — Feature importance saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/feature_importance_v4_1x2.json
+2026-02-21 13:13:59,000 [INFO] __main__ — Meta saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/1x2_v4_meta.json
+2026-02-21 13:13:59,003 [INFO] __main__ — === Training O/U 2.5 model ===
+2026-02-21 13:13:59,051 [INFO] __main__ — Split — train: 6800  val: 1200  test: 2000  class balance (OVER): 51.8%
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 482, in <module>
+    main()
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 467, in main
+    results["ou25"] = train_ou25(feature_matrix)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 389, in train_ou25
+    calibrated, brier_before, brier_after = calibrate_binary(model, X_val, y_val_enc)
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/calibrator.py", line 48, in calibrate_binary
+    calibrated.fit(X_val, y_val)
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/base.py", line 1329, in wrapper
+    estimator._validate_params()
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/base.py", line 492, in _validate_params
+    validate_parameter_constraints(
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/utils/_param_validation.py", line 98, in validate_parameter_constraints
+    raise InvalidParameterError(
+sklearn.utils._param_validation.InvalidParameterError: The 'cv' parameter of CalibratedClassifierCV must be an int in the range [2, inf), an object implementing 'split' and 'get_n_splits', an iterable or None. Got 'prefit' instead.
+
+2026-02-21 13:14:21,510 [ERROR] ml-service — Training failed:
+2026-02-21 12:46:57,812 [INFO] __main__ — Loading fixture data from DB: ...
+2026-02-21 12:46:57,871 [INFO] __main__ — Loaded 10000 completed fixtures
+2026-02-21 12:46:57,871 [INFO] __main__ — Building feature matrix (this may take several minutes)...
+2026-02-21 12:46:57,873 [INFO] __main__ — Building features: 0 / 10000
+2026-02-21 12:47:03,860 [INFO] __main__ — Building features: 100 / 10000
+2026-02-21 12:47:10,150 [INFO] __main__ — Building features: 200 / 10000
+2026-02-21 12:47:16,873 [INFO] __main__ — Building features: 300 / 10000
+2026-02-21 12:47:23,482 [INFO] __main__ — Building features: 400 / 10000
+2026-02-21 12:47:30,845 [INFO] __main__ — Building features: 500 / 10000
+2026-02-21 12:47:37,576 [INFO] __main__ — Building features: 600 / 10000
+2026-02-21 12:47:43,079 [INFO] __main__ — Building features: 700 / 10000
+2026-02-21 12:47:49,747 [INFO] __main__ — Building features: 800 / 10000
+2026-02-21 12:47:57,069 [INFO] __main__ — Building features: 900 / 10000
+2026-02-21 12:48:04,348 [INFO] __main__ — Building features: 1000 / 10000
+2026-02-21 12:48:12,748 [INFO] __main__ — Building features: 1100 / 10000
+2026-02-21 12:48:19,800 [INFO] __main__ — Building features: 1200 / 10000
+2026-02-21 12:48:26,702 [INFO] __main__ — Building features: 1300 / 10000
+2026-02-21 12:48:33,728 [INFO] __main__ — Building features: 1400 / 10000
+2026-02-21 12:48:39,331 [INFO] __main__ — Building features: 1500 / 10000
+2026-02-21 12:48:46,218 [INFO] __main__ — Building features: 1600 / 10000
+2026-02-21 12:48:52,323 [INFO] __main__ — Building features: 1700 / 10000
+2026-02-21 12:48:58,679 [INFO] __main__ — Building features: 1800 / 10000
+2026-02-21 12:49:05,112 [INFO] __main__ — Building features: 1900 / 10000
+2026-02-21 12:49:14,114 [INFO] __main__ — Building features: 2000 / 10000
+2026-02-21 12:49:21,897 [INFO] __main__ — Building features: 2100 / 10000
+2026-02-21 12:49:31,299 [INFO] __main__ — Building features: 2200 / 10000
+2026-02-21 12:49:37,447 [INFO] __main__ — Building features: 2300 / 10000
+2026-02-21 12:49:44,764 [INFO] __main__ — Building features: 2400 / 10000
+2026-02-21 12:49:51,845 [INFO] __main__ — Building features: 2500 / 10000
+2026-02-21 12:49:58,418 [INFO] __main__ — Building features: 2600 / 10000
+2026-02-21 12:50:04,659 [INFO] __main__ — Building features: 2700 / 10000
+2026-02-21 12:50:11,273 [INFO] __main__ — Building features: 2800 / 10000
+2026-02-21 12:50:17,766 [INFO] __main__ — Building features: 2900 / 10000
+2026-02-21 12:50:24,055 [INFO] __main__ — Building features: 3000 / 10000
+2026-02-21 12:50:30,167 [INFO] __main__ — Building features: 3100 / 10000
+2026-02-21 12:50:38,305 [INFO] __main__ — Building features: 3200 / 10000
+2026-02-21 12:50:45,305 [INFO] __main__ — Building features: 3300 / 10000
+2026-02-21 12:50:53,037 [INFO] __main__ — Building features: 3400 / 10000
+2026-02-21 12:51:00,054 [INFO] __main__ — Building features: 3500 / 10000
+2026-02-21 12:51:07,159 [INFO] __main__ — Building features: 3600 / 10000
+2026-02-21 12:51:15,371 [INFO] __main__ — Building features: 3700 / 10000
+2026-02-21 12:51:23,690 [INFO] __main__ — Building features: 3800 / 10000
+2026-02-21 12:51:29,989 [INFO] __main__ — Building features: 3900 / 10000
+2026-02-21 12:51:36,713 [INFO] __main__ — Building features: 4000 / 10000
+2026-02-21 12:51:44,271 [INFO] __main__ — Building features: 4100 / 10000
+2026-02-21 12:51:51,796 [INFO] __main__ — Building features: 4200 / 10000
+2026-02-21 12:51:57,642 [INFO] __main__ — Building features: 4300 / 10000
+2026-02-21 12:52:08,564 [INFO] __main__ — Building features: 4400 / 10000
+2026-02-21 12:52:23,948 [INFO] __main__ — Building features: 4500 / 10000
+2026-02-21 12:52:41,572 [INFO] __main__ — Building features: 4600 / 10000
+2026-02-21 12:53:06,119 [INFO] __main__ — Building features: 4700 / 10000
+2026-02-21 12:53:32,357 [INFO] __main__ — Building features: 4800 / 10000
+2026-02-21 12:53:55,514 [INFO] __main__ — Building features: 4900 / 10000
+2026-02-21 12:54:09,049 [INFO] __main__ — Building features: 5000 / 10000
+2026-02-21 12:54:21,275 [INFO] __main__ — Building features: 5100 / 10000
+2026-02-21 12:54:40,142 [INFO] __main__ — Building features: 5200 / 10000
+2026-02-21 12:55:03,571 [INFO] __main__ — Building features: 5300 / 10000
+2026-02-21 12:55:24,309 [INFO] __main__ — Building features: 5400 / 10000
+2026-02-21 12:55:46,218 [INFO] __main__ — Building features: 5500 / 10000
+2026-02-21 12:56:14,151 [INFO] __main__ — Building features: 5600 / 10000
+2026-02-21 12:56:53,938 [INFO] __main__ — Building features: 5700 / 10000
+2026-02-21 12:57:28,272 [INFO] __main__ — Building features: 5800 / 10000
+2026-02-21 12:57:53,448 [INFO] __main__ — Building features: 5900 / 10000
+2026-02-21 12:58:07,160 [INFO] __main__ — Building features: 6000 / 10000
+2026-02-21 12:58:30,028 [INFO] __main__ — Building features: 6100 / 10000
+2026-02-21 12:58:43,353 [INFO] __main__ — Building features: 6200 / 10000
+2026-02-21 12:59:11,183 [INFO] __main__ — Building features: 6300 / 10000
+2026-02-21 12:59:42,099 [INFO] __main__ — Building features: 6400 / 10000
+2026-02-21 13:00:09,860 [INFO] __main__ — Building features: 6500 / 10000
+2026-02-21 13:00:32,154 [INFO] __main__ — Building features: 6600 / 10000
+2026-02-21 13:01:04,212 [INFO] __main__ — Building features: 6700 / 10000
+2026-02-21 13:01:37,652 [INFO] __main__ — Building features: 6800 / 10000
+2026-02-21 13:02:18,806 [INFO] __main__ — Building features: 6900 / 10000
+2026-02-21 13:02:53,699 [INFO] __main__ — Building features: 7000 / 10000
+2026-02-21 13:03:16,388 [INFO] __main__ — Building features: 7100 / 10000
+2026-02-21 13:03:34,603 [INFO] __main__ — Building features: 7200 / 10000
+2026-02-21 13:03:55,630 [INFO] __main__ — Building features: 7300 / 10000
+2026-02-21 13:04:08,023 [INFO] __main__ — Building features: 7400 / 10000
+2026-02-21 13:04:29,127 [INFO] __main__ — Building features: 7500 / 10000
+2026-02-21 13:04:58,644 [INFO] __main__ — Building features: 7600 / 10000
+2026-02-21 13:05:26,437 [INFO] __main__ — Building features: 7700 / 10000
+2026-02-21 13:05:49,921 [INFO] __main__ — Building features: 7800 / 10000
+2026-02-21 13:06:22,337 [INFO] __main__ — Building features: 7900 / 10000
+2026-02-21 13:06:57,705 [INFO] __main__ — Building features: 8000 / 10000
+2026-02-21 13:07:33,495 [INFO] __main__ — Building features: 8100 / 10000
+2026-02-21 13:08:08,769 [INFO] __main__ — Building features: 8200 / 10000
+2026-02-21 13:08:28,377 [INFO] __main__ — Building features: 8300 / 10000
+2026-02-21 13:08:43,927 [INFO] __main__ — Building features: 8400 / 10000
+2026-02-21 13:09:01,913 [INFO] __main__ — Building features: 8500 / 10000
+2026-02-21 13:09:14,180 [INFO] __main__ — Building features: 8600 / 10000
+2026-02-21 13:09:28,620 [INFO] __main__ — Building features: 8700 / 10000
+2026-02-21 13:09:55,377 [INFO] __main__ — Building features: 8800 / 10000
+2026-02-21 13:10:20,382 [INFO] __main__ — Building features: 8900 / 10000
+2026-02-21 13:10:45,410 [INFO] __main__ — Building features: 9000 / 10000
+2026-02-21 13:11:10,910 [INFO] __main__ — Building features: 9100 / 10000
+2026-02-21 13:11:48,046 [INFO] __main__ — Building features: 9200 / 10000
+2026-02-21 13:12:14,593 [INFO] __main__ — Building features: 9300 / 10000
+2026-02-21 13:12:46,460 [INFO] __main__ — Building features: 9400 / 10000
+2026-02-21 13:13:03,354 [INFO] __main__ — Building features: 9500 / 10000
+2026-02-21 13:13:21,869 [INFO] __main__ — Building features: 9600 / 10000
+2026-02-21 13:13:39,248 [INFO] __main__ — Building features: 9700 / 10000
+2026-02-21 13:13:51,346 [INFO] __main__ — Building features: 9800 / 10000
+2026-02-21 13:14:02,838 [INFO] __main__ — Building features: 9900 / 10000
+2026-02-21 13:14:08,605 [INFO] __main__ — Feature matrix cached to /Users/dominiqueparsis/statFootV3/ml-service/cache/feature_matrix_last.csv
+2026-02-21 13:14:08,609 [INFO] __main__ — Feature matrix: 10000 rows, 36 columns
+2026-02-21 13:14:08,609 [INFO] __main__ — === Training 1X2 model ===
+2026-02-21 13:14:08,658 [INFO] __main__ — Split — train: 6800  val: 1200  test: 2000  classes: ['AWAY', 'DRAW', 'HOME']
+2026-02-21 13:14:18,171 [INFO] __main__ — 1X2 — log_loss train: 0.3788  test: 1.1117  accuracy: 0.4545  brier before: 0.2186  after: 0.2050
+2026-02-21 13:14:18,200 [INFO] __main__ — Model saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/1x2_v5.pkl
+2026-02-21 13:14:18,201 [INFO] __main__ — Feature importance saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/feature_importance_v5_1x2.json
+2026-02-21 13:14:18,204 [INFO] __main__ — Meta saved: /Users/dominiqueparsis/statFootV3/ml-service/saved_models/1x2_v5_meta.json
+2026-02-21 13:14:18,207 [INFO] __main__ — === Training O/U 2.5 model ===
+2026-02-21 13:14:18,258 [INFO] __main__ — Split — train: 6800  val: 1200  test: 2000  class balance (OVER): 51.8%
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 482, in <module>
+    main()
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 467, in main
+    results["ou25"] = train_ou25(feature_matrix)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/trainer.py", line 389, in train_ou25
+    calibrated, brier_before, brier_after = calibrate_binary(model, X_val, y_val_enc)
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/dominiqueparsis/statFootV3/ml-service/models/calibrator.py", line 48, in calibrate_binary
+    calibrated.fit(X_val, y_val)
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/base.py", line 1329, in wrapper
+    estimator._validate_params()
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/base.py", line 492, in _validate_params
+    validate_parameter_constraints(
+  File "/Users/dominiqueparsis/statFootV3/ml-service/venv/lib/python3.11/site-packages/sklearn/utils/_param_validation.py", line 98, in validate_parameter_constraints
+    raise InvalidParameterError(
+sklearn.utils._param_validation.InvalidParameterError: The 'cv' parameter of CalibratedClassifierCV must be an int in the range [2, inf), an object implementing 'split' and 'get_n_splits', an iterable or None. Got 'prefit' instead.
+

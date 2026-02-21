@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
+import MLIntelligenceBadge from './MLIntelligenceBadge';
 import './LiveBet.css';
 
 const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: [], favorite_teams: [] }, onToggleFavorite = () => { } }) => {
@@ -11,6 +12,22 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
     const isFavHome = preferences.favorite_teams?.includes(teams.home.id);
     const isFavAway = preferences.favorite_teams?.includes(teams.away.id);
     const [saveState, setSaveState] = React.useState('idle'); // idle, saving, saved, error
+    const [mlPrediction, setMlPrediction] = React.useState(null);
+    const [mlLoading, setMlLoading] = React.useState(false);
+
+    // Lazy-load ML prediction after card renders (non-blocking)
+    React.useEffect(() => {
+        let cancelled = false;
+        const isUpcoming = !['FT', 'AET', 'PEN'].includes(matchInfo.status.short);
+        if (!isUpcoming) return; // don't fetch predictions for finished matches
+
+        setMlLoading(true);
+        api.getMatchPrediction(matchInfo.id)
+            .then(data => { if (!cancelled) setMlPrediction(data); })
+            .catch(() => { /* ML unavailable — badge hidden */ })
+            .finally(() => { if (!cancelled) setMlLoading(false); });
+        return () => { cancelled = true; };
+    }, [matchInfo.id, matchInfo.status.short]);
 
     const matchTime = new Date(matchInfo.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const isLive = matchInfo.status.short === '1H' || matchInfo.status.short === '2H' || matchInfo.status.short === 'HT';
@@ -171,6 +188,9 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                     </div>
                 </div>
             )}
+
+            {/* ML Intelligence Badge (US_028 AC 1) */}
+            <MLIntelligenceBadge prediction={mlPrediction} loading={mlLoading} />
         </div>
     );
 };

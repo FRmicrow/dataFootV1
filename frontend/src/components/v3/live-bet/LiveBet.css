@@ -324,3 +324,44 @@
 .lb-react-select .lb-select__input-container {
     color: white;
 }
+
+/* ── ML Intelligence (US_028) ─────────────────────────────────────────────── */
+
+@keyframes ml-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes ml-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ml-intelligence-badge {
+    transition: all 0.3s ease;
+}
+
+.ml-intelligence-badge:hover {
+    filter: brightness(1.05);
+}
+
+.ml-badge-skeleton {
+    animation: ml-shimmer 1.5s infinite linear;
+}
+
+/* Animate the probability progress bars on mount */
+.ml-prob-bar {
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
