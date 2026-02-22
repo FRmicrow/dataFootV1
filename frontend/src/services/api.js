@@ -96,4 +96,7 @@ export default {
     getStudioStats: () => api.get('/studio/meta/stats'),
     getStudioLeagues: () => api.get('/studio/meta/leagues'),
     queryStudio: (data) => api.post('/studio/query', data),
+    // --- Import Matrix (US_040, US_042) ---
+    getImportMatrixStatus: () => api.get('/import/matrix-status'),
+    triggerAuditScan: () => api.post('/import/audit-scan'),
 };

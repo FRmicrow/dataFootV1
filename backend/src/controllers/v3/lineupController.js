@@ -139,6 +139,12 @@ export const importLineupsBatch = async (req, res) => {
                 failed++;
             }
         }
+        if (success > 0) {
+            db.run(
+                "UPDATE V3_League_Seasons SET imported_lineups = 1, last_sync_lineups = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
+                [league_id, season_year]
+            );
+        }
 
         res.json({
             message: `Processed ${targets.length} fixtures.`,

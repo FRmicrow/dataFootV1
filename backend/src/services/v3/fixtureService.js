@@ -33,9 +33,15 @@ const fetchWithRetry = async (url, retries = 3, backoff = 2000) => {
  * @param {number} leagueId 
  * @param {number} seasonYear 
  * @param {number} limit 
+ * @param {function} sendLog
  */
-export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50) => {
-    console.log(`📡 Service: Auto-syncing events for League ${leagueId}/${seasonYear}...`);
+export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, sendLog = null) => {
+    const log = (msg, type = 'info') => {
+        console.log(msg);
+        if (sendLog) sendLog(msg, type);
+    };
+
+    log(`📡 Service: Auto-syncing events for League ${leagueId}/${seasonYear}...`);
 
     try {
         const sql = `
@@ -50,24 +56,43 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50) 
         const targetFixtures = db.all(sql, [leagueId, seasonYear, limit]);
 
         if (targetFixtures.length === 0) {
-            console.log('   ✅ No missing events found for this league/season.');
+            log('   ✅ No missing events found for this league/season.', 'success');
             return { total: 0, success: 0, failed: 0 };
         }
 
-        console.log(`   found ${targetFixtures.length} fixtures missing events.`);
+        log(`   Found ${targetFixtures.length} fixtures missing events.`);
         let success = 0;
         let failed = 0;
 
-        for (const fixture of targetFixtures) {
-            try {
-                await fetchAndStoreEvents(fixture.fixture_id, fixture.api_id);
-                success++;
-                await delay(300); // Rate limit protection (increased to 300ms)
-            } catch (err) {
-                console.error(`   ❌ Failed fixture ${fixture.fixture_id}: ${err.message}`);
-                failed++;
+        // Optimized for high-throughput (targeting ~450 RPM)
+        const CHUNK_SIZE = 5;
+        for (let i = 0; i < targetFixtures.length; i += CHUNK_SIZE) {
+            const chunk = targetFixtures.slice(i, i + CHUNK_SIZE);
+
+            if (sendLog && sendLog.emit && i % 10 === 0) {
+                sendLog.emit({ type: 'progress', step: 'events', current: i + chunk.length, total: targetFixtures.length, label: `Syncing Events: ${i + chunk.length}/${targetFixtures.length}` });
             }
+
+            await Promise.all(chunk.map(async (fixture) => {
+                try {
+                    await fetchAndStoreEvents(fixture.fixture_id, fixture.api_id);
+                    success++;
+                } catch (err) {
+                    console.error(`   ❌ Failed fixture ${fixture.fixture_id}: ${err.message}`);
+                    failed++;
+                }
+            }));
+
+            // Aggressive delay: 5 calls every 700ms ~= 428 RPM
+            await delay(700);
         }
+        if (success > 0) {
+            db.run(
+                "UPDATE V3_League_Seasons SET imported_events = 1, last_sync_events = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
+                [leagueId, seasonYear]
+            );
+        }
+
         return { total: targetFixtures.length, success, failed };
 
     } catch (error) {

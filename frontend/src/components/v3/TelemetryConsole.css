@@ -1,0 +1,205 @@
+.telemetry-console {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 450px;
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.telemetry-console.active {
+    border-color: #3b82f6;
+}
+
+.telemetry-console.minimized {
+    width: 200px;
+    border-radius: 30px;
+}
+
+.telemetry-header {
+    background: #0f172a;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1e293b;
+}
+
+.telemetry-status {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.1em;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #94a3b8;
+    border-radius: 50%;
+}
+
+.status-dot.pulse {
+    background: #3b82f6;
+    box-shadow: 0 0 10px #3b82f6;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.95);
+        opacity: 0.5;
+    }
+}
+
+.telemetry-controls button {
+    background: transparent;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+}
+
+.telemetry-controls button:hover {
+    color: #f1f5f9;
+}
+
+.telemetry-body {
+    padding: 16px;
+}
+
+.progress-section {
+    margin-bottom: 16px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.progress-label.step {
+    margin-top: 12px;
+    color: #64748b;
+}
+
+.progress-bar-container {
+    height: 8px;
+    background: #1e293b;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    transition: width 0.3s ease-out;
+}
+
+.progress-bar-fill.master {
+    background: linear-gradient(to right, #3b82f6, #60a5fa);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.progress-bar-fill.step {
+    background: #10b981;
+}
+
+.terminal-log {
+    height: 200px;
+    overflow-y: auto;
+    background: #000;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* Custom Scrollbar */
+.terminal-log::-webkit-scrollbar {
+    width: 6px;
+}
+
+.terminal-log::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.terminal-log::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 3px;
+}
+
+.log-line {
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+
+.log-time {
+    color: #475569;
+    margin-right: 8px;
+}
+
+.log-line.info {
+    color: #cbd5e1;
+}
+
+.log-line.success {
+    color: #10b981;
+}
+
+.log-line.warning {
+    color: #f59e0b;
+}
+
+.log-line.error {
+    color: #f43f5e;
+    font-weight: bold;
+}
+
+.log-line.complete {
+    color: #38bdf8;
+    border-top: 1px solid #1e293b;
+    padding-top: 4px;
+    margin-top: 8px;
+}
+
+.mini-progress {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    gap: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.mini-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: #3b82f6;
+    transition: width 0.3s;
+}

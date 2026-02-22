@@ -11,12 +11,17 @@ export const importPlayerTrophies = async (req, res) => {
 
     try {
         // Step 1: Get the correct API ID from V3_Players using the Local ID
-        const player = db.get("SELECT api_id FROM V3_Players WHERE player_id = ?", [playerId]);
+        const player = db.get("SELECT api_id, is_trophy_synced FROM V3_Players WHERE player_id = ?", [playerId]);
 
         if (!player || !player.api_id) {
             console.error(`Player ${playerId} not found in V3_Players or missing API ID.`);
-            // If checking existence fails, maybe fallback? But safer to skip.
             return res.status(404).json({ error: "Player not found or missing API ID" });
+        }
+
+        const { forceRefresh = false } = req.body;
+        if (!forceRefresh && player.is_trophy_synced) {
+            console.log(`⏩ Skipping player ${playerId} trophies - already synced.`);
+            return res.json({ success: true, count: 0, inserted: 0, skipped: true });
         }
 
         const apiId = player.api_id;
@@ -52,6 +57,11 @@ export const importPlayerTrophies = async (req, res) => {
                 console.error("Error inserting trophy:", err.message);
             }
         }
+        // Update sync flags
+        db.run(
+            "UPDATE V3_Players SET is_trophy_synced = 1, last_sync_trophies = CURRENT_TIMESTAMP WHERE player_id = ?",
+            [playerId]
+        );
 
         res.json({ success: true, count: trophies.length, inserted });
     } catch (e) {
