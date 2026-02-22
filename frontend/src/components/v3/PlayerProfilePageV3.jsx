@@ -255,13 +255,14 @@ const PlayerProfilePageV3 = () => {
                                             };
                                             const badgeClass = getBadgeClass(pg.place);
                                             const uniqueKey = `${comp.name}-${pg.place}`;
+                                            const isPremium = country.rank < 10;
 
                                             return (
-                                                <div key={uniqueKey} className="trophy-place-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
-                                                    <span className={`trophy-count-badge ${badgeClass}`} style={{ minWidth: '80px' }}>
+                                                <div key={uniqueKey} className={`trophy-place-row ${isPremium ? 'premium-honour' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                                                    <span className={`trophy-count-badge ${badgeClass}`} style={{ minWidth: '80px', boxShadow: isPremium ? `0 0 10px ${badgeClass === 'gold' ? 'rgba(251, 191, 36, 0.3)' : 'transparent'}` : 'none' }}>
                                                         {pg.count}x {pg.place}
                                                     </span>
-                                                    <span className="trophy-years-list" style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                                    <span className="trophy-years-list" style={{ fontSize: '0.8rem', color: isPremium ? '#cbd5e1' : '#94a3b8', fontWeight: isPremium ? '600' : '400' }}>
                                                         {pg.seasons.join(', ')}
                                                     </span>
                                                 </div>
@@ -522,35 +523,40 @@ const PlayerProfilePageV3 = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {rows.sort((a, b) => b.season_year - a.season_year).map((row, idx) => (
-                                                <tr key={`${key}-${idx}`}>
-                                                    {careerView !== 'club' && (
-                                                        <td className="team-cell">
-                                                            <img src={row.team_logo} alt="" className="mini-logo" />
-                                                            <span>{row.team_name}</span>
+                                            {rows.sort((a, b) => b.season_year - a.season_year).map((row, idx) => {
+                                                const FEATURED_IDS = [2, 3, 39, 140, 78, 135, 61];
+                                                const isMajor = FEATURED_IDS.includes(row.api_id);
+                                                return (
+                                                    <tr key={`${key}-${idx}`} className={isMajor ? 'major-league-row' : ''}>
+                                                        {careerView !== 'club' && (
+                                                            <td className="team-cell">
+                                                                <img src={row.team_logo} alt="" className="mini-logo" />
+                                                                <span style={{ fontWeight: isMajor ? '700' : '400' }}>{row.team_name}</span>
+                                                            </td>
+                                                        )}
+                                                        <td className="league-cell">
+                                                            <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="league-link" style={{ color: isMajor ? '#fff' : '#6366f1' }}>
+                                                                {row.league_name}
+                                                                {isMajor && <span className="star-indicator">⭐</span>}
+                                                            </Link>
                                                         </td>
-                                                    )}
-                                                    <td className="league-cell">
-                                                        <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="league-link">
-                                                            {row.league_name}
-                                                        </Link>
-                                                    </td>
-                                                    {careerView !== 'year' && <td className="season-cell">{row.season_year}</td>}
-                                                    <td className="center stat-important">{row.games_appearences}</td>
-                                                    <td className="center stat-important goals">{row.goals_total}</td>
-                                                    <td className="center">{row.goals_assists}</td>
-                                                    <td className="center">
-                                                        <span className="rating-badge" style={{
-                                                            background: parseFloat(row.games_rating) > 7.5 ? 'rgba(16, 185, 129, 0.2)' :
-                                                                parseFloat(row.games_rating) > 6.8 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-                                                            color: parseFloat(row.games_rating) > 7.5 ? '#10b981' :
-                                                                parseFloat(row.games_rating) > 6.8 ? '#3b82f6' : '#94a3b8'
-                                                        }}>
-                                                            {row.games_rating || 'N/A'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                                        {careerView !== 'year' && <td className="season-cell">{row.season_year}</td>}
+                                                        <td className="center stat-important">{row.games_appearences}</td>
+                                                        <td className="center stat-important goals">{row.goals_total}</td>
+                                                        <td className="center">{row.goals_assists}</td>
+                                                        <td className="center">
+                                                            <span className="rating-badge" style={{
+                                                                background: parseFloat(row.games_rating) > 7.5 ? 'rgba(16, 185, 129, 0.2)' :
+                                                                    parseFloat(row.games_rating) > 6.8 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+                                                                color: parseFloat(row.games_rating) > 7.5 ? '#10b981' :
+                                                                    parseFloat(row.games_rating) > 6.8 ? '#3b82f6' : '#94a3b8'
+                                                            }}>
+                                                                {row.games_rating || 'N/A'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

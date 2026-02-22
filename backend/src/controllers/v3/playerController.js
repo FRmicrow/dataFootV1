@@ -33,7 +33,7 @@ export const getPlayerProfileV3 = async (req, res) => {
             JOIN V3_Leagues l ON ps.league_id = l.league_id
             LEFT JOIN V3_Countries c3 ON l.country_id = c3.country_id
             WHERE ps.player_id = ?
-            ORDER BY ps.season_year DESC, l.type ASC
+            ORDER BY ps.season_year DESC, c3.importance_rank ASC, l.importance_rank ASC, l.name ASC
         `, [id]);
 
         // 3. Aggregate Stats by Club (US-010)

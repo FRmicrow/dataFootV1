@@ -38,7 +38,7 @@ export const searchV3 = async (req, res) => {
                 playerParams.push(country);
             }
 
-            playerSql += ` ORDER BY c.importance_rank ASC, p.name ASC LIMIT 20`;
+            playerSql += ` ORDER BY COALESCE(c.importance_rank, 999) ASC, p.name ASC LIMIT 20`;
             players = db.all(playerSql, cleanParams(playerParams));
         }
 
@@ -59,7 +59,7 @@ export const searchV3 = async (req, res) => {
                 clubParams.push(country);
             }
 
-            clubSql += ` ORDER BY c.importance_rank ASC, t.name ASC LIMIT 20`;
+            clubSql += ` ORDER BY COALESCE(c.importance_rank, 999) ASC, t.name ASC LIMIT 20`;
             clubs = db.all(clubSql, cleanParams(clubParams));
         }
 
@@ -109,7 +109,7 @@ export const getClubProfile = async (req, res) => {
             JOIN V3_Leagues l ON ps.league_id = l.league_id
             WHERE ps.team_id = ?
             GROUP BY ps.season_year, ps.league_id
-            ORDER BY ps.season_year DESC, l.name ASC
+            ORDER BY ps.season_year DESC, l.importance_rank ASC, l.name ASC
         `, cleanParams([id]));
 
         // 3. Determine roster year

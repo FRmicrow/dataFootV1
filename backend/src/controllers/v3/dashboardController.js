@@ -39,7 +39,7 @@ export const getImportedLeagues = async (req, res) => {
             JOIN V3_League_Seasons ls ON l.league_id = ls.league_id
             WHERE ls.imported_players = 1
             GROUP BY l.league_id
-            ORDER BY c.importance_rank ASC, l.type ASC, l.name ASC
+            ORDER BY c.importance_rank ASC, l.importance_rank ASC, l.name ASC
         `);
 
         const leagues = rows.map(row => ({
@@ -77,7 +77,7 @@ export const getDiscoveredLeagues = async (req, res) => {
               AND (ls.sync_status = 'PARTIAL_DISCOVERY' OR ls.sync_status = 'PARTIAL')
               AND ls.imported_players = 0
             GROUP BY l.league_id
-            ORDER BY c.name ASC, l.name ASC
+            ORDER BY c.importance_rank ASC, l.importance_rank ASC, l.name ASC
         `);
 
         // Group by country for cleaner frontend

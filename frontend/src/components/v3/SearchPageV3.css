@@ -52,6 +52,7 @@
     letter-spacing: -2px;
     background: linear-gradient(to bottom, #ffffff, #94a3b8);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -306,6 +307,16 @@
     border-color: rgba(99, 102, 241, 0.3);
     transform: translateX(8px);
     box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+}
+
+.rich-card.featured-result {
+    border-left: 3px solid #fbbf24;
+    background: linear-gradient(to right, rgba(251, 191, 36, 0.05), rgba(30, 41, 59, 0.3));
+}
+
+.rich-card.featured-result .card-title {
+    color: #fff;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.1);
 }
 
 .card-rank {

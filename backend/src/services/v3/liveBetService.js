@@ -113,26 +113,34 @@ export const getDailyFixturesService = async (targetDate) => {
             };
         });
 
-        // 6. Enrich with Country Importance (Local DB)
         const countries = db.all("SELECT name, importance_rank FROM V3_Countries");
         const countryRankMap = {};
         countries.forEach(c => countryRankMap[c.name] = c.importance_rank);
 
+        const leagues = db.all("SELECT api_id, importance_rank FROM V3_Leagues");
+        const leagueRankMap = {};
+        leagues.forEach(l => leagueRankMap[l.api_id] = l.importance_rank);
+
         mappedFixtures.forEach(f => {
             const countryName = f.league.country;
-            f.league.importance_rank = countryRankMap[countryName] || 999;
+            f.league.country_importance_rank = countryRankMap[countryName] || 999;
+            f.league.league_importance_rank = leagueRankMap[f.league.id] || 999;
         });
 
-        // 7. Sort (US_010 AC 2)
-        // 1. Importance Rank (ASC)
-        // 2. League ID
-        // 3. Date
+        // 7. Sort (US_010 AC 2 / US_052)
+        // 1. Country Importance Rank (ASC)
+        // 2. League Importance Rank (ASC)
+        // 3. League Name
+        // 4. Date
         mappedFixtures.sort((a, b) => {
-            if (a.league.importance_rank !== b.league.importance_rank) {
-                return a.league.importance_rank - b.league.importance_rank;
+            if (a.league.country_importance_rank !== b.league.country_importance_rank) {
+                return a.league.country_importance_rank - b.league.country_importance_rank;
             }
-            if (a.league.id !== b.league.id) {
-                return a.league.id - b.league.id;
+            if (a.league.league_importance_rank !== b.league.league_importance_rank) {
+                return a.league.league_importance_rank - b.league.league_importance_rank;
+            }
+            if (a.league.name !== b.league.name) {
+                return a.league.name.localeCompare(b.league.name);
             }
             return new Date(a.fixture.date) - new Date(b.fixture.date);
         });

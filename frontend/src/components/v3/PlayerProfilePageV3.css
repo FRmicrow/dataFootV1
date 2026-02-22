@@ -1358,3 +1358,29 @@
     padding-left: 0;
     /* Override previous */
 }
+
+/* Prioritization Styles (US_053) */
+.major-league-row {
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.major-league-row:hover {
+    background: rgba(99, 102, 241, 0.1) !important;
+}
+
+.major-league-row .star-indicator {
+    margin-left: 6px;
+    font-size: 0.8rem;
+    color: #fbbf24;
+}
+
+.premium-honour {
+    padding: 6px;
+    background: rgba(251, 191, 36, 0.03);
+    border-radius: 8px;
+}
+
+.premium-honour .trophy-years-list {
+    color: #fff !important;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}

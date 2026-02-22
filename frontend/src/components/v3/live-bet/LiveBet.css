@@ -53,6 +53,15 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+.lb-game-card.featured {
+    border-left: 4px solid #6366f1;
+    background: linear-gradient(to right, rgba(99, 102, 241, 0.05), #1e293b);
+}
+
+.lb-game-card.featured:hover {
+    background: linear-gradient(to right, rgba(99, 102, 241, 0.1), #273549);
+}
+
 .lb-card-header {
     display: flex;
     justify-content: space-between;

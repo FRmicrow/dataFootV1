@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import './LiveBet.css';
 
-const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: [], favorite_teams: [] }, onToggleFavorite = () => { } }) => {
+const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: [], favorite_teams: [] }, onToggleFavorite = () => { }, isFeatured = false }) => {
     const navigate = useNavigate();
     const { fixture: matchInfo, league, teams, goals, live_odds } = fixture;
 
@@ -60,7 +60,7 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
     };
 
     return (
-        <div className="lb-game-card animate-fade-in" onClick={handleCardClick}>
+        <div className={`lb-game-card animate-fade-in ${isFeatured ? 'featured' : ''}`} onClick={handleCardClick}>
             <div className="lb-card-header">
                 <div className="lb-league-info">
                     {league.flag && <img src={league.flag} alt="" className="lb-league-flag" />}

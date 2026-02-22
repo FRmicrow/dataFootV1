@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
+import { CompetitionRanker } from '../../utils/v3/CompetitionRanker.js';
 
 export const Mappers = {
     country: (api) => ({
@@ -186,9 +187,10 @@ export const ImportRepository = {
         }
 
         // 4. Create New Discovered League
+        const rank = CompetitionRanker.calculate({ name: finalName, type: data.type, country_name: countryName });
         const info = db.run(
-            "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered) VALUES (?, ?, ?, ?, ?, 1)",
-            cleanParams([data.api_id, finalName, data.type, data.logo_url, countryId])
+            "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered, importance_rank) VALUES (?, ?, ?, ?, ?, 1, ?)",
+            cleanParams([data.api_id, finalName, data.type, data.logo_url, countryId, rank])
         );
         return info.lastInsertRowid;
     },
