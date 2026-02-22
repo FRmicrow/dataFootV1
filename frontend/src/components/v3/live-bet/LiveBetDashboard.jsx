@@ -149,6 +149,10 @@ const LiveBetDashboard = () => {
 
     const trackedIds = preferences.tracked_leagues || [];
 
+    // Helper to check if league is Tier 1 (England, Spain, Germany, Italy, France, CL, EL)
+    const TIER_1_IDS = [39, 140, 78, 135, 61, 2, 3];
+    const isTier1 = (leagueId) => TIER_1_IDS.includes(Number(leagueId));
+
     return (
         <div className="lb-dashboard animate-slide-up">
             {/* ── Title Bar ── */}
@@ -251,42 +255,51 @@ const LiveBetDashboard = () => {
                         </div>
                     )}
 
-                    {filteredGroups.map(group => (
-                        <div key={group.league.id}>
-                            {/* Competition header */}
-                            <div style={{
-                                display: 'flex', alignItems: 'center', gap: '10px',
-                                padding: '10px 0', marginBottom: '12px',
-                                borderBottom: '2px solid rgba(99,102,241,0.3)'
-                            }}>
-                                {group.league.logo && (
-                                    <img src={group.league.logo} alt="" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-                                )}
-                                <div>
-                                    <div style={{ fontWeight: '800', fontSize: '1rem', color: '#f1f5f9' }}>{group.league.name}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{group.league.country}</div>
-                                </div>
-                                <span style={{
-                                    marginLeft: 'auto', fontSize: '0.75rem', color: '#6366f1',
-                                    background: 'rgba(99,102,241,0.1)', padding: '3px 10px', borderRadius: '20px', fontWeight: '600'
+                    {filteredGroups.map(group => {
+                        const featured = isTier1(group.league.api_id);
+                        return (
+                            <div key={group.league.id} className={featured ? 'featured-group' : ''}>
+                                {/* Competition header */}
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '10px',
+                                    padding: '10px 0', marginBottom: '12px',
+                                    borderBottom: featured ? '2px solid #6366f1' : '2px solid rgba(99,102,241,0.3)',
+                                    position: 'relative'
                                 }}>
-                                    {group.fixtures.length} matches
-                                </span>
-                            </div>
+                                    {featured && <span style={{ position: 'absolute', top: '-10px', left: '0', fontSize: '0.65rem', color: '#6366f1', fontWeight: '900', letterSpacing: '1px' }}>PREMIUM DATA</span>}
+                                    {group.league.logo && (
+                                        <img src={group.league.logo} alt="" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                                    )}
+                                    <div>
+                                        <div style={{ fontWeight: '800', fontSize: '1rem', color: featured ? '#fff' : '#f1f5f9' }}>
+                                            {group.league.name}
+                                            {featured && <span style={{ marginLeft: '6px' }}>⭐</span>}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{group.league.country}</div>
+                                    </div>
+                                    <span style={{
+                                        marginLeft: 'auto', fontSize: '0.75rem', color: '#6366f1',
+                                        background: 'rgba(99,102,241,0.1)', padding: '3px 10px', borderRadius: '20px', fontWeight: '600'
+                                    }}>
+                                        {group.fixtures.length} matches
+                                    </span>
+                                </div>
 
-                            {/* Fixtures in this group */}
-                            <div className="lb-game-feed">
-                                {group.fixtures.map(f => (
-                                    <GameCard
-                                        key={f.fixture.id}
-                                        fixture={f}
-                                        preferences={preferences}
-                                        onToggleFavorite={toggleFavorite}
-                                    />
-                                ))}
+                                {/* Fixtures in this group */}
+                                <div className="lb-game-feed">
+                                    {group.fixtures.map(f => (
+                                        <GameCard
+                                            key={f.fixture.id}
+                                            fixture={f}
+                                            preferences={preferences}
+                                            onToggleFavorite={toggleFavorite}
+                                            isFeatured={featured}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 /* ── Daily Mode: Flat list ── */
@@ -296,14 +309,18 @@ const LiveBetDashboard = () => {
                             <p>No matches found for {selectedDate || 'today'}.</p>
                         </div>
                     )}
-                    {filteredFixtures.map(f => (
-                        <GameCard
-                            key={f.fixture.id}
-                            fixture={f}
-                            preferences={preferences}
-                            onToggleFavorite={toggleFavorite}
-                        />
-                    ))}
+                    {filteredFixtures.map(f => {
+                        const featured = isTier1(f.league.id);
+                        return (
+                            <GameCard
+                                key={f.fixture.id}
+                                fixture={f}
+                                preferences={preferences}
+                                onToggleFavorite={toggleFavorite}
+                                isFeatured={featured}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>

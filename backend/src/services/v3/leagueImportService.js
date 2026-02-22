@@ -3,6 +3,7 @@ import footballApi from '../footballApi.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import { Mappers, ImportRepository as DB } from './ImportService.js';
 import { syncLeagueEventsService } from './fixtureService.js';
+import { CompetitionRanker } from '../../utils/v3/CompetitionRanker.js';
 
 /**
  * V3 Import Logic Service
@@ -45,16 +46,22 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) 
     let localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([targetApiId]));
     let localLeagueId;
 
+    const importanceRank = CompetitionRanker.calculate({
+        name: apiData.league.name,
+        type: apiData.league.type,
+        country_name: apiData.country.name
+    });
+
     if (!localLeague) {
-        const info = db.run("INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id) VALUES (?,?,?,?,?)",
-            cleanParams([apiData.league.id, apiData.league.name, apiData.league.type, apiData.league.logo, countryId]));
+        const info = db.run("INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, importance_rank) VALUES (?,?,?,?,?,?)",
+            cleanParams([apiData.league.id, apiData.league.name, apiData.league.type, apiData.league.logo, countryId, importanceRank]));
         localLeagueId = info.lastInsertRowid;
-        sendLog(`✅ Created League: ${apiData.league.name}`, 'success');
+        sendLog(`✅ Created League: ${apiData.league.name} (Rank: ${importanceRank})`, 'success');
     } else {
         localLeagueId = localLeague.league_id;
         // Integrity Sync: Refresh info even if exists
-        db.run("UPDATE V3_Leagues SET name=?, logo_url=?, type=?, api_id=? WHERE league_id=?",
-            cleanParams([apiData.league.name, apiData.league.logo, apiData.league.type, apiData.league.id, localLeagueId]));
+        db.run("UPDATE V3_Leagues SET name=?, logo_url=?, type=?, api_id=?, importance_rank=? WHERE league_id=?",
+            cleanParams([apiData.league.name, apiData.league.logo, apiData.league.type, apiData.league.id, importanceRank, localLeagueId]));
     }
 
     // Season Tracker

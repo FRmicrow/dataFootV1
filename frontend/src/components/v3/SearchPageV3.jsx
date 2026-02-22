@@ -147,7 +147,7 @@ const SearchPageV3 = () => {
                                             {results.clubs.map(c => (
                                                 <div
                                                     key={c.team_id}
-                                                    className="rich-card club-result"
+                                                    className={`rich-card club-result ${c.country_rank < 10 ? 'featured-result' : ''}`}
                                                     onClick={() => navigate(`/club/${c.team_id}`)}
                                                 >
                                                     <div className="card-rank">
@@ -191,7 +191,7 @@ const SearchPageV3 = () => {
                                             {results.players.map(p => (
                                                 <div
                                                     key={p.player_id}
-                                                    className="rich-card player-result"
+                                                    className={`rich-card player-result ${p.country_rank < 10 ? 'featured-result' : ''}`}
                                                     onClick={() => navigate(`/player/${p.player_id}`)}
                                                 >
                                                     <div className="card-rank">

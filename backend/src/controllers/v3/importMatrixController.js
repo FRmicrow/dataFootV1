@@ -32,7 +32,7 @@ export const getImportMatrixStatus = (req, res) => {
             FROM V3_Leagues l
             JOIN V3_Countries c ON l.country_id = c.country_id
             LEFT JOIN V3_League_Seasons s ON l.league_id = s.league_id
-            ORDER BY c.importance_rank ASC, l.name ASC, s.season_year DESC
+            ORDER BY c.importance_rank ASC, l.importance_rank ASC, l.name ASC, s.season_year DESC
         `;
 
         const rows = db.all(sql);
