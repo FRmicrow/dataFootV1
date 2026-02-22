@@ -48,10 +48,34 @@ export const StudioProvider = ({ children }) => {
     // Should match the Data Contract: { meta: {...}, timeline: [...] }
     const [chartData, setChartData] = useState(null);
 
-    // Navigation Helpers
-    const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
+    // Navigation Helpers with Integrity Guards
+    const nextStep = () => {
+        if (step === 1 && !chartData) return;
+        setStep(prev => Math.min(prev + 1, 4));
+    };
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
-    const goToStep = (s) => setStep(s);
+    const goToStep = (s) => {
+        if (s > 1 && !chartData) return;
+        setStep(s);
+    };
+
+    // Atomic State Transition for Step 1 -> Step 2
+    // Ensures all data is committed before navigation
+    const finalizeStep1 = (data, updatedFilters, mode) => {
+        // 1. Commit Data
+        setChartData(data);
+
+        // 2. Commit Metadata to Filters
+        setFilters(prev => ({
+            ...prev,
+            ...updatedFilters,
+            contextType: mode
+        }));
+
+        // 3. Trigger Navigation
+        setStep(2);
+        setIsLoading(false);
+    };
 
     // Reset Flow
     const resetWizard = () => {
@@ -63,6 +87,7 @@ export const StudioProvider = ({ children }) => {
     return (
         <StudioContext.Provider value={{
             step, setStep, nextStep, prevStep, goToStep, resetWizard,
+            finalizeStep1,
             isLoading, setIsLoading,
             error, setError,
             filters, setFilters,

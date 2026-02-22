@@ -16,6 +16,7 @@ const PlayerProfilePageV3 = () => {
     const [allLeagues, setAllLeagues] = useState([]);
     const [syncLogs, setSyncLogs] = useState([]);
     const [trophies, setTrophies] = useState([]);
+    const [expandedPanels, setExpandedPanels] = useState({});
 
     useEffect(() => {
         const fetchPlayerProfile = async () => {
@@ -106,10 +107,90 @@ const PlayerProfilePageV3 = () => {
 
     const [careerView, setCareerView] = useState('year'); // 'year', 'club', 'country'
 
+    const { clubCareer, internationalCareer } = React.useMemo(() => {
+        const full = (data && Array.isArray(data.career)) ? data.career : [];
+        return {
+            clubCareer: full.filter(s => !s.is_national_team),
+            internationalCareer: full.filter(s => !!s.is_national_team).sort((a, b) => {
+                if (b.season_year !== a.season_year) return b.season_year - a.season_year;
+                return (a.importance_rank || 999) - (b.importance_rank || 999);
+            })
+        };
+    }, [data]);
+
+    // View Logic (US-010, US_093)
+    const { groupedCareer, sortedKeys } = React.useMemo(() => {
+        let grouped = {};
+        let keys = [];
+
+        if (careerView === 'year') {
+            grouped = clubCareer.reduce((acc, curr) => {
+                const key = curr.season_year;
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(curr);
+                return acc;
+            }, {});
+            keys = Object.keys(grouped).sort((a, b) => b - a);
+
+            // Sort each year by importance_rank
+            keys.forEach(k => {
+                grouped[k].sort((a, b) => (a.importance_rank || 999) - (b.importance_rank || 999));
+            });
+        } else if (careerView === 'club') {
+            grouped = clubCareer.reduce((acc, curr) => {
+                const key = curr.team_name;
+                if (!acc[key]) acc[key] = { rows: [], logo: curr.team_logo, id: curr.team_id, latest: 0 };
+                acc[key].rows.push(curr);
+                if (curr.season_year > acc[key].latest) acc[key].latest = curr.season_year;
+                return acc;
+            }, {});
+            keys = Object.keys(grouped).sort((a, b) => grouped[b].latest - grouped[a].latest);
+
+            // Sort each club by year (DESC) then importance_rank
+            keys.forEach(k => {
+                grouped[k].rows.sort((a, b) => {
+                    if (b.season_year !== a.season_year) return b.season_year - a.season_year;
+                    return (a.importance_rank || 999) - (b.importance_rank || 999);
+                });
+            });
+        } else if (careerView === 'country') {
+            grouped = clubCareer.reduce((acc, curr) => {
+                const key = curr.team_country_name || 'International';
+                if (!acc[key]) acc[key] = { rows: [], flag: curr.team_country_flag, latest: 0 };
+                acc[key].rows.push(curr);
+                if (curr.season_year > acc[key].latest) acc[key].latest = curr.season_year;
+                return acc;
+            }, {});
+            keys = Object.keys(grouped).sort((a, b) => grouped[b].latest - grouped[a].latest);
+
+            // Sort each country by year (DESC) then importance_rank
+            keys.forEach(k => {
+                grouped[k].rows.sort((a, b) => {
+                    if (b.season_year !== a.season_year) return b.season_year - a.season_year;
+                    return (a.importance_rank || 999) - (b.importance_rank || 999);
+                });
+            });
+        }
+        return { groupedCareer: grouped, sortedKeys: keys };
+    }, [careerView, clubCareer]);
+
+    // Initialize expanded panels when keys change
+    useEffect(() => {
+        if (data && sortedKeys.length > 0) {
+            const initial = {};
+            sortedKeys.forEach(k => initial[k] = true);
+            setExpandedPanels(initial);
+        }
+    }, [careerView, data, sortedKeys]);
+
+    const togglePanel = (key) => {
+        setExpandedPanels(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
     if (loading) return (
         <div className="v3-player-profile loading-state">
             <div className="spinner"></div>
-            <p>Scanning V3 Biological Data...</p>
+            <p>Scanning Biological Data...</p>
         </div>
     );
 
@@ -122,41 +203,8 @@ const PlayerProfilePageV3 = () => {
     );
 
     if (!data) return null;
-
-    const { player, career, clubTotals } = data;
+    const { player, career, careerTotals, currentContext } = data;
     const careerList = Array.isArray(career) ? career : [];
-
-    // View Logic (US-010)
-    let groupedCareer = {};
-    let sortedKeys = [];
-
-    if (careerView === 'year') {
-        groupedCareer = careerList.reduce((acc, curr) => {
-            const key = curr.season_year;
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(curr);
-            return acc;
-        }, {});
-        sortedKeys = Object.keys(groupedCareer).sort((a, b) => b - a);
-    } else if (careerView === 'club') {
-        groupedCareer = careerList.reduce((acc, curr) => {
-            const key = curr.team_name;
-            if (!acc[key]) acc[key] = { rows: [], logo: curr.team_logo, id: curr.team_id, latest: 0 };
-            acc[key].rows.push(curr);
-            if (curr.season_year > acc[key].latest) acc[key].latest = curr.season_year;
-            return acc;
-        }, {});
-        sortedKeys = Object.keys(groupedCareer).sort((a, b) => groupedCareer[b].latest - groupedCareer[a].latest);
-    } else if (careerView === 'country') {
-        groupedCareer = careerList.reduce((acc, curr) => {
-            const key = curr.country_name || 'International';
-            if (!acc[key]) acc[key] = { rows: [], flag: curr.country_flag, latest: 0 };
-            acc[key].rows.push(curr);
-            if (curr.season_year > acc[key].latest) acc[key].latest = curr.season_year;
-            return acc;
-        }, {});
-        sortedKeys = Object.keys(groupedCareer).sort((a, b) => groupedCareer[b].latest - groupedCareer[a].latest);
-    }
 
     const renderTrophies = () => {
         if (!trophies || trophies.length === 0) return null;
@@ -237,7 +285,7 @@ const PlayerProfilePageV3 = () => {
                     {processedList.map((country) => (
                         <div key={country.name} className="country-group">
                             <div className="country-group-header">
-                                {country.flag && <img src={country.flag} alt={country.name} className="country-header-flag" />}
+                                {country.flag && <img src={country.flag} alt={country.name} className="mini-flag" />}
                                 <span className="country-header-name">{country.name}</span>
                             </div>
                             <div className="country-trophies-list">
@@ -289,8 +337,13 @@ const PlayerProfilePageV3 = () => {
                     </div>
 
                     <div className="player-main-info">
-                        <div className="v3-badge">V3 PLAYER PROFILE</div>
                         <h1 className="player-name">{player.name}</h1>
+                        {currentContext && currentContext.team && (
+                            <div className={`current-club-badge ${currentContext.status === 'Inactive' ? 'historical' : 'active'}`}>
+                                <img src={currentContext.team.logo} alt="" className="club-mini-logo" />
+                                <span>{currentContext.status === 'Active' ? 'Current Club' : 'Last Club'}: <strong>{currentContext.team.name}</strong></span>
+                            </div>
+                        )}
                         <div className="player-meta-badges">
                             <span className="meta-badge">
                                 <span className="label">Nationality</span>
@@ -319,7 +372,7 @@ const PlayerProfilePageV3 = () => {
 
                         <div className="sync-container-inline">
                             {syncStatus === 'idle' && (
-                                <button className="btn-deep-sync-v2" onClick={handleDeepSync}>
+                                <button className="btn-deep-sync-ghost" onClick={handleDeepSync}>
                                     <span className="icon">🔄</span>
                                     Deep Sync History
                                 </button>
@@ -369,15 +422,15 @@ const PlayerProfilePageV3 = () => {
                 <div className="hero-stats-overview">
                     <div className="overview-stat">
                         <span className="val">{careerList.reduce((sum, s) => sum + (s.games_appearences || 0), 0)}</span>
-                        <span className="lbl">Appearances</span>
+                        <span className="lbl">Apps</span>
                     </div>
                     <div className="overview-stat">
                         <span className="val">{careerList.reduce((sum, s) => sum + (s.goals_total || 0), 0)}</span>
-                        <span className="lbl">Total Goals</span>
+                        <span className="lbl">Goals</span>
                     </div>
                     <div className="overview-stat highlight">
                         <span className="val">{(careerList.reduce((sum, s) => sum + (parseFloat(s.games_rating) || 0), 0) / (careerList.filter(s => s.games_rating).length || 1)).toFixed(2)}</span>
-                        <span className="lbl">Avg Rating</span>
+                        <span className="lbl">Rating</span>
                     </div>
                 </div>
             </header>
@@ -443,25 +496,29 @@ const PlayerProfilePageV3 = () => {
             <div className="profile-grid">
                 {/* Career History Table */}
                 <main className="career-history">
-                    {/* Club Totals Section */}
+                    {/* Universal Career Aggregation (US_091) */}
                     <div className="dash-card club-totals-card animate-slide-up">
-                        <div className="card-title">🛡️ Club Career Totals</div>
+                        <div className="card-title">📈 Performance Metrics</div>
                         <table className="club-totals-table">
                             <thead>
                                 <tr>
-                                    <th>Club</th>
-                                    <th className="center">Matches</th>
+                                    <th>Team</th>
+                                    <th className="center">Apps</th>
                                     <th className="center">Goals</th>
                                     <th className="center">Assists</th>
-                                    <th className="center">Avg Rating</th>
+                                    <th className="center">Rating</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {clubTotals.sort((a, b) => b.total_matches - a.total_matches).map(club => (
-                                    <tr key={club.team_id}>
+                                {careerTotals.sort((a, b) => {
+                                    if (!!a.is_national_team !== !!b.is_national_team) return a.is_national_team ? -1 : 1;
+                                    return b.total_matches - a.total_matches;
+                                }).map(club => (
+                                    <tr key={club.team_id} className={club.is_national_team ? 'national-team-row' : ''}>
                                         <td className="team-cell">
                                             <img src={club.team_logo} alt="" className="mini-logo" />
                                             <span>{club.team_name}</span>
+                                            {club.is_national_team && <span className="national-tag">NT</span>}
                                         </td>
                                         <td className="center">{club.total_matches}</td>
                                         <td className="center highlight-goals">{club.total_goals}</td>
@@ -478,7 +535,7 @@ const PlayerProfilePageV3 = () => {
                     <div className="section-header-flex">
                         <div className="section-title">
                             <span className="icon">🏟️</span>
-                            <h2>Career History</h2>
+                            <h2>Performance History</h2>
                         </div>
                         <div className="view-switcher">
                             <button className={careerView === 'year' ? 'active' : ''} onClick={() => setCareerView('year')}>By Year</button>
@@ -487,13 +544,67 @@ const PlayerProfilePageV3 = () => {
                         </div>
                     </div>
 
+                    {/* National Team Section (US_092/093 Separate) */}
+                    {internationalCareer.length > 0 && (
+                        <div className="career-group-block international-duty-section">
+                            <div className="group-header expanded pinned" style={{ background: 'rgba(251, 191, 36, 0.05)', borderLeft: '4px solid #fbbf24' }}>
+                                <span className="icon" style={{ marginRight: '10px' }}>🌍</span>
+                                <span className="key-val" style={{ color: '#fbbf24' }}>International Duty</span>
+                            </div>
+                            <div className="career-table-container">
+                                <table className="career-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th>Competition</th>
+                                            <th>Season</th>
+                                            <th className="center">Apps</th>
+                                            <th className="center">G</th>
+                                            <th className="center">A</th>
+                                            <th className="center">Rating</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {internationalCareer.map((row, idx) => {
+                                            const isMajor = (row.importance_rank || 999) <= 10;
+                                            return (
+                                                <tr key={`intl-${idx}`} className="national-team-row highlight-row">
+                                                    <td className="team-cell">
+                                                        <img src={row.team_logo} alt="" className="mini-logo" />
+                                                        <span style={{ fontWeight: '700' }}>{row.team_name}</span>
+                                                    </td>
+                                                    <td className="league-cell">
+                                                        <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="league-link" style={{ color: '#fbbf24' }}>
+                                                            {row.league_name}
+                                                            <span className="star-indicator">⭐</span>
+                                                        </Link>
+                                                    </td>
+                                                    <td className="season-cell">{row.season_year}</td>
+                                                    <td className="center stat-important">{row.games_appearences}</td>
+                                                    <td className="center stat-important goals">{row.goals_total}</td>
+                                                    <td className="center">{row.goals_assists}</td>
+                                                    <td className="center">
+                                                        <span className="rating-badge" style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24' }}>
+                                                            {row.games_rating || '0.00'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     {sortedKeys.map(key => {
                         const content = groupedCareer[key];
                         const rows = Array.isArray(content) ? content : content.rows;
+                        const isExpanded = !!expandedPanels[key];
 
                         return (
                             <div key={key} className="career-group-block">
-                                <div className="group-header">
+                                <div className={`group-header ${isExpanded ? 'expanded' : ''}`} onClick={() => togglePanel(key)}>
                                     {careerView === 'year' && <span className="key-val">{key} / {parseInt(key) + 1}</span>}
                                     {careerView === 'club' && (
                                         <div className="club-key">
@@ -507,59 +618,61 @@ const PlayerProfilePageV3 = () => {
                                             <span className="key-val">{key}</span>
                                         </div>
                                     )}
+                                    <span className={`chevron-icon ${isExpanded ? 'open' : ''}`}>▼</span>
                                 </div>
 
-                                <div className="career-table-container">
-                                    <table className="career-table">
-                                        <thead>
-                                            <tr>
-                                                {careerView !== 'club' && <th>Team</th>}
-                                                <th>Competition</th>
-                                                {careerView !== 'year' && <th>Season</th>}
-                                                <th className="center">Apps</th>
-                                                <th className="center">G</th>
-                                                <th className="center">A</th>
-                                                <th className="center">Rating</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {rows.sort((a, b) => b.season_year - a.season_year).map((row, idx) => {
-                                                const FEATURED_IDS = [2, 3, 39, 140, 78, 135, 61];
-                                                const isMajor = FEATURED_IDS.includes(row.api_id);
-                                                return (
-                                                    <tr key={`${key}-${idx}`} className={isMajor ? 'major-league-row' : ''}>
-                                                        {careerView !== 'club' && (
-                                                            <td className="team-cell">
-                                                                <img src={row.team_logo} alt="" className="mini-logo" />
-                                                                <span style={{ fontWeight: isMajor ? '700' : '400' }}>{row.team_name}</span>
+                                {isExpanded && (
+                                    <div className="career-table-container animate-fade-in-down">
+                                        <table className="career-table">
+                                            <thead>
+                                                <tr>
+                                                    {careerView !== 'club' && <th>Team</th>}
+                                                    <th>Competition</th>
+                                                    {careerView !== 'year' && <th>Season</th>}
+                                                    <th className="center">Apps</th>
+                                                    <th className="center">G</th>
+                                                    <th className="center">A</th>
+                                                    <th className="center">Rating</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {rows.map((row, idx) => {
+                                                    const isMajor = (row.importance_rank || 999) <= 10;
+                                                    return (
+                                                        <tr key={`${key}-${idx}`} className={isMajor ? 'major-league-row' : ''}>
+                                                            {careerView !== 'club' && (
+                                                                <td className="team-cell">
+                                                                    <img src={row.team_logo} alt="" className="mini-logo" />
+                                                                    <span style={{ fontWeight: isMajor ? '700' : '400' }}>{row.team_name}</span>
+                                                                </td>
+                                                            )}
+                                                            <td className="league-cell">
+                                                                <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="league-link" style={{ color: isMajor ? '#fff' : '#6366f1' }}>
+                                                                    {row.league_name}
+                                                                    {isMajor && <span className="star-indicator">⭐</span>}
+                                                                </Link>
                                                             </td>
-                                                        )}
-                                                        <td className="league-cell">
-                                                            <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="league-link" style={{ color: isMajor ? '#fff' : '#6366f1' }}>
-                                                                {row.league_name}
-                                                                {isMajor && <span className="star-indicator">⭐</span>}
-                                                            </Link>
-                                                        </td>
-                                                        {careerView !== 'year' && <td className="season-cell">{row.season_year}</td>}
-                                                        <td className="center stat-important">{row.games_appearences}</td>
-                                                        <td className="center stat-important goals">{row.goals_total}</td>
-                                                        <td className="center">{row.goals_assists}</td>
-                                                        <td className="center">
-                                                            <span className="rating-badge" style={{
-                                                                background: parseFloat(row.games_rating) > 7.5 ? 'rgba(16, 185, 129, 0.2)' :
-                                                                    parseFloat(row.games_rating) > 6.8 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-                                                                color: parseFloat(row.games_rating) > 7.5 ? '#10b981' :
-                                                                    parseFloat(row.games_rating) > 6.8 ? '#3b82f6' : '#94a3b8'
-                                                            }}>
-                                                                {row.games_rating || 'N/A'}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                            {careerView !== 'year' && <td className="season-cell">{row.season_year}</td>}
+                                                            <td className="center stat-important">{row.games_appearences}</td>
+                                                            <td className="center stat-important goals">{row.goals_total}</td>
+                                                            <td className="center">{row.goals_assists}</td>
+                                                            <td className="center">
+                                                                <span className="rating-badge" style={{
+                                                                    background: parseFloat(row.games_rating) > 7.5 ? 'rgba(16, 185, 129, 0.2)' :
+                                                                        parseFloat(row.games_rating) > 6.8 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+                                                                    color: parseFloat(row.games_rating) > 7.5 ? '#10b981' :
+                                                                        parseFloat(row.games_rating) > 6.8 ? '#3b82f6' : '#94a3b8'
+                                                                }}>
+                                                                    {row.games_rating || 'N/A'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

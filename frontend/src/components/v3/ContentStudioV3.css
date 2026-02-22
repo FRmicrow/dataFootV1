@@ -1,26 +1,18 @@
 .content-studio-page {
-    background: #111;
+    padding: 2.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Outfit', sans-serif;
+    color: #f8fafc;
     min-height: 100vh;
-    color: white;
-    font-family: 'Inter', sans-serif;
 }
 
-.studio-header {
-    text-align: center;
-    padding: 3rem 0;
-    background: linear-gradient(to bottom, #1a1a1a, #111);
-    border-bottom: 1px solid #222;
+.v3-header.studio {
+    margin-bottom: 4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.studio-header h1 {
-    font-size: 2.5rem;
-    background: -webkit-linear-gradient(#eee, #aaa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.5rem;
-}
-
-.studio-header p {
-    color: #888;
-    font-size: 1.1rem;
+.content-studio-page main {
+    max-width: 1000px;
+    margin: 0 auto;
 }

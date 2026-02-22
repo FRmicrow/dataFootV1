@@ -6,10 +6,13 @@ import './ContentStudioV3.css';
 const ContentStudioV3 = () => {
     return (
         <StudioProvider>
-            <div className="content-studio-page">
-                <header className="studio-header">
-                    <h1>🎬 Content Studio</h1>
-                    <p>Create viral football data animations in minutes.</p>
+            <div className="content-studio-page animate-fade-in">
+                <header className="v3-header studio">
+                    <div className="header-meta">
+                        <span className="hub-badge">CONTENT PRODUCTION</span>
+                        <h1 className="hub-title">Data Studio</h1>
+                        <p className="hub-subtitle">Engineered for viral professional data visualization</p>
+                    </div>
                 </header>
                 <main>
                     <StudioWizard />

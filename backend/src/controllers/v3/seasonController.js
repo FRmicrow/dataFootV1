@@ -14,14 +14,15 @@ export const getSeasonOverview = async (req, res) => {
             return res.status(400).json({ error: "Missing leagueId or season year" });
         }
 
-        console.log(`📊 Fetching V3 Season Overview for League ${leagueId}, Season ${season}`);
+        console.log(`📊 Fetching Season Overview for League ${leagueId}, Season ${season}`);
 
         // 1. Fetch League Metadata
         const leagueInfo = db.get(`
             SELECT 
                 l.league_id, l.name as league_name, l.logo_url, l.type,
-                c.name as country_name, c.flag_url,
-                ls.season_year, ls.start_date, ls.end_date
+                CASE WHEN c.name = 'World' THEN 'International' ELSE c.name END as country_name, 
+                c.flag_url,
+                ls.season_year, ls.start_date, ls.end_date, ls.imported_standings
             FROM V3_Leagues l
             JOIN V3_Countries c ON l.country_id = c.country_id
             JOIN V3_League_Seasons ls ON l.league_id = ls.league_id
@@ -32,98 +33,123 @@ export const getSeasonOverview = async (req, res) => {
             return res.status(404).json({ error: "League/Season not found in V3 database" });
         }
 
-        // 2. Simulated Standings (Aggregated by Team)
-        // Note: casting boolean to integer for sqlite sum if needed, but goals are integers
-        const standings = db.all(`
-            SELECT 
-                t.team_id, 
-                t.name as team_name, 
-                t.logo_url as team_logo,
-                COUNT(DISTINCT ps.player_id) as squad_size,
-                SUM(ps.goals_total) as total_goals,
-                SUM(ps.goals_assists) as total_assists,
-                SUM(ps.goals_conceded) as total_conceded,
-                SUM(ps.cards_yellow) as total_yellow,
-                SUM(ps.cards_red) as total_red,
-                MAX(ps.games_appearences) as estimated_matches_played
-            FROM V3_Player_Stats ps
-            JOIN V3_Teams t ON ps.team_id = t.team_id
-            WHERE ps.league_id = ? AND ps.season_year = ?
-            GROUP BY t.team_id
-            ORDER BY total_goals DESC, total_assists DESC
-        `, [leagueId, season]);
+        const isFinished = new Date(leagueInfo.end_date) < new Date();
 
-        // 3. Top Scorers
+        // 2. Hall of Fame (Historical Data for Header)
+        let hallOfFame = null;
+        if (isFinished) {
+            const winner = db.get(`
+                SELECT t.name, t.logo_url 
+                FROM V3_Standings s
+                JOIN V3_Teams t ON s.team_id = t.team_id
+                WHERE s.league_id = ? AND s.season_year = ? AND s.rank = 1
+                LIMIT 1
+            `, [leagueId, season]);
+
+            const topScorer = db.get(`
+                SELECT p.name, ps.goals_total
+                FROM V3_Player_Stats ps
+                JOIN V3_Players p ON ps.player_id = p.player_id
+                WHERE ps.league_id = ? AND ps.season_year = ?
+                ORDER BY ps.goals_total DESC
+                LIMIT 1
+            `, [leagueId, season]);
+
+            const topAssister = db.get(`
+                SELECT p.name, ps.goals_assists
+                FROM V3_Player_Stats ps
+                JOIN V3_Players p ON ps.player_id = p.player_id
+                WHERE ps.league_id = ? AND ps.season_year = ?
+                ORDER BY ps.goals_assists DESC
+                LIMIT 1
+            `, [leagueId, season]);
+
+            const bestPlayer = db.get(`
+                SELECT p.name, ps.games_rating
+                FROM V3_Player_Stats ps
+                JOIN V3_Players p ON ps.player_id = p.player_id
+                WHERE ps.league_id = ? AND ps.season_year = ? AND ps.games_appearences >= 10
+                ORDER BY CAST(ps.games_rating AS FLOAT) DESC
+                LIMIT 1
+            `, [leagueId, season]);
+
+            hallOfFame = { winner, topScorer, topAssister, bestPlayer };
+        }
+
+        // 3. Standings
+        let standings = [];
+        if (leagueInfo.imported_standings) {
+            standings = db.all(`
+                SELECT 
+                    s.*, t.name as team_name, t.logo_url as team_logo
+                FROM V3_Standings s
+                JOIN V3_Teams t ON s.team_id = t.team_id
+                WHERE s.league_id = ? AND s.season_year = ?
+                ORDER BY s.rank ASC
+            `, [leagueId, season]);
+        } else {
+            // Simulated fallback
+            standings = db.all(`
+                SELECT 
+                    t.team_id, t.name as team_name, t.logo_url as team_logo,
+                    COUNT(DISTINCT ps.player_id) as squad_size,
+                    SUM(ps.goals_total) as total_goals,
+                    SUM(ps.goals_assists) as total_assists,
+                    SUM(ps.goals_conceded) as total_conceded,
+                    MAX(ps.games_appearences) as played
+                FROM V3_Player_Stats ps
+                JOIN V3_Teams t ON ps.team_id = t.team_id
+                WHERE ps.league_id = ? AND ps.season_year = ?
+                GROUP BY t.team_id
+                ORDER BY total_goals DESC
+            `, [leagueId, season]);
+        }
+
+        // 4. Leaderboards (Top Scorers, etc.)
         const topScorers = db.all(`
-            SELECT 
-                p.player_id, 
-                p.name as player_name, 
-                p.photo_url, 
-                t.name as team_name, 
-                t.logo_url as team_logo,
-                ps.goals_total,
-                ps.games_appearences as appearances,
-                ps.games_minutes as minutes
+            SELECT p.player_id, p.name as player_name, p.photo_url, t.name as team_name, t.logo_url as team_logo, ps.goals_total, ps.games_appearences as appearances
             FROM V3_Player_Stats ps
             JOIN V3_Players p ON ps.player_id = p.player_id
             JOIN V3_Teams t ON ps.team_id = t.team_id
             WHERE ps.league_id = ? AND ps.season_year = ?
-            ORDER BY ps.goals_total DESC, ps.goals_assists DESC
+            ORDER BY ps.goals_total DESC
             LIMIT 5
         `, [leagueId, season]);
 
-        // 4. Top Assists
         const topAssists = db.all(`
-            SELECT 
-                p.player_id, 
-                p.name as player_name, 
-                p.photo_url, 
-                t.name as team_name, 
-                t.logo_url as team_logo,
-                ps.goals_assists,
-                ps.goals_total,
-                ps.games_appearences as appearances
+            SELECT p.player_id, p.name as player_name, p.photo_url, t.name as team_name, t.logo_url as team_logo, ps.goals_assists, ps.games_appearences as appearances
             FROM V3_Player_Stats ps
             JOIN V3_Players p ON ps.player_id = p.player_id
             JOIN V3_Teams t ON ps.team_id = t.team_id
             WHERE ps.league_id = ? AND ps.season_year = ?
-            ORDER BY ps.goals_assists DESC, ps.goals_total DESC
+            ORDER BY ps.goals_assists DESC
             LIMIT 5
         `, [leagueId, season]);
 
-        // 5. Top Rated Players
         const topRated = db.all(`
-            SELECT 
-                p.player_id, 
-                p.name as player_name, 
-                p.photo_url, 
-                t.name as team_name, 
-                t.logo_url as team_logo,
-                ps.games_rating,
-                ps.games_appearences as appearances
+            SELECT p.player_id, p.name as player_name, p.photo_url, t.name as team_name, t.logo_url as team_logo, ps.games_rating, ps.games_appearences as appearances
             FROM V3_Player_Stats ps
             JOIN V3_Players p ON ps.player_id = p.player_id
             JOIN V3_Teams t ON ps.team_id = t.team_id
-            WHERE ps.league_id = ? AND ps.season_year = ? AND ps.games_rating IS NOT NULL AND ps.games_rating != ''
+            WHERE ps.league_id = ? AND ps.season_year = ? AND ps.games_rating IS NOT NULL
             ORDER BY CAST(ps.games_rating AS FLOAT) DESC
             LIMIT 5
         `, [leagueId, season]);
 
-        // 6. Available Years for this League
+        // 5. Available Years
         const availableYears = db.all(`
-            SELECT season_year 
-            FROM V3_League_Seasons 
-            WHERE league_id = ? AND imported_players = 1
-            ORDER BY season_year DESC
+            SELECT season_year FROM V3_League_Seasons WHERE league_id = ? ORDER BY season_year DESC
         `, [leagueId]).map(y => y.season_year);
 
         res.json({
             league: leagueInfo,
-            standings: standings,
-            topScorers: topScorers,
-            topAssists: topAssists,
-            topRated: topRated,
-            availableYears: availableYears
+            isFinished,
+            hallOfFame,
+            standings,
+            topScorers,
+            topAssists,
+            topRated,
+            availableYears
         });
 
     } catch (error) {
@@ -140,10 +166,25 @@ export const getSeasonOverview = async (req, res) => {
 export const getSeasonPlayers = async (req, res) => {
     try {
         const { id: leagueId, year } = req.params;
-        const { teamId, position } = req.query;
+        const { teamId, position, sortBy = 'goals', order = 'DESC' } = req.query;
 
-        console.log(`🔍 getSeasonPlayers: leagueId=${leagueId}, year=${year}, teamId=${teamId}, position=${position}`);
+        console.log(`🔍 getSeasonPlayers: leagueId=${leagueId}, year=${year}, teamId=${teamId}, position=${position}, sortBy=${sortBy}, order=${order}`);
 
+        const validColumns = {
+            name: 'p.name',
+            team: 't.name',
+            pos: 'ps.games_position',
+            apps: 'ps.games_appearences',
+            mins: 'ps.games_minutes',
+            goals: 'ps.goals_total',
+            assists: 'ps.goals_assists',
+            yellow: 'ps.cards_yellow',
+            red: 'ps.cards_red',
+            rating: 'ps.games_rating'
+        };
+
+        const sortCol = validColumns[sortBy] || 'ps.goals_total';
+        const sortOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
         let sql = `
             SELECT 
@@ -151,7 +192,7 @@ export const getSeasonPlayers = async (req, res) => {
                 ps.games_appearences as appearances, ps.games_lineups as lineups,
                 ps.games_minutes as minutes, ps.goals_total as goals, ps.goals_assists as assists,
                 ps.cards_yellow as yellow, ps.cards_red as red, ps.games_rating as rating,
-                t.name as team_name, t.logo_url as team_logo
+                t.team_id, t.name as team_name, t.logo_url as team_logo
             FROM V3_Player_Stats ps
             JOIN V3_Players p ON ps.player_id = p.player_id
             JOIN V3_Teams t ON ps.team_id = t.team_id
@@ -169,7 +210,7 @@ export const getSeasonPlayers = async (req, res) => {
             params.push(position);
         }
 
-        sql += ` ORDER BY ps.games_appearences DESC, ps.goals_total DESC`;
+        sql += ` ORDER BY ${sortCol} ${sortOrder}, ps.games_appearences DESC`;
 
         console.log(`📡 Executing SQL for season players...`);
         const players = db.all(sql, cleanParams(params));

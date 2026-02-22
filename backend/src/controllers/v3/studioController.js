@@ -6,7 +6,7 @@ import db from '../../config/database.js';
  */
 export const getStudioStats = (req, res) => {
     const stats = [
-        { key: 'goals_total', label: 'Total Goals', category: 'Attacking', unit: 'integer' },
+        { key: 'goals_total', label: 'Goals', category: 'Attacking', unit: 'integer' },
         { key: 'goals_assists', label: 'Assists', category: 'Attacking', unit: 'integer' },
         { key: 'shots_total', label: 'Total Shots', category: 'Shooting', unit: 'integer' },
         { key: 'shots_on', label: 'Shots on Target', category: 'Shooting', unit: 'integer' },
@@ -20,8 +20,8 @@ export const getStudioStats = (req, res) => {
         { key: 'cards_yellow', label: 'Yellow Cards', category: 'Discipline', unit: 'integer' },
         { key: 'cards_red', label: 'Red Cards', category: 'Discipline', unit: 'integer' },
         { key: 'games_minutes', label: 'Minutes Played', category: 'General', unit: 'integer' },
-        { key: 'games_appearences', label: 'Appearances', category: 'General', unit: 'integer' },
-        { key: 'games_rating', label: 'Average Rating', category: 'General', unit: 'decimal' }
+        { key: 'games_appearences', label: 'Apps', category: 'General', unit: 'integer' },
+        { key: 'games_rating', label: 'Rating', category: 'General', unit: 'decimal' }
     ];
     res.json(stats);
 };
@@ -32,7 +32,22 @@ export const getStudioStats = (req, res) => {
  */
 export const getStudioNationalities = (req, res) => {
     try {
-        const sql = `SELECT DISTINCT nationality FROM V3_Players WHERE nationality IS NOT NULL ORDER BY nationality ASC`;
+        // US_121: Sort by Top 10 nations by database weight (player count) first, then alphabetical
+        const sql = `
+            WITH Stats AS (
+                SELECT nationality, COUNT(*) as count
+                FROM V3_Players
+                WHERE nationality IS NOT NULL
+                GROUP BY nationality
+            ),
+            Top10 AS (
+                SELECT nationality FROM Stats ORDER BY count DESC LIMIT 10
+            )
+            SELECT nationality, 
+                   (CASE WHEN nationality IN (SELECT nationality FROM Top10) THEN 0 ELSE 1 END) as group_rank
+            FROM Stats
+            ORDER BY group_rank ASC, nationality ASC
+        `;
         const rows = db.all(sql);
         res.json(rows.map(r => r.nationality));
     } catch (error) {
@@ -53,14 +68,15 @@ export const getStudioLeagues = (req, res) => {
                 l.name as league_name, 
                 l.logo_url,
                 l.type as league_type,
+                l.importance_rank as league_rank,
                 c.country_id,
                 c.name as country_name,
                 c.flag_url,
-                c.importance_rank
+                c.importance_rank as country_rank
             FROM V3_Leagues l
             JOIN V3_Countries c ON l.country_id = c.country_id
             JOIN V3_Player_Stats s ON l.league_id = s.league_id
-            ORDER BY c.importance_rank ASC, c.name ASC, l.name ASC
+            ORDER BY c.importance_rank ASC, c.name ASC, l.importance_rank ASC, l.name ASC
         `;
         const rows = db.all(sql);
 
@@ -130,7 +146,7 @@ export const searchStudioPlayers = (req, res) => {
             params.push(season);
         }
 
-        sql += ` GROUP BY p.player_id LIMIT 20`;
+        sql += ` GROUP BY p.player_id ORDER BY COALESCE(p.scout_rank, 0) DESC, last_season DESC, p.name ASC LIMIT 20`;
 
         const rows = db.all(sql, params);
         res.json(rows);
@@ -155,9 +171,9 @@ export const searchStudioTeams = (req, res) => {
         const sql = `
             SELECT t.team_id, t.name, t.logo_url, c.name as country_name
             FROM V3_Teams t
-            JOIN V3_Countries c ON t.country = c.name
+            LEFT JOIN V3_Countries c ON t.country = c.name
             WHERE t.name LIKE ?
-            ORDER BY c.importance_rank ASC, t.name ASC
+            ORDER BY COALESCE(t.scout_rank, 0) DESC, COALESCE(c.importance_rank, 999) ASC, t.name ASC
             LIMIT 20
         `;
         const params = [`%${search}%`];

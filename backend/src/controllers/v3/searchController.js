@@ -26,19 +26,26 @@ export const searchV3 = async (req, res) => {
             let playerSql = `
                 SELECT p.player_id, p.name, p.firstname, p.lastname, p.photo_url, p.nationality, p.age,
                        COALESCE(c.importance_rank, 999) as country_rank,
-                       c.flag_url as nationality_flag
+                       c.flag_url as nationality_flag,
+                       p.scout_rank,
+                       (CASE 
+                            WHEN p.name = ? THEN 1000 
+                            WHEN p.name LIKE ? THEN 100
+                            ELSE 0 
+                        END) as match_bonus
                 FROM V3_Players p
                 LEFT JOIN V3_Countries c ON p.nationality = c.name
                 WHERE (p.name LIKE ? OR p.firstname LIKE ? OR p.lastname LIKE ?)
             `;
-            const playerParams = [searchTerm, searchTerm, searchTerm];
+            const playerParams = [q, q + '%', searchTerm, searchTerm, searchTerm];
 
             if (country) {
                 playerSql += ` AND p.nationality = ?`;
                 playerParams.push(country);
             }
 
-            playerSql += ` ORDER BY COALESCE(c.importance_rank, 999) ASC, p.name ASC LIMIT 20`;
+            // Order by (Scout Rank + Match Bonus) DESC, then Prestige (Country Rank) ASC
+            playerSql += ` ORDER BY (p.scout_rank + match_bonus) DESC, COALESCE(c.importance_rank, 999) ASC, p.name ASC LIMIT 20`;
             players = db.all(playerSql, cleanParams(playerParams));
         }
 
@@ -47,19 +54,25 @@ export const searchV3 = async (req, res) => {
             let clubSql = `
                 SELECT t.team_id, t.api_id, t.name, t.logo_url, t.country, t.founded,
                        COALESCE(c.importance_rank, 999) as country_rank,
-                       c.flag_url as country_flag
+                       c.flag_url as country_flag,
+                       t.scout_rank,
+                       (CASE 
+                            WHEN t.name = ? THEN 1000 
+                            WHEN t.name LIKE ? THEN 100
+                            ELSE 0 
+                        END) as match_bonus
                 FROM V3_Teams t
                 LEFT JOIN V3_Countries c ON t.country = c.name
                 WHERE t.name LIKE ? AND (t.is_national_team = 0 OR t.is_national_team IS NULL)
             `;
-            const clubParams = [searchTerm];
+            const clubParams = [q, q + '%', searchTerm];
 
             if (country) {
                 clubSql += ` AND t.country = ?`;
                 clubParams.push(country);
             }
 
-            clubSql += ` ORDER BY COALESCE(c.importance_rank, 999) ASC, t.name ASC LIMIT 20`;
+            clubSql += ` ORDER BY (t.scout_rank + match_bonus) DESC, COALESCE(c.importance_rank, 999) ASC, t.name ASC LIMIT 20`;
             clubs = db.all(clubSql, cleanParams(clubParams));
         }
 
@@ -167,16 +180,23 @@ export const getClubProfile = async (req, res) => {
  * GET /api/v3/search/countries
  * Returns distinct country names for the country filter dropdown
  */
+/**
+ * GET /api/v3/search/countries
+ * Returns countries with flags and importance rank for filtering
+ */
 export const getSearchCountries = async (req, res) => {
     try {
+        // We fetch countries that actually have data (linked to teams)
+        // or just established countries from V3_Countries.
+        // Let's use V3_Countries as the primary source of truth for the dropdown.
         const countries = db.all(`
-            SELECT DISTINCT t.country as name, 
-                   COALESCE(c.importance_rank, 999) as importance_rank,
-                   c.flag_url
-            FROM V3_Teams t
-            LEFT JOIN V3_Countries c ON t.country = c.name
-            WHERE t.country IS NOT NULL AND t.country != '' 
-            ORDER BY COALESCE(c.importance_rank, 999) ASC, t.country ASC
+            SELECT 
+                name, 
+                COALESCE(importance_rank, 999) as importance_rank,
+                flag_url
+            FROM V3_Countries
+            WHERE flag_url IS NOT NULL
+            ORDER BY COALESCE(importance_rank, 999) ASC, name ASC
         `);
         res.json(countries);
     } catch (error) {

@@ -12,33 +12,18 @@ const Step3_Preview = () => {
 
     const [isPlaying, setIsPlaying] = useState(false);
 
-    // Determine dimensions based on format
-    const getDimensions = () => {
-        switch (visual.format) {
-            case '9:16': return { width: 400, height: 711 }; // Scaled down for preview
-            case '1:1': return { width: 500, height: 500 };
-            case '16:9': return { width: 711, height: 400 };
-            default: return { width: 400, height: 711 };
-        }
-    };
-    const { width, height } = getDimensions();
+    if (!chartData || !chartData.timeline || chartData.timeline.length === 0) {
+        return <div className="error-state">No surveillance data available to render.</div>;
+    }
 
     const togglePlay = () => setIsPlaying(!isPlaying);
     const restart = () => {
         setIsPlaying(false);
-        // Reset logic handled inside chart component via key or ref
-        // For MVP, simplistic toggle
         setTimeout(() => setIsPlaying(true), 100);
     };
 
-    if (!chartData || !chartData.timeline || chartData.timeline.length === 0) {
-        return <div className="error-state">No data available to render.</div>;
-    }
-
     // Determine configuration based on format - HD Canvas Resolution
     const getLayoutConfig = () => {
-        // If Bump chart or League Rankings, we generally want to see the whole league (e.g. 20-25 teams)
-        // regardless of aspect ratio, as lines are thinner than bars.
         const isBumpOrRankings = (visual.type === 'bump' || (chartData.meta && chartData.meta.type === 'league_rankings'));
         const defaultBarCount = isBumpOrRankings ? 25 : 15;
 
@@ -74,55 +59,67 @@ const Step3_Preview = () => {
     }
 
     return (
-        <div className="preview-container fade-in">
-            {/* Canvas Wrapper - preview scales down via CSS */}
-            <div className="canvas-wrapper" style={{
-                width: '100%',
-                maxWidth: visual.format === '9:16' ? '500px' : '800px',
-                aspectRatio: visual.format === '9:16' ? '9/16' : (visual.format === '1:1' ? '1/1' : '16/9')
-            }}>
-                {visual.type === 'line' || visual.type === 'bump' ? (
-                    <LineChartRace
-                        data={chartData.timeline}
-                        width={layout.width}
-                        height={layout.height}
-                        barCount={layout.barCount}
-                        isPlaying={isPlaying}
-                        speed={visual.speed}
-                        onComplete={() => setIsPlaying(false)}
-                        title={chartTitle}
-                        isBump={visual.type === 'bump'}
-                        leagueLogo={chartData.meta.league_logo}
-                    />
-                ) : (
-                    <BarChartRace
-                        data={chartData.timeline}
-                        width={layout.width}
-                        height={layout.height}
-                        barCount={layout.barCount}
-                        isPlaying={isPlaying}
-                        speed={visual.speed}
-                        onComplete={() => setIsPlaying(false)}
-                        title={chartTitle}
-                    />
-                )}
-            </div>
-            <div className="preview-controls">
-                <button className="ctrl-btn" onClick={togglePlay}>
-                    {isPlaying ? '⏸ Pause' : '▶ Play'}
-                </button>
-                <button className="ctrl-btn" onClick={restart}>
-                    Rewind
-                </button>
-                <div className="playback-info">
-                    {chartData.meta.range} • {visual.speed}x Speed
+        <div className="step-container animate-fade-in" style={{ maxWidth: '1000px' }}>
+            <h2 className="step-title-v2">Visualization Engine Preview</h2>
+
+            <div className="preview-stage-v2">
+                {/* HD Canvas Wrapper */}
+                <div className="canvas-wrapper-v2" style={{
+                    width: '100%',
+                    maxWidth: visual.format === '9:16' ? '400px' : '800px',
+                    aspectRatio: visual.format === '9:16' ? '9/16' : (visual.format === '1:1' ? '1/1' : '16/9')
+                }}>
+                    {visual.type === 'line' || visual.type === 'bump' ? (
+                        <LineChartRace
+                            data={chartData.timeline}
+                            width={layout.width}
+                            height={layout.height}
+                            barCount={layout.barCount}
+                            isPlaying={isPlaying}
+                            speed={visual.speed}
+                            onComplete={() => setIsPlaying(false)}
+                            title={chartTitle}
+                            isBump={visual.type === 'bump'}
+                            leagueLogo={chartData.meta.league_logo}
+                        />
+                    ) : (
+                        <BarChartRace
+                            data={chartData.timeline}
+                            width={layout.width}
+                            height={layout.height}
+                            barCount={layout.barCount}
+                            isPlaying={isPlaying}
+                            speed={visual.speed}
+                            onComplete={() => setIsPlaying(false)}
+                            title={chartTitle}
+                        />
+                    )}
+                </div>
+
+                {/* Playback Control Deck */}
+                <div className="playback-console-v2">
+                    <button className="ctrl-btn-v2" onClick={restart} title="Rewind to start">
+                        ⏮
+                    </button>
+                    <button className={`ctrl-btn-v2 play`} onClick={togglePlay}>
+                        {isPlaying ? '⏸' : '▶'}
+                    </button>
+                    <div className="playback-info-v2">
+                        <span className="info-label-v2">Stream Status</span>
+                        <span className="info-value-v2">{isPlaying ? 'LIVE RENDERING' : 'READY TO PLAY'}</span>
+                    </div>
+                    <div className="playback-info-v2">
+                        <span className="info-label-v2">Intelligence Scope</span>
+                        <span className="info-value-v2">{statName} • {visual.speed}x</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="step-actions">
-                <button className="btn-back" onClick={prevStep}>← Configure</button>
-                <button className="btn-next" onClick={() => goToStep(4)}>
-                    Next: Export Video →
+            {/* Navigation Buttons */}
+            <div className="nav-actions-v2">
+                <button className="btn-secondary-v2" onClick={prevStep}>← Adjust Config</button>
+                <button className="btn-primary-v2" style={{ flex: 1 }} onClick={() => goToStep(4)}>
+                    Export Master Asset →
                 </button>
             </div>
         </div>

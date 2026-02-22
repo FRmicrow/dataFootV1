@@ -56,24 +56,36 @@ const SeasonOverviewPage = () => {
                 }
 
                 // Parallel Fetching
-                const [overviewRes, standingsRes, fixturesRes] = await Promise.all([
+                const [overviewRes, fixturesRes] = await Promise.all([
                     api.getSeasonOverview(id, targetYear),
-                    api.getStandings(id, targetYear),
                     api.getLeagueFixtures(id, targetYear)
                 ]);
 
                 setData(overviewRes);
-                setStandings(standingsRes);
+                setStandings(overviewRes.standings || []);
 
                 // Auto-set max round logic
-                if (standingsRes && standingsRes.length > 0 && !isDynamicMode) {
-                    const maxPlayed = Math.max(...standingsRes.map(t => t.played));
+                if (overviewRes.standings && overviewRes.standings.length > 0 && !isDynamicMode) {
+                    const maxPlayed = Math.max(...overviewRes.standings.map(t => t.played || 0));
                     setRangeEnd(maxPlayed || 38);
                 }
 
                 setFixturesData(fixturesRes || { fixtures: [], rounds: [] });
                 if (fixturesRes?.rounds?.length > 0) {
-                    setSelectedRound(fixturesRes.rounds[0]);
+                    // Detect current round: first round that has unplayed matches, or the last one if all played
+                    const allFixtures = fixturesRes.fixtures || [];
+                    let current = fixturesRes.rounds[0];
+
+                    // Find first round with a non-finished match
+                    const firstUnplayed = allFixtures.find(f => f.status_short === 'NS' || f.status_short === 'TBD');
+                    if (firstUnplayed) {
+                        current = firstUnplayed.round;
+                    } else if (allFixtures.length > 0) {
+                        // If everything is played, pick the last round
+                        current = allFixtures[allFixtures.length - 1].round;
+                    }
+
+                    setSelectedRound(current);
                 }
 
             } catch (err) {
@@ -141,7 +153,7 @@ const SeasonOverviewPage = () => {
     if (loading && !data) return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 gap-4">
             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="font-medium animate-pulse">Gathering V3 Intelligence...</p>
+            <p className="font-medium animate-pulse">Scanning Competition Data...</p>
         </div>
     );
 
@@ -149,7 +161,7 @@ const SeasonOverviewPage = () => {
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
             <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-red-100 dark:border-red-900/30">
                 <span className="text-4xl mb-4 block">⚠️</span>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Analytics Offline</h2>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Data Hub Offline</h2>
                 <p className="text-slate-500 mb-6">{error}</p>
                 <button onClick={() => navigate('/import')} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
                     Go to Import Tool
@@ -160,61 +172,107 @@ const SeasonOverviewPage = () => {
 
     if (!data) return null;
 
-    const { league, topScorers, topAssists, topRated, availableYears } = data;
+    const { league, topScorers, topAssists, topRated, availableYears, isFinished, hallOfFame } = data;
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 pb-20 font-sans">
 
-            {/* Header */}
-            <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-opacity-90 dark:bg-opacity-90">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Premium Header */}
+            <header className="bg-white/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-sm backdrop-blur-md">
+                <div className="w-full px-4 sm:px-6 lg:px-8 py-3">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 
                         {/* League Identity */}
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 p-2 flex items-center justify-center">
+                        <div className="flex items-center gap-4 min-w-0">
+                            <div className="w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 p-2 flex items-center justify-center shrink-0">
                                 <img src={league.logo_url} alt={league.league_name} className="w-full h-full object-contain" />
                             </div>
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">V3 Analytics</span>
-                                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-xs text-slate-600 dark:text-slate-300 font-medium">
-                                        <img src={league.flag_url} alt="" className="w-4 h-3 object-cover rounded-[1px]" />
+                            <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded-full text-[9px] text-slate-500 font-black border border-slate-100 dark:border-slate-700 uppercase tracking-tighter">
+                                        <img src={league.flag_url} alt="" className="w-3 h-2 object-cover rounded-[1px]" />
                                         {league.country_name}
                                     </div>
+                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${isFinished ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'}`}>
+                                        {isFinished ? 'Completed' : 'Live'}
+                                    </span>
                                 </div>
-                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-none">{league.league_name}</h1>
+                                <h1 className="text-xl font-black text-slate-800 dark:text-white leading-none tracking-tight truncate">{league.league_name}</h1>
                             </div>
+                        </div>
+
+                        {/* Hall of Fame / Live Status Center */}
+                        <div className="flex-1 flex justify-center lg:px-8">
+                            {isFinished && hallOfFame ? (
+                                <div className="flex items-center bg-slate-100/50 dark:bg-slate-900/40 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide max-w-2xl">
+                                    {hallOfFame.winner && (
+                                        <div className="flex items-center gap-2.5 border-r border-slate-200 dark:border-slate-700 px-4 whitespace-nowrap">
+                                            <div className="w-6 h-6 bg-white dark:bg-slate-800 rounded-lg p-1 shadow-sm border border-slate-100 dark:border-slate-700">
+                                                <img src={hallOfFame.winner.logo_url} alt="" className="w-full h-full object-contain" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <p className="text-[7px] font-black text-slate-400 uppercase leading-none mb-0.5">Champion</p>
+                                                <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 leading-none">{hallOfFame.winner.name}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col justify-center px-4 border-r border-slate-200 dark:border-slate-700 whitespace-nowrap">
+                                        <p className="text-[7px] font-black text-slate-400 uppercase leading-none mb-0.5">Scorer</p>
+                                        <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-none">
+                                            {hallOfFame.topScorer ? `${hallOfFame.topScorer.name}` : 'N/A'}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col justify-center px-4 border-r border-slate-200 dark:border-slate-700 whitespace-nowrap">
+                                        <p className="text-[7px] font-black text-slate-400 uppercase leading-none mb-0.5">Assist</p>
+                                        <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-none">
+                                            {hallOfFame.topAssister ? `${hallOfFame.topAssister.name}` : 'N/A'}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col justify-center px-4 whitespace-nowrap">
+                                        <p className="text-[7px] font-black text-slate-400 uppercase leading-none mb-0.5">MVP</p>
+                                        <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-none">
+                                            {hallOfFame.bestPlayer ? `${hallOfFame.bestPlayer.name}` : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3 bg-blue-500/5 px-4 py-1.5 rounded-full border border-blue-500/10">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                    <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-none">Season in Discovery Mode</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Season Selector */}
                         <div className="flex items-center gap-3">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest hidden md:block">Season Archive</label>
-                            <select
-                                value={year}
-                                onChange={handleSeasonChange}
-                                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 border-0 rounded-lg text-slate-900 dark:text-white font-bold cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors focus:ring-2 focus:ring-blue-500 outline-none appearance-none text-right min-w-[120px]"
-                            >
-                                {(availableYears || [year]).map(y => (
-                                    <option key={y} value={y}>{y} / {parseInt(y) + 1}</option>
-                                ))}
-                            </select>
+                            <div className="relative">
+                                <select
+                                    value={year}
+                                    onChange={handleSeasonChange}
+                                    className="pl-4 pr-8 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white font-black cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-all outline-none appearance-none text-[10px] shadow-sm uppercase tracking-widest min-w-[120px]"
+                                >
+                                    {(availableYears || [year]).map(y => (
+                                        <option key={y} value={y}>{y} / {parseInt(y) + 1}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px]">▼</div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Navigation Tabs */}
-                    <div className="flex items-center gap-1 mt-6 overflow-x-auto scrollbar-hide -mb-[17px]">
+                    <div className="flex items-center gap-1 mt-3 overflow-x-auto scrollbar-hide -mb-[13px]">
                         {[
                             { id: 'overview', icon: '💎', label: 'Overview' },
-                            { id: 'standings', icon: '📊', label: 'Standings' },
+                            { id: 'standings', icon: '📊', label: 'Standings', hidden: league.type === 'Cup' },
                             { id: 'fixtures', icon: '📅', label: 'Results' },
                             { id: 'squads', icon: '👥', label: 'Squads' }
-                        ].map(tab => (
+                        ].filter(t => !t.hidden).map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`
-                                    flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-all whitespace-nowrap
+                                    flex items-center gap-2 px-4 py-2 border-b-2 font-black text-[11px] uppercase tracking-wider transition-all whitespace-nowrap
                                     ${activeTab === tab.id
                                         ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                                         : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:border-slate-300'}
@@ -229,7 +287,7 @@ const SeasonOverviewPage = () => {
             </header>
 
             {/* Main Content Area */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
                 {activeTab === 'overview' && (
                     <LeagueOverview

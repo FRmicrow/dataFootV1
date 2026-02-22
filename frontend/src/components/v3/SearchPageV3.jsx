@@ -3,6 +3,89 @@ import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import './SearchPageV3.css';
 
+const CountrySelector = ({ countries, selected, onSelect }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    // Close on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedCountryData = countries.find(c => c.name === selected);
+    const top10 = countries.filter(c => c.importance_rank <= 10);
+    const others = countries.filter(c => c.importance_rank > 10);
+
+    return (
+        <div className="custom-dropdown" ref={containerRef}>
+            <div
+                className={`dropdown-trigger ${isOpen ? 'active' : ''}`}
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                {selected ? (
+                    <div className="selected-val">
+                        <img src={selectedCountryData?.flag_url} alt="" className="mini-flag" />
+                        <span>{selected}</span>
+                    </div>
+                ) : (
+                    <div className="selected-val">
+                        <span className="globe">🌍</span>
+                        <span>All Regions</span>
+                    </div>
+                )}
+                <span className={`chevron ${isOpen ? 'up' : 'down'}`}>▼</span>
+            </div>
+
+            {isOpen && (
+                <div className="dropdown-menu animate-fade-in-down">
+                    <div className="menu-item all" onClick={() => { onSelect(''); setIsOpen(false); }}>
+                        🌍 All Regions
+                    </div>
+
+                    {top10.length > 0 && (
+                        <div className="menu-group">
+                            <div className="group-label">Top 10 Nations</div>
+                            {top10.map(c => (
+                                <div
+                                    key={c.name}
+                                    className={`menu-item ${selected === c.name ? 'active' : ''}`}
+                                    onClick={() => { onSelect(c.name); setIsOpen(false); }}
+                                >
+                                    <img src={c.flag_url} alt="" className="mini-flag" />
+                                    <span>{c.name}</span>
+                                    <span className="rank">#{c.importance_rank}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {others.length > 0 && (
+                        <div className="menu-group">
+                            <div className="group-label">Other Regions</div>
+                            {others.map(c => (
+                                <div
+                                    key={c.name}
+                                    className={`menu-item ${selected === c.name ? 'active' : ''}`}
+                                    onClick={() => { onSelect(c.name); setIsOpen(false); }}
+                                >
+                                    <img src={c.flag_url} alt="" className="mini-flag" />
+                                    <span>{c.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const SearchPageV3 = () => {
     const [query, setQuery] = useState('');
     const [type, setType] = useState('all');
@@ -59,11 +142,10 @@ const SearchPageV3 = () => {
             <div className="search-hero-bg"></div>
 
             <div className="search-content-container">
-                {/* Header Section */}
+                {/* Header Section (US_101 - Clean SaaS High-Density) */}
                 <header className="search-header-premium">
-                    <div className="search-badge">DISCOVERY ENGINE</div>
-                    <h1>Global Search</h1>
-                    <p>Access the complete football database. Players, clubs, and performance data.</p>
+                    <h1>Search Engine</h1>
+                    <p className="search-subtitle">Accessing 50+ professional leagues & 320,000+ player statistical profiles</p>
                 </header>
 
                 {/* Search Box Box */}
@@ -74,7 +156,7 @@ const SearchPageV3 = () => {
                             ref={inputRef}
                             type="text"
                             className="search-input-field"
-                            placeholder="Type name of player or club..."
+                            placeholder="Search by player name or club brand..."
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             autoFocus
@@ -93,7 +175,7 @@ const SearchPageV3 = () => {
                                     className={`type-option ${type === t ? 'active' : ''}`}
                                     onClick={() => setType(t)}
                                 >
-                                    {t === 'all' && 'Everything'}
+                                    {t === 'all' && 'All'}
                                     {t === 'player' && 'Players'}
                                     {t === 'club' && 'Clubs'}
                                 </button>
@@ -101,18 +183,11 @@ const SearchPageV3 = () => {
                         </div>
 
                         <div className="country-filter-wrap">
-                            <select
-                                className="country-dropdown-premium"
-                                value={country}
-                                onChange={(e) => setCountry(e.target.value)}
-                            >
-                                <option value="">🌍 Global Search</option>
-                                {countries.map(c => (
-                                    <option key={c.name} value={c.name}>
-                                        {c.importance_rank < 999 ? `(#${c.importance_rank}) ` : ''}{c.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <CountrySelector
+                                countries={countries}
+                                selected={country}
+                                onSelect={setCountry}
+                            />
                         </div>
                     </div>
                 </div>
@@ -131,7 +206,7 @@ const SearchPageV3 = () => {
                             {/* Summary Bar */}
                             <div className="results-summary">
                                 <span>Showing <strong>{totalResults}</strong> matches for <span className="query-highlight">"{query}"</span></span>
-                                <div className="sort-indicator">Sorted by Importance Rank</div>
+                                <div className="sort-indicator">Sorted by Relevance & Prestige</div>
                             </div>
 
                             <div className="results-grid-container">
@@ -147,12 +222,9 @@ const SearchPageV3 = () => {
                                             {results.clubs.map(c => (
                                                 <div
                                                     key={c.team_id}
-                                                    className={`rich-card club-result ${c.country_rank < 10 ? 'featured-result' : ''}`}
+                                                    className="rich-card club-result"
                                                     onClick={() => navigate(`/club/${c.team_id}`)}
                                                 >
-                                                    <div className="card-rank">
-                                                        {c.country_rank < 999 ? `#${c.country_rank}` : ''}
-                                                    </div>
                                                     <div className="card-logo-box">
                                                         <img
                                                             src={c.logo_url || ''}
@@ -191,12 +263,9 @@ const SearchPageV3 = () => {
                                             {results.players.map(p => (
                                                 <div
                                                     key={p.player_id}
-                                                    className={`rich-card player-result ${p.country_rank < 10 ? 'featured-result' : ''}`}
+                                                    className="rich-card player-result"
                                                     onClick={() => navigate(`/player/${p.player_id}`)}
                                                 >
-                                                    <div className="card-rank">
-                                                        {p.country_rank < 999 ? `#${p.country_rank}` : ''}
-                                                    </div>
                                                     <div className="card-photo-box">
                                                         <img
                                                             src={p.photo_url || ''}
@@ -242,8 +311,8 @@ const SearchPageV3 = () => {
                             <div className="exploration-mesh"></div>
                             <div className="empty-content">
                                 <div className="empty-icon-box">⚽</div>
-                                <h2>Ready to Explore?</h2>
-                                <p>Search through thousands of profiles across 50+ leagues. Results are ranked by international importance.</p>
+                                <h2>Scout Engine Ready</h2>
+                                <p>Query deep statistical profiles and historical milestones across 50+ global leagues.</p>
                                 <div className="quick-info">
                                     <div className="q-item"><span>🏆</span> Top Leagues First</div>
                                     <div className="q-item"><span>📊</span> Deep Player Stats</div>

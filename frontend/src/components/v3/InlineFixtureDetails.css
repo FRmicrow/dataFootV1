@@ -77,13 +77,13 @@
     color: #94a3b8;
     text-align: center;
     /* Center align number */
-    font-size: 12px !important;
+    font-size: 14px !important;
 }
 
 .inline-player-name {
     color: #e2e8f0;
     font-weight: 500;
-    font-size: 12px !important;
+    font-size: 14px !important;
     /* Wrap logic */
     white-space: normal;
     word-break: break-word;
@@ -92,7 +92,7 @@
 }
 
 .inline-player-role {
-    font-size: 11px !important;
+    font-size: 13px !important;
     color: #64748b;
     background: rgba(255, 255, 255, 0.05);
     padding: 1px 0;

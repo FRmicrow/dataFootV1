@@ -10,24 +10,27 @@ const Step1_Data = () => {
     } = useStudio();
 
     const [statsMeta, setStatsMeta] = useState([]);
-    const [leaguesMeta, setLeaguesMeta] = useState([]); // Grouped { country, leagues: [] }
-    const [nationalities, setNationalities] = useState([]); // List of distinct nationalities
+    const [leaguesMeta, setLeaguesMeta] = useState([]);
+    const [nationalities, setNationalities] = useState([]);
     const [isLoadingMeta, setIsLoadingMeta] = useState(true);
 
-    // 'specific' | 'league' | 'country' | 'standings'
+    // 'specific' | 'league' | 'country' | 'club' (renamed from 'club') | 'standings'
     const [mode, setMode] = useState('specific');
 
-    // Selection State
-    const [selectedPlayers, setSelectedPlayers] = useState([]); // Manual mode
-    const [selectedLeague, setSelectedLeague] = useState('');   // League & Standings mode
-    const [selectedCountry, setSelectedCountry] = useState(''); // Country mode
+    // Selection State (Multi-selection for everything)
+    const [selectedPlayers, setSelectedPlayers] = useState([]);
+    const [selectedLeagues, setSelectedLeagues] = useState([]);
+    const [selectedCountries, setSelectedCountries] = useState([]);
+    const [selectedTeams, setSelectedTeams] = useState([]);
+
     const [playerSearchQuery, setPlayerSearchQuery] = useState('');
     const [playerSearchResults, setPlayerSearchResults] = useState([]);
 
-    // Club State
-    const [selectedTeam, setSelectedTeam] = useState(null);
     const [teamSearchQuery, setTeamSearchQuery] = useState('');
     const [teamSearchResults, setTeamSearchResults] = useState([]);
+
+    const [leagueSearchQuery, setLeagueSearchQuery] = useState('');
+    const [countrySearchQuery, setCountrySearchQuery] = useState('');
 
     // Fetch initial metadata
     useEffect(() => {
@@ -117,8 +120,40 @@ const Step1_Data = () => {
         setPlayerSearchResults([]);
     };
 
-    const removePlayer = (pid) => {
-        setSelectedPlayers(selectedPlayers.filter(p => p.player_id !== pid));
+    const addLeague = (league) => {
+        if (!selectedLeagues.find(l => l.id === league.id)) {
+            setSelectedLeagues([...selectedLeagues, league]);
+        }
+        setLeagueSearchQuery('');
+    };
+
+    const addCountry = (country) => {
+        if (!selectedCountries.includes(country)) {
+            setSelectedCountries([...selectedCountries, country]);
+        }
+        setCountrySearchQuery('');
+    };
+
+    const addTeam = (team) => {
+        if (!selectedTeams.find(t => t.id === team.id)) {
+            setSelectedTeams([...selectedTeams, team]);
+        }
+        setTeamSearchQuery('');
+        setTeamSearchResults([]);
+    };
+
+    const removePlayer = (pid) => setSelectedPlayers(selectedPlayers.filter(p => p.player_id !== pid));
+    const removeLeague = (id) => setSelectedLeagues(selectedLeagues.filter(l => l.id !== id));
+    const removeCountry = (c) => setSelectedCountries(selectedCountries.filter(x => x !== c));
+    const removeTeam = (id) => setSelectedTeams(selectedTeams.filter(t => t.id !== id));
+
+    const finalizeStep1 = (data, meta, mode) => {
+        setChartData(data);
+        if (meta.contextLabel) {
+            setFilters(prev => ({ ...prev, contextLabel: meta.contextLabel, contextType: mode }));
+        }
+        setIsLoading(false);
+        goToStep(2);
     };
 
     const handleNext = async () => {
@@ -126,15 +161,31 @@ const Step1_Data = () => {
         setError(null);
 
         try {
+            // Calculate final metadata for this run
+            let contextLabel = '';
+            if (mode === 'specific') {
+                if (selectedPlayers.length === 0) throw new Error("Please select at least one player.");
+                contextLabel = selectedPlayers.length === 1 ? selectedPlayers[0].name : `${selectedPlayers.length} Selected Players`;
+            } else if (mode === 'league' || mode === 'standings') {
+                if (selectedLeagues.length === 0) throw new Error("Please select a league.");
+                contextLabel = selectedLeagues.length === 1 ? selectedLeagues[0].name : `${selectedLeagues.length} Leagues`;
+            } else if (mode === 'country') {
+                if (selectedCountries.length === 0) throw new Error("Please select a nationality.");
+                contextLabel = selectedCountries.length === 1 ? selectedCountries[0] : `${selectedCountries.length} Countries`;
+            } else if (mode === 'club') {
+                if (selectedTeams.length === 0) throw new Error("Please select a club.");
+                contextLabel = selectedTeams.length === 1 ? selectedTeams[0].name : `${selectedTeams.length} Clubs`;
+            }
+
             // Standing Race Special Flow
             if (mode === 'standings') {
-                if (!selectedLeague) throw new Error("Please select a league.");
                 const season = filters.years[1];
+                const leagueId = selectedLeagues[0].id;
 
                 const res = await fetch('/api/studio/query/league-rankings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ league_id: parseInt(selectedLeague), season })
+                    body: JSON.stringify({ league_id: parseInt(leagueId), season })
                 });
 
                 if (!res.ok) {
@@ -143,46 +194,24 @@ const Step1_Data = () => {
                 }
 
                 const data = await res.json();
-                setChartData(data);
                 setVisual(prev => ({ ...prev, type: 'league_race' }));
-                setIsLoading(false);
-                goToStep(2);
+                finalizeStep1(data, { contextLabel }, mode);
                 return;
             }
 
             // Standard Flow
             let payloadFilters = {
                 years: filters.years,
-                leagues: [],
-                countries: [],
-                teams: []
+                leagues: selectedLeagues.map(l => l.id),
+                countries: selectedCountries,
+                teams: selectedTeams.map(t => t.id)
             };
             let payloadSelection = { mode: 'top_n', value: 100, players: [] };
-            let contextLabel = '';
 
             if (mode === 'specific') {
-                if (selectedPlayers.length === 0) throw new Error("Please select at least one player.");
                 payloadSelection.mode = 'manual';
                 payloadSelection.players = selectedPlayers.map(p => p.player_id);
-            } else if (mode === 'league') {
-                if (!selectedLeague) throw new Error("Please select a league.");
-                payloadFilters.leagues = [parseInt(selectedLeague)];
-
-                for (const group of leaguesMeta) {
-                    const l = group.leagues.find(x => x.id === parseInt(selectedLeague));
-                    if (l) { contextLabel = l.name; break; }
-                }
-            } else if (mode === 'country') {
-                if (!selectedCountry) throw new Error("Please select a nationality.");
-                payloadFilters.countries = [selectedCountry];
-                contextLabel = selectedCountry;
-            } else if (mode === 'club') {
-                if (!selectedTeam) throw new Error("Please select a club.");
-                payloadFilters.teams = [parseInt(selectedTeam.id)];
-                contextLabel = selectedTeam.name;
             }
-
-            setFilters(prev => ({ ...prev, contextLabel, contextType: mode }));
 
             const payload = {
                 stat: filters.stat,
@@ -206,137 +235,201 @@ const Step1_Data = () => {
             const totalRecords = data.timeline.reduce((acc, frame) => acc + frame.records.length, 0);
             if (totalRecords === 0) throw new Error("No data found for this selection.");
 
-            setChartData(data);
-            goToStep(2);
+            // Finalize with synchronization
+            finalizeStep1(data, { contextLabel }, mode);
 
         } catch (err) {
+            console.error("Studio Query Error:", err);
             setError(err.message);
-        } finally {
             setIsLoading(false);
         }
     };
 
-    if (isLoadingMeta) return <div className="loading-spinner">Loading options...</div>;
+    if (isLoadingMeta) return (
+        <div className="flex items-center justify-center p-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        </div>
+    );
 
     return (
-        <div className="step-container fade-in">
-            <h2>Select Data Source</h2>
+        <div className="step-container animate-fade-in">
+            <h2 className="step-title-v2">Data Architecture Selection</h2>
 
             {/* 1. Mode Selector */}
             <div className="mode-selector">
                 <button className={`mode-btn ${mode === 'specific' ? 'active' : ''}`} onClick={() => setMode('specific')}>👤 Players</button>
-                <button className={`mode-btn ${mode === 'league' ? 'active' : ''}`} onClick={() => setMode('league')}>🏆 League Top</button>
-                <button className={`mode-btn ${mode === 'country' ? 'active' : ''}`} onClick={() => setMode('country')}>🌍 Country</button>
-                <button className={`mode-btn ${mode === 'club' ? 'active' : ''}`} onClick={() => setMode('club')}>🛡️ Club</button>
-                <button className={`mode-btn ${mode === 'standings' ? 'active' : ''}`} onClick={() => setMode('standings')}>📈 Standing Race</button>
+                <button className={`mode-btn ${mode === 'league' ? 'active' : ''}`} onClick={() => setMode('league')}>🏆 Leagues</button>
+                <button className={`mode-btn ${mode === 'country' ? 'active' : ''}`} onClick={() => setMode('country')}>🌍 Nationalities</button>
+                <button className={`mode-btn ${mode === 'club' ? 'active' : ''}`} onClick={() => setMode('club')}>🛡️ Clubs</button>
+                <button className={`mode-btn ${mode === 'standings' ? 'active' : ''}`} onClick={() => setMode('standings')}>📈 Standings</button>
             </div>
 
-            {/* 2. Source Input (Dynamic) */}
-            <div className="source-input-area">
+            {/* 2. Source Input Area */}
+            <div className="form-group-v2">
+                <label className="form-label-v2">
+                    {mode === 'specific' ? 'Target Profiles' : mode === 'league' ? 'Active Leagues' : mode === 'country' ? 'Nationalities' : mode === 'club' ? 'Professional Clubs' : 'Championship Registry'}
+                </label>
 
-                {mode === 'specific' && (
-                    <div className="player-search">
-                        <input type="text" placeholder="Search player..." value={playerSearchQuery} onChange={(e) => setPlayerSearchQuery(e.target.value)} className="search-input" />
-                        {playerSearchResults.length > 0 && (
-                            <ul className="search-results">
-                                {playerSearchResults.map(p => (
-                                    <li key={p.player_id} onClick={() => addPlayer(p)}>
-                                        <img src={p.photo_url} alt="" className="avatar-mini" />
-                                        <span>{p.name}</span>
-                                        <small>{p.team_name}</small>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                        <div className="selected-chips">
-                            {selectedPlayers.map(p => (
-                                <div key={p.player_id} className="chip">
-                                    <img src={p.photo_url} alt="" /> {p.name}
-                                    <span className="remove" onClick={() => removePlayer(p.player_id)}>×</span>
+                <div style={{ position: 'relative' }}>
+                    {/* Search / Input Field */}
+                    {mode === 'specific' && (
+                        <input
+                            type="text"
+                            placeholder="Search clinical profiles (e.g. 'Haaland')..."
+                            value={playerSearchQuery}
+                            onChange={(e) => setPlayerSearchQuery(e.target.value)}
+                            className="input-v2"
+                        />
+                    )}
+
+                    {mode === 'league' || mode === 'standings' ? (
+                        <input
+                            type="text"
+                            placeholder="Locate competition registry..."
+                            value={leagueSearchQuery}
+                            onChange={(e) => setLeagueSearchQuery(e.target.value)}
+                            className="input-v2"
+                            onFocus={() => { }} // Could show all on focus
+                        />
+                    ) : null}
+
+                    {mode === 'country' && (
+                        <input
+                            type="text"
+                            placeholder="Identify talent territory..."
+                            value={countrySearchQuery}
+                            onChange={(e) => setCountrySearchQuery(e.target.value)}
+                            className="input-v2"
+                        />
+                    )}
+
+                    {mode === 'club' && (
+                        <input
+                            type="text"
+                            placeholder="Locate professional club entity..."
+                            value={teamSearchQuery}
+                            onChange={(e) => setTeamSearchQuery(e.target.value)}
+                            className="input-v2"
+                        />
+                    )}
+
+                    {/* Results Dropdowns */}
+                    {mode === 'specific' && playerSearchResults.length > 0 && (
+                        <div className="search-results-v2">
+                            {playerSearchResults.map(p => (
+                                <div key={p.player_id} className="result-item-v2" onClick={() => addPlayer(p)}>
+                                    <img src={p.photo_url} alt="" />
+                                    <div className="result-info-v2">
+                                        <span className="result-name-v2">{p.name}</span>
+                                        <span className="result-meta-v2">{p.team_name}</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {(mode === 'league' || mode === 'standings') && (
-                    <div className="league-select">
-                        <select value={selectedLeague} onChange={(e) => setSelectedLeague(e.target.value)} className="full-width">
-                            <option value="">-- Select League --</option>
-                            {leaguesMeta.map(group => {
-                                // Filter for League type only if in standings mode
-                                const filteredLeagues = mode === 'standings'
-                                    ? group.leagues.filter(l => l.type === 'League')
-                                    : group.leagues;
+                    {(mode === 'league' || mode === 'standings') && leagueSearchQuery.length > 0 && (
+                        <div className="search-results-v2">
+                            {leaguesMeta.flatMap(group =>
+                                group.leagues
+                                    .filter(l => l.name.toLowerCase().includes(leagueSearchQuery.toLowerCase()))
+                                    .filter(l => mode === 'standings' ? l.type === 'League' : true)
+                                    .map(l => ({ ...l, country: group.country }))
+                            ).slice(0, 15).map(l => (
+                                <div key={l.id} className="result-item-v2" onClick={() => addLeague(l)}>
+                                    <img src={l.logo} alt="" />
+                                    <div className="result-info-v2">
+                                        <span className="result-name-v2">{l.name}</span>
+                                        <span className="result-meta-v2">{l.country}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                                if (filteredLeagues.length === 0) return null;
+                    {mode === 'country' && countrySearchQuery.length > 0 && (
+                        <div className="search-results-v2">
+                            {nationalities
+                                .filter(n => n.toLowerCase().includes(countrySearchQuery.toLowerCase()))
+                                .slice(0, 15)
+                                .map(n => (
+                                    <div key={n} className="result-item-v2" onClick={() => addCountry(n)}>
+                                        <div className="result-info-v2">
+                                            <span className="result-name-v2">{n}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )}
 
-                                return (
-                                    <optgroup key={group.country} label={group.country}>
-                                        {filteredLeagues.map(l => (
-                                            <option key={l.id} value={l.id}>{l.name}</option>
-                                        ))}
-                                    </optgroup>
-                                );
-                            })}
-                        </select>
-                    </div>
-                )}
+                    {mode === 'club' && teamSearchResults.length > 0 && (
+                        <div className="search-results-v2">
+                            {teamSearchResults.map(t => (
+                                <div key={t.team_id} className="result-item-v2" onClick={() => addTeam({ id: t.team_id, name: t.name, logo: t.logo_url })}>
+                                    <img src={t.logo_url} alt="" />
+                                    <div className="result-info-v2">
+                                        <span className="result-name-v2">{t.name}</span>
+                                        <span className="result-meta-v2">{t.country_name}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                {mode === 'country' && (
-                    <div className="country-select">
-                        <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="full-width">
-                            <option value="">-- Select Nationality --</option>
-                            {nationalities.map(nat => <option key={nat} value={nat}>{nat}</option>)}
-                        </select>
-                    </div>
-                )}
-
-                {mode === 'club' && (
-                    <div className="team-search">
-                        {!selectedTeam ? (
-                            <div className="search-container">
-                                <input type="text" placeholder="Search club..." value={teamSearchQuery} onChange={(e) => setTeamSearchQuery(e.target.value)} className="search-input full-width" />
-                                {teamSearchResults.length > 0 && (
-                                    <ul className="search-results dropdown">
-                                        {teamSearchResults.map(t => (
-                                            <li key={t.team_id} onClick={() => { setSelectedTeam({ id: t.team_id, name: t.name, logo: t.logo_url }); setTeamSearchQuery(''); setTeamSearchResults([]); }}>
-                                                <img src={t.logo_url} alt="" className="avatar-mini" /> <span>{t.name}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                    {/* Selected Tags / Chips */}
+                    <div className="selected-tags-v2">
+                        {mode === 'specific' && selectedPlayers.map(p => (
+                            <div key={p.player_id} className="tag-chip-v2">
+                                <img src={p.photo_url} alt="" /> {p.name}
+                                <span className="tag-remove-v2" onClick={() => removePlayer(p.player_id)}>×</span>
                             </div>
-                        ) : (
-                            <div className="selected-item-card">
-                                <img src={selectedTeam.logo} alt="" className="avatar-small" /> <span className="label">{selectedTeam.name}</span>
-                                <button className="btn-small btn-danger" onClick={() => setSelectedTeam(null)}>Change</button>
+                        ))}
+                        {(mode === 'league' || mode === 'standings') && selectedLeagues.map(l => (
+                            <div key={l.id} className="tag-chip-v2">
+                                <img src={l.logo} alt="" /> {l.name}
+                                <span className="tag-remove-v2" onClick={() => removeLeague(l.id)}>×</span>
                             </div>
-                        )}
+                        ))}
+                        {mode === 'country' && selectedCountries.map(c => (
+                            <div key={c} className="tag-chip-v2">
+                                {c}
+                                <span className="tag-remove-v2" onClick={() => removeCountry(c)}>×</span>
+                            </div>
+                        ))}
+                        {mode === 'club' && selectedTeams.map(t => (
+                            <div key={t.id} className="tag-chip-v2">
+                                <img src={t.logo} alt="" /> {t.name}
+                                <span className="tag-remove-v2" onClick={() => removeTeam(t.id)}>×</span>
+                            </div>
+                        ))}
                     </div>
-                )}
+                </div>
             </div>
 
             {/* 3. Stat Selection (Hidden for Standings) */}
             {mode !== 'standings' && (
-                <div className="form-group">
-                    <label>Statistic</label>
-                    <select value={filters.stat} onChange={handleStatChange} className="full-width">
-                        <option value="">-- Select Stat --</option>
+                <div className="form-group-v2">
+                    <label className="form-label-v2">Performance Metric</label>
+                    <select value={filters.stat} onChange={handleStatChange} className="input-v2">
+                        <option value="">Select Surveillance Metric...</option>
                         {statsMeta.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                     </select>
                 </div>
             )}
 
-            {/* 4. Year Range / Single Year */}
-            <div className="form-group">
-                <label>{mode === 'standings' ? 'Season' : `Season Range (${filters.years[0]} - ${filters.years[1]})`}</label>
-                <div className="range-inputs">
+            {/* 4. Temporal Range */}
+            <div className="form-group-v2">
+                <label className="form-label-v2">
+                    {mode === 'standings' ? 'Operational Season' : `Temporal Surveillance Window (${filters.years[0]} - ${filters.years[1]})`}
+                </label>
+                <div className="range-grid-v2">
                     {mode === 'standings' ? (
                         <select
                             value={filters.years[1]}
                             onChange={(e) => handleYearChange(e, 1)}
-                            className="full-width"
+                            className="input-v2"
+                            style={{ gridColumn: 'span 3' }}
                         >
                             {Array.from({ length: 25 }, (_, i) => new Date().getFullYear() - i).map(year => (
                                 <option key={year} value={year}>{year - 1}/{year}</option>
@@ -344,28 +437,33 @@ const Step1_Data = () => {
                         </select>
                     ) : (
                         <>
-                            <input type="number" value={filters.years[0]} min="2000" max={filters.years[1]} onChange={(e) => handleYearChange(e, 0)} />
-                            <span>to</span>
-                            <input type="number" value={filters.years[1]} min={filters.years[0]} max={new Date().getFullYear()} onChange={(e) => handleYearChange(e, 1)} />
+                            <input type="number" value={filters.years[0]} min="2000" max={filters.years[1]} onChange={(e) => handleYearChange(e, 0)} className="input-v2" />
+                            <span className="range-separator-v2">TO</span>
+                            <input type="number" value={filters.years[1]} min={filters.years[0]} max={new Date().getFullYear()} onChange={(e) => handleYearChange(e, 1)} className="input-v2" />
                         </>
                     )}
                 </div>
             </div>
 
-            {/* 5. Options (Hidden for Standings) */}
+            {/* 5. Production Options */}
             {mode !== 'standings' && (
-                <div className="form-group">
-                    <label className="checkbox-item option-toggle">
-                        <input type="checkbox" checked={filters.cumulative} onChange={(e) => setFilters(prev => ({ ...prev, cumulative: e.target.checked }))} />
-                        <span className="chk-label">Cumulative Sum (Total Career)</span>
-                    </label>
+                <div className="form-group-v2">
+                    <label className="form-label-v2">Processing Logic</label>
+                    <div className="option-card-v2" onClick={() => setFilters(prev => ({ ...prev, cumulative: !prev.cumulative }))}>
+                        <input type="checkbox" checked={filters.cumulative} onChange={() => { }} />
+                        <span className="option-label-v2">Aggregate Historical Trajectory (Cumulative Sum)</span>
+                    </div>
                 </div>
             )}
 
             {/* Actions */}
-            <div className="step-actions">
-                <button className="btn-next" disabled={(mode !== 'standings' && !filters.stat) || isLoading} onClick={handleNext}>
-                    {isLoading ? 'Processing...' : 'Next: Design Chart →'}
+            <div className="step-actions" style={{ marginTop: '3rem' }}>
+                <button
+                    className="btn-primary-v2"
+                    disabled={(mode !== 'standings' && !filters.stat) || (mode === 'specific' && selectedPlayers.length === 0) || isLoading}
+                    onClick={handleNext}
+                >
+                    {isLoading ? 'Compiling Registry...' : 'Initialize Visualization Sequence →'}
                 </button>
             </div>
         </div>
