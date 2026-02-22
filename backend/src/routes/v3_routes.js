@@ -205,4 +205,14 @@ import { getPreferences, updatePreferences } from '../controllers/v3/preferences
 router.get('/preferences', getPreferences);
 router.put('/preferences', validateRequest(preferencesSchema), updatePreferences);
 
+/**
+ * @route Import Matrix (US_040, US_042)
+ */
+import { getImportMatrixStatus, triggerAuditScan, triggerDeepSync, triggerBatchDeepSync } from '../controllers/v3/importMatrixController.js';
+
+router.get('/import/matrix-status', getImportMatrixStatus);
+router.post('/import/audit-scan', triggerAuditScan);
+router.post('/import/league/:id/deep-sync', triggerDeepSync);
+router.post('/import/leagues/batch-deep-sync', triggerBatchDeepSync);
+
 export default router;

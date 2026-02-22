@@ -11,7 +11,8 @@ import { syncLeagueEventsService } from './fixtureService.js';
 
 // --- League Import Job ---
 
-export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = false) => {
+export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) => {
+    const { forceApiId = false, forceRefresh = false } = options;
     sendLog(`🚀 V3 Import Started for League ID ${leagueId}, Season ${seasonYear}`, 'info');
 
     // 1. Resolve ID & Fetch League Info
@@ -31,7 +32,9 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
     }
 
     const leagueResponse = await footballApi.getLeagues({ id: targetApiId, season: seasonYear });
-    if (!leagueResponse.response?.length) throw new Error("League data not found in API.");
+    if (!leagueResponse.response?.length) {
+        throw new Error(`League ID ${targetApiId} / Season ${seasonYear} not found in API. This season might not be supported for this league.`);
+    }
     const apiData = leagueResponse.response[0];
 
     // Country & League Resolution
@@ -49,6 +52,9 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
         sendLog(`✅ Created League: ${apiData.league.name}`, 'success');
     } else {
         localLeagueId = localLeague.league_id;
+        // Integrity Sync: Refresh info even if exists
+        db.run("UPDATE V3_Leagues SET name=?, logo_url=?, type=?, api_id=? WHERE league_id=?",
+            cleanParams([apiData.league.name, apiData.league.logo, apiData.league.type, apiData.league.id, localLeagueId]));
     }
 
     // Season Tracker
@@ -64,6 +70,13 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
                 apiSeason.coverage.standings ? 1 : 0, apiSeason.coverage.players ? 1 : 0, apiSeason.coverage.top_scorers ? 1 : 0, apiSeason.coverage.top_assists ? 1 : 0,
                 apiSeason.coverage.top_cards ? 1 : 0, apiSeason.coverage.injuries ? 1 : 0, apiSeason.coverage.predictions ? 1 : 0, apiSeason.coverage.odds ? 1 : 0]));
         sendLog(`📅 Created Season Tracker for ${seasonYear}`, 'success');
+        leagueSeason = db.get("SELECT * FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+    }
+
+    // Idempotency Check (US_041)
+    if (!forceRefresh && leagueSeason.imported_standings && leagueSeason.imported_fixtures && leagueSeason.imported_players) {
+        sendLog(`⏩ Data already fully imported for ${seasonYear}. Use Force Refresh to overwrite.`, 'info');
+        return { leagueId: targetApiId, season: seasonYear, skipped: true };
     }
 
     // 2. Fetch Teams
@@ -73,8 +86,13 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
 
     const localTeamMap = {};
     db.run('BEGIN TRANSACTION');
+    let currentTeam = 0;
     try {
         for (const t of teams) {
+            currentTeam++;
+            if (sendLog.emit) {
+                sendLog.emit({ type: 'progress', step: 'teams', current: currentTeam, total: teams.length, label: `Importing ${t.team.name}` });
+            }
             let venueId = t.venue?.id ? DB.getOrInsertVenue(Mappers.venue(t.venue)) : null;
             localTeamMap[t.team.id] = DB.upsertTeam(Mappers.team(t.team), venueId);
         }
@@ -85,47 +103,58 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, forceApiId = f
         throw err;
     }
 
-    // 3. Fetch Players & Stats
-    sendLog('📡 Fetching Players & Stats (Team by Team)...', 'info');
+    // 3. Fetch Players & Stats (Optimized for high-throughput)
+    sendLog('📡 Fetching Players & Stats (Parallel Chunks)...', 'info');
     let totalPlayers = 0;
+    const TEAM_CHUNK_SIZE = 5;
 
-    for (const t of teams) {
-        const teamName = t.team.name;
-        const teamApiId = t.team.id;
-        const localTeamId = localTeamMap[teamApiId];
-        sendLog(`   Processing ${teamName}...`, 'info');
+    for (let i = 0; i < teams.length; i += TEAM_CHUNK_SIZE) {
+        const chunk = teams.slice(i, i + TEAM_CHUNK_SIZE);
 
-        let page = 1;
-        let totalPages = 1;
+        await Promise.all(chunk.map(async (t) => {
+            const teamName = t.team.name;
+            const teamApiId = t.team.id;
 
-        while (page <= totalPages) {
-            const playersRes = await footballApi.getPlayersByTeam(teamApiId, seasonYear, page);
-            if (!playersRes.response?.length) break;
-            totalPages = playersRes.paging.total;
+            let page = 1;
+            let totalPages = 1;
 
-            db.run('BEGIN TRANSACTION');
-            try {
-                for (const p of playersRes.response) {
-                    const localPlayerId = DB.upsertPlayer(Mappers.player(p.player));
-                    const leagueStats = p.statistics.filter(s => s.league.id === targetApiId);
-                    for (const s of leagueStats) {
-                        let statTeamId = localTeamMap[s.team.id] || db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([s.team.id]))?.team_id;
-                        if (localPlayerId && statTeamId) {
-                            DB.upsertPlayerStats(Mappers.stats(s, localPlayerId, statTeamId, localLeagueId, seasonYear));
+            while (page <= totalPages) {
+                try {
+                    const playersRes = await footballApi.getPlayersByTeam(teamApiId, seasonYear, page);
+                    if (!playersRes.response?.length) break;
+                    totalPages = playersRes.paging.total;
+
+                    db.run('BEGIN TRANSACTION');
+                    for (const p of playersRes.response) {
+                        const localPlayerId = DB.upsertPlayer(Mappers.player(p.player));
+                        const leagueStats = p.statistics.filter(s => s.league.id === targetApiId);
+                        for (const s of leagueStats) {
+                            let statTeamId = localTeamMap[s.team.id] || db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([s.team.id]))?.team_id;
+                            if (localPlayerId && statTeamId) {
+                                DB.upsertPlayerStats(Mappers.stats(s, localPlayerId, statTeamId, localLeagueId, seasonYear));
+                            }
                         }
+                        totalPlayers++;
                     }
-                    totalPlayers++;
+                    db.run('COMMIT');
+                } catch (err) {
+                    try { db.run('ROLLBACK'); } catch (e) { }
+                    sendLog(`      ⚠️ Error fetching players for ${teamName} (Page ${page}): ${err.message}`, 'error');
                 }
-                db.run('COMMIT');
-            } catch (err) {
-                db.run('ROLLBACK');
-                sendLog(`      ⚠️ Error on page ${page} for ${teamName}: ${err.message}`, 'error');
+                page++;
             }
-            page++;
+        }));
+
+        if (sendLog.emit) {
+            const currentProgress = Math.min(i + TEAM_CHUNK_SIZE, teams.length);
+            sendLog.emit({ type: 'progress', step: 'players', current: currentProgress, total: teams.length, label: `Processed ${currentProgress}/${teams.length} teams` });
         }
+
+        // Aggressive delay: 5 teams (~10-15 calls) every 1.5s
+        await new Promise(r => setTimeout(r, 1500));
     }
 
-    db.run("UPDATE V3_League_Seasons SET imported_players = 1, last_imported_at = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+    db.run("UPDATE V3_League_Seasons SET imported_players = 1, last_imported_at = CURRENT_TIMESTAMP, last_sync_core = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
     sendLog(`🎉 League ${targetApiId} (${seasonYear}) Complete! Processed ${totalPlayers} players.`, 'success');
 
     // 4. Ingest Standings

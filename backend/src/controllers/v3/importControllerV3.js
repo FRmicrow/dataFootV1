@@ -196,9 +196,9 @@ export const importLeagueV3 = async (req, res) => {
     };
     sendLog.emit = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
-    const { leagueId, season, forceApiId = true } = req.body;
+    const { leagueId, season, forceApiId = true, forceRefresh = false } = req.body;
     try {
-        const meta = await runImportJob(leagueId, parseInt(season), sendLog, forceApiId);
+        const meta = await runImportJob(leagueId, parseInt(season), sendLog, { forceApiId, forceRefresh });
         res.write(`data: ${JSON.stringify({ type: 'complete', ...meta })}\n\n`);
         res.end();
     } catch (error) {
@@ -229,13 +229,21 @@ export const importBatchV3 = async (req, res) => {
     try {
         sendLog(`📦 Batch Import Started: ${selection.length} items queued.`, 'info');
 
+        const totalTasks = selection.reduce((acc, item) => acc + item.seasons.length, 0);
+        let completedTasks = 0;
+
         for (const item of selection) {
             const { leagueId, seasons, forceApiId = true } = item;
 
             // Loop through each season for this league
             for (const season of seasons) {
+                completedTasks++;
+                if (sendLog.emit) {
+                    sendLog.emit({ type: 'progress', step: 'overall', current: completedTasks, total: totalTasks });
+                }
                 try {
-                    await runImportJob(leagueId, parseInt(season), sendLog, forceApiId);
+                    const forceRefresh = item.forceRefresh || false;
+                    await runImportJob(leagueId, parseInt(season), sendLog, { forceApiId, forceRefresh });
                 } catch (err) {
                     console.error(`Error in batch for League ${leagueId} Season ${season}:`, err);
                     sendLog(`❌ Error importing League ${leagueId} Season ${season}: ${err.message || String(err)}`, 'error');

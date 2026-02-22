@@ -14,13 +14,27 @@ const PORT = process.env.PORT || 3001;
 await db.init();
 
 // --- DB Migrations ---
-try {
-    db.run("ALTER TABLE V3_System_Preferences ADD COLUMN tracked_leagues TEXT DEFAULT '[]'");
-    console.log('🔄 Migration: tracked_leagues column added to V3_System_Preferences');
-} catch (e) {
-    // Column likely already exists — ignore safely
-    if (!e.message?.includes('duplicate column')) {
-        console.warn('Migration note (tracked_leagues):', e.message);
+const migrations = [
+    { table: 'V3_System_Preferences', column: 'tracked_leagues', sql: "ALTER TABLE V3_System_Preferences ADD COLUMN tracked_leagues TEXT DEFAULT '[]'" },
+    { table: 'V3_League_Seasons', column: 'imported_events', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN imported_events BOOLEAN DEFAULT 0" },
+    { table: 'V3_League_Seasons', column: 'imported_lineups', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN imported_lineups BOOLEAN DEFAULT 0" },
+    { table: 'V3_League_Seasons', column: 'imported_trophies', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN imported_trophies BOOLEAN DEFAULT 0" },
+    { table: 'V3_League_Seasons', column: 'last_sync_core', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_core DATETIME" },
+    { table: 'V3_League_Seasons', column: 'last_sync_events', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_events DATETIME" },
+    { table: 'V3_League_Seasons', column: 'last_sync_lineups', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_lineups DATETIME" },
+    { table: 'V3_League_Seasons', column: 'last_sync_trophies', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_trophies DATETIME" },
+    { table: 'V3_Players', column: 'is_trophy_synced', sql: "ALTER TABLE V3_Players ADD COLUMN is_trophy_synced BOOLEAN DEFAULT 0" },
+    { table: 'V3_Players', column: 'last_sync_trophies', sql: "ALTER TABLE V3_Players ADD COLUMN last_sync_trophies DATETIME" }
+];
+
+for (const m of migrations) {
+    try {
+        db.run(m.sql);
+        console.log(`🔄 Migration: ${m.column} added to ${m.table}`);
+    } catch (e) {
+        if (!e.message?.includes('duplicate column')) {
+            console.warn(`Migration note (${m.table}.${m.column}):`, e.message);
+        }
     }
 }
 
