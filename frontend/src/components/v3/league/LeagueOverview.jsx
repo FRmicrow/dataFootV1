@@ -27,10 +27,10 @@ const LeagueOverview = ({
         <div className="space-y-8 animate-slide-up">
 
             {/* Top Grid: Explorer & Leaders */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
 
-                {/* Left: Squad Explorer (Takes 2/3 width on large screens) */}
-                <div className="lg:col-span-2">
+                {/* Left: Squad Explorer (Takes 3/4 width) */}
+                <div className="xl:col-span-3">
                     <SquadExplorer
                         leagueId={leagueId}
                         season={season}
@@ -38,26 +38,20 @@ const LeagueOverview = ({
                     />
                 </div>
 
-                {/* Right: League Leaders (Takes 1/3 width) */}
-                <div className="lg:col-span-1">
-                    <LeagueLeaders
-                        topScorers={topScorers}
-                        topAssists={topAssists}
-                        topRated={topRated}
-                    />
+                {/* Right: League Leaders (Takes 1/4 width) */}
+                <div className="xl:col-span-1 h-full">
+                    {/* For Leaders, we'll revert to vertical list to fit the narrow column */}
+                    <div className="flex flex-col gap-6">
+                        <LeagueLeaders
+                            topScorers={topScorers}
+                            topAssists={topAssists}
+                            topRated={topRated}
+                            layout="vertical"
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Bottom: Squad Directory */}
-            <div className="pt-8 border-t border-slate-200 dark:border-slate-700">
-                <SquadList
-                    teams={standings}
-                    selectedTeamId={selectedTeamId}
-                    setSelectedTeamId={setSelectedTeamId}
-                    squadLoading={squadLoading}
-                    teamSquad={teamSquad}
-                />
-            </div>
 
         </div>
     );

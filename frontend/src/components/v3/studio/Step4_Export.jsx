@@ -27,7 +27,7 @@ const Step4_Export = () => {
     };
     const { width, height } = getDimensions();
 
-    // Construct Dynamic Title (Mirrored from Step3)
+    // Construct Dynamic Title
     const formatStat = (key) => {
         if (!key) return 'Data';
         return key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -51,21 +51,14 @@ const Step4_Export = () => {
     const startRecording = async () => {
         setRecordUrl(null);
         chunksRef.current = [];
-
-        // 1. Reset Animation by changing key (remounts BarChartRace)
         setAnimationKey(prev => prev + 1);
 
-        // 2. Wait 500ms for resources and layout stability
         await new Promise(r => setTimeout(r, 500));
 
-        // 3. Setup MediaRecorder
         const canvas = canvasRef.current;
-        if (!canvas) {
-            console.error("Canvas ref not found");
-            return;
-        }
+        if (!canvas) return;
 
-        const stream = canvas.captureStream(60); // 60 FPS for smooth video
+        const stream = canvas.captureStream(60);
         let mimeType = 'video/webm;codecs=vp9';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
             mimeType = 'video/webm';
@@ -73,7 +66,7 @@ const Step4_Export = () => {
 
         const recorder = new MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: 8000000 // 8 Mbps for high quality
+            videoBitsPerSecond: 8000000
         });
 
         recorder.ondataavailable = (e) => {
@@ -95,7 +88,6 @@ const Step4_Export = () => {
 
     const handleAnimationComplete = () => {
         if (isRecording && recorderRef.current && recorderRef.current.state === 'recording') {
-            // Buffer to catch the final stationary frame
             setTimeout(() => {
                 if (recorderRef.current && recorderRef.current.state === 'recording') {
                     recorderRef.current.stop();
@@ -107,22 +99,27 @@ const Step4_Export = () => {
     const generateFilename = () => {
         const stat = filters.stat || 'stats';
         const range = chartData.meta?.range || '2010-2024';
-        return `bar_race_${stat}_${range}.webm`;
+        return `statfoot_studio_${stat}_${range}.webm`;
     };
 
     return (
-        <div className="step-container export-container">
-            <header className="export-header">
-                <h2>Export Manager</h2>
-                <p>Record your animation and download high-quality video for social media.</p>
-            </header>
+        <div className="step-container animate-fade-in">
+            <h2 className="step-title-v2">Master Asset Production</h2>
 
-            <div className="export-main">
-                <div className="recording-preview-box">
-                    <div className="canvas-wrapper" style={{
-                        aspectRatio: width / height,
-                        maxWidth: height > width ? '300px' : '600px',
-                        margin: '0 auto'
+            <div className="export-layout-v2">
+                {/* Render Stage */}
+                <div className="render-stage-v2">
+                    {isRecording && (
+                        <div className="rec-overlay-v2">
+                            <div className="rec-dot-v2"></div>
+                            <span>ASSET CAPTURE IN PROGRESS</span>
+                        </div>
+                    )}
+
+                    <div className="canvas-wrapper-v2" style={{
+                        width: '100%',
+                        maxWidth: height > width ? '300px' : '640px',
+                        aspectRatio: width / height
                     }}>
                         {(visual.type === 'line' || visual.type === 'bump') ? (
                             <LineChartRace
@@ -132,11 +129,7 @@ const Step4_Export = () => {
                                 width={width}
                                 height={height}
                                 isPlaying={isRecording}
-                                onComplete={() => {
-                                    handleAnimationComplete();
-                                    setIsRecording(false); // Ensure state update on completion
-                                    setIsRecording(false); // Ensure state update on completion
-                                }}
+                                onComplete={handleAnimationComplete}
                                 title={chartTitle}
                                 speed={1.0}
                                 isBump={visual.type === 'bump'}
@@ -151,84 +144,81 @@ const Step4_Export = () => {
                                 width={width}
                                 height={height}
                                 isPlaying={isRecording}
-                                onComplete={() => {
-                                    handleAnimationComplete();
-                                    setIsRecording(false);
-                                }}
+                                onComplete={handleAnimationComplete}
                                 title={chartTitle}
                                 speed={1.0}
                             />
                         )}
+                    </div>
+                </div>
+
+                {/* Production Sidebar */}
+                <div className="export-sidebar-v2">
+                    <div className="asset-card-v2">
+                        <span className="sidebar-title-v2">Output Specifications</span>
+
+                        <div className="spec-list-v2">
+                            <div className="spec-item-v2">
+                                <span className="spec-label-v2">Architecture</span>
+                                <span className="spec-value-v2">{visual.type.toUpperCase()}</span>
+                            </div>
+                            <div className="spec-item-v2">
+                                <span className="spec-label-v2">Dimensions</span>
+                                <span className="spec-value-v2">{width}x{height}</span>
+                            </div>
+                            <div className="spec-item-v2">
+                                <span className="spec-label-v2">Framerate</span>
+                                <span className="spec-value-v2">60 FPS</span>
+                            </div>
+                            <div className="spec-item-v2">
+                                <span className="spec-label-v2">Bitrate</span>
+                                <span className="spec-value-v2">8.0 MBPS</span>
+                            </div>
+                        </div>
+
+                        {!recordUrl && !isRecording && (
+                            <button className="btn-primary-v2" onClick={startRecording}>
+                                Initialize Render
+                            </button>
+                        )}
 
                         {isRecording && (
-                            <div className="rec-overlay">
-                                <div className="rec-dot"></div>
-                                <span>RECORDING...</span>
+                            <div className="status-box-v2">
+                                <p className="status-text-v2">Processing Frames...</p>
+                                <button className="btn-secondary-v2" style={{ width: '100%', padding: '0.8rem' }} onClick={() => recorderRef.current?.stop()}>
+                                    Force Stop
+                                </button>
+                            </div>
+                        )}
+
+                        {recordUrl && (
+                            <div className="result-zone-v2">
+                                <div className="status-box-v2" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                                    <p className="status-text-v2" style={{ color: '#10b981' }}>Capture Finalized ({fileSize}MB)</p>
+                                </div>
+                                <a
+                                    href={recordUrl}
+                                    download={generateFilename()}
+                                    className="btn-download-v2"
+                                >
+                                    💾 Download Asset
+                                </a>
+                                <button className="re-record-btn-v2" onClick={() => setRecordUrl(null)}>
+                                    Reset Production Pipeline
+                                </button>
                             </div>
                         )}
                     </div>
-                </div>
 
-                <div className="export-sidebar">
-                    <div className="format-info">
-                        <div className="info-item">
-                            <span className="label">Format</span>
-                            <span className="value">{visual.format}</span>
-                        </div>
-                        <div className="info-item">
-                            <span className="label">Resolution</span>
-                            <span className="value">{width} x {height}</span>
-                        </div>
-                    </div>
-
-                    {!recordUrl && !isRecording && (
-                        <div className="export-actions">
-                            <button className="btn-primary btn-record" onClick={startRecording}>
-                                ⏺ Start Rendering
-                            </button>
-                            <p className="hint">The animation will play once to record. Don't close this tab.</p>
-                        </div>
-                    )}
-
-                    {isRecording && (
-                        <div className="export-status">
-                            <div className="spinner"></div>
-                            <p>Capturing frames...</p>
-                            <button className="btn-secondary" onClick={() => {
-                                recorderRef.current?.stop();
-                                setIsRecording(false);
-                            }}>Cancel</button>
-                        </div>
-                    )}
-
-                    {recordUrl && (
-                        <div className="result-card">
-                            <div className="success-badge">✅ Recording Complete</div>
-                            <div className="file-details">
-                                <span>{fileSize} MB</span>
-                                <span className="dot"></span>
-                                <span>WEBM</span>
-                            </div>
-
-                            <a
-                                href={recordUrl}
-                                download={generateFilename()}
-                                className="btn-primary btn-download"
-                            >
-                                💾 Download Video
-                            </a>
-
-                            <button className="btn-text" onClick={() => setRecordUrl(null)}>
-                                🔄 Re-record
-                            </button>
-                        </div>
-                    )}
+                    <p style={{ fontSize: '0.75rem', color: '#475569', lineHeight: 1.5, padding: '0 1rem' }}>
+                        Note: The render sequence captures individual frames directly from the GPU buffer. Maintain the browser focus during this operation to ensure frame synchronization.
+                    </p>
                 </div>
             </div>
 
-            <div className="step-actions">
-                <button className="btn-back" onClick={() => goToStep(3)} disabled={isRecording}>
-                    ← Back to Preview
+            <div className="nav-actions-v2">
+                <button className="btn-secondary-v2" onClick={() => goToStep(3)} disabled={isRecording}>
+                    ← Return to Preview
                 </button>
             </div>
         </div>

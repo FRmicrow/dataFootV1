@@ -4,11 +4,41 @@
     font-family: 'Outfit', sans-serif;
 }
 
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in-down {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+}
+
+.animate-fade-in-down {
+    animation: fade-in-down 0.3s ease-out;
+}
+
 /* Hero Section */
 .player-hero {
     background: linear-gradient(135deg, #1e293b, #0f172a);
-    border-radius: 24px;
-    padding: 3rem;
+    border-radius: 40px;
+    padding: 2.5rem 3.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -67,10 +97,11 @@
 }
 
 .player-name {
-    font-size: 3.5rem;
-    font-weight: 800;
-    margin: 0.5rem 0 1.5rem 0;
-    letter-spacing: -2px;
+    font-size: 2.25rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: -1.5px;
+    line-height: 1;
 }
 
 .nationality-val {
@@ -88,7 +119,8 @@
 
 .player-meta-badges {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
+    margin-top: 1.5rem;
 }
 
 .meta-badge {
@@ -132,6 +164,117 @@
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+/* NEW STYLES FOR US_090-093 */
+.current-club-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    padding: 6px 16px;
+    border-radius: 12px;
+    margin-top: 1rem;
+    width: fit-content;
+}
+
+.current-club-badge.historical {
+    background: rgba(100, 116, 139, 0.1);
+    border-color: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+}
+
+.current-club-badge .club-mini-logo {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.current-club-badge span {
+    font-size: 0.8rem;
+    color: #10b981;
+}
+
+.current-club-badge.historical span {
+    color: #94a3b8;
+}
+
+.current-club-badge .season-val {
+    font-weight: 800;
+    opacity: 0.7;
+}
+
+.national-team-row {
+    background: rgba(251, 191, 36, 0.05) !important;
+}
+
+.major-league-row {
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.major-league-row .league-cell {
+    position: relative;
+}
+
+.star-indicator {
+    margin-left: 6px;
+    font-size: 0.8rem;
+}
+
+.btn-deep-sync-ghost {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #64748b;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-deep-sync-ghost:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #f1f5f9;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.career-group-block {
+    background: rgba(15, 23, 42, 0.2);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.group-header {
+    cursor: pointer;
+    padding: 1.25rem 1.5rem;
+    transition: background 0.2s;
+}
+
+.group-header:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.group-header.expanded {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.chevron-icon {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: #475569;
+    transition: transform 0.3s;
+}
+
+.chevron-icon.open {
+    transform: rotate(180deg);
 }
 
 .foot-val {
@@ -247,6 +390,16 @@
 
 .team-cell .name {
     font-weight: 700;
+}
+
+.national-tag {
+    font-size: 0.65rem;
+    background: #fbbf24;
+    color: #000;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-weight: 900;
+    margin-left: 8px;
 }
 
 .cat-label {

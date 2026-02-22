@@ -10,7 +10,7 @@ import PlayerProfilePageV3 from './components/v3/PlayerProfilePageV3';
 import SearchPageV3 from './components/v3/SearchPageV3';
 import ClubProfilePageV3 from './components/v3/ClubProfilePageV3';
 import ContentStudioV3 from './components/v3/ContentStudioV3';
-import HealthCheckPage from './components/v3/HealthCheckPage';
+import HealthCenterPage from './components/v3/HealthCenterPage';
 import ImportTrophiesPage from './components/v3/ImportTrophiesPage';
 import ImportEventsPage from './components/v3/ImportEventsPage';
 import ImportLineupsPage from './components/v3/ImportLineupsPage';
@@ -51,8 +51,8 @@ function App() {
                             <NavLink to="/live-bet" className="nav-link" style={{ color: '#f59e0b', fontWeight: 'bold' }}>
                                 🔥 Live Bet
                             </NavLink>
-                            <NavLink to="/health" className="nav-link">
-                                Health
+                            <NavLink to="/health" className="nav-link" style={{ color: '#10b981' }}>
+                                🛡️ Health
                             </NavLink>
                         </div>
                     </nav>
@@ -65,6 +65,7 @@ function App() {
                         <Route element={<V3Layout />}>
                             <Route path="/dashboard" element={<V3Dashboard />} />
                             <Route path="/import" element={<ImportMatrixPage />} />
+                            <Route path="/import/matrix-status" element={<ImportMatrixPage />} />
                             <Route path="/import/old" element={<ImportV3Page />} />
                             <Route path="/leagues" element={<V3LeaguesList />} />
                             <Route path="/league/:id" element={<SeasonOverviewPage />} />
@@ -73,7 +74,7 @@ function App() {
                             <Route path="/search" element={<SearchPageV3 />} />
                             <Route path="/club/:id" element={<ClubProfilePageV3 />} />
                             <Route path="/studio" element={<ContentStudioV3 />} />
-                            <Route path="/health" element={<HealthCheckPage />} />
+                            <Route path="/health" element={<HealthCenterPage />} />
                             <Route path="/trophies" element={<ImportTrophiesPage />} />
                             <Route path="/events" element={<ImportEventsPage />} />
                             <Route path="/lineups-import" element={<ImportLineupsPage />} />

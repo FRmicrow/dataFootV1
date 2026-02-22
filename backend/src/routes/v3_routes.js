@@ -1,5 +1,6 @@
 import express from 'express';
 import { getLeagueSeasonsStatus, initializeSeasons, getSyncStatus } from '../controllers/v3/leagueSeasonController.js';
+import { getStructuredLeagues } from '../controllers/v3/leagueStructuredController.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import {
     importLeagueSchema,
@@ -18,7 +19,11 @@ import {
     healthCheckLeagueSchema,
     healthCheckDeepSchema,
     importTrophiesSchema,
-    preferencesSchema
+    preferencesSchema,
+    mergeSchema,
+    duplicatesSchema,
+    prescriptionExecuteSchema,
+    prescriptionListSchema
 } from '../schemas/v3Schemas.js';
 
 const router = express.Router();
@@ -29,6 +34,7 @@ const router = express.Router();
  */
 router.get('/leagues/:id/seasons', getLeagueSeasonsStatus);
 router.get('/league/:id/sync-status', getSyncStatus);
+router.get('/leagues/structured', getStructuredLeagues);
 
 /**
  * @route POST /api/leagues/seasons/init
@@ -214,5 +220,20 @@ router.get('/import/matrix-status', getImportMatrixStatus);
 router.post('/import/audit-scan', triggerAuditScan);
 router.post('/import/league/:id/deep-sync', triggerDeepSync);
 router.post('/import/leagues/batch-deep-sync', triggerBatchDeepSync);
+
+/**
+ * @route Entity Resolution (US_061)
+ */
+import { getPotentialDuplicates, mergePlayers } from '../controllers/v3/resolutionController.js';
+router.get('/resolution/duplicates', validateRequest(duplicatesSchema), getPotentialDuplicates);
+router.post('/resolution/merge', validateRequest(mergeSchema), mergePlayers);
+
+/**
+ * @route Health Prescriptions (US_062)
+ */
+import { generatePrescriptions, getPrescriptions, executePrescription } from '../controllers/v3/healthController.js';
+router.post('/health/prescribe', generatePrescriptions);
+router.get('/health/prescriptions', validateRequest(prescriptionListSchema), getPrescriptions);
+router.post('/health/execute', validateRequest(prescriptionExecuteSchema), executePrescription);
 
 export default router;

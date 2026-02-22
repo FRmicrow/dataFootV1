@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import { HealthIntelligenceService } from '../../services/v3/HealthIntelligenceService.js';
 
 /**
  * V3 Dashboard Controller
@@ -7,20 +8,61 @@ import db from '../../config/database.js';
 
 export const getV3Stats = async (req, res) => {
     try {
-        const leagueCount = db.get("SELECT COUNT(*) as count FROM V3_Leagues").count;
-        const playerCount = db.get("SELECT COUNT(*) as count FROM V3_Players").count;
-        const teamCount = db.get("SELECT COUNT(*) as count FROM V3_Teams").count;
-        const seasonCount = db.get("SELECT COUNT(*) as count FROM V3_League_Seasons WHERE imported_players = 1").count;
+        // 1. Volumetrics (US_110)
+        const volumetrics = {
+            total_leagues: db.get("SELECT COUNT(*) as count FROM V3_Leagues").count,
+            total_players: db.get("SELECT COUNT(*) as count FROM V3_Players").count,
+            total_clubs: db.get("SELECT COUNT(*) as count FROM V3_Teams").count,
+            total_fixtures: db.get("SELECT COUNT(*) as count FROM V3_Fixtures").count,
+            imported_seasons: db.get("SELECT COUNT(*) as count FROM V3_League_Seasons WHERE imported_players = 1").count
+        };
+
+        // 2. Continental Distribution (Leagues)
+        const distribution = db.all(`
+            SELECT c.continent, COUNT(*) as count
+            FROM V3_Leagues l
+            JOIN V3_Countries c ON l.country_id = c.country_id
+            WHERE EXISTS (SELECT 1 FROM V3_League_Seasons ls WHERE ls.league_id = l.league_id AND ls.imported_players = 1)
+            GROUP BY c.continent
+        `);
+
+        // 3. Health Intelligence Score (US_113)
+        const health = HealthIntelligenceService.calculateScore();
+
+        // 4. Distribution: Players by Country (Top 10) - for Charts
+        const players_by_country = db.all(`
+            SELECT c.name, COUNT(*) as count
+            FROM V3_Players p
+            JOIN V3_Countries c ON p.nationality = c.name
+            GROUP BY c.name
+            ORDER BY count DESC
+            LIMIT 10
+        `);
+
+        // 5. Fixture Growth Trends (US_112)
+        const fixture_trends = db.all(`
+            SELECT strftime('%Y', date) as year, COUNT(*) as count
+            FROM V3_Fixtures
+            WHERE date IS NOT NULL
+            GROUP BY year
+            ORDER BY year ASC
+        `);
 
         res.json({
-            leagues: leagueCount,
-            players: playerCount,
-            teams: teamCount,
-            importedSeasons: seasonCount
+            volumetrics,
+            distribution,
+            players_by_country,
+            fixture_trends,
+            health_summary: {
+                score: health.score,
+                coverage_percent: health.coverage_percent,
+                orphans: health.details.orphans,
+                partial_seasons: health.details.missing_fixture_seasons
+            }
         });
     } catch (error) {
-        console.error("Error fetching V3 stats:", error);
-        res.status(500).json({ error: "Failed to fetch V3 stats" });
+        console.error("Error fetching V3 Intelligence Hub stats:", error);
+        res.status(500).json({ error: "Failed to fetch aggregated intelligence" });
     }
 };
 

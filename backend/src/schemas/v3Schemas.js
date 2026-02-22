@@ -68,25 +68,28 @@ export const predictionsSyncSchema = z.object({
 
 export const studioQuerySchema = z.object({
     body: z.object({
-        metric: z.string().min(1, "Metric is required"),
-        primaryDimension: z.string().min(1, "Primary dimension is required"),
-        secondaryDimension: z.string().optional(),
-        aggregation: z.enum(['Sum', 'Avg', 'Count', 'Max', 'Min']).default('Sum'),
-        limit: z.coerce.number().min(1).max(500).default(50),
-        filters: z.array(z.object({
-            field: z.string(),
-            operator: z.string(),
-            value: z.union([z.string(), z.number(), z.boolean(), z.array(z.string()), z.array(z.number())])
-        })).optional()
+        stat: z.string().min(1, "Stat key is required"),
+        filters: z.object({
+            years: z.array(z.coerce.number()).length(2, "Years range [min, max] is required"),
+            leagues: z.array(z.coerce.number()).optional(),
+            countries: z.array(z.string()).optional(),
+            teams: z.array(z.coerce.number()).optional()
+        }),
+        selection: z.object({
+            mode: z.enum(['top_n', 'manual']),
+            value: z.coerce.number().optional(),
+            players: z.array(z.coerce.number()).optional()
+        }).optional(),
+        options: z.object({
+            cumulative: z.boolean().optional()
+        }).optional()
     })
 });
 
 export const studioRankingsSchema = z.object({
     body: z.object({
-        metric: z.string().min(1, "Metric is required"),
-        season: z.coerce.number().optional(),
-        minMinutes: z.coerce.number().optional(),
-        limit: z.coerce.number().min(1).max(100).default(20)
+        league_id: z.coerce.number().positive(),
+        season: z.coerce.number().min(2000).max(2030)
     })
 });
 
@@ -141,5 +144,32 @@ export const preferencesSchema = z.object({
         favorite_leagues: z.array(z.coerce.number()).optional(),
         favorite_teams: z.array(z.coerce.number()).optional(),
         tracked_leagues: z.array(z.coerce.number()).optional()
+    })
+});
+
+export const mergeSchema = z.object({
+    body: z.object({
+        id1: z.coerce.number().positive(),
+        id2: z.coerce.number().positive(),
+        confidence: z.coerce.number().min(0).max(100).optional()
+    })
+});
+
+export const duplicatesSchema = z.object({
+    query: z.object({
+        threshold: z.coerce.number().min(0).max(100).optional()
+    })
+});
+
+export const prescriptionExecuteSchema = z.object({
+    body: z.object({
+        id: z.coerce.number().positive()
+    })
+});
+
+export const prescriptionListSchema = z.object({
+    query: z.object({
+        status: z.enum(['PENDING', 'RESOLVED', 'IGNORED']).optional(),
+        type: z.string().optional()
     })
 });

@@ -1,0 +1,429 @@
+.health-center-page {
+    padding: 2rem;
+    color: #f1f5f9;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Stats Dashboard */
+.health-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.health-stat-card {
+    background: rgba(30, 41, 59, 0.4);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s ease;
+}
+
+.health-stat-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.health-stat-card .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.health-stat-card .label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 1px;
+}
+
+.health-stat-card .icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.health-stat-card.health-score .icon-wrap {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.health-stat-card.gaps .icon-wrap {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.health-stat-card.duplicates .icon-wrap {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.health-stat-card .value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.health-stat-card .trend {
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    color: #64748b;
+}
+
+/* Main Layout */
+.health-main-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+}
+
+/* Prescription Hub */
+.prescription-hub {
+    background: rgba(30, 41, 59, 0.4);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.hub-header {
+    padding: 1.5rem;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hub-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.hub-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.prescription-table-v3 {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.prescription-table-v3 th {
+    text-align: left;
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 800;
+    background: rgba(15, 23, 42, 0.2);
+}
+
+.prescription-table-v3 td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.prescription-row {
+    transition: background 0.2s;
+}
+
+.prescription-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.type-pill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.type-pill.MISSING_DATA {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.type-pill.DUPLICATE_CANDIDATE {
+    background: rgba(168, 85, 247, 0.1);
+    color: #a855f7;
+}
+
+.type-pill.DATA_INCONSISTENCY {
+    background: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+}
+
+.priority-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.prio-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.priority-HIGH .prio-dot {
+    background: #ef4444;
+    box-shadow: 0 0 8px #ef4444;
+}
+
+.priority-MEDIUM .prio-dot {
+    background: #f59e0b;
+}
+
+.priority-LOW .prio-dot {
+    background: #10b981;
+}
+
+.desc-cell-v3 .main {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.desc-cell-v3 .meta {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+/* Repair Console */
+.repair-console {
+    background: #0f172a;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+}
+
+.console-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.console-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6366f1;
+}
+
+.console-logs {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.log-entry {
+    display: flex;
+    gap: 10px;
+    line-height: 1.4;
+}
+
+.log-entry.info {
+    color: #94a3b8;
+}
+
+.log-entry.success {
+    color: #10b981;
+}
+
+.log-entry.error {
+    color: #ef4444;
+}
+
+.log-entry.warning {
+    color: #f59e0b;
+}
+
+/* Comparison Modal */
+.comparison-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.comparison-modal {
+    background: #1e293b;
+    width: 90%;
+    max-width: 1000px;
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 2rem;
+    background: rgba(15, 23, 42, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-content {
+    padding: 2.5rem;
+    display: flex;
+    gap: 3rem;
+    align-items: center;
+}
+
+.entity-card {
+    flex: 1;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.entity-card.master {
+    border-color: #6366f1;
+}
+
+.entity-card .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+.master-badge {
+    background: #6366f1;
+    color: white;
+}
+
+.ghost-badge {
+    background: #475569;
+    color: #94a3b8;
+}
+
+.entity-info h3 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+}
+
+.entity-id {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+}
+
+.entity-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.detail-row .lbl {
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.detail-row .val {
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.merge-vs {
+    width: 60px;
+    height: 60px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6366f1;
+    font-weight: 900;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.modal-footer {
+    padding: 1.5rem 2rem;
+    background: rgba(15, 23, 42, 0.3);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-primary-v3 {
+    background: #6366f1;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Progress Overlay */
+.repair-progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.repair-progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    transition: width 0.3s ease;
+}

@@ -23,8 +23,26 @@ const migrations = [
     { table: 'V3_League_Seasons', column: 'last_sync_events', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_events DATETIME" },
     { table: 'V3_League_Seasons', column: 'last_sync_lineups', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_lineups DATETIME" },
     { table: 'V3_League_Seasons', column: 'last_sync_trophies', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_trophies DATETIME" },
+    { table: 'V3_League_Seasons', column: 'coverage_fixtures', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN coverage_fixtures BOOLEAN DEFAULT 0" },
+    { table: 'V3_League_Seasons', column: 'last_updated', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_updated DATETIME" },
     { table: 'V3_Players', column: 'is_trophy_synced', sql: "ALTER TABLE V3_Players ADD COLUMN is_trophy_synced BOOLEAN DEFAULT 0" },
-    { table: 'V3_Players', column: 'last_sync_trophies', sql: "ALTER TABLE V3_Players ADD COLUMN last_sync_trophies DATETIME" }
+    { table: 'V3_Players', column: 'last_sync_trophies', sql: "ALTER TABLE V3_Players ADD COLUMN last_sync_trophies DATETIME" },
+    {
+        table: 'V3_Health_Prescriptions',
+        column: 'id',
+        sql: `CREATE TABLE IF NOT EXISTS V3_Health_Prescriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL,
+            priority TEXT DEFAULT 'MEDIUM',
+            status TEXT DEFAULT 'PENDING',
+            target_entity_type TEXT,
+            target_entity_id INTEGER,
+            description TEXT,
+            metadata TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolved_at DATETIME
+        )`
+    }
 ];
 
 for (const m of migrations) {

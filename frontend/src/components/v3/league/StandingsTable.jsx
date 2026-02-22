@@ -106,7 +106,7 @@ const StandingsTable = ({
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Link to={`/team/${t.team_id}`} className="flex items-center gap-3 hover:text-blue-600 dark:hover:text-blue-400 font-medium text-slate-900 dark:text-slate-100 transition-colors">
+                                            <Link to={`/club/${t.team_id}`} className="flex items-center gap-3 hover:text-blue-600 dark:hover:text-blue-400 font-medium text-slate-900 dark:text-slate-100 transition-colors">
                                                 <img src={t.team_logo} alt={t.team_name} className="w-6 h-6 object-contain" onError={(e) => e.target.style.display = 'none'} />
                                                 <span>{t.team_name}</span>
                                             </Link>
@@ -127,8 +127,8 @@ const StandingsTable = ({
                                                     <span
                                                         key={i}
                                                         className={`w-2 h-2 rounded-full ${char === 'W' ? 'bg-emerald-500' :
-                                                                char === 'D' ? 'bg-amber-400' :
-                                                                    char === 'L' ? 'bg-rose-500' : 'bg-slate-300'
+                                                            char === 'D' ? 'bg-amber-400' :
+                                                                char === 'L' ? 'bg-rose-500' : 'bg-slate-300'
                                                             }`}
                                                         title={char}
                                                     />

@@ -9,14 +9,19 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    // US_081 Sorting State
+    const [sortConfig, setSortConfig] = useState({ key: 'goals', direction: 'DESC' });
+
     useEffect(() => {
         const fetchExplorerData = async () => {
             setLoading(true);
             try {
-                // api.getSeasonPlayers(id, year, params)
+                // Fetch with explicit sorting
                 const res = await api.getSeasonPlayers(leagueId, season, {
                     teamId: teamId,
-                    position: position
+                    position: position,
+                    sortBy: sortConfig.key,
+                    order: sortConfig.direction
                 });
                 setPlayers(res);
             } catch (err) {
@@ -29,17 +34,39 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
         if (leagueId && season) {
             fetchExplorerData();
         }
-    }, [leagueId, season, teamId, position]);
+    }, [leagueId, season, teamId, position, sortConfig]);
+
+    const handleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'DESC' ? 'ASC' : 'DESC'
+        }));
+    };
+
+    const SortableHeader = ({ label, sortKey, align = 'left', width }) => (
+        <th
+            className={`px-2 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors group ${align === 'center' ? 'text-center' : ''}`}
+            style={width ? { width } : {}}
+            onClick={() => handleSort(sortKey)}
+        >
+            <div className={`flex items-center gap-1 ${align === 'center' ? 'justify-center' : ''}`}>
+                <span className="truncate">{label}</span>
+                <span className={`text-[8px] transition-opacity ${sortConfig.key === sortKey ? 'opacity-100 text-blue-500' : 'opacity-0 group-hover:opacity-40'}`}>
+                    {sortConfig.direction === 'DESC' ? '▼' : '▲'}
+                </span>
+            </div>
+        </th>
+    );
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 animate-slide-up">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 animate-slide-up h-[calc(100vh-210px)] flex flex-col">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
                 <div>
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
                         <span>🔍</span> Squad Explorer
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Filter and analyze player performance across the league
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                        Filter and analyze player performance
                     </p>
                 </div>
 
@@ -47,7 +74,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                     <select
                         value={teamId}
                         onChange={(e) => setTeamId(e.target.value)}
-                        className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                     >
                         <option value="">All Teams</option>
                         {teams.map(t => (
@@ -58,7 +85,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                     <select
                         value={position}
                         onChange={(e) => setPosition(e.target.value)}
-                        className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                     >
                         <option value="ALL">All Positions</option>
                         <option value="Goalkeeper">Goalkeepers</option>
@@ -69,85 +96,77 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="flex-1 overflow-y-auto border border-slate-100 dark:border-slate-700 rounded-2xl scrollbar-thin overflow-x-hidden">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-3">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p className="font-medium animate-pulse">Querying V3 Dataset...</p>
+                    <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3">
+                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-[10px] font-black uppercase tracking-widest">Querying Dataset...</p>
                     </div>
                 ) : (
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-700/50 dark:text-slate-400">
+                    <table className="w-full text-sm text-left border-collapse table-fixed">
+                        <thead className="text-[9px] text-slate-400 uppercase bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 border-b border-slate-100 dark:border-slate-800">
                             <tr>
-                                <th className="px-4 py-3">Player</th>
-                                <th className="px-4 py-3">Team</th>
-                                <th className="px-4 py-3 text-center">Pos</th>
-                                <th className="px-4 py-3 text-center">Apps</th>
-                                <th className="px-4 py-3 text-center">Mins</th>
-                                <th className="px-4 py-3 text-center text-emerald-600 font-bold">G</th>
-                                <th className="px-4 py-3 text-center text-blue-600 font-bold">A</th>
-                                <th className="px-4 py-3 text-center text-amber-500">Y</th>
-                                <th className="px-4 py-3 text-center text-rose-500">R</th>
-                                <th className="px-4 py-3 text-center">Rating</th>
+                                <SortableHeader label="Player" sortKey="name" width="120px" />
+                                <SortableHeader label="Team" sortKey="team" width="100px" />
+                                <SortableHeader label="Pos" sortKey="pos" align="center" width="40px" />
+                                <SortableHeader label="App" sortKey="apps" align="center" width="40px" />
+                                <SortableHeader label="90s" sortKey="mins" align="center" width="40px" />
+                                <SortableHeader label="G" sortKey="goals" align="center" width="35px" />
+                                <SortableHeader label="A" sortKey="assists" align="center" width="35px" />
+                                <SortableHeader label="Y" sortKey="yellow" align="center" width="35px" />
+                                <SortableHeader label="Rat" sortKey="rating" align="center" width="50px" />
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                            {players.slice(0, 15).map((player) => (
-                                <tr key={player.player_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                    <td className="px-4 py-3 font-medium">
-                                        <Link to={`/player/${player.player_id}`} className="flex items-center gap-3 text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
-                                            <img src={player.photo_url} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-600" />
-                                            <span>{player.name}</span>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {players.map((player) => (
+                                <tr key={`${player.player_id}-${player.team_id}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                                    <td className="px-2 py-2">
+                                        <Link to={`/player/${player.player_id}`} className="flex items-center gap-1.5 group/p">
+                                            <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
+                                                <img src={player.photo_url} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                            <span className="font-bold text-[10px] text-slate-700 dark:text-slate-200 group-hover/p:text-blue-600 dark:group-hover/p:text-blue-400 leading-tight line-clamp-2">
+                                                {player.name}
+                                            </span>
                                         </Link>
                                     </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                                            <img src={player.team_logo} alt="" className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                            <span className="truncate max-w-[120px]">{player.team_name}</span>
-                                        </div>
+                                    <td className="px-2 py-2">
+                                        <Link to={`/club/${player.team_id}`} className="flex items-center gap-1.5 group/t">
+                                            <img src={player.team_logo} alt="" className="w-3 h-3 object-contain shrink-0" />
+                                            <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 group-hover/t:text-slate-900 dark:group-hover/t:text-slate-100 truncate">
+                                                {player.team_name}
+                                            </span>
+                                        </Link>
                                     </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide
-                                            ${player.position === 'Goalkeeper' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
-                                            ${player.position === 'Defender' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : ''}
-                                            ${player.position === 'Midfielder' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}
-                                            ${player.position === 'Attacker' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : ''}
-                                        `}>
-                                            {player.position?.substring(0, 3)}
-                                        </span>
+                                    <td className="px-1 py-2 text-center">
+                                        <span className="text-[9px] font-black text-slate-400">{player.position?.substring(0, 1)}</span>
                                     </td>
-                                    <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400">{player.appearances}</td>
-                                    <td className="px-4 py-3 text-center text-slate-500 text-xs">{player.minutes}'</td>
-                                    <td className="px-4 py-3 text-center font-bold text-emerald-600">{player.goals}</td>
-                                    <td className="px-4 py-3 text-center font-bold text-blue-600">{player.assists}</td>
-                                    <td className="px-4 py-3 text-center text-slate-500">{player.yellow}</td>
-                                    <td className="px-4 py-3 text-center text-slate-500">{player.red}</td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`inline-block px-2 py-1 rounded font-bold text-xs ${parseFloat(player.rating) >= 7.5 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                                                parseFloat(player.rating) >= 7.0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                    'bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-400'
-                                            }`}>
+                                    <td className="px-1 py-2 text-center text-[10px] font-bold text-slate-600 dark:text-slate-300">{player.appearances}</td>
+                                    <td className="px-1 py-2 text-center text-[9px] font-medium text-slate-400">{Math.round(player.minutes / 90) || 0}</td>
+                                    <td className={`px-1 py-2 text-center text-[10px] font-black ${player.goals > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>{player.goals}</td>
+                                    <td className={`px-1 py-2 text-center text-[10px] font-black ${player.assists > 0 ? 'text-blue-500' : 'text-slate-300'}`}>{player.assists}</td>
+                                    <td className={`px-1 py-2 text-center text-[10px] font-black ${player.yellow > 0 ? 'text-amber-500' : 'text-slate-300'}`}>{player.yellow}</td>
+                                    <td className="px-1 py-2 text-center">
+                                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/5 px-1 rounded">
                                             {player.rating || '-'}
                                         </span>
                                     </td>
                                 </tr>
                             ))}
-                            {players.length === 0 && (
-                                <tr>
-                                    <td colSpan="10" className="px-4 py-8 text-center text-slate-500">
-                                        No players found matching current filters.
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
                 )}
-                {players.length >= 15 && (
-                    <div className="px-6 py-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 text-xs text-center text-slate-500">
-                        Showing top 15 results. Refine filters for more specific search.
-                    </div>
-                )}
             </div>
+
+            {!loading && players.length > 0 && (
+                <div className="shrink-0 mt-4 flex items-center justify-between text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                    <span>{players.length} Players Identified</span>
+                    <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        Live Analysis Mode
+                    </span>
+                </div>
+            )}
         </div>
     );
 };

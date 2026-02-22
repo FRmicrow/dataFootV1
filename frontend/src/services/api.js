@@ -34,6 +34,7 @@ export default {
     getImportedLeagues: () => api.get('/leagues/imported'),
     getLeagueSeasons: (id) => api.get(`/leagues/${id}/seasons`),
     getAvailableSeasons: (id) => api.get(`/league/${id}/available-seasons`),
+    getStructuredLeagues: () => api.get('/leagues/structured'),
     getSeasonOverview: (id, year) => api.get(`/league/${id}/season/${year}`),
     getSeasonPlayers: (id, year, params) => api.get(`/league/${id}/season/${year}/players`, { params }),
     getStandings: (id, year) => api.get(`/league/${id}/standings?year=${year}`), // Note: Verify if query param or path param
@@ -99,4 +100,9 @@ export default {
     // --- Import Matrix (US_040, US_042) ---
     getImportMatrixStatus: () => api.get('/import/matrix-status'),
     triggerAuditScan: () => api.post('/import/audit-scan'),
+
+    // --- Health Prescriptions (US_062, US_063) ---
+    getHealthPrescriptions: (status) => api.get(`/health/prescriptions${status ? `?status=${status}` : ''}`),
+    triggerHealthPrescribe: () => api.post('/health/prescribe'),
+    executePrescription: (id) => api.post('/health/execute', { id }),
 };
