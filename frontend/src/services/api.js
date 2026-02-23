@@ -88,6 +88,8 @@ export default {
     getUpcomingFixtures: (leagueIds = []) => api.get(`/live-bet/upcoming${leagueIds.length ? `?leagues=${leagueIds.join(',')}` : ''}`),
     getMatchDetails: (id) => api.get(`/live-bet/match/${id}`),
     saveMatchOdds: (id) => api.post(`/live-bet/match/${id}/save-odds`),
+    ingestDepthOdds: (id) => api.post(`/live-bet/odds/fixture/${id}`),
+    bulkIngestOdds: (date) => api.post('/live-bet/odds/ingest-date', { date }),
 
     // --- Preferences (US_017, US_018) ---
     getPreferences: () => api.get('/preferences'),

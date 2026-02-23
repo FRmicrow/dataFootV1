@@ -1,4 +1,55 @@
+import db from '../../config/database.js';
 import { getDailyFixturesService, getUpcomingByLeaguesService, getMatchDetailsService, saveMatchOddsService } from '../../services/v3/liveBetService.js';
+
+/**
+ * PUT /api/v3/live-bet/leagues/:id/monitoring
+ * Toggle live monitoring state for a league (US_130).
+ */
+export const toggleLeagueMonitoring = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { enabled } = req.body;
+
+        db.run(
+            "UPDATE V3_Leagues SET is_live_enabled = ? WHERE league_id = ?",
+            [enabled ? 1 : 0, id]
+        );
+
+        res.json({
+            success: true,
+            league_id: id,
+            is_live_enabled: enabled
+        });
+    } catch (error) {
+        console.error("Error toggling monitoring:", error);
+        res.status(500).json({ error: "Failed to toggle monitoring" });
+    }
+};
+
+/**
+ * GET /api/v3/live-bet/leagues/monitoring
+ * Returns all leagues with their monitoring status and current live match count.
+ */
+export const getMonitoringLeagues = async (req, res) => {
+    try {
+        const sql = `
+            SELECT 
+                l.league_id, l.api_id, l.name, l.logo_url, c.name as country, l.is_live_enabled,
+                COUNT(f.fixture_id) as live_now
+            FROM V3_Leagues l
+            JOIN V3_Countries c ON l.country_id = c.country_id
+            LEFT JOIN V3_Fixtures f ON l.league_id = f.league_id 
+                AND f.status_short IN ('1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE')
+            GROUP BY l.league_id
+            ORDER BY c.name ASC, l.name ASC
+        `;
+        const leagues = db.all(sql);
+        res.json(leagues);
+    } catch (error) {
+        console.error("Error fetching monitoring leagues:", error);
+        res.status(500).json({ error: "Failed to fetch monitoring leagues" });
+    }
+};
 
 /**
  * Live Bet Controller (V3)

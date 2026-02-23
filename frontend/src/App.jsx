@@ -14,10 +14,11 @@ import HealthCenterPage from './components/v3/HealthCenterPage';
 import ImportTrophiesPage from './components/v3/ImportTrophiesPage';
 import ImportEventsPage from './components/v3/ImportEventsPage';
 import ImportLineupsPage from './components/v3/ImportLineupsPage';
-import BettingLabsPage from './components/v3/BettingLabsPage';
 import MatchDetailPage from './components/v3/MatchDetailPage';
+import LiveBetHub from './components/v3/live-bet/LiveBetHub';
 import LiveBetDashboard from './components/v3/live-bet/LiveBetDashboard';
 import LiveBetMatchDetails from './components/v3/live-bet/LiveBetMatchDetails';
+import MonitoringConsole from './components/v3/live-bet/MonitoringConsole';
 import TelemetryConsole from './components/v3/TelemetryConsole';
 import { ImportProvider } from './context/ImportContext.jsx';
 import './App.css';
@@ -44,9 +45,6 @@ function App() {
                             </NavLink>
                             <NavLink to="/import" className="nav-link">
                                 Import
-                            </NavLink>
-                            <NavLink to="/betting-labs" className="nav-link">
-                                Betting Labs
                             </NavLink>
                             <NavLink to="/live-bet" className="nav-link" style={{ color: '#f59e0b', fontWeight: 'bold' }}>
                                 🔥 Live Bet
@@ -78,8 +76,9 @@ function App() {
                             <Route path="/trophies" element={<ImportTrophiesPage />} />
                             <Route path="/events" element={<ImportEventsPage />} />
                             <Route path="/lineups-import" element={<ImportLineupsPage />} />
-                            <Route path="/betting-labs" element={<BettingLabsPage />} />
-                            <Route path="/live-bet" element={<LiveBetDashboard />} />
+                            <Route path="/live-bet" element={<LiveBetHub />} />
+                            <Route path="/live-bet/board" element={<LiveBetDashboard />} />
+                            <Route path="/live-bet/monitoring" element={<MonitoringConsole />} />
                             <Route path="/live-bet/match/:id" element={<LiveBetMatchDetails />} />
                             <Route path="/match/:id" element={<MatchDetailPage />} />
                         </Route>

@@ -1,5 +1,11 @@
 import db from '../../config/database.js';
 import footballApi from '../footballApi.js';
+import probabilityService from './probabilityService.js';
+import MarketVolatilityService from './MarketVolatilityService.js';
+import mlService from './mlService.js';
+import QuantService from './quantService.js';
+import NarrativeService from './narrativeService.js';
+import { BOOKMAKER_PRIORITY } from '../../config/betting.js';
 
 // Simple in-memory cache for daily fixtures (TTL 15 mins)
 let dailyCache = {
@@ -11,6 +17,20 @@ let dailyCache = {
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 /**
+ * Helper to get the list of leagues monitored for Live Bet intelligence (US_131)
+ */
+const getTrackedLeagues = () => {
+    try {
+        const row = db.get("SELECT tracked_leagues FROM V3_System_Preferences LIMIT 1");
+        if (!row || !row.tracked_leagues) return [];
+        return JSON.parse(row.tracked_leagues);
+    } catch (e) {
+        console.error("⚠️ Failed to parse tracked_leagues:", e.message);
+        return [];
+    }
+};
+
+/**
  * Service to handle Live Bet logic (US_010, US_011, US_012)
  */
 
@@ -18,20 +38,24 @@ const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
  * Get Daily Fixtures with Odds (US_010, US_011)
  * Fetches fixtures for today. If < 10, fetches tomorrow's.
  * Merges with Odds.
+ * US_131: Respects 'tracked_leagues' activation switch.
  */
 export const getDailyFixturesService = async (targetDate) => {
     const today = targetDate || new Date().toISOString().split('T')[0];
     const now = Date.now();
     const isToday = !targetDate || targetDate === new Date().toISOString().split('T')[0];
 
-    // 1. Check Cache (only use cache for the current day request without explicit date to avoid caching past dates wrongly, or we could key cache by date. Let's just key cache by date to be safe.)
-    // Actually our dailyCache already stores date! Let's just use it properly.
+    // US_131: Load Tracked Leagues
+    const trackedLeagues = getTrackedLeagues();
+    const hasTracking = trackedLeagues.length > 0;
+
+    // 1. Check Cache
     if (dailyCache.date === today && (now - dailyCache.timestamp < CACHE_TTL) && dailyCache.data) {
         console.log('⚡ Serving Live Bet Dashboard from Cache');
         return dailyCache.data;
     }
 
-    console.log(`🎰 Fetching Live Bet Dashboard for ${today}...`);
+    console.log(`🎰 Fetching Live Bet Dashboard for ${today}... ${hasTracking ? `(Monitoring ${trackedLeagues.length} leagues)` : '(Default: Top 5 Mode)'}`);
 
     try {
         // 2. Fetch Fixtures for Today
@@ -45,6 +69,34 @@ export const getDailyFixturesService = async (targetDate) => {
             const tomorrowResponse = await footballApi.getFixturesByDate(tomorrow);
             fixtures = [...fixtures, ...(tomorrowResponse.response || [])];
         }
+
+        // US_131: Strategic Activation Switch - Filtering
+        // Only keep leagues that are 'tracked' or match the 'Top 5' fallback if tracking is empty.
+        let allowedApiIds = [];
+        if (hasTracking) {
+            // Tracked leagues are stored by internal ID. We need to map them to api_ids.
+            const placeholders = trackedLeagues.map(() => '?').join(',');
+            const rows = db.all(`SELECT api_id FROM V3_Leagues WHERE league_id IN (${placeholders})`, trackedLeagues);
+            allowedApiIds = rows.map(r => r.api_id);
+        } else {
+            // Fallback: Top 5 most important leagues
+            const top5 = db.all(`
+                SELECT l.api_id 
+                FROM V3_Leagues l 
+                JOIN V3_Countries c ON l.country_id = c.country_id 
+                ORDER BY c.importance_rank ASC, l.importance_rank ASC 
+                LIMIT 5
+            `);
+            allowedApiIds = top5.map(r => r.api_id);
+            console.log(`   🛰️ Activation Switch: No tracked leagues. Falling back to Top 5 API IDs: [${allowedApiIds.join(', ')}]`);
+        }
+
+        const filteredFixtures = fixtures.filter(f => allowedApiIds.includes(f.league.id));
+        const skippedCount = fixtures.length - filteredFixtures.length;
+        if (skippedCount > 0) {
+            console.log(`   🛡️ Activation Switch: Skipped ${skippedCount} fixtures from non-monitored leagues.`);
+        }
+        fixtures = filteredFixtures;
 
         // 4. Fetch Odds (Bulk) - Note: This endpoint is heavy, filtering by bookmaker/bet might be needed if API allows
         // API-Football /odds endpoint with date returns a lot. We try to get for specific date.
@@ -66,10 +118,19 @@ export const getDailyFixturesService = async (targetDate) => {
             console.error("   ⚠️ Failed to fetch odds:", err.message);
         }
 
+        const fixtureIds = fixtures.map(f => f.fixture.id);
+        const predictionsMap = {};
+        if (fixtureIds.length > 0) {
+            const placeholders = fixtureIds.map(() => '?').join(',');
+            const preds = db.all(`SELECT * FROM V3_Predictions WHERE fixture_id IN (${placeholders})`, fixtureIds);
+            preds.forEach(p => { predictionsMap[p.fixture_id] = p; });
+        }
+
         // 5. Merge & Map Data
         const mappedFixtures = fixtures.map(f => {
             const fixtureId = f.fixture.id;
             const oddsData = oddsMap[fixtureId];
+            const savedPrediction = predictionsMap[fixtureId];
 
             // Resolve Importance Rank from Local DB
             // We need to look up Country -> importance_rank
@@ -106,10 +167,37 @@ export const getDailyFixturesService = async (targetDate) => {
                 };
             }
 
+            // Probability normalization helper (handles both "45%" and "0.45" formats)
+            const parseProb = (p) => {
+                if (p === null || p === undefined) return 0;
+                if (typeof p === 'number') return p;
+                if (typeof p === 'string') {
+                    if (p.includes('%')) return (parseFloat(p) || 0) / 100;
+                    return parseFloat(p) || 0;
+                }
+                return 0;
+            };
+
+            let impliedProbs = null;
+            if (displayOdds?.match_winner) {
+                const fair = probabilityService.calculateFairProbabilities(displayOdds.match_winner);
+                if (fair) impliedProbs = fair.probabilities;
+            }
+
             return {
                 ...f,
                 live_odds: displayOdds, // Renamed from 'odds' to match frontend prop
-                // We'll attach importance rank later
+                implied_probabilities: impliedProbs,
+                ai_prediction: savedPrediction ? {
+                    probabilities: {
+                        home: parseProb(savedPrediction.prob_home),
+                        draw: parseProb(savedPrediction.prob_draw),
+                        away: parseProb(savedPrediction.prob_away)
+                    },
+                    edge: savedPrediction.edge_value,
+                    confidence: savedPrediction.confidence_score,
+                    risk: savedPrediction.risk_level
+                } : null
             };
         });
 
@@ -277,6 +365,55 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
     // Sort groups by importance_rank (AC 3)
     groups.sort((a, b) => a.league.importance_rank - b.league.importance_rank);
 
+    // US_172: Fetch AI predictions for all collected fixture IDs
+    const allFixtureIds = groups.flatMap(g => g.fixtures.map(f => f.fixture.id));
+    const predictionsMap = {};
+    if (allFixtureIds.length > 0) {
+        const placeholders = allFixtureIds.map(() => '?').join(',');
+        try {
+            const preds = db.all(`SELECT * FROM V3_Predictions WHERE fixture_id IN (${placeholders})`, allFixtureIds);
+            preds.forEach(p => { predictionsMap[p.fixture_id] = p; });
+        } catch (e) {
+            console.error("⚠️ Failed to fetch predictions for upcoming dashboard:", e.message);
+        }
+    }
+
+    // Map AI predictions back to fixtures
+    groups.forEach(g => {
+        g.fixtures.forEach(f => {
+            const savedPrediction = predictionsMap[f.fixture.id];
+
+            // Probability normalization helper (handles both "45%" and "0.45" formats)
+            const parseProb = (p) => {
+                if (p === null || p === undefined) return 0;
+                if (typeof p === 'number') return p;
+                if (typeof p === 'string') {
+                    if (p.includes('%')) return (parseFloat(p) || 0) / 100;
+                    return parseFloat(p) || 0;
+                }
+                return 0;
+            };
+
+            let impliedProbs = null;
+            if (f.live_odds?.match_winner) {
+                const fair = probabilityService.calculateFairProbabilities(f.live_odds.match_winner);
+                if (fair) impliedProbs = fair.probabilities;
+            }
+
+            f.implied_probabilities = impliedProbs;
+            f.ai_prediction = savedPrediction ? {
+                probabilities: {
+                    home: parseProb(savedPrediction.prob_home),
+                    draw: parseProb(savedPrediction.prob_draw),
+                    away: parseProb(savedPrediction.prob_away)
+                },
+                edge: savedPrediction.edge_value,
+                confidence: savedPrediction.confidence_score,
+                risk: savedPrediction.risk_level
+            } : null;
+        });
+    });
+
     return {
         groups,
         meta: {
@@ -300,13 +437,15 @@ export const getMatchDetailsService = async (fixtureId) => {
         predictionsRes,
         lineupsRes,
         oddsRes,
-        injuriesRes
+        injuriesRes,
+        mlPrediction
     ] = await Promise.all([
         footballApi.getFixtureById(fixtureId),
         footballApi.getPredictions(fixtureId),
         footballApi.getFixtureLineups(fixtureId),
         footballApi.getOdds({ fixture: fixtureId }),
-        footballApi.getInjuries(fixtureId)
+        footballApi.getInjuries(fixtureId),
+        mlService.getPredictionForFixture(fixtureId)
     ]);
 
     if (!fixtureRes.response || fixtureRes.response.length === 0) {
@@ -443,9 +582,12 @@ export const getMatchDetailsService = async (fixtureId) => {
     // 3. Detailed Odds (AC 3)
     let detailedOdds = [];
     if (oddsData && oddsData.bookmakers.length > 0) {
-        const PREFERRED_IDS = [52, 11];
-        let bookmaker = oddsData.bookmakers.find(b => PREFERRED_IDS.includes(b.id));
-        if (!bookmaker) bookmaker = oddsData.bookmakers[0];
+        // Selection logic: Strict Hierarchy based on Config (US_175)
+        let bookmaker = oddsData.bookmakers.find(b => b.id === BOOKMAKER_PRIORITY[0].id) ||
+            oddsData.bookmakers.find(b => b.id === BOOKMAKER_PRIORITY[1].id) ||
+            oddsData.bookmakers[0];
+
+        console.log(`   🎯 Selected Bookmaker for Details: ${bookmaker.name} (ID: ${bookmaker.id})`);
 
         const TARGET_MARKETS = [1, 5, 8, 12];
         detailedOdds = bookmaker.bets.filter(b => TARGET_MARKETS.includes(b.id));
@@ -536,6 +678,81 @@ export const getMatchDetailsService = async (fixtureId) => {
             h2h
         },
         odds: detailedOdds,
+        probabilities: detailedOdds.reduce((acc, market) => {
+            // Convert market to odds object for calculator
+            const marketOdds = {};
+            market.values.forEach(v => {
+                marketOdds[v.value] = v.odd;
+            });
+
+            const fair = probabilityService.calculateFairProbabilities(marketOdds);
+            if (fair) acc[market.id] = fair;
+            return acc;
+        }, {}),
+        market_movement: MarketVolatilityService.getVolatilityReport(fixtureId, 1), // Standard: analyze Match Winner
+        ml_prediction: mlPrediction,
+        narrative: await NarrativeService.encodeContext(fixtureId),
+        investment_value: (() => {
+            const market1X2 = detailedOdds.find(m => m.id === 1);
+            if (!market1X2 || !mlPrediction?.probabilities) return null;
+
+            // Map detailedOdds values to odds object for calculator
+            const marketOdds = {};
+            market1X2.values.forEach(v => {
+                marketOdds[v.value.toLowerCase()] = v.odd;
+            });
+
+            const fairMarket = probabilityService.calculateFairProbabilities(marketOdds);
+            if (!fairMarket) return null;
+
+            // Fetch League Accuracy Context (US_160)
+            const leagueStats = db.get(`
+                SELECT brier_score, total_bets
+                FROM V3_Backtest_Results
+                WHERE league_id = ?
+                ORDER BY created_at DESC LIMIT 1
+            `, [fixtureData.league.id]);
+
+            const result = QuantService.calculateValue(
+                mlPrediction.probabilities,
+                fairMarket.probabilities,
+                {
+                    hasLineups: officialLineups.length > 0,
+                    volatility: MarketVolatilityService.getVolatilityReport(fixtureId, 1),
+                    brierScore: leagueStats?.brier_score,
+                    leagueHistoryCount: leagueStats?.total_bets || 0
+                }
+            );
+
+            // Persist to DB (US_160)
+            try {
+                db.run(`
+                    INSERT INTO V3_Predictions (fixture_id, league_id, prob_home, prob_draw, prob_away, edge_value, confidence_score, risk_level)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(fixture_id) DO UPDATE SET
+                        prob_home = excluded.prob_home,
+                        prob_draw = excluded.prob_draw,
+                        prob_away = excluded.prob_away,
+                        edge_value = excluded.edge_value,
+                        confidence_score = excluded.confidence_score,
+                        risk_level = excluded.risk_level,
+                        prediction_date = CURRENT_TIMESTAMP
+                `, [
+                    fixtureId,
+                    fixtureData.league.id,
+                    mlPrediction.probabilities.home.toString(),
+                    mlPrediction.probabilities.draw.toString(),
+                    mlPrediction.probabilities.away.toString(),
+                    result.edge,
+                    result.confidence,
+                    result.risk_level
+                ]);
+            } catch (dbErr) {
+                console.warn("⚠️ Failed to persist prediction to DB:", dbErr.message);
+            }
+
+            return result;
+        })(),
         prediction: predictionData,
         injuries: injuriesData,
         events: matchEvents,
@@ -555,6 +772,31 @@ export const getMatchDetailsService = async (fixtureId) => {
 export const saveMatchOddsService = async (fixtureId) => {
     console.log(`💾 Saving odds for fixture ${fixtureId}...`);
 
+    // US_131: Check if this fixture belongs to a monitored league
+    const fixtureLeague = db.get("SELECT league_id FROM V3_Fixtures WHERE fixture_id = ?", [fixtureId]);
+    if (fixtureLeague) {
+        const trackedLeagues = getTrackedLeagues();
+        let isMonitored = false;
+        if (trackedLeagues.length > 0) {
+            isMonitored = trackedLeagues.includes(fixtureLeague.league_id);
+        } else {
+            // Check if it's in top 5
+            const top5 = db.all(`
+                SELECT l.league_id 
+                FROM V3_Leagues l 
+                JOIN V3_Countries c ON l.country_id = c.country_id 
+                ORDER BY c.importance_rank ASC, l.importance_rank ASC 
+                LIMIT 5
+            `);
+            isMonitored = top5.map(r => r.league_id).includes(fixtureLeague.league_id);
+        }
+
+        if (!isMonitored) {
+            console.log(`   🛡️ Activation Switch: Fixture ${fixtureId} belongs to a non-monitored league (Target: Tracking-Only). Skipping sync.`);
+            return { success: false, reason: 'unmonitored_league' };
+        }
+    }
+
     // 1. Fetch Latest Odds
     const oddsRes = await footballApi.getOdds({ fixture: fixtureId });
     if (!oddsRes.response || oddsRes.response.length === 0) {
@@ -567,13 +809,14 @@ export const saveMatchOddsService = async (fixtureId) => {
         throw new Error("No bookmakers available");
     }
 
-    // 2. Select Bookmaker (Winamax > Unibet > First)
-    const PREFERRED_IDS = [52, 11];
-    let selectedBookmaker = bookmakers.find(b => PREFERRED_IDS.includes(b.id));
-    if (!selectedBookmaker) selectedBookmaker = bookmakers[0];
+    // 2. Select Bookmaker: Strict Hierarchy based on Config (US_175)
+    let selectedBookmaker = bookmakers.find(b => b.id === BOOKMAKER_PRIORITY[0].id) ||
+        bookmakers.find(b => b.id === BOOKMAKER_PRIORITY[1].id) ||
+        bookmakers[0];
+
+    console.log(`   🎯 Selected Bookmaker for Refresh: ${selectedBookmaker.name} (ID: ${selectedBookmaker.id})`);
 
     const bookmakerId = selectedBookmaker.id;
-    console.log(`   Selected Bookmaker: ${selectedBookmaker.name} (ID: ${bookmakerId})`);
 
     // 3. Prepare Bulk Insert/Upsert
     // We want to save ALL markets provided by this bookmaker
@@ -600,17 +843,11 @@ export const saveMatchOddsService = async (fixtureId) => {
     */
 
     const sql = `
-        INSERT INTO V3_Odds (
+        REPLACE INTO V3_Odds (
             fixture_id, bookmaker_id, market_id, 
             value_home_over, value_draw, value_away_under, 
             handicap_value, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(fixture_id, bookmaker_id, market_id) 
-        DO UPDATE SET 
-            value_home_over = excluded.value_home_over,
-            value_draw = excluded.value_draw,
-            value_away_under = excluded.value_away_under,
-            updated_at = CURRENT_TIMESTAMP
     `;
 
     let count = 0;

@@ -158,7 +158,12 @@ const LiveBetDashboard = () => {
             {/* ── Title Bar ── */}
             <div className="lb-title-bar">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-                    <h1 style={{ margin: 0 }}>Live Bet Central</h1>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <button onClick={() => window.history.back()} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textAlign: 'left', fontSize: '0.9rem', width: 'fit-content' }}>
+                            ← Back to Hub
+                        </button>
+                        <h1 style={{ margin: 0 }}>Live Bet Central</h1>
+                    </div>
 
                     {/* Mode Toggle */}
                     <div style={{ display: 'flex', background: '#1e293b', borderRadius: '8px', padding: '4px', gap: '4px' }}>
@@ -214,13 +219,31 @@ const LiveBetDashboard = () => {
                     )}
 
                     {mode === 'daily' && (
-                        <input
-                            type="date"
-                            className="lb-search-input"
-                            value={selectedDate}
-                            onChange={e => setSelectedDate(e.target.value)}
-                            title="Select Date"
-                        />
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <input
+                                type="date"
+                                className="lb-search-input"
+                                value={selectedDate}
+                                onChange={e => setSelectedDate(e.target.value)}
+                                title="Select Date"
+                            />
+                            <button
+                                onClick={async () => {
+                                    const date = selectedDate || new Date().toISOString().split('T')[0];
+                                    if (!window.confirm(`Perform multi-market depth ingestion for all fixtures on ${date}?`)) return;
+                                    try {
+                                        const res = await api.bulkIngestOdds(date);
+                                        alert(`Success: ${res.result.successful} fixtures updated with depth odds.`);
+                                    } catch (err) {
+                                        alert('Failed to ingest depth odds: ' + err.message);
+                                    }
+                                }}
+                                className="lb-action-btn"
+                                title="Depth Sync (Multi-Market Ingestion)"
+                            >
+                                ⚡ Depth Sync
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

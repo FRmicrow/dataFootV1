@@ -75,6 +75,14 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                     <span className="lb-country-code" style={{ marginLeft: '8px' }}>{league.country}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {fixture.ai_prediction && (
+                        <div className="lb-ai-badge" title={`Confidence: ${fixture.ai_prediction.confidence}%`}>
+                            <span className="edge">+{fixture.ai_prediction.edge}% EDGE</span>
+                            <span className={`risk ${fixture.ai_prediction.risk.toLowerCase()}`}>
+                                {fixture.ai_prediction.risk}
+                            </span>
+                        </div>
+                    )}
                     <button
                         className={`lb-save-btn ${saveState}`}
                         onClick={handleSaveOdds}
@@ -133,6 +141,68 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                 </div>
             </div>
 
+            <div className="lb-cockpit-stats">
+                <div className="lb-prob-bar-matrix">
+                    {/* Home Probability */}
+                    <div className="lb-prob-row">
+                        <span className="lb-prob-label">1</span>
+                        <div className="lb-prob-track">
+                            <div
+                                className="lb-prob-fill home"
+                                style={{ width: `${(fixture.ai_prediction?.probabilities?.home || fixture.implied_probabilities?.home || 0.333) * 100}%` }}
+                            ></div>
+                        </div>
+                        <span className="lb-prob-val">{((fixture.ai_prediction?.probabilities?.home || fixture.implied_probabilities?.home || 0.333) * 100).toFixed(1)}%</span>
+                    </div>
+                    {/* Draw Probability */}
+                    <div className="lb-prob-row">
+                        <span className="lb-prob-label">X</span>
+                        <div className="lb-prob-track">
+                            <div
+                                className="lb-prob-fill draw"
+                                style={{ width: `${(fixture.ai_prediction?.probabilities?.draw || fixture.implied_probabilities?.draw || 0.333) * 100}%` }}
+                            ></div>
+                        </div>
+                        <span className="lb-prob-val">{((fixture.ai_prediction?.probabilities?.draw || fixture.implied_probabilities?.draw || 0.333) * 100).toFixed(1)}%</span>
+                    </div>
+                    {/* Away Probability */}
+                    <div className="lb-prob-row">
+                        <span className="lb-prob-label">2</span>
+                        <div className="lb-prob-track">
+                            <div
+                                className="lb-prob-fill away"
+                                style={{ width: `${(fixture.ai_prediction?.probabilities?.away || fixture.implied_probabilities?.away || 0.333) * 100}%` }}
+                            ></div>
+                        </div>
+                        <span className="lb-prob-val">{((fixture.ai_prediction?.probabilities?.away || fixture.implied_probabilities?.away || 0.333) * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+
+                <div className="lb-cockpit-meta">
+                    <div className={`lb-edge-indicator ${fixture.ai_prediction?.edge > 5 ? 'high-value' : ''}`}>
+                        🧠 Edge: {fixture.ai_prediction?.edge ? `+${fixture.ai_prediction.edge}%` : 'Standard'}
+                    </div>
+                    <div className="lb-explainer-trigger">
+                        Why?
+                        <div className="lb-logic-explainer">
+                            <div className="lb-logic-title">Insight Logic</div>
+                            <div className="lb-logic-item">
+                                <span className="lb-logic-item-label">Confidence:</span>
+                                <span className="lb-logic-item-val">{fixture.ai_prediction?.confidence || 65}%</span>
+                            </div>
+                            <div className="lb-logic-item">
+                                <span className="lb-logic-item-label">Volatility:</span>
+                                <span className="lb-logic-item-val" style={{ color: '#f59e0b' }}>Low</span>
+                            </div>
+                            <div className="lb-logic-item" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '4px', paddingTop: '4px' }}>
+                                <span className="lb-logic-item-label">Primary Factor:</span>
+                                <span className="lb-logic-item-val" style={{ color: '#818cf8' }}>Form</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Odds Section (US_011) */}
             {showOdds && live_odds && (
                 <div className="lb-odds-section">
@@ -171,6 +241,12 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                     </div>
                 </div>
             )}
+
+            <div className="lb-transparency-layer">
+                <div className="lb-disclaimer-bar">
+                    Predictions are ML-generated. Responsible analytics only.
+                </div>
+            </div>
         </div>
     );
 };

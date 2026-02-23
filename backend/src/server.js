@@ -42,7 +42,26 @@ const migrations = [
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             resolved_at DATETIME
         )`
-    }
+    },
+    { table: 'V3_Leagues', column: 'is_live_enabled', sql: "ALTER TABLE V3_Leagues ADD COLUMN is_live_enabled BOOLEAN DEFAULT 0" },
+    {
+        table: 'V3_Odds_History',
+        column: 'id',
+        sql: `CREATE TABLE IF NOT EXISTS V3_Odds_History (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fixture_id INTEGER NOT NULL,
+            bookmaker_id INTEGER NOT NULL,
+            market_id INTEGER NOT NULL,
+            value_home_over REAL,
+            value_draw REAL,
+            value_away_under REAL,
+            handicap_value REAL,
+            capture_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`
+    },
+    { table: 'V3_Predictions', column: 'edge_value', sql: "ALTER TABLE V3_Predictions ADD COLUMN edge_value REAL" },
+    { table: 'V3_Predictions', column: 'confidence_score', sql: "ALTER TABLE V3_Predictions ADD COLUMN confidence_score INTEGER" },
+    { table: 'V3_Predictions', column: 'risk_level', sql: "ALTER TABLE V3_Predictions ADD COLUMN risk_level TEXT" }
 ];
 
 for (const m of migrations) {
@@ -109,6 +128,8 @@ app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
 
+import MarketVolatilityService from './services/v3/MarketVolatilityService.js';
+
 // Start server
 const server = app.listen(PORT, () => {
     console.log('⚽ Football Player Database API');
@@ -117,6 +138,24 @@ const server = app.listen(PORT, () => {
     console.log(`📊 Database: SQLite V3 (sql.js)`);
     console.log(`🔑 API: API-Football v3`);
     console.log('================================\n');
+
+    // US_142: Odds Volatility Tracking - Background Job (Every 4 hours)
+    setInterval(() => {
+        MarketVolatilityService.runGlobalSnapshot().catch(err => console.error("❌ Stats Snapshot Error:", err));
+    }, 4 * 60 * 60 * 1000);
+
+    // US_174: Retraining Trigger System - Weekly Cycle (Every Monday at 04:00 AM)
+    import('./services/v3/mlService.js').then(module => {
+        const mlService = module.default;
+        setInterval(() => {
+            const now = new Date();
+            // Monday search: day 1, hour 4
+            if (now.getDay() === 1 && now.getHours() === 4 && now.getMinutes() < 10) {
+                console.log("⏰ [US_174] Weekly retraining cycle triggered automatically.");
+                mlService.triggerRetraining().catch(err => console.error("❌ Weekly Training Error:", err));
+            }
+        }, 10 * 60 * 1000); // Check every 10 minutes
+    });
 });
 
 server.on('error', (e) => {
