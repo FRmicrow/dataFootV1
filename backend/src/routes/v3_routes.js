@@ -23,7 +23,10 @@ import {
     mergeSchema,
     duplicatesSchema,
     prescriptionExecuteSchema,
-    prescriptionListSchema
+    prescriptionListSchema,
+    toggleMonitoringSchema,
+    bulkOddsSchema,
+    mlTrainSchema
 } from '../schemas/v3Schemas.js';
 
 const router = express.Router();
@@ -196,12 +199,21 @@ router.get('/players/by-nationality', getPlayersByNationality);
 /**
  * @route Live Bet System (US_010, US_011, US_012)
  */
-import { getDailyFixtures, getUpcomingFixtures, getMatchDetails, saveMatchOdds } from '../controllers/v3/liveBetController.js';
+import { getDailyFixtures, getUpcomingFixtures, getMatchDetails, saveMatchOdds, getMonitoringLeagues, toggleLeagueMonitoring } from '../controllers/v3/liveBetController.js';
 
 router.get('/live-bet/fixtures', getDailyFixtures);
 router.get('/live-bet/upcoming', getUpcomingFixtures);
 router.get('/live-bet/match/:id', getMatchDetails);
 router.post('/live-bet/match/:id/save-odds', saveMatchOdds);
+router.get('/live-bet/leagues/monitoring', getMonitoringLeagues);
+router.put('/live-bet/leagues/:id/monitoring', validateRequest(toggleMonitoringSchema), toggleLeagueMonitoring);
+
+/**
+ * @route Bulk Odds Ingestion (US_140)
+ */
+import { triggerFixtureDepthIngestion, triggerDateBulkIngestion } from '../controllers/v3/bulkOddsController.js';
+router.post('/live-bet/odds/fixture/:id', triggerFixtureDepthIngestion);
+router.post('/live-bet/odds/ingest-date', validateRequest(bulkOddsSchema), triggerDateBulkIngestion);
 
 /**
  * @route Preferences (US_017)
@@ -235,5 +247,20 @@ import { generatePrescriptions, getPrescriptions, executePrescription } from '..
 router.post('/health/prescribe', generatePrescriptions);
 router.get('/health/prescriptions', validateRequest(prescriptionListSchema), getPrescriptions);
 router.post('/health/execute', validateRequest(prescriptionExecuteSchema), executePrescription);
+
+/**
+ * @route Intelligence Hub (US_170, US_171)
+ */
+import { getBacktest, getCalibrationAudit } from '../controllers/v3/intelligenceController.js';
+
+router.get('/intelligence/backtest', getBacktest);
+router.get('/intelligence/audit', getCalibrationAudit);
+
+/**
+ * @route ML Management (US_174)
+ */
+import { triggerModelRetrain, getModelStatus } from '../controllers/v3/mlController.js';
+router.post('/ml/train', validateRequest(mlTrainSchema), triggerModelRetrain);
+router.get('/ml/status', getModelStatus);
 
 export default router;

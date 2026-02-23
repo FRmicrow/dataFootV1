@@ -173,3 +173,23 @@ export const prescriptionListSchema = z.object({
         type: z.string().optional()
     })
 });
+export const toggleMonitoringSchema = z.object({
+    params: z.object({
+        id: z.coerce.number().positive()
+    }),
+    body: z.object({
+        enabled: z.boolean()
+    })
+});
+
+export const bulkOddsSchema = z.object({
+    body: z.object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    })
+});
+
+export const mlTrainSchema = z.object({
+    body: z.object({
+        force: z.boolean().optional()
+    })
+});
