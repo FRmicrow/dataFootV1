@@ -26,14 +26,16 @@ class SimulationQueueService {
      */
     _recoverActiveJobs() {
         console.log('🔄 [US_207] Scanning for orphaned simulation jobs...');
-        const runningJobs = db.prepare("SELECT id, league_id, season_year FROM V3_Forge_Simulations WHERE status = 'RUNNING'").all();
+        try {
+            const runningJobs = db.all("SELECT id, league_id, season_year FROM V3_Forge_Simulations WHERE status = 'RUNNING'");
 
-        runningJobs.forEach(job => {
-            console.warn(`   ⚠️ Orphaned job detected: Sim ${job.id}. Marking for health check.`);
-            // Since we lost the child_process, we mark it as FAILED so the user can restart.
-            // A more advanced version would check if the PID is still alive.
-            db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED' WHERE id = ?", [job.id]);
-        });
+            runningJobs.forEach(job => {
+                console.warn(`   ⚠️ Orphaned job detected: Sim ${job.id}. Marking as FAILED.`);
+                db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED' WHERE id = ?", [job.id]);
+            });
+        } catch (err) {
+            console.warn('   ⚠️ Could not recover orphaned jobs:', err.message);
+        }
     }
 
     startSimulation(leagueId, seasonYear, mode = 'STATIC', horizon = 'FULL_HISTORICAL') {

@@ -259,8 +259,27 @@ router.get('/intelligence/audit', getCalibrationAudit);
 /**
  * @route ML Management (US_174)
  */
-import { triggerModelRetrain, getModelStatus } from '../controllers/v3/mlController.js';
+import { triggerModelRetrain, getModelStatus, buildForgeModels, getForgeBuildStatus, cancelForgeBuild, getForgeModels, retrainModel, getRetrainStatus, getEligibleHorizons, getLeagueModels } from '../controllers/v3/mlController.js';
 router.post('/ml/train', validateRequest(mlTrainSchema), triggerModelRetrain);
 router.get('/ml/status', getModelStatus);
+router.post('/forge/build-models', buildForgeModels);
+router.get('/forge/build-status', getForgeBuildStatus);
+router.post('/forge/cancel-build', cancelForgeBuild);
+router.get('/forge/models', getForgeModels);
+router.post('/forge/retrain', retrainModel);
+router.get('/forge/retrain-status', getRetrainStatus);
+router.get('/forge/eligible-horizons', getEligibleHorizons);
+router.get('/forge/league-models/:leagueId', getLeagueModels);
+
+/**
+ * @route Forge Simulation Engine (V8)
+ */
+import { triggerSimulation, checkJobStatus, getSimulationResults, checkSimulationReadiness, triggerBulkSimulation, checkBulkJobStatus } from '../controllers/v3/simulationController.js';
+router.post('/simulation/start', triggerSimulation);
+router.get('/simulation/status', checkJobStatus);
+router.get('/simulation/readiness', checkSimulationReadiness);
+router.get('/simulation/results/:simId', getSimulationResults);
+router.post('/simulation/bulk', triggerBulkSimulation);
+router.get('/simulation/bulk/status', checkBulkJobStatus);
 
 export default router;

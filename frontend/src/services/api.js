@@ -107,4 +107,30 @@ export default {
     getHealthPrescriptions: (status) => api.get(`/health/prescriptions${status ? `?status=${status}` : ''}`),
     triggerHealthPrescribe: () => api.post('/health/prescribe'),
     executePrescription: (id) => api.post('/health/execute', { id }),
+
+    // --- Forge Simulation Engine (V8) ---
+    startSimulation: (data) => api.post('/simulation/start', data),
+    getSimulationStatus: (leagueId, seasonYear) => api.get(`/simulation/status?leagueId=${leagueId}&seasonYear=${seasonYear}`),
+    getSimulationReadiness: (leagueId, seasonYear) => api.get(`/simulation/readiness?leagueId=${leagueId}&seasonYear=${seasonYear}`),
+    getSimulationResults: (simId) => api.get(`/simulation/results/${simId}`),
+
+    // --- ML Management (V8) ---
+    getMLStatus: () => api.get('/ml/status'),
+    triggerMLRetrain: () => api.post('/ml/train'),
+
+    // --- Forge Model Building (V8) ---
+    buildForgeModels: (data) => api.post('/forge/build-models', data),
+    getForgeBuildStatus: () => api.get('/forge/build-status'),
+    cancelForgeBuild: () => api.post('/forge/cancel-build'),
+    getForgeModels: () => api.get('/forge/models'),
+
+    // --- Forge Model Refinement (V8 Adaptive) ---
+    retrainModel: (data) => api.post('/forge/retrain', data),
+    getRetrainStatus: () => api.get('/forge/retrain-status'),
+    getEligibleHorizons: (leagueId, seasonYear) => api.get(`/forge/eligible-horizons?leagueId=${leagueId}&seasonYear=${seasonYear}`),
+    getLeagueModels: (leagueId) => api.get(`/forge/league-models/${leagueId}`),
+
+    // --- Deep Sync (League Activation) ---
+    triggerDeepSync: (leagueId) => api.post(`/import/league/${leagueId}/deep-sync`),
+    getSyncStatus: (leagueId) => api.get(`/league/${leagueId}/sync-status`),
 };
