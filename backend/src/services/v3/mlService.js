@@ -4,7 +4,7 @@ import axios from 'axios';
  * ML Service Integration (US_154)
  * Bridges the Node.js backend with the Python-based FastAPI predictive engine.
  */
-const ML_SERVICE_URL = 'http://localhost:8008';
+const ML_SERVICE_URL = 'http://localhost:8000';
 
 /**
  * Fallback Heuristic (Poisson-based approximation)
@@ -84,9 +84,105 @@ export const getTrainingStatus = async () => {
     }
 };
 
+/**
+ * Forge Model Building (V8)
+ */
+export const buildForgeModels = async (leagueId, seasonYear = null) => {
+    try {
+        const response = await axios.post(`${ML_SERVICE_URL}/forge/build-models`, {
+            league_id: parseInt(leagueId),
+            season_year: seasonYear ? parseInt(seasonYear) : null
+        });
+        return response.data;
+    } catch (err) {
+        console.error(`❌ Forge Build Error: ${err.message}`);
+        return { success: false, message: err.message };
+    }
+};
+
+export const getForgeBuildStatus = async () => {
+    try {
+        const response = await axios.get(`${ML_SERVICE_URL}/forge/build-status`);
+        return response.data;
+    } catch (err) {
+        return { is_building: false, error: "ML Service Offline" };
+    }
+};
+
+export const cancelForgeBuild = async () => {
+    try {
+        const response = await axios.post(`${ML_SERVICE_URL}/forge/cancel-build`);
+        return response.data;
+    } catch (err) {
+        return { success: false, message: "ML Service Offline" };
+    }
+};
+
+export const getForgeModels = async () => {
+    try {
+        const response = await axios.get(`${ML_SERVICE_URL}/forge/models`);
+        return response.data;
+    } catch (err) {
+        return { success: false, models: [] };
+    }
+};
+
+/**
+ * Retrain model from simulation results (V8 Adaptive Refinement)
+ */
+export const retrainFromSimulation = async (modelId, simulationId) => {
+    try {
+        const response = await axios.post(`${ML_SERVICE_URL}/forge/retrain`, {
+            model_id: parseInt(modelId),
+            simulation_id: parseInt(simulationId)
+        }, { timeout: 300000 }); // 5min timeout for retraining
+        return response.data;
+    } catch (err) {
+        console.error(`❌ Retrain Error: ${err.message}`);
+        return { success: false, message: err.message };
+    }
+};
+
+export const getRetrainStatus = async () => {
+    try {
+        const response = await axios.get(`${ML_SERVICE_URL}/forge/retrain-status`);
+        return response.data;
+    } catch (err) {
+        return { is_retraining: false, error: "ML Service Offline" };
+    }
+};
+
+export const getEligibleHorizons = async (leagueId, seasonYear) => {
+    try {
+        const response = await axios.get(`${ML_SERVICE_URL}/forge/eligible-horizons`, {
+            params: { league_id: leagueId, season_year: seasonYear }
+        });
+        return response.data;
+    } catch (err) {
+        return { success: false, eligible: ['FULL_HISTORICAL'] };
+    }
+};
+
+export const getLeagueModels = async (leagueId) => {
+    try {
+        const response = await axios.get(`${ML_SERVICE_URL}/forge/league-models/${leagueId}`);
+        return response.data;
+    } catch (err) {
+        return { success: false, models: [], has_models: false };
+    }
+};
+
 export default {
     getPredictionForFixture,
     getBatchPredictions,
     triggerRetraining,
-    getTrainingStatus
+    getTrainingStatus,
+    buildForgeModels,
+    getForgeBuildStatus,
+    cancelForgeBuild,
+    getForgeModels,
+    retrainFromSimulation,
+    getRetrainStatus,
+    getEligibleHorizons,
+    getLeagueModels
 };

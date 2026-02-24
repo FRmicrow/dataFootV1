@@ -19,6 +19,7 @@ import LiveBetHub from './components/v3/live-bet/LiveBetHub';
 import LiveBetDashboard from './components/v3/live-bet/LiveBetDashboard';
 import LiveBetMatchDetails from './components/v3/live-bet/LiveBetMatchDetails';
 import MonitoringConsole from './components/v3/live-bet/MonitoringConsole';
+import SimulationDashboard from './components/v3/live-bet/SimulationDashboard';
 import TelemetryConsole from './components/v3/TelemetryConsole';
 import { ImportProvider } from './context/ImportContext.jsx';
 import './App.css';
@@ -80,6 +81,7 @@ function App() {
                             <Route path="/live-bet/board" element={<LiveBetDashboard />} />
                             <Route path="/live-bet/monitoring" element={<MonitoringConsole />} />
                             <Route path="/live-bet/match/:id" element={<LiveBetMatchDetails />} />
+                            <Route path="/live-bet/alpha" element={<SimulationDashboard />} />
                             <Route path="/match/:id" element={<MatchDetailPage />} />
                         </Route>
 

@@ -57,7 +57,7 @@ export const checkJobStatus = (req, res) => {
         const status = SimulationQueueService.getJobStatus(leagueId, seasonYear);
 
         if (!status) {
-            return res.status(404).json({ success: false, message: 'No job found for this scope' });
+            return res.json({ status: 'NONE', message: 'No simulation has been run for this scope yet.' });
         }
         res.json(status);
     } catch (err) {

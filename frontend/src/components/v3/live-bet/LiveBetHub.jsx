@@ -29,17 +29,16 @@ const LiveBetHub = () => {
             title: 'Alpha Analytics',
             description: 'Backtesting engine and model performance calibration (Institutional Grade).',
             icon: '🧠',
-            path: '#',
+            path: '/live-bet/alpha',
             color: '#10b981',
-            stats: 'Coming Soon',
-            disabled: true
+            stats: 'Forge Engine Active'
         }
     ];
 
     return (
         <div className="lb-hub-container animate-fade-in">
             <header className="lb-hub-header">
-                <div className="badge-v3">V7 Engine</div>
+                <div className="badge-v3">V8 Engine</div>
                 <h1>Betting Intelligence Hub</h1>
                 <p>Select an operational module to begin real-time market analysis.</p>
             </header>

@@ -3,30 +3,40 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import api from '../../../services/api';
 import LeagueDiscovery from '../LeagueDiscovery';
 import LeagueActivationStage from '../LeagueActivationStage';
-import OddsImportStage from '../OddsImportStage';
 import './SimulationDashboard.css';
 
 const SimulationDashboard = () => {
     const [leagues, setLeagues] = useState([]);
     const [selectedLeague, setSelectedLeague] = useState('');
     const [selectedYear, setSelectedYear] = useState('');
-    const [selectedMode, setSelectedMode] = useState('STATIC'); // 'STATIC' | 'WALK_FORWARD'
+    const [selectedMode, setSelectedMode] = useState('STATIC');
     const [years, setYears] = useState([]);
 
     // Forge Multi-Step Flow State
     const [showDiscovery, setShowDiscovery] = useState(false);
     const [activeActivationId, setActiveActivationId] = useState(null);
-    const [activeOddsLeagueId, setActiveOddsLeagueId] = useState(null);
+
+    // Model Building State
+    const [isBuildingModels, setIsBuildingModels] = useState(false);
+    const [buildStatus, setBuildStatus] = useState(null);
+    const [forgeModels, setForgeModels] = useState([]);
 
     // Polling and Job State
     const [jobStatus, setJobStatus] = useState(null);
     const [selectedHorizon, setSelectedHorizon] = useState('FULL_HISTORICAL');
+    const [eligibleHorizons, setEligibleHorizons] = useState(['FULL_HISTORICAL']);
     const [metrics, setMetrics] = useState(null);
     const [simId, setSimId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [readiness, setReadiness] = useState(null);
     const [checkingReadiness, setCheckingReadiness] = useState(false);
+    const [userTriggeredSim, setUserTriggeredSim] = useState(false); // Track if user started a sim this session
+    const [previousSimAvailable, setPreviousSimAvailable] = useState(null); // Old completed sim from DB
+
+    // Retrain State
+    const [isRetraining, setIsRetraining] = useState(false);
+    const [retrainResult, setRetrainResult] = useState(null);
 
     // Tape State
     const [tapeData, setTapeData] = useState([]);
@@ -35,10 +45,10 @@ const SimulationDashboard = () => {
 
     // ML Status
     const [mlStatus, setMlStatus] = useState({ is_training: false });
-    const [isCalibrating, setIsCalibrating] = useState(false);
 
     useEffect(() => {
         fetchLeagues();
+        fetchForgeModels(); // Load ALL models from DB on mount
 
         const interval = setInterval(async () => {
             try {
@@ -49,6 +59,7 @@ const SimulationDashboard = () => {
         return () => clearInterval(interval);
     }, []);
 
+    // When league changes: reset ALL sim state + load league-specific models
     useEffect(() => {
         if (selectedLeague) {
             const l = leagues.find(x => x.league_id === parseInt(selectedLeague));
@@ -56,18 +67,33 @@ const SimulationDashboard = () => {
                 setYears(l.years_imported || []);
                 if (l.years_imported && l.years_imported.length > 0) setSelectedYear(l.years_imported[0]);
             }
+            // Clear stale simulation data from other leagues
+            setMetrics(null);
+            setSimId(null);
+            setJobStatus(null);
+            setTapeData([]);
+            setShowTape(false);
+            setRetrainResult(null);
+            setError(null);
+            setUserTriggeredSim(false);
+            setPreviousSimAvailable(null);
+            // Fetch models specific to this league from DB
+            fetchLeagueModels();
         } else {
             setYears([]);
             setSelectedYear('');
         }
     }, [selectedLeague, leagues]);
 
-    // Pre-Flight Readiness Check (US_201)
+    // Check horizon eligibility when year changes
     useEffect(() => {
         if (selectedLeague && selectedYear) {
             checkReadiness();
+            checkHorizonEligibility();
         } else {
             setReadiness(null);
+            setEligibleHorizons(['FULL_HISTORICAL']);
+            setSelectedHorizon('FULL_HISTORICAL');
         }
     }, [selectedLeague, selectedYear]);
 
@@ -83,7 +109,23 @@ const SimulationDashboard = () => {
         }
     };
 
-    // US_207: Stateless Adoption & Polling
+    const checkHorizonEligibility = async () => {
+        try {
+            const data = await api.getEligibleHorizons(selectedLeague, selectedYear);
+            if (data.eligible) {
+                setEligibleHorizons(data.eligible);
+                // Auto-select the best horizon if current one is not eligible
+                if (!data.eligible.includes(selectedHorizon)) {
+                    setSelectedHorizon(data.eligible[0] || 'FULL_HISTORICAL');
+                }
+            }
+        } catch (err) {
+            console.warn("Horizon eligibility check failed, defaulting to FULL_HISTORICAL");
+            setEligibleHorizons(['FULL_HISTORICAL']);
+        }
+    };
+
+    // Stateless Polling — only poll for active jobs, not completed historical ones
     useEffect(() => {
         let interval;
         if (selectedLeague && selectedYear && !metrics) {
@@ -99,23 +141,51 @@ const SimulationDashboard = () => {
             const data = await api.getSimulationStatus(selectedLeague, selectedYear);
             if (!data) return;
 
+            // No simulation exists yet for this scope — silently skip
+            if (data.status === 'NONE') {
+                setJobStatus(null);
+                setPreviousSimAvailable(null);
+                return;
+            }
+
             setJobStatus(data);
 
-            if (data.status === 'running' || data.status === 'pending') {
+            if (data.status === 'running' || data.status === 'pending' || data.status === 'RUNNING' || data.status === 'PENDING') {
+                // Active sim — always show progress
                 setLoading(true);
                 setError(null);
-            } else if (data.status === 'completed') {
+                setUserTriggeredSim(true); // User or system started it
+            } else if (data.status === 'completed' || data.status === 'COMPLETED') {
                 setLoading(false);
-                if (data.metrics) setMetrics(data.metrics);
-                setSimId(data.id || null);
-            } else if (data.status === 'failed') {
+                if (userTriggeredSim) {
+                    // User started this sim — show results immediately
+                    if (data.metrics) setMetrics(data.metrics);
+                    setSimId(data.id || null);
+                } else {
+                    // Old completed sim from DB — don't auto-fill canvas, just note it's available
+                    setPreviousSimAvailable({
+                        id: data.id,
+                        metrics: data.metrics,
+                        status: data.status
+                    });
+                }
+            } else if (data.status === 'failed' || data.status === 'FAILED') {
                 setLoading(false);
                 if (loading) setError(data.error || 'Simulation Failed.');
             }
         } catch (err) {
             if (err.response?.status !== 404) {
-                console.error("Job check failed", err);
+                console.warn("Job check failed (non-critical):", err.message);
             }
+        }
+    };
+
+    // Load previous results on demand
+    const handleLoadPreviousResults = () => {
+        if (previousSimAvailable) {
+            if (previousSimAvailable.metrics) setMetrics(previousSimAvailable.metrics);
+            setSimId(previousSimAvailable.id || null);
+            setPreviousSimAvailable(null);
         }
     };
 
@@ -128,42 +198,114 @@ const SimulationDashboard = () => {
         }
     };
 
+    const fetchForgeModels = async () => {
+        try {
+            const data = await api.getForgeModels();
+            if (data.models) {
+                console.log(`📦 Loaded ${data.models.length} models from registry`);
+                setForgeModels(data.models);
+            }
+        } catch (err) {
+            console.warn("Could not load forge models.");
+        }
+    };
+
+    const fetchLeagueModels = async () => {
+        if (!selectedLeague) return;
+        try {
+            const data = await api.getLeagueModels(selectedLeague);
+            if (data.models && data.models.length > 0) {
+                console.log(`🧠 Found ${data.models.length} active models for league ${selectedLeague}`);
+                // Merge league-specific models into the global list
+                setForgeModels(prev => {
+                    const otherModels = prev.filter(m => m.league_id !== parseInt(selectedLeague));
+                    return [...otherModels, ...data.models.map(m => ({ ...m, league_id: parseInt(selectedLeague) }))];
+                });
+            } else {
+                console.log(`⚠️ No active models for league ${selectedLeague}`);
+            }
+        } catch (err) {
+            console.warn("Could not load league models.");
+        }
+    };
+
     const handleBatchDiscoverySelect = async (stagedItems) => {
         setShowDiscovery(false);
-        setLoading(true);
+        if (stagedItems.length >= 1) {
+            const item = stagedItems[0];
+            setSelectedLeague(String(item.league.id));
+        }
+    };
+
+    // Build Models for selected league
+    const handleBuildModels = async () => {
+        if (!selectedLeague) return;
+        setIsBuildingModels(true);
+        setBuildStatus({ FULL_HISTORICAL: 'pending', '5Y_ROLLING': 'pending', '3Y_ROLLING': 'pending' });
+        setError(null);
         try {
-            for (const item of stagedItems) {
-                await api.importLeague({
-                    leagueId: item.league.id,
-                    season: 2024,
-                    forceApiId: true
-                });
+            const result = await api.buildForgeModels({ leagueId: parseInt(selectedLeague) });
+            if (result.success) {
+                // Start polling build status
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const status = await api.getForgeBuildStatus();
+
+                        // Update multi-horizon progress
+                        setBuildStatus(status.progress || {});
+
+                        if (!status.is_building) {
+                            clearInterval(pollInterval);
+                            setIsBuildingModels(false);
+
+                            // Refresh models
+                            await fetchForgeModels();
+                            await fetchLeagueModels();
+
+                            if (status.error) {
+                                if (status.error.includes("cancelled")) {
+                                    console.log("🚫 Build was cancelled.");
+                                } else {
+                                    setError(`Model Build Failed: ${status.error}`);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Polling error", e);
+                    }
+                }, 2000);
+            } else {
+                setError(result.message);
+                setIsBuildingModels(false);
             }
-            const freshLeagues = await api.getImportedLeagues();
-            setLeagues(freshLeagues);
-            if (stagedItems.length === 1) {
-                const matching = freshLeagues.find(l => l.api_id === stagedItems[0].league.id);
-                if (matching) setActiveActivationId(matching.league_id);
-            }
-            setLoading(false);
         } catch (err) {
-            console.error("Batch activation failed", err);
-            setError("Batch activation failed. Check logs.");
-            setLoading(false);
+            setError(err.message);
+            setIsBuildingModels(false);
         }
     };
 
-    const handleOddsSelect = (discoveryItem) => {
-        setShowDiscovery(false);
-        const matching = leagues.find(l => l.api_id === discoveryItem.league.id);
-        if (matching) {
-            setActiveOddsLeagueId(matching.league_id);
+    const handleCancelBuild = async () => {
+        try {
+            const res = await api.cancelForgeBuild();
+            if (res.success) {
+                console.log("✅ Cancellation requested");
+            }
+        } catch (err) {
+            console.error("Failed to cancel build", err);
         }
     };
 
-    const importedApiIds = useMemo(() => {
-        return leagues.map(l => l.api_id);
-    }, [leagues]);
+    const leagueModels = useMemo(() => {
+        if (!selectedLeague) return [];
+        return forgeModels.filter(m => m.league_id === parseInt(selectedLeague) && m.is_active);
+    }, [selectedLeague, forgeModels]);
+
+    const hasModels = leagueModels.length > 0;
+
+    // Get the model ID for the currently selected horizon
+    const activeModelForHorizon = useMemo(() => {
+        return leagueModels.find(m => m.horizon_type === selectedHorizon);
+    }, [leagueModels, selectedHorizon]);
 
     useEffect(() => {
         if (simId && !showTape) {
@@ -180,6 +322,9 @@ const SimulationDashboard = () => {
         setSimId(null);
         setShowTape(false);
         setTapeData([]);
+        setRetrainResult(null);
+        setUserTriggeredSim(true);
+        setPreviousSimAvailable(null);
 
         try {
             const data = await api.startSimulation({
@@ -189,7 +334,6 @@ const SimulationDashboard = () => {
                 horizon: selectedHorizon
             });
             if (data.success) {
-                // Polling starts automatically via useEffect on loading/metrics
                 setLoading(true);
             } else {
                 setError(data.message);
@@ -201,28 +345,52 @@ const SimulationDashboard = () => {
         }
     };
 
-    const handleCalibrate = async () => {
-        setIsCalibrating(true);
+    // Retrain from simulation results
+    const handleRetrain = async () => {
+        if (!activeModelForHorizon || !simId) return;
+        setIsRetraining(true);
+        setRetrainResult(null);
+        setError(null);
+
         try {
-            const data = await api.triggerMLRetrain();
-            if (!data.success) setError(data.message);
+            const result = await api.retrainModel({
+                modelId: activeModelForHorizon.id,
+                simulationId: simId
+            });
+
+            if (result.success) {
+                // Poll for retrain status
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const status = await api.getRetrainStatus();
+                        if (!status.is_retraining) {
+                            clearInterval(pollInterval);
+                            setIsRetraining(false);
+                            setRetrainResult(status.result);
+                            // Refresh models
+                            fetchForgeModels();
+                            fetchLeagueModels();
+                        }
+                    } catch (e) { }
+                }, 3000);
+            } else {
+                setError(result.message);
+                setIsRetraining(false);
+            }
         } catch (err) {
             setError(err.message);
-        } finally {
-            setIsCalibrating(false);
+            setIsRetraining(false);
         }
     };
 
-    // US_18x: Refined ROI Logic (100€ Capital, 10€ Flat Bet)
+    // Accuracy per round data
     const combinedChartData = useMemo(() => {
         if (!tapeData || tapeData.length === 0) return [];
 
         const roundsMap = {};
 
         tapeData.forEach((m, idx) => {
-            // Setup Round Name map
             const rName = m.round_name?.replace('Regular Season - ', 'MD ') || 'Unknown';
-            // Extract Round Num
             const roundMatch = m.round_name?.match(/\d+/);
             const roundNum = roundMatch ? parseInt(roundMatch[0]) : Math.floor(idx / 10) + 1;
 
@@ -230,9 +398,8 @@ const SimulationDashboard = () => {
                 roundsMap[roundNum] = { round: roundNum, correct: 0, total: 0 };
             }
 
-            // Accuracy evaluation
             roundsMap[roundNum].total++;
-            if (m.predicted_outcome === m.actual_result) {
+            if (m.is_correct === 1) {
                 roundsMap[roundNum].correct++;
             }
         });
@@ -244,11 +411,6 @@ const SimulationDashboard = () => {
                 accuracy: parseFloat(((r.correct / r.total) * 100).toFixed(1))
             }));
     }, [tapeData]);
-
-    // Keep bankrollData pointing to the new array for component compatibility if needed elsewhere
-    const bankrollData = combinedChartData;
-    const matchdayStats = combinedChartData;
-
 
     const handleToggleTape = async () => {
         if (showTape && simId === null) {
@@ -285,6 +447,16 @@ const SimulationDashboard = () => {
         <span className="info-icon" data-tooltip={text}>?</span>
     );
 
+    const selectedLeagueObj = leagues.find(x => x.league_id === parseInt(selectedLeague));
+
+    // Determine what the user needs to do
+    const getStepMessage = () => {
+        if (!selectedLeague) return 'Step 1: Select a league using the "Select League" button above.';
+        if (!hasModels) return 'Step 2: Build the 3 ML models for your selected league.';
+        if (!selectedYear) return 'Step 3: Select a season and run the simulation.';
+        return 'Step 3: Select a season, choose a horizon, and run the simulation.';
+    };
+
     return (
         <div className="simulation-dashboard animate-fade-in">
             <header className="sim-header">
@@ -293,14 +465,14 @@ const SimulationDashboard = () => {
                 </button>
                 <div className="header-main-wrap">
                     <div className="header-content">
-                        <span className="badge">V8 Validation Framework</span>
-                        <h1>Forge Control Center</h1>
-                        <p>Execute sophisticated chronological backtesting schemas to isolate pure alpha and structural market edges.</p>
+                        <span className="badge">V8 Forge Engine</span>
+                        <h1>Alpha Analytics — Forge Control Center</h1>
+                        <p>Build league-scoped ML models and run chronological backtesting to validate prediction accuracy.</p>
                     </div>
                     <div className="header-actions">
                         <button className="forge-discovery-btn" onClick={() => setShowDiscovery(true)}>
                             <span className="icon">🔭</span>
-                            Discover New League
+                            Select League
                         </button>
                     </div>
                 </div>
@@ -310,7 +482,7 @@ const SimulationDashboard = () => {
                 <LeagueDiscovery
                     onSelectBatch={handleBatchDiscoverySelect}
                     onCancel={() => setShowDiscovery(false)}
-                    importedApiIds={importedApiIds}
+                    importedApiIds={[]}
                 />
             )}
 
@@ -325,28 +497,27 @@ const SimulationDashboard = () => {
                 />
             )}
 
-            {/* OddsImportStage is disabled per user request to forget odds data for now */}
-            {/* activeOddsLeagueId && (
-    <OddsImportStage
-        leagueId={activeOddsLeagueId}
-        onComplete={() => setActiveOddsLeagueId(null)}
-        onCancel={() => setActiveOddsLeagueId(null)}
-    />
-) */}
-
             <div className="sim-grid">
                 {/* ── Parameters Sidebar ── */}
                 <aside className="sim-params-card">
                     <h3>Simulation Protocol</h3>
 
+                    {/* STEP 1: League Selection */}
                     <div className="param-group">
                         <div className="label-with-action">
-                            <label>League Target</label>
+                            <label>① League Target</label>
                             <button className="text-action-btn" onClick={fetchLeagues} disabled={loading}>↻ Refresh</button>
                         </div>
                         <select
                             value={selectedLeague}
-                            onChange={(e) => setSelectedLeague(e.target.value)}
+                            onChange={(e) => {
+                                setSelectedLeague(e.target.value);
+                                setMetrics(null);
+                                setSimId(null);
+                                setRetrainResult(null);
+                                setTapeData([]);
+                                setShowTape(false);
+                            }}
                             disabled={loading}
                         >
                             <option value="">-- Choose League --</option>
@@ -354,7 +525,7 @@ const SimulationDashboard = () => {
                                 const yearsList = l.years_imported || [];
                                 const minYear = Math.min(...yearsList);
                                 const maxYear = Math.max(...yearsList);
-                                const range = yearsList.length > 0 ? `[${minYear}-${maxYear}]` : '(Incomplete)';
+                                const range = yearsList.length > 0 ? `[${minYear}-${maxYear}]` : '(No Data)';
                                 return (
                                     <option key={l.league_id} value={l.league_id}>
                                         {l.country_name} - {l.name} {range}
@@ -364,93 +535,198 @@ const SimulationDashboard = () => {
                         </select>
                     </div>
 
-                    <div className="param-group">
-                        <label>Season Scope</label>
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(e.target.value)}
-                            disabled={!selectedLeague || loading || years.length === 0}
-                        >
-                            <option value="">-- Select Year --</option>
-                            {years.map(y => (
-                                <option key={y} value={y}>{y} / {y + 1}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="param-group">
-                        <label>Execution Architecture</label>
-                        <select
-                            value={selectedMode}
-                            onChange={(e) => setSelectedMode(e.target.value)}
-                            disabled={loading}
-                        >
-                            <option value="STATIC">Static Matrix (Single Weight Pass)</option>
-                            <option value="WALK_FORWARD">Walk-Forward (Recursive Fitting)</option>
-                        </select>
-                    </div>
-
-                    <div className="param-group">
-                        <label>Temporal Horizon</label>
-                        <select
-                            value={selectedHorizon}
-                            onChange={(e) => setSelectedHorizon(e.target.value)}
-                            disabled={loading}
-                        >
-                            <option value="FULL_HISTORICAL">Full Historical (Max Sample)</option>
-                            <option value="5Y_ROLLING">5-Year Rolling Window</option>
-                            <option value="3Y_ROLLING">3-Year Rolling Window</option>
-                        </select>
-                    </div>
-
-                    <div className="trident-health">
-                        <div className={`trident-badge ${readiness?.total_fixtures > 0 ? 'good' : 'bad'}`}>
-                            <span className="icon">💿</span>
-                            <span className="lbl">Core Data</span>
-                        </div>
-                        <div className={`trident-badge ${readiness?.status === 'READY' ? 'good' : readiness?.status === 'PARTIAL' ? 'warn' : 'bad'}`}>
-                            <span className="icon">🧠</span>
-                            <span className="lbl">Model Index</span>
-                        </div>
-                        <div className={`trident-badge ${metrics ? 'good' : 'idle'}`}>
-                            <span className="icon">⚖️</span>
-                            <span className="lbl">Quantum Ledger</span>
-                        </div>
-                    </div>
-
-                    {readiness?.status === 'READY' ? (
-                        <button
-                            className="btn-run-sim"
-                            onClick={handleRunSimulation}
-                            disabled={loading || !selectedLeague || !selectedYear}
-                        >
-                            {loading ? 'Compiling Ledger...' : 'Initialize Forge Run'}
-                        </button>
-                    ) : readiness ? (
-                        <div className="preflight-warning">
-                            <div className="warning-content">
-                                <b>⚠️ Pre-Flight Blocker</b>
-                                <p>{readiness.message}</p>
+                    {/* STEP 2: Models — Build or Show Existing */}
+                    {selectedLeague && (
+                        <div className="param-group" style={{
+                            background: hasModels ? 'rgba(16, 185, 129, 0.05)' : 'rgba(59, 130, 246, 0.05)',
+                            padding: '14px', borderRadius: '12px',
+                            border: `1px solid ${hasModels ? '#134e3a' : '#1e3a5f'}`
+                        }}>
+                            <div className="label-with-action">
+                                <label>② Models {hasModels ? '✅' : '⚠️'}</label>
+                                {hasModels && (
+                                    <span style={{ fontSize: '0.65rem', color: '#10b981', background: '#0d3d2e', padding: '2px 8px', borderRadius: '6px' }}>
+                                        {leagueModels.length}/3 Active
+                                    </span>
+                                )}
                             </div>
-                            <button className="btn-repair-intel" onClick={() => setActiveActivationId(selectedLeague)}>
-                                Repair Intelligence Matrix
-                            </button>
+
+                            {/* Existing Models Display */}
+                            {leagueModels.length > 0 && (
+                                <div style={{ marginBottom: '10px' }}>
+                                    {leagueModels.map(m => (
+                                        <div key={m.id} style={{
+                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                            background: '#0f172a', borderRadius: '8px', padding: '6px 10px', marginBottom: '4px',
+                                            fontSize: '0.72rem'
+                                        }}>
+                                            <span style={{ color: '#10b981', fontWeight: 600 }}>{m.horizon_type?.replace('_', ' ')}</span>
+                                            <span style={{ color: '#e2e8f0' }}>{m.accuracy ? (m.accuracy * 100).toFixed(1) + '%' : '-'}</span>
+                                            <span style={{ color: '#64748b' }}>{m.training_dataset_size || '-'} matches</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Build Status Progress */}
+                            {isBuildingModels && buildStatus && (
+                                <div style={{ marginBottom: '10px' }}>
+                                    {Object.entries(buildStatus).map(([horizon, status]) => (
+                                        <div key={horizon} style={{
+                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                            fontSize: '0.72rem', padding: '4px 0'
+                                        }}>
+                                            <span style={{ color: '#94a3b8' }}>{horizon}</span>
+                                            <span style={{
+                                                color: status === 'completed' ? '#10b981' : status === 'failed' ? '#ef4444' : '#f59e0b'
+                                            }}>
+                                                {status === 'completed' ? '✅' : status === 'failed' ? '❌' : status === 'training' ? '⏳ Training...' : '⏸️ Pending'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {!hasModels ? (
+                                <>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: '4px 0 10px' }}>
+                                        No models exist yet. Build 3 models: Full Historical, 5-Year, 3-Year horizons.
+                                    </p>
+                                    <button
+                                        className="btn-calibrate"
+                                        onClick={handleBuildModels}
+                                        disabled={isBuildingModels || !selectedLeague || mlStatus.status !== 'online'}
+                                        style={{ width: '100%' }}
+                                    >
+                                        {isBuildingModels ? '⏳ Building Models...' : '🏗️ Build 3 Models'}
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    className="text-action-btn"
+                                    onClick={handleBuildModels}
+                                    disabled={isBuildingModels || mlStatus.status !== 'online'}
+                                    style={{ fontSize: '0.7rem', color: '#64748b', cursor: 'pointer', marginTop: '4px' }}
+                                >
+                                    {isBuildingModels ? '⏳ Rebuilding...' : '🔄 Rebuild All Models'}
+                                </button>
+                            )}
                         </div>
-                    ) : (
-                        <button className="btn-run-sim" disabled={true}>
-                            Select Target Protocol
-                        </button>
+                    )}
+
+                    {/* STEP 3: Simulation Parameters — Only if models exist */}
+                    {selectedLeague && hasModels && (
+                        <>
+                            <div className="param-group">
+                                <label>③ Season Scope</label>
+                                <select
+                                    value={selectedYear}
+                                    onChange={(e) => {
+                                        setSelectedYear(e.target.value);
+                                        setMetrics(null);
+                                        setSimId(null);
+                                        setTapeData([]);
+                                        setShowTape(false);
+                                        setRetrainResult(null);
+                                    }}
+                                    disabled={!selectedLeague || loading || years.length === 0}
+                                >
+                                    <option value="">-- Select Year --</option>
+                                    {years.map(y => (
+                                        <option key={y} value={y}>{y} / {y + 1}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="param-group">
+                                <label>Execution Architecture</label>
+                                <select
+                                    value={selectedMode}
+                                    onChange={(e) => setSelectedMode(e.target.value)}
+                                    disabled={loading}
+                                >
+                                    <option value="STATIC">Static Matrix (Single Weight Pass)</option>
+                                    <option value="WALK_FORWARD">Walk-Forward (Recursive Fitting)</option>
+                                </select>
+                            </div>
+
+                            <div className="param-group">
+                                <div className="label-with-action">
+                                    <label>Model Horizon</label>
+                                    {eligibleHorizons.length < 3 && selectedYear && (
+                                        <span style={{ fontSize: '0.6rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                                            ⚠️ {3 - eligibleHorizons.length} restricted
+                                        </span>
+                                    )}
+                                </div>
+                                <select
+                                    value={selectedHorizon}
+                                    onChange={(e) => setSelectedHorizon(e.target.value)}
+                                    disabled={loading}
+                                >
+                                    <option value="FULL_HISTORICAL">Full Historical (Max Sample)</option>
+                                    <option
+                                        value="5Y_ROLLING"
+                                        disabled={!eligibleHorizons.includes('5Y_ROLLING')}
+                                    >
+                                        5-Year Rolling Window {!eligibleHorizons.includes('5Y_ROLLING') ? '(N/A for this season)' : ''}
+                                    </option>
+                                    <option
+                                        value="3Y_ROLLING"
+                                        disabled={!eligibleHorizons.includes('3Y_ROLLING')}
+                                    >
+                                        3-Year Rolling Window {!eligibleHorizons.includes('3Y_ROLLING') ? '(N/A for this season)' : ''}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div className="trident-health">
+                                <div className={`trident-badge ${readiness?.total_fixtures > 0 ? 'good' : 'bad'}`}>
+                                    <span className="icon">💿</span>
+                                    <span className="lbl">Core Data</span>
+                                </div>
+                                <div className={`trident-badge ${hasModels ? 'good' : 'bad'}`}>
+                                    <span className="icon">🧠</span>
+                                    <span className="lbl">Models</span>
+                                </div>
+                                <div className={`trident-badge ${metrics ? 'good' : 'idle'}`}>
+                                    <span className="icon">📊</span>
+                                    <span className="lbl">Results</span>
+                                </div>
+                            </div>
+
+                            {readiness?.status === 'READY' ? (
+                                <button
+                                    className="btn-run-sim"
+                                    onClick={handleRunSimulation}
+                                    disabled={loading || !selectedLeague || !selectedYear}
+                                >
+                                    {loading ? 'Running Simulation...' : '🚀 Run Simulation'}
+                                </button>
+                            ) : readiness ? (
+                                <div className="preflight-warning">
+                                    <div className="warning-content">
+                                        <b>⚠️ Pre-Flight Check</b>
+                                        <p>{readiness.message}</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button className="btn-run-sim" disabled={true}>
+                                    Select Season
+                                </button>
+                            )}
+                        </>
                     )}
 
                     {/* Progress Monitor */}
-                    {jobStatus && jobStatus.status === 'running' && (
+                    {jobStatus && (jobStatus.status === 'running' || jobStatus.status === 'RUNNING') && (
                         <div className="sim-progress-monitor">
                             <div className="progress-header">
-                                <span>Core Processing</span>
-                                <span className="pct">{jobStatus.progress}%</span>
+                                <span>Processing</span>
+                                <span className="pct">{jobStatus.progress || 0}%</span>
                             </div>
                             <div className="progress-bar-wrap">
-                                <div className="progress-bar-fill" style={{ width: `${jobStatus.progress}%` }}></div>
+                                <div className="progress-bar-fill" style={{ width: `${jobStatus.progress || 0}%` }}></div>
                             </div>
                             <div className="progress-logs">
                                 {jobStatus.output && jobStatus.output.slice(-5).map((line, i) => (
@@ -460,24 +736,16 @@ const SimulationDashboard = () => {
                         </div>
                     )}
 
-                    {/* Auto-Calibrate Tool */}
+                    {/* System Status */}
                     <div className="calibration-box">
                         <div className="calibration-header">
-                            <h4>System Calibration</h4>
+                            <h4>ML Engine</h4>
                             <span className={`status-pill ${mlStatus.status === 'online' ? 'online' : 'offline'}`}>
-                                {mlStatus.status === 'online' ? 'ML Online' : 'ML Offline'}
+                                {mlStatus.status === 'online' ? 'Online' : 'Offline'}
                             </span>
                         </div>
-                        <button
-                            onClick={handleCalibrate}
-                            disabled={isCalibrating || mlStatus.is_training || mlStatus.status !== 'online'}
-                            className={`btn-calibrate ${mlStatus.is_training ? 'training' : ''}`}
-                        >
-                            {mlStatus.is_training ? '⏳ Training Active...' : '🛠️ Force Global Retrain'}
-                        </button>
-                        <p className="calibrate-desc">Optimizes the latent logic matrices across all leagues utilizing newly ingested fixture outcomes.</p>
                         {mlStatus.status !== 'online' && (
-                            <div className="service-warning">⚠️ ML Service is unreachable. Simulation and training are disabled.</div>
+                            <div className="service-warning">⚠️ ML Service is unreachable. Model building and simulation are disabled.</div>
                         )}
                     </div>
                 </aside>
@@ -494,65 +762,145 @@ const SimulationDashboard = () => {
                         <div className="sim-initial-state">
                             <div className="sim-icon">💠</div>
                             <h3>Awaiting Protocol Activation</h3>
-                            <p>Configure the simulation envelope and initialize the Forge to generate absolute theoretical performance metrics based on the current model weights.</p>
+                            <p>{getStepMessage()}</p>
+                            {previousSimAvailable && previousSimAvailable.metrics && (
+                                <div style={{ marginTop: '16px' }}>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '8px' }}>
+                                        A previous simulation was found for this scope.
+                                    </p>
+                                    <button
+                                        className="btn-tape-toggle"
+                                        onClick={handleLoadPreviousResults}
+                                        style={{ fontSize: '0.82rem' }}
+                                    >
+                                        📊 View Previous Results ({((previousSimAvailable.metrics.accuracy || 0) * 100).toFixed(1)}% accuracy)
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : metrics ? (
                         <div className="results-container animate-fade-in-up">
-                            {metrics.recalibration_suggested && (
+                            {metrics.overconfidence_warning && (
                                 <div className="recalibration-banner">
-                                    ⚠️ System Recalibration Suggested – Model exhibited high entropy or severe overconfidence in this strata.
+                                    ⚠️ Overconfidence Alert — Model showed high confidence on predictions that were incorrect.
                                 </div>
                             )}
 
                             <div className="metrics-row">
-                                <div className="metric-card">
+                                <div className="metric-card highlight-accuracy">
                                     <span className="lbl">
-                                        1X2 Accuracy
-                                        <InfoIcon text="Percentage of matches where the model's highest probability outcome matched reality." />
+                                        🎯 Accuracy Rate
+                                        <InfoIcon text="Percentage of matches where the model correctly predicted the 1X2 outcome." />
                                     </span>
                                     <div className="val">{((metrics.accuracy || 0) * 100).toFixed(1)}%</div>
-                                    <div className="sub-val">{metrics.count || 0} fixtures analyzed</div>
+                                    <div className="sub-val">{metrics.count || 0} matches analyzed</div>
                                 </div>
 
                                 <div className="metric-card">
                                     <span className="lbl">
                                         Brier Score
-                                        <InfoIcon text="Measures predictive accuracy. 0.0 is perfect, 0.66 is random guessing. Values below 0.35 represent an elite quant model." />
+                                        <InfoIcon text="Measures calibration quality. 0.0 = perfect, 0.66 = random. Below 0.35 is elite." />
                                     </span>
                                     <div className="val">{(metrics.brier_score || 0).toFixed(4)}</div>
-                                    <div className="sub-val">Calibration Error</div>
+                                    <div className="sub-val">Calibration</div>
                                 </div>
 
                                 <div className="metric-card">
                                     <span className="lbl">
                                         Log-Loss
-                                        <InfoIcon text="System Entropy. Penalizes 'surprises' where the model was confident but wrong. Lower values indicate better probabilistic calibration." />
+                                        <InfoIcon text="Penalizes confident wrong predictions. Lower = better probability calibration." />
                                     </span>
                                     <div className="val">{(metrics.log_loss || 0).toFixed(4)}</div>
-                                    <div className="sub-val">Uncertainty Entropy</div>
+                                    <div className="sub-val">Entropy</div>
                                 </div>
 
-                                <div className="metric-card highlight-accuracy">
+                                <div className="metric-card">
                                     <span className="lbl">
-                                        Calibration Health
-                                        <InfoIcon text="Overall system reliability score based on predictive stability." />
+                                        Avg Confidence
+                                        <InfoIcon text="Average confidence the model had in its top prediction." />
                                     </span>
-                                    <div className="val">
-                                        {metrics.brier_score < 0.25 ? 'EXCELLENT' : (metrics.brier_score < 0.35 ? 'STABLE' : 'DRIFTING')}
+                                    <div className="val">{((metrics.avg_confidence || 0) * 100).toFixed(1)}%</div>
+                                    <div className="sub-val">
+                                        {metrics.accuracy > 0.5 ? 'RELIABLE' : metrics.accuracy > 0.4 ? 'MODERATE' : 'NEEDS WORK'}
                                     </div>
-                                    <div className="sub-val">Structural Integrity</div>
                                 </div>
                             </div>
+
+                            {/* Retrain Section — Shows after simulation completes */}
+                            {simId && activeModelForHorizon && (
+                                <div style={{
+                                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08))',
+                                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                                    borderRadius: '12px',
+                                    padding: '16px 20px',
+                                    marginBottom: '16px'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                        <div>
+                                            <h4 style={{ margin: 0, color: '#e2e8f0', fontSize: '0.9rem' }}>
+                                                🔬 Adaptive Model Refinement
+                                            </h4>
+                                            <p style={{ margin: '4px 0 0', color: '#94a3b8', fontSize: '0.72rem' }}>
+                                                Re-train the <strong>{selectedHorizon.replace('_', ' ')}</strong> model using
+                                                simulation error signals. Misclassified matches get 3× sample weight to correct systematic errors.
+                                            </p>
+                                        </div>
+                                        <button
+                                            className="btn-calibrate"
+                                            onClick={handleRetrain}
+                                            disabled={isRetraining || mlStatus.status !== 'online'}
+                                            style={{ minWidth: '160px' }}
+                                        >
+                                            {isRetraining ? '⏳ Re-training...' : '🔄 Re-train Model'}
+                                        </button>
+                                    </div>
+
+                                    {/* Retrain Result */}
+                                    {retrainResult && (
+                                        <div style={{
+                                            marginTop: '10px',
+                                            padding: '10px 14px',
+                                            borderRadius: '8px',
+                                            background: retrainResult.status === 'accepted' ? 'rgba(16, 185, 129, 0.1)' :
+                                                retrainResult.status === 'rejected' ? 'rgba(245, 158, 11, 0.1)' :
+                                                    'rgba(239, 68, 68, 0.1)',
+                                            border: `1px solid ${retrainResult.status === 'accepted' ? '#10b981' :
+                                                retrainResult.status === 'rejected' ? '#f59e0b' : '#ef4444'}33`,
+                                            fontSize: '0.75rem'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{
+                                                    color: retrainResult.status === 'accepted' ? '#10b981' :
+                                                        retrainResult.status === 'rejected' ? '#f59e0b' : '#ef4444',
+                                                    fontWeight: 600
+                                                }}>
+                                                    {retrainResult.status === 'accepted' ? '✅ Model Updated' :
+                                                        retrainResult.status === 'rejected' ? '⚠️ Retrain Rejected' : '❌ Error'}
+                                                </span>
+                                                {retrainResult.old_accuracy !== undefined && (
+                                                    <span style={{ color: '#e2e8f0' }}>
+                                                        {(retrainResult.old_accuracy * 100).toFixed(1)}% →{' '}
+                                                        <strong>{(retrainResult.new_accuracy * 100).toFixed(1)}%</strong>
+                                                        {' '}
+                                                        <span style={{
+                                                            color: retrainResult.improvement > 0 ? '#10b981' : '#ef4444'
+                                                        }}>
+                                                            ({retrainResult.improvement > 0 ? '+' : ''}{(retrainResult.improvement * 100).toFixed(1)}%)
+                                                        </span>
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p style={{ margin: '4px 0 0', color: '#94a3b8' }}>{retrainResult.message}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="charts-grid">
                                 <div className="chart-card" style={{ gridColumn: 'span 2' }}>
                                     <div className="card-header-with-info">
-                                        <h3>📈 Performance & Bankroll Trajectory</h3>
-                                        <InfoIcon text="Bankroll progression (Green) starting with 100€. Matchday Accuracy % (Blue) overlays model success rate per round." />
-                                    </div>
-                                    <div className="bankroll-stats-mini">
-                                        <span>Initial: <b>100€</b></span>
-                                        <span>Stake: <b>10€ Flat</b></span>
+                                        <h3>📈 Accuracy by Matchday</h3>
+                                        <InfoIcon text="Prediction accuracy (%) per matchday round. Higher is better." />
                                     </div>
                                     <div className="chart-wrapper">
                                         <ResponsiveContainer width="100%" height={300}>
@@ -564,19 +912,10 @@ const SimulationDashboard = () => {
                                                     stroke="#94a3b8"
                                                     tick={{ fontSize: 10 }}
                                                     type="number"
-                                                    domain={[1, 38]}
+                                                    domain={['dataMin', 'dataMax']}
                                                 />
                                                 <YAxis
-                                                    yAxisId="left"
                                                     stroke="#10b981"
-                                                    tick={{ fontSize: 10 }}
-                                                    domain={['dataMin - 10', 'dataMax + 10']}
-                                                    tickFormatter={(val) => `${val}€`}
-                                                />
-                                                <YAxis
-                                                    yAxisId="right"
-                                                    orientation="right"
-                                                    stroke="#3b82f6"
                                                     tick={{ fontSize: 10 }}
                                                     domain={[0, 100]}
                                                     tickFormatter={(val) => `${val}%`}
@@ -584,27 +923,26 @@ const SimulationDashboard = () => {
                                                 <Tooltip
                                                     contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', fontSize: '11px' }}
                                                     labelFormatter={(value) => `Matchday ${value}`}
+                                                    formatter={(value) => [`${value}%`, 'Accuracy']}
                                                 />
                                                 <Line
-                                                    yAxisId="left"
-                                                    name="Bankroll"
-                                                    type="monotone"
-                                                    dataKey="bankroll"
-                                                    stroke="#10b981"
-                                                    strokeWidth={3}
-                                                    dot={false}
-                                                    activeDot={{ r: 4 }}
-                                                />
-                                                <Line
-                                                    yAxisId="right"
                                                     name="Accuracy"
                                                     type="monotone"
                                                     dataKey="accuracy"
-                                                    stroke="#3b82f6"
-                                                    strokeWidth={2}
-                                                    strokeDasharray="5 5"
-                                                    dot={{ r: 3, fill: '#3b82f6' }}
+                                                    stroke="#10b981"
+                                                    strokeWidth={3}
+                                                    dot={{ r: 3, fill: '#10b981' }}
                                                     connectNulls={true}
+                                                />
+                                                {/* 33% baseline (random guessing) */}
+                                                <Line
+                                                    name="Random Baseline"
+                                                    type="monotone"
+                                                    dataKey={() => 33.3}
+                                                    stroke="#ef4444"
+                                                    strokeWidth={1}
+                                                    strokeDasharray="8 4"
+                                                    dot={false}
                                                 />
                                             </LineChart>
                                         </ResponsiveContainer>
@@ -615,7 +953,7 @@ const SimulationDashboard = () => {
                                     <div className="chart-card">
                                         <div className="card-header-with-info">
                                             <h3>🎯 Confusion Matrix</h3>
-                                            <InfoIcon text="Visualizes exactly where the model succeeded or failed. Rows are ACTUAL results, Columns are PREDICTED results." />
+                                            <InfoIcon text="Rows = Actual results, Columns = Predicted results." />
                                         </div>
                                         <div className="confusion-matrix-wrapper">
                                             <div className="cm-title-top">MODEL PREDICTION</div>
@@ -658,7 +996,7 @@ const SimulationDashboard = () => {
                                 <div className="tape-container animate-fade-in">
                                     <h3>Historical Match Log (N={tapeData.length})</h3>
                                     {loadingTape ? (
-                                        <div className="tape-loading">Deep Querying Forge Results... 🔄</div>
+                                        <div className="tape-loading">Loading Results... 🔄</div>
                                     ) : (
                                         <div className="tape-table-wrapper">
                                             <table className="tape-table">
@@ -669,18 +1007,16 @@ const SimulationDashboard = () => {
                                                         <th className="center">1</th>
                                                         <th className="center">X</th>
                                                         <th className="center">2</th>
-                                                        <th>Edge Pick</th>
                                                         <th>Score</th>
-                                                        <th>Pred</th>
+                                                        <th>Result</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {tapeData.map((m, idx) => {
                                                         const homeTeam = m.home_team_name || 'Home';
                                                         const awayTeam = m.away_team_name || 'Away';
-                                                        const isCorrect = m.predicted_outcome === m.actual_result;
+                                                        const isCorrect = m.is_correct === 1;
 
-                                                        // Round separator logic
                                                         const prevRound = idx > 0 ? tapeData[idx - 1].round_name : null;
                                                         const isNewRound = idx === 0 || m.round_name !== prevRound;
 
@@ -688,7 +1024,7 @@ const SimulationDashboard = () => {
                                                             <React.Fragment key={idx}>
                                                                 {isNewRound && (
                                                                     <tr className="round-separator">
-                                                                        <td colSpan="8">{m.round_name || 'Next Phase'}</td>
+                                                                        <td colSpan="7">{m.round_name || 'Next Phase'}</td>
                                                                     </tr>
                                                                 )}
                                                                 <tr>
@@ -727,6 +1063,33 @@ const SimulationDashboard = () => {
                     ) : null}
                 </main>
             </div>
+            {/* ── Model Build Overlay ── */}
+            {isBuildingModels && (
+                <div className="build-overlay">
+                    <div className="build-overlay-card">
+                        <span className="icon">🏗️</span>
+                        <h2>Forging ML intelligence</h2>
+                        <p>Constructing multi-horizon predictive models for {
+                            leagues.find(l => String(l.league_id) === selectedLeague)?.name || 'Selected League'
+                        }</p>
+
+                        <div className="build-horizons-progress">
+                            {['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING'].map(horizon => (
+                                <div key={horizon} className="horizon-progress-item">
+                                    <span className="name">{horizon.replace('_', ' ')}</span>
+                                    <span className={`status status-${(buildStatus[horizon] || 'pending').toLowerCase()}`}>
+                                        {buildStatus[horizon] || 'pending'}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button className="build-cancel-btn" onClick={handleCancelBuild}>
+                            ⚙️ Abort Construction
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

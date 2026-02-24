@@ -1,5 +1,9 @@
+"""
+Forge Orchestrator (V8) — Sequential Simulation Pipeline
+Manages: Model Selection → Training → Prediction → Evaluation
+NO ODDS. KPI = Accuracy Rate.
+"""
 import sqlite3
-import pd as pd
 import pandas as pd
 import os
 import sys
@@ -9,7 +13,7 @@ import joblib
 from datetime import datetime
 from simulation_engine import LeagueReplayEngine
 from analytics import ForgeAnalytics
-from train_1x2 import train_model
+from train_forge import train_model
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -24,8 +28,8 @@ MODELS_DIR = os.path.join(BASE_DIR, 'models')
 
 class ForgeOrchestrator:
     """
-    US_189 / V9 Rebuild: Sequential Orchestrator
-    Manages the lifecycle: Selection -> Training -> Prediction -> Evaluation.
+    V8 Forge Orchestrator: Selection → Training → Prediction → Evaluation.
+    Manages the lifecycle of a simulation run.
     """
     def __init__(self, db_path: str = DB_PATH):
         self.db_path = db_path
@@ -55,21 +59,41 @@ class ForgeOrchestrator:
         
         if row:
             model_id, model_path = row
-        else:
-            # If no model exists, we MUST train one first (US_211)
-            logger.info(f"⚠️ No active {horizon} model found for league {league_id}. Triggering training...")
-            model_path = train_model(league_id=league_id, horizon_type=horizon)
+            # Verify model file still exists
+            if model_path and os.path.exists(model_path):
+                logger.info(f"✅ Using existing model: {model_path} (ID: {model_id})")
+            else:
+                logger.warning(f"⚠️ Model file not found at {model_path}. Re-training...")
+                model_path = None
+        
+        if not model_path:
+            # Train a new model
+            logger.info(f"⚠️ No active {horizon} model found for league {league_id}. Training now...")
+            sys.stdout.flush()
+            
+            model_path = train_model(
+                league_id=league_id, 
+                horizon_type=horizon,
+                season_year=season_year
+            )
+            
             if model_path:
-                # Re-query to get the newly created model_id
                 cur.execute("SELECT id FROM V3_Model_Registry WHERE model_path = ? LIMIT 1", (model_path,))
                 row = cur.fetchone()
                 if row: model_id = row[0]
             else:
-                logger.error("❌ Failed to establish a valid model for simulation.")
-                return
+                # Last resort: try global model
+                global_model_path = os.path.join(BASE_DIR, 'model_1x2.joblib')
+                if os.path.exists(global_model_path):
+                    logger.warning("⚠️ Using global fallback model.")
+                    model_path = global_model_path
+                else:
+                    logger.error("❌ No valid model available. Cannot run simulation.")
+                    print("PROGRESS: 0% | FAILED: No model available")
+                    sys.stdout.flush()
+                    return
 
-        # 2. Create/Update Simulation Entry
-        # We check if a simulation already exists for this config to avoid duplicates
+        # 2. Create Simulation Entry
         cur.execute("""
             INSERT INTO V3_Forge_Simulations (league_id, season_year, model_id, status, horizon_type)
             VALUES (?, ?, ?, 'PENDING', ?)
@@ -78,7 +102,7 @@ class ForgeOrchestrator:
         conn.commit()
         conn.close()
         
-        logger.info(f"🆕 Created Simulation ID: {sim_id} for League {league_id} Season {season_year} (Model: {model_id}, Horizon: {horizon})")
+        logger.info(f"🆕 Simulation ID: {sim_id} | League {league_id} | Season {season_year} | Horizon: {horizon}")
         sys.stdout.flush()
         
         try:
@@ -90,13 +114,15 @@ class ForgeOrchestrator:
             else:
                 raise ValueError(f"Unknown mode: {mode}")
                 
-            # Final Settlement (US_Accuracy mandate)
+            # Final Settlement
             self.analytics.settle_simulation(sim_id)
             logger.info(f"🏆 Forge Run {sim_id} Complete!")
             sys.stdout.flush()
             
         except Exception as e:
             logger.error(f"❌ Forge Run {sim_id} Failed: {e}")
+            import traceback
+            traceback.print_exc()
             conn = self.get_connection()
             conn.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED' WHERE id = ?", (sim_id,))
             conn.commit()
@@ -104,33 +130,50 @@ class ForgeOrchestrator:
 
     def _run_walk_forward_simulation(self, sim_id: int, league_id: int, season_year: int, horizon: str):
         """
-        US_189: Monthly rolling retraining with fixed horizon window.
+        Walk-Forward: Monthly rolling retraining with fixed horizon window.
         """
-        logger.info(f"🌀 Starting Walk-Forward Orchestration for Sim {sim_id} [{horizon}]...")
+        logger.info(f"🌀 Walk-Forward for Sim {sim_id} [{horizon}]...")
         sys.stdout.flush()
         
         conn = self.get_connection()
-        query = "SELECT DISTINCT strftime('%Y-%m', date) as month FROM V3_Fixtures WHERE league_id = ? AND season_year = ? ORDER BY month ASC"
+        query = """
+            SELECT DISTINCT strftime('%Y-%m', date) as month 
+            FROM V3_Fixtures 
+            WHERE league_id = ? AND season_year = ? AND status_short IN ('FT','AET','PEN')
+            ORDER BY month ASC
+        """
         months = pd.read_sql_query(query, conn, params=(league_id, season_year))['month'].tolist()
         conn.close()
         
         if not months:
             raise ValueError("No months found to simulate.")
             
-        for month in months:
-            logger.info(f"--- [Month {month}] ---")
+        for i, month in enumerate(months):
+            logger.info(f"--- [Month {i+1}/{len(months)}: {month}] ---")
             
             # Recalibrate model at the start of each month
             cutoff_d = f"{month}-01"
-            specialized_model_path = train_model(league_id=league_id, cutoff_date=cutoff_d, horizon_type=horizon)
+            specialized_model_path = train_model(
+                league_id=league_id, 
+                cutoff_date=cutoff_d, 
+                horizon_type=horizon,
+                season_year=season_year
+            )
             
             if not specialized_model_path:
-                 # Fallback to the initial model assigned to simulation
-                 conn = self.get_connection()
-                 row = conn.execute("SELECT model_path FROM V3_Model_Registry r JOIN V3_Forge_Simulations s ON r.id = s.model_id WHERE s.id = ?", (sim_id,)).fetchone()
-                 conn.close()
-                 specialized_model_path = row[0]
-                 logger.warning("   ⚠️  Retraining failed (likely no data). Falling back to initial model.")
+                # Fallback to the initial model assigned to simulation
+                conn = self.get_connection()
+                row = conn.execute("""
+                    SELECT r.model_path FROM V3_Model_Registry r 
+                    JOIN V3_Forge_Simulations s ON r.id = s.model_id 
+                    WHERE s.id = ?
+                """, (sim_id,)).fetchone()
+                conn.close()
+                if row:
+                    specialized_model_path = row[0]
+                else:
+                    specialized_model_path = os.path.join(BASE_DIR, 'model_1x2.joblib')
+                logger.warning("   ⚠️ Retraining failed. Falling back to initial model.")
 
             # Predict the month
             start_d = cutoff_d
@@ -144,7 +187,7 @@ class ForgeOrchestrator:
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description='Forge Orchestrator V9')
+    parser = argparse.ArgumentParser(description='Forge Orchestrator V8')
     parser.add_argument('--league', type=int, required=True, help='League ID')
     parser.add_argument('--season', type=int, required=True, help='Season Year')
     parser.add_argument('--mode', type=str, default='STATIC', choices=['STATIC', 'WALK_FORWARD'])
