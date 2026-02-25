@@ -12,6 +12,35 @@ const SimulationDashboard = () => {
     const [selectedMode, setSelectedMode] = useState('STATIC');
     const [years, setYears] = useState([]);
 
+    // Persistence & State Initialization (US_210)
+    useEffect(() => {
+        const savedLeague = localStorage.getItem('forge_selected_league');
+        const savedYear = localStorage.getItem('forge_selected_year');
+
+        // Restore league first - validation happens in leagues useEffect
+        if (savedLeague) setSelectedLeague(savedLeague);
+
+        // Restore year - validation happens in selectedLeague useEffect
+        if (savedYear) setSelectedYear(savedYear);
+
+        // Check if a model build was in progress before refresh
+        const checkInitialBuildStatus = async () => {
+            try {
+                const status = await api.getForgeBuildStatus();
+                if (status.is_building) {
+                    console.log("🏗️ Resuming model build monitor...");
+                    setIsBuildingModels(true);
+                    setBuildStatus(status.progress || {});
+                    // Start the polling loop
+                    pollBuildStatus();
+                }
+            } catch (err) {
+                console.warn("Initial build status check failed");
+            }
+        };
+        checkInitialBuildStatus();
+    }, []);
+
     // Forge Multi-Step Flow State
     const [showDiscovery, setShowDiscovery] = useState(false);
     const [activeActivationId, setActiveActivationId] = useState(null);
@@ -61,13 +90,35 @@ const SimulationDashboard = () => {
 
     // When league changes: reset ALL sim state + load league-specific models
     useEffect(() => {
+        if (!leagues || leagues.length === 0) return;
+
+        // Validation: If selectedLeague in storage doesn't exist anymore, clear it
+        if (selectedLeague && !leagues.find(x => x.league_id === parseInt(selectedLeague))) {
+            console.warn(`⚠️ Persisted league ${selectedLeague} no longer available.`);
+            setSelectedLeague('');
+            setSelectedYear('');
+            localStorage.removeItem('forge_selected_league');
+            localStorage.removeItem('forge_selected_year');
+            return;
+        }
+
         if (selectedLeague) {
             const l = leagues.find(x => x.league_id === parseInt(selectedLeague));
             if (l) {
                 setYears(l.years_imported || []);
-                if (l.years_imported && l.years_imported.length > 0) setSelectedYear(l.years_imported[0]);
+
+                // US_210: Only auto-select first year if current selectedYear is NOT in the new league
+                const savedYear = localStorage.getItem('forge_selected_year');
+                const isYearValid = l.years_imported && l.years_imported.includes(parseInt(selectedYear || savedYear));
+
+                if (!isYearValid && l.years_imported && l.years_imported.length > 0) {
+                    setSelectedYear(String(l.years_imported[0]));
+                }
             }
-            // Clear stale simulation data from other leagues
+            // Persistence Update (US_210)
+            localStorage.setItem('forge_selected_league', selectedLeague);
+
+            // Clear stale simulation data
             setMetrics(null);
             setSimId(null);
             setJobStatus(null);
@@ -77,11 +128,14 @@ const SimulationDashboard = () => {
             setError(null);
             setUserTriggeredSim(false);
             setPreviousSimAvailable(null);
-            // Fetch models specific to this league from DB
+
+            // Fetch models specific to this league
             fetchLeagueModels();
         } else {
             setYears([]);
             setSelectedYear('');
+            localStorage.removeItem('forge_selected_league');
+            localStorage.removeItem('forge_selected_year');
         }
     }, [selectedLeague, leagues]);
 
@@ -128,17 +182,17 @@ const SimulationDashboard = () => {
     // Stateless Polling — only poll for active jobs, not completed historical ones
     useEffect(() => {
         let interval;
-        if (selectedLeague && selectedYear && !metrics) {
+        if (selectedLeague && selectedYear && selectedHorizon && !metrics) {
             checkActiveJob();
             interval = setInterval(checkActiveJob, 4000);
         }
         return () => clearInterval(interval);
-    }, [selectedLeague, selectedYear, metrics]);
+    }, [selectedLeague, selectedYear, selectedHorizon, metrics]);
 
     const checkActiveJob = async () => {
-        if (!selectedLeague || !selectedYear) return;
+        if (!selectedLeague || !selectedYear || !selectedHorizon) return;
         try {
-            const data = await api.getSimulationStatus(selectedLeague, selectedYear);
+            const data = await api.getSimulationStatus(selectedLeague, selectedYear, selectedHorizon);
             if (!data) return;
 
             // No simulation exists yet for this scope — silently skip
@@ -157,21 +211,14 @@ const SimulationDashboard = () => {
                 setUserTriggeredSim(true); // User or system started it
             } else if (data.status === 'completed' || data.status === 'COMPLETED') {
                 setLoading(false);
-                if (userTriggeredSim) {
-                    // User started this sim — show results immediately
-                    if (data.metrics) setMetrics(data.metrics);
+                // US_212: Automated Retrieval - Auto-fill if completed
+                if (data.metrics) {
+                    setMetrics(data.metrics);
                     setSimId(data.id || null);
-                } else {
-                    // Old completed sim from DB — don't auto-fill canvas, just note it's available
-                    setPreviousSimAvailable({
-                        id: data.id,
-                        metrics: data.metrics,
-                        status: data.status
-                    });
                 }
             } else if (data.status === 'failed' || data.status === 'FAILED') {
                 setLoading(false);
-                if (loading) setError(data.error || 'Simulation Failed.');
+                setError(data.error_log || data.error || 'Simulation Failed.');
             }
         } catch (err) {
             if (err.response?.status !== 404) {
@@ -237,6 +284,36 @@ const SimulationDashboard = () => {
         }
     };
 
+    const pollBuildStatus = () => {
+        const interval = setInterval(async () => {
+            try {
+                const status = await api.getForgeBuildStatus();
+
+                // Update multi-horizon progress
+                setBuildStatus(status.progress || {});
+
+                if (!status.is_building) {
+                    clearInterval(interval);
+                    setIsBuildingModels(false);
+
+                    // Refresh models
+                    await fetchForgeModels();
+                    await fetchLeagueModels();
+
+                    if (status.error) {
+                        if (status.error.includes("cancelled")) {
+                            console.log("🚫 Build was cancelled.");
+                        } else {
+                            setError(`Model Build Failed: ${status.error}`);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 2000);
+    };
+
     // Build Models for selected league
     const handleBuildModels = async () => {
         if (!selectedLeague) return;
@@ -246,34 +323,7 @@ const SimulationDashboard = () => {
         try {
             const result = await api.buildForgeModels({ leagueId: parseInt(selectedLeague) });
             if (result.success) {
-                // Start polling build status
-                const pollInterval = setInterval(async () => {
-                    try {
-                        const status = await api.getForgeBuildStatus();
-
-                        // Update multi-horizon progress
-                        setBuildStatus(status.progress || {});
-
-                        if (!status.is_building) {
-                            clearInterval(pollInterval);
-                            setIsBuildingModels(false);
-
-                            // Refresh models
-                            await fetchForgeModels();
-                            await fetchLeagueModels();
-
-                            if (status.error) {
-                                if (status.error.includes("cancelled")) {
-                                    console.log("🚫 Build was cancelled.");
-                                } else {
-                                    setError(`Model Build Failed: ${status.error}`);
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Polling error", e);
-                    }
-                }, 2000);
+                pollBuildStatus();
             } else {
                 setError(result.message);
                 setIsBuildingModels(false);
@@ -451,7 +501,7 @@ const SimulationDashboard = () => {
 
     // Determine what the user needs to do
     const getStepMessage = () => {
-        if (!selectedLeague) return 'Step 1: Select a league using the "Select League" button above.';
+        if (!selectedLeague) return 'Step 1: Select a league from the dropdown or use "Discover New Leagues".';
         if (!hasModels) return 'Step 2: Build the 3 ML models for your selected league.';
         if (!selectedYear) return 'Step 3: Select a season and run the simulation.';
         return 'Step 3: Select a season, choose a horizon, and run the simulation.';
@@ -465,15 +515,9 @@ const SimulationDashboard = () => {
                 </button>
                 <div className="header-main-wrap">
                     <div className="header-content">
-                        <span className="badge">V8 Forge Engine</span>
+                        <span className="badge">V10 Forge Optimization</span>
                         <h1>Alpha Analytics — Forge Control Center</h1>
                         <p>Build league-scoped ML models and run chronological backtesting to validate prediction accuracy.</p>
-                    </div>
-                    <div className="header-actions">
-                        <button className="forge-discovery-btn" onClick={() => setShowDiscovery(true)}>
-                            <span className="icon">🔭</span>
-                            Select League
-                        </button>
                     </div>
                 </div>
             </header>
@@ -506,11 +550,18 @@ const SimulationDashboard = () => {
                     <div className="param-group">
                         <div className="label-with-action">
                             <label>① League Target</label>
-                            <button className="text-action-btn" onClick={fetchLeagues} disabled={loading}>↻ Refresh</button>
+                            <div className="action-row">
+                                <button className="text-action-btn" onClick={fetchLeagues} disabled={loading}>↻</button>
+                                <button className="text-action-btn" onClick={() => setShowDiscovery(true)}>🔭 Discovery</button>
+                            </div>
                         </div>
                         <select
                             value={selectedLeague}
                             onChange={(e) => {
+                                if (e.target.value === 'DISCOVER') {
+                                    setShowDiscovery(true);
+                                    return;
+                                }
                                 setSelectedLeague(e.target.value);
                                 setMetrics(null);
                                 setSimId(null);
@@ -521,17 +572,20 @@ const SimulationDashboard = () => {
                             disabled={loading}
                         >
                             <option value="">-- Choose League --</option>
-                            {leagues.map(l => {
-                                const yearsList = l.years_imported || [];
-                                const minYear = Math.min(...yearsList);
-                                const maxYear = Math.max(...yearsList);
-                                const range = yearsList.length > 0 ? `[${minYear}-${maxYear}]` : '(No Data)';
-                                return (
-                                    <option key={l.league_id} value={l.league_id}>
-                                        {l.country_name} - {l.name} {range}
-                                    </option>
-                                );
-                            })}
+                            <option value="DISCOVER" style={{ fontWeight: 'bold', color: '#10b981' }}>🔭 Discover & Sync New Leagues</option>
+                            <optgroup label="Imported Leagues">
+                                {leagues.map(l => {
+                                    const yearsList = l.years_imported || [];
+                                    const minYear = Math.min(...yearsList);
+                                    const maxYear = Math.max(...yearsList);
+                                    const range = yearsList.length > 0 ? `[${minYear}-${maxYear}]` : '(No Data)';
+                                    return (
+                                        <option key={l.league_id} value={l.league_id}>
+                                            {l.country_name} - {l.name} {range}
+                                        </option>
+                                    );
+                                })}
+                            </optgroup>
                         </select>
                     </div>
 
@@ -623,6 +677,7 @@ const SimulationDashboard = () => {
                                     value={selectedYear}
                                     onChange={(e) => {
                                         setSelectedYear(e.target.value);
+                                        localStorage.setItem('forge_selected_year', e.target.value);
                                         setMetrics(null);
                                         setSimId(null);
                                         setTapeData([]);
@@ -632,9 +687,10 @@ const SimulationDashboard = () => {
                                     disabled={!selectedLeague || loading || years.length === 0}
                                 >
                                     <option value="">-- Select Year --</option>
-                                    {years.map(y => (
-                                        <option key={y} value={y}>{y} / {y + 1}</option>
-                                    ))}
+                                    {years.map(y => {
+                                        const yearLabel = `${y} / ${y + 1}`;
+                                        return <option key={y} value={y}>{yearLabel}</option>;
+                                    })}
                                 </select>
                             </div>
 
@@ -722,17 +778,20 @@ const SimulationDashboard = () => {
                     {jobStatus && (jobStatus.status === 'running' || jobStatus.status === 'RUNNING') && (
                         <div className="sim-progress-monitor">
                             <div className="progress-header">
-                                <span>Processing</span>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase' }}>Current Stage</span>
+                                    <span style={{ fontWeight: 600, color: '#10b981' }}>{jobStatus.stage || 'PROCESSING...'}</span>
+                                </div>
                                 <span className="pct">{jobStatus.progress || 0}%</span>
                             </div>
                             <div className="progress-bar-wrap">
                                 <div className="progress-bar-fill" style={{ width: `${jobStatus.progress || 0}%` }}></div>
                             </div>
-                            <div className="progress-logs">
-                                {jobStatus.output && jobStatus.output.slice(-5).map((line, i) => (
-                                    <div key={i} className="log-entry">{line}</div>
-                                ))}
-                            </div>
+                            {jobStatus.last_heartbeat && (
+                                <div style={{ fontSize: '0.6rem', color: '#475569', marginTop: '4px', textAlign: 'right' }}>
+                                    💓 Last Active: {new Date(jobStatus.last_heartbeat).toLocaleTimeString()}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -753,25 +812,63 @@ const SimulationDashboard = () => {
                 {/* ── Results Canvas ── */}
                 <main className="sim-canvas">
                     {error && (
-                        <div className="error-card">
-                            ⚠️ {error}
+                        <div className="error-card" style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            borderRadius: '12px',
+                            padding: '20px',
+                            marginBottom: '20px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <div>
+                                <h4 style={{ color: '#f87171', margin: '0 0 5px 0' }}>⚠️ Simulation Error</h4>
+                                <p style={{ color: '#fca5a5', margin: 0, fontSize: '0.85rem' }}>{error}</p>
+                            </div>
+                            <button
+                                className="btn-calibrate"
+                                onClick={handleRunSimulation}
+                                style={{
+                                    width: 'auto',
+                                    padding: '8px 16px',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                    borderColor: 'rgba(239, 68, 68, 0.3)',
+                                    color: '#f87171'
+                                }}
+                            >
+                                🔄 Retry Simulation
+                            </button>
                         </div>
                     )}
 
-                    {!loading && !metrics ? (
-                        <div className="sim-initial-state">
+                    {loading && !metrics && (!jobStatus || (jobStatus.status !== 'RUNNING' && jobStatus.status !== 'running')) ? (
+                        <div className="results-container" style={{ opacity: 0.6 }}>
+                            <div className="metrics-row">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="metric-card skeleton metric-skeleton"></div>
+                                ))}
+                            </div>
+                            <div className="charts-grid">
+                                <div className="chart-card skeleton chart-skeleton" style={{ gridColumn: 'span 2' }}></div>
+                                <div className="chart-card skeleton chart-skeleton" style={{ height: '240px' }}></div>
+                                <div className="chart-card skeleton chart-skeleton" style={{ height: '240px' }}></div>
+                            </div>
+                        </div>
+                    ) : !metrics ? (
+                        <div className="sim-initial-state animate-fade-in">
                             <div className="sim-icon">💠</div>
                             <h3>Awaiting Protocol Activation</h3>
                             <p>{getStepMessage()}</p>
                             {previousSimAvailable && previousSimAvailable.metrics && (
-                                <div style={{ marginTop: '16px' }}>
-                                    <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '8px' }}>
+                                <div style={{ marginTop: '24px' }}>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '12px' }}>
                                         A previous simulation was found for this scope.
                                     </p>
                                     <button
                                         className="btn-tape-toggle"
                                         onClick={handleLoadPreviousResults}
-                                        style={{ fontSize: '0.82rem' }}
+                                        style={{ fontSize: '0.85rem', padding: '10px 20px' }}
                                     >
                                         📊 View Previous Results ({((previousSimAvailable.metrics.accuracy || 0) * 100).toFixed(1)}% accuracy)
                                     </button>
@@ -825,6 +922,13 @@ const SimulationDashboard = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Last Ran Indicator (US_212) */}
+                            {jobStatus && jobStatus.status === 'COMPLETED' && (
+                                <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '20px', textAlign: 'right' }}>
+                                    ✅ Protocol Verified — Last Ran: {new Date(jobStatus.last_heartbeat || jobStatus.created_at).toLocaleString()}
+                                </div>
+                            )}
 
                             {/* Retrain Section — Shows after simulation completes */}
                             {simId && activeModelForHorizon && (
@@ -1062,35 +1166,37 @@ const SimulationDashboard = () => {
                         </div>
                     ) : null}
                 </main>
-            </div>
+            </div >
             {/* ── Model Build Overlay ── */}
-            {isBuildingModels && (
-                <div className="build-overlay">
-                    <div className="build-overlay-card">
-                        <span className="icon">🏗️</span>
-                        <h2>Forging ML intelligence</h2>
-                        <p>Constructing multi-horizon predictive models for {
-                            leagues.find(l => String(l.league_id) === selectedLeague)?.name || 'Selected League'
-                        }</p>
+            {
+                isBuildingModels && (
+                    <div className="build-overlay">
+                        <div className="build-overlay-card">
+                            <span className="icon">🏗️</span>
+                            <h2>Forging ML intelligence</h2>
+                            <p>Constructing multi-horizon predictive models for {
+                                leagues.find(l => String(l.league_id) === selectedLeague)?.name || 'Selected League'
+                            }</p>
 
-                        <div className="build-horizons-progress">
-                            {['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING'].map(horizon => (
-                                <div key={horizon} className="horizon-progress-item">
-                                    <span className="name">{horizon.replace('_', ' ')}</span>
-                                    <span className={`status status-${(buildStatus[horizon] || 'pending').toLowerCase()}`}>
-                                        {buildStatus[horizon] || 'pending'}
-                                    </span>
-                                </div>
-                            ))}
+                            <div className="build-horizons-progress">
+                                {['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING'].map(horizon => (
+                                    <div key={horizon} className="horizon-progress-item">
+                                        <span className="name">{horizon.replace('_', ' ')}</span>
+                                        <span className={`status status-${(buildStatus[horizon] || 'pending').toLowerCase()}`}>
+                                            {buildStatus[horizon] || 'pending'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button className="build-cancel-btn" onClick={handleCancelBuild}>
+                                ⚙️ Abort Construction
+                            </button>
                         </div>
-
-                        <button className="build-cancel-btn" onClick={handleCancelBuild}>
-                            ⚙️ Abort Construction
-                        </button>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

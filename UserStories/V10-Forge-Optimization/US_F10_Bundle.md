@@ -150,6 +150,114 @@ Acceptance Criteria:
 
 ---
 
+US_216: Forge Laboratory Portal — Dedicated Architecture Module  
+Feature Type: New Capability  
+Role: Frontend Developer  
+Goal: Provide a high-integrity, isolated environment for professional model breeding and calibration, separate from the live simulation dashboard.  
+
+Core Task: Build `/forge-lab` as a standalone workspace with a specialized layout for "Deep Intelligence" tasks.  
+
+Functional Requirements:  
+- Distinct side-bar or tabbed navigation to isolate the Laboratory.  
+- Dedicated "Breeding Hub" view for triggering model generation.  
+- Dedicated "Performance Matrix" view for analyzing results.  
+- High-density comparative UI (Matrix style) for viewing Accuracy across all Horizons and Seasons.  
+
+---
+
+US_217: Manual Breeding Orchestrator (No Automatic Execution)  
+Feature Type: Architecture Upgrade  
+Role: Full Stack  
+Goal: Allow the user to manually initiate the heavy "Breeding Cycle" for a league, ensuring the system only consumes resources when requested.  
+
+Core Task: Implement a command-based orchestrator that builds the "Trident" (Full, 5Y, 3Y) and runs backtests only upon user trigger.  
+
+Functional Requirements:  
+- A single "🔥 Start Breeding Cycle" button.  
+- Sequential execution: Build Model 1 -> Backtest Model 1 -> Build Model 2 -> etc.  
+- Ability to see the "Audit Queue" of pending simulations.  
+- Manual "Run Audit Sweep" option to backtest already trained models across all years.  
+
+---
+
+US_220: Multi-Horizon Backtest Suite  
+Feature Type: Data Logic  
+Role: ML Engine  
+Goal: Automatically backtest every available imported year for each model horizon to create a performance baseline.  
+
+Core Task: For a given league, run STATIC simulations for every year in `years_imported` for each of the 3 horizons.  
+
+Functional Requirements:  
+- Model-Range awareness: 3Y model only backtests the last 3 available seasons.  
+- 5Y model only backtests the last 5 available seasons.  
+- Full Historical backtests all available seasons.  
+- All results tagged as `LAB_AUDIT` in `V3_Forge_Simulations`.  
+
+---
+
+US_221: Calibration with 3-Season Multi-Validation  
+Feature Type: Performance Optimization  
+Role: ML Engine / Backend  
+Goal: Ensure recalibrated models are robust across recent history, preventing overfitting on a single season.  
+
+Core Task: Implement a recalibration gate that validates the "improved" model against the 3 latest available seasons.  
+
+Functional Requirements:  
+- Retrain using error signals from a target season.  
+- Validation Gate: Run hidden simulations on the 3 latest seasons.  
+- Success Rule: The new model must show an aggregate accuracy gain ≥ 0.5% across those 3 seasons.  
+- If rejected, keep the previous version but log the attempt.  
+
+---
+
+US_222: Intelligence Performance Matrix & Trend Graph  
+Feature Type: UX Overhaul  
+Role: Frontend Developer  
+Goal: Visualize complex multi-model performance data to help users identify the "Peak" model for their target league.  
+
+Core Task: Create a combined visualization using a Data Matrix (Table) and a Performance Trend Line (Recharts).  
+
+Functional Requirements:  
+- X-axis: Seasons | Y-Axis: Accuracy %.  
+- 3 Separate Lines: Full, 5Y, 3Y.  
+- Click on any matrix cell to jump into the detailed "Matchday Tape" for that audit.  
+- Highlight "Optimal Model" per season (highest accuracy).  
+
+---
+
+US_223: Historical Registry of Accuracy Metrics  
+Feature Type: Architecture Upgrade  
+Role: Data Architect  
+Goal: Maintain a rigorous historical ledger of all model performance to assist in future calibration and audit-trailing.  
+
+Core Task: Ensure all simulation results store the %accuracy and Brier Score in the `V3_Forge_Simulations` table securely.  
+
+Functional Requirements:  
+- Store `summary_metrics_json` without overwriting historical runs.  
+- Link each simulation to its specific `model_id` version.  
+- Add `calibration_tag` to rows that were used to refine models.  
+
+---
+
+### 📋 User Story & Agent Allocation
+
+| US ID | Title | Feature Type | Primary Agent |
+| :--- | :--- | :--- | :--- |
+| **US_210** | Forge UI Persistence & State Management | UX Improvement | Frontend Developer |
+| **US_211** | Unified League Exploration & Selection | UX Improvement | Frontend Developer |
+| **US_212** | Automated Simulation Result Retrieval | UX Improvement | Full Stack |
+| **US_213** | Robust Forge Process Heartbeat & Monitoring | Architecture Upgrade | Backend Developer |
+| **US_214** | Forge Error Transparency & Feedback | UX Improvement | Full Stack |
+| **US_215** | Premium Forge Visual Aesthetics | UX Improvement | Frontend Developer |
+| **US_216** | Forge Laboratory Portal — Dedicated Architecture Module | New Capability | Frontend Developer |
+| **US_217** | Manual Breeding Orchestrator | Architecture Upgrade | Full Stack |
+| **US_220** | Multi-Horizon Backtest Suite | Data Logic | ML Engine |
+| **US_221** | Calibration with 3-Season Multi-Validation | Performance Optimization | ML Engine |
+| **US_222** | Intelligence Performance Matrix & Trend Graph | UX Overhaul | Frontend Developer |
+| **US_223** | Historical Registry of Accuracy Metrics | Architecture Upgrade | Data Architect |
+
+---
+
 🔍 Audit & Assumptions
 
 Current system limitations identified:
@@ -161,46 +269,29 @@ Technical debt detected:
 - The separation between "Imported Leagues" (dropdown) and "Discoverable Leagues" (Discovery UI) is confusing for users who only want to simulate what they already have.
 - Error handling in `forge_orchestrator.py` is not currently feeding back detailed logs to the `V3_Forge_Simulations` table correctly.
 
-Assumptions:
-- The ML Service is running on a stable port (8000) and can handle background tasks without blocking main API requests.
-- The `V3_Forge_Simulations` and `V3_Model_Registry` tables have the necessary columns or can be easily migrated to include `last_heartbeat` and `error_log`.
-
-Risks:
-- Auto-loading previous results might increase initial load time if the metrics JSON payload is massive (though currently it seems small enough).
-- Heartbeat implementation requires shared access to the DB between the Python process and the Node process.
-
----
-
-🎨 UX & Product Strategy
+### 🎨 UX & Product Strategy
 
 Why this feature improves the product:
-- **Trust & Reliability**: By eliminating the "infinite loading" and showing clear stages, users feel the engine is working and reliable.
-- **Efficiency**: Persistence and auto-loading turn a 4-click process (Select League -> Select Season -> Select Horizon -> View Results) into a 0-click or 1-click process for recurring analysis.
-- **Professionalism**: Premium aesthetics and smooth transitions transform the tool from a "developer's experiment" into a "quant analysis workstation".
-
-How it strengthens data integrity:
-- Better monitoring ensures that failed simulations are correctly flagged, preventing users from making decisions based on "stale" or "incorrectly converged" models.
-
-Long-term architectural value:
-- The heartbeat mechanism is a foundational piece for V10’s focus on robust, stateless job orchestration, which will be critical when moving to multi-worker or cloud-based simulation environments.
+- **Professionalism**: A dedicated Lab page transforms the tool from an experimental engine into a rigorous Quant workstation.
+- **Data-Driven Confidence**: Sequential backtesting for ALL years ensures no bias in model selection.
+- **Robust Calibration**: 3-season validation prevents the model from "cheating" by overfitting on a single volatile season.
 
 ---
 
-🛠 Hand-off Instruction for the Team
+### 🛠 Hand-off Instruction for the Team
 
 ATTENTION AGENTS:
 
 BE AGENT:
-- Add `last_heartbeat` (DATETIME) and `error_log` (TEXT) to `V3_Forge_Simulations`.
-- Implement the "watchdog" logic in `SimulationQueueService` to mark jobs as FAILED if they timeout.
-- Ensure `getJobStatus` returns the full metrics object for auto-loading.
+- Add `calibration_tag` and `is_audit` columns to `V3_Forge_Simulations`.
+- Implement `ForgeLaboratoryService` to handle manual sequential triggers for US_217.
+- Ensure `getSimulationStatus` can filter by `is_audit` to populate the Lab Matrix.
 
 FE AGENT:
-- Implement `localStorage` persistence for `selectedLeague` and `selectedSeason`.
-- Remove the header "Select League" button and unify discovery into the sidebar.
-- Implement auto-triggering of `fetchLeagueModels` and simulation retrieval on mount/selection.
-- Polish UI with transitions and health-badge animations.
+- Create the standalone `/forge-lab` page with the Matrix UI (US_216).
+- Implement the "Performance Trend Graph" using Recharts (US_222).
+- Ensure the Lab page manages its own persistence (Selected League).
 
 ML AGENT:
-- Update `forge_orchestrator.py` to pulse the `last_heartbeat` and catch errors for the `error_log`.
-- Report granular stages (Fetching, Engineering, Preds, Calibration) to the DB via PROGRESS updates or a new `stage` column.
+- Update `forge_orchestrator.py` to support the multi-year backtest sweep (US_220).
+- Refactor `retrain_forge.py` to execute the **3-Season Success Gate** before reporting a successful calibration (US_221).

@@ -21,6 +21,7 @@ import LiveBetMatchDetails from './components/v3/live-bet/LiveBetMatchDetails';
 import MonitoringConsole from './components/v3/live-bet/MonitoringConsole';
 import SimulationDashboard from './components/v3/live-bet/SimulationDashboard';
 import TelemetryConsole from './components/v3/TelemetryConsole';
+import ForgeLaboratory from './components/v3/ForgeLaboratory';
 import { ImportProvider } from './context/ImportContext.jsx';
 import './App.css';
 
@@ -43,6 +44,9 @@ function App() {
                             </NavLink>
                             <NavLink to="/studio" className="nav-link">
                                 Studio
+                            </NavLink>
+                            <NavLink to="/forge/lab" className="nav-link" style={{ color: '#8b5cf6', fontWeight: 'bold' }}>
+                                🧪 Forge Lab
                             </NavLink>
                             <NavLink to="/import" className="nav-link">
                                 Import
@@ -73,6 +77,7 @@ function App() {
                             <Route path="/search" element={<SearchPageV3 />} />
                             <Route path="/club/:id" element={<ClubProfilePageV3 />} />
                             <Route path="/studio" element={<ContentStudioV3 />} />
+                            <Route path="/forge/lab" element={<ForgeLaboratory />} />
                             <Route path="/health" element={<HealthCenterPage />} />
                             <Route path="/trophies" element={<ImportTrophiesPage />} />
                             <Route path="/events" element={<ImportEventsPage />} />

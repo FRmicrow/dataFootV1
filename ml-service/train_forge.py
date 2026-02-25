@@ -95,6 +95,8 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
             
             if (idx + 1) % 500 == 0:
                 print(f"      {len(X_list)} features generated ({skipped} skipped)...")
+                print(f"HEARTBEAT: {idx+1}")
+                sys.stdout.flush()
         
         if len(X_list) < 30:
             print(f"   ⚠️ Only {len(X_list)} valid feature vectors. Not enough to train.")

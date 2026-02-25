@@ -1,6 +1,4 @@
 import express from 'express';
-import { getLeagueSeasonsStatus, initializeSeasons, getSyncStatus } from '../controllers/v3/leagueSeasonController.js';
-import { getStructuredLeagues } from '../controllers/v3/leagueStructuredController.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import {
     importLeagueSchema,
@@ -29,131 +27,204 @@ import {
     mlTrainSchema
 } from '../schemas/v3Schemas.js';
 
+// Controller Imports
+import { getLeagueSeasonsStatus, initializeSeasons, getSyncStatus } from '../controllers/v3/leagueSeasonController.js';
+import { getStructuredLeagues } from '../controllers/v3/leagueStructuredController.js';
+import {
+    importLeagueV3,
+    getCountriesV3,
+    getLeaguesV3,
+    importBatchV3,
+    getStandingsV3,
+    getFixturesV3,
+    syncPlayerCareerV3,
+    getAvailableSeasons
+} from '../controllers/v3/importControllerV3.js';
+import {
+    getSeasonOverview,
+    getTeamSquad,
+    getSeasonPlayers,
+    getDynamicStandings
+} from '../controllers/v3/seasonController.js';
+import { getPlayerProfileV3 } from '../controllers/v3/playerController.js';
+import {
+    getV3Stats,
+    getImportedLeagues,
+    getDiscoveredLeagues
+} from '../controllers/v3/dashboardController.js';
+import {
+    searchV3,
+    getClubProfile,
+    getSearchCountries
+} from '../controllers/v3/searchController.js';
+import {
+    getEventCandidates,
+    syncFixtureEvents,
+    getFixtureEvents,
+    getFixtureDetails
+} from '../controllers/v3/fixtureController.js';
+import {
+    getLineups,
+    getLineupCandidates,
+    importLineupsBatch
+} from '../controllers/v3/lineupController.js';
+import {
+    syncUpcomingProps,
+    getPredictions
+} from '../controllers/v3/predictionController.js';
+import {
+    getStudioStats,
+    getStudioLeagues,
+    searchStudioPlayers,
+    searchStudioTeams,
+    queryStudioData,
+    getStudioNationalities,
+    queryLeagueRankings
+} from '../controllers/v3/studioController.js';
+import {
+    getDbHealth,
+    fixDbHealth,
+    getLeagueNames,
+    checkLeagueHealthName,
+    revertCleanup,
+    checkDeepHealth,
+    fixAllIssues,
+    getCleanupHistory
+} from '../controllers/v3/adminController.js';
+import {
+    importPlayerTrophies,
+    getPlayersMissingTrophies,
+    getPlayerTrophiesLocal,
+    getNationalities,
+    getPlayersByNationality
+} from '../controllers/v3/trophyController.js';
+import {
+    getDailyFixtures,
+    getUpcomingFixtures,
+    getMatchDetails,
+    saveMatchOdds,
+    getMonitoringLeagues,
+    toggleLeagueMonitoring
+} from '../controllers/v3/liveBetController.js';
+import {
+    triggerFixtureDepthIngestion,
+    triggerDateBulkIngestion
+} from '../controllers/v3/bulkOddsController.js';
+import {
+    getPreferences,
+    updatePreferences
+} from '../controllers/v3/preferencesController.js';
+import {
+    getImportMatrixStatus,
+    triggerAuditScan,
+    triggerDeepSync,
+    triggerBatchDeepSync
+} from '../controllers/v3/importMatrixController.js';
+import {
+    getPotentialDuplicates,
+    mergePlayers
+} from '../controllers/v3/resolutionController.js';
+import {
+    generatePrescriptions,
+    getPrescriptions,
+    executePrescription
+} from '../controllers/v3/healthController.js';
+import {
+    getBacktest,
+    getCalibrationAudit
+} from '../controllers/v3/intelligenceController.js';
+import {
+    triggerModelRetrain,
+    getModelStatus,
+    buildForgeModels,
+    getForgeBuildStatus,
+    cancelForgeBuild,
+    getForgeModels,
+    retrainModel,
+    getRetrainStatus,
+    getEligibleHorizons,
+    getLeagueModels
+} from '../controllers/v3/mlController.js';
+import {
+    triggerSimulation,
+    checkJobStatus,
+    getSimulationResults,
+    checkSimulationReadiness,
+    triggerBulkSimulation,
+    checkBulkJobStatus,
+    getLeagueSimulations
+} from '../controllers/v3/simulationController.js';
+import { startBreeding, getBreedingStatus } from '../controllers/v3/forgeLaboratoryController.js';
+
 const router = express.Router();
 
 /**
- * @route GET /api/leagues/:id/seasons
- * @desc Get the Granular Tracker status for a league
+ * @route Stats & Dashboard
  */
-router.get('/leagues/:id/seasons', getLeagueSeasonsStatus);
-router.get('/league/:id/sync-status', getSyncStatus);
-router.get('/leagues/structured', getStructuredLeagues);
-
-/**
- * @route POST /api/leagues/seasons/init
- * @desc Initialize season trackers for a league (e.g. 2010-2025)
- * @body { leagueId, startYear, endYear }
- */
-import { importLeagueV3, getCountriesV3, getLeaguesV3, importBatchV3, getStandingsV3, getFixturesV3, syncPlayerCareerV3, getAvailableSeasons } from '../controllers/v3/importControllerV3.js';
-import { getSeasonOverview, getTeamSquad, getSeasonPlayers } from '../controllers/v3/seasonController.js';
-import { getPlayerProfileV3 } from '../controllers/v3/playerController.js';
-import { getV3Stats, getImportedLeagues, getDiscoveredLeagues } from '../controllers/v3/dashboardController.js';
-import { searchV3, getClubProfile, getSearchCountries } from '../controllers/v3/searchController.js';
-
 router.get('/stats', getV3Stats);
 router.get('/leagues/imported', getImportedLeagues);
 router.get('/leagues/discovered', getDiscoveredLeagues);
-router.post('/leagues/seasons/init', validateRequest(initSeasonsSchema), initializeSeasons);
 
 /**
- * @route GET /api/countries
- * @desc Get all countries (for dropdown)
+ * @route Countries & Leagues
  */
 router.get('/countries', getCountriesV3);
-
-/**
- * @route GET /api/leagues
- * @desc Get leagues filtered by country
- */
 router.get('/leagues', getLeaguesV3);
+router.get('/leagues/structured', getStructuredLeagues);
 
 /**
- * @route GET /api/league/:id/season/:year
- * @desc Get aggregated season overview (standings, leaders)
+ * @route Season Tracking
  */
+router.get('/leagues/:id/seasons', getLeagueSeasonsStatus);
+router.get('/league/:id/sync-status', getSyncStatus);
+router.post('/leagues/seasons/init', validateRequest(initSeasonsSchema), initializeSeasons);
 router.get('/league/:id/season/:year', getSeasonOverview);
 router.get('/league/:id/season/:year/players', getSeasonPlayers);
-
-/**
- * @route GET /api/league/:leagueId/season/:year/team/:teamId/squad
- * @desc Get squad for a specific team/season
- */
 router.get('/league/:leagueId/season/:year/team/:teamId/squad', getTeamSquad);
+router.get('/league/:apiId/available-seasons', getAvailableSeasons);
 
 /**
- * @desc Get standings for a league/season
+ * @route Standings & Fixtures
  */
-import { getDynamicStandings } from '../controllers/v3/seasonController.js';
 router.get('/standings/dynamic', getDynamicStandings);
 router.get('/league/:id/standings', getStandingsV3);
-
-/**
- * @route GET /api/league/:id/fixtures
- * @desc Get fixtures for a league/season
- */
 router.get('/league/:id/fixtures', getFixturesV3);
 
 /**
- * @route Fixture Events (Data Engine)
- * @desc Sync and Serve Match Events
+ * @route Fixture Events & Lineups
  */
-import { getEventCandidates, syncFixtureEvents, getFixtureEvents, getFixtureDetails } from '../controllers/v3/fixtureController.js';
-import { getLineups, getLineupCandidates, importLineupsBatch } from '../controllers/v3/lineupController.js';
-
 router.get('/fixtures/events/candidates', getEventCandidates);
 router.post('/fixtures/events/sync', validateRequest(syncEventsSchema), syncFixtureEvents);
 router.get('/fixtures/:id/events', getFixtureEvents);
-router.get('/fixtures/:id', getFixtureDetails); // New Header Route
+router.get('/fixtures/:id', getFixtureDetails);
 router.get('/fixtures/:id/lineups', getLineups);
-
 router.get('/fixtures/lineups/candidates', getLineupCandidates);
 router.post('/fixtures/lineups/import', validateRequest(importLineupsSchema), importLineupsBatch);
 
 /**
  * @route Predictions System
  */
-import { syncUpcomingProps, getPredictions } from '../controllers/v3/predictionController.js';
 router.post('/predictions/sync', validateRequest(predictionsSyncSchema), syncUpcomingProps);
 router.get('/predictions', getPredictions);
 
 /**
- * @route GET /api/league/:apiId/available-seasons
- * @desc Get all available seasons from API for a league, cross-referenced with local DB
- */
-router.get('/league/:apiId/available-seasons', getAvailableSeasons);
-
-/**
- * @route GET /api/player/:id
- * @desc Get player profile and career history
+ * @route Player & Search
  */
 router.get('/player/:id', getPlayerProfileV3);
-
-/**
- * @route GET /api/search
- * @desc Search players & clubs
- */
-// Search System
+router.post('/player/:id/sync-career', validateRequest(syncCareerSchema), syncPlayerCareerV3);
 router.get('/search', validateRequest(searchSchema), searchV3);
 router.get('/search/countries', getSearchCountries);
-
-/**
- * @route GET /api/club/:id
- */
 router.get('/club/:id', getClubProfile);
 
 /** 
- * Import System with Validation 
+ * Import System 
  */
 router.post('/import/league', validateRequest(importLeagueSchema), importLeagueV3);
 router.post('/import/batch', validateRequest(importBatchSchema), importBatchV3);
 
-
 /**
  * @route Studio Data Engine
- * @desc Endpoints for the Content Studio visualization feature
  */
-import { getStudioStats, getStudioLeagues, searchStudioPlayers, searchStudioTeams, queryStudioData, getStudioNationalities, queryLeagueRankings } from '../controllers/v3/studioController.js';
-
 router.get('/studio/meta/stats', getStudioStats);
 router.get('/studio/meta/leagues', getStudioLeagues);
 router.get('/studio/meta/nationalities', getStudioNationalities);
@@ -162,25 +233,15 @@ router.get('/studio/meta/teams', searchStudioTeams);
 router.post('/studio/query', validateRequest(studioQuerySchema), queryStudioData);
 router.post('/studio/query/league-rankings', validateRequest(studioRankingsSchema), queryLeagueRankings);
 
-
-
 /**
- * @route POST /api/player/:id/sync-career
- * @desc Deep-career backfill for a player
+ * @route DB Health & Admin
  */
-router.post('/player/:id/sync-career', validateRequest(syncCareerSchema), syncPlayerCareerV3);
-
-/**
- * @route DB Health Check
- */
-import { getDbHealth, fixDbHealth, getLeagueNames, checkLeagueHealthName, revertCleanup, checkDeepHealth, fixAllIssues, getCleanupHistory } from '../controllers/v3/adminController.js';
-
 router.get('/admin/health', getDbHealth);
 router.post('/admin/health/fix', validateRequest(healthFixSchema), fixDbHealth);
 router.post('/admin/health/fix-all', validateRequest(healthFixAllSchema), fixAllIssues);
 router.get('/admin/health/history', getCleanupHistory);
 router.post('/admin/health/revert/:groupId', validateRequest(healthRevertSchema), revertCleanup);
-router.post('/admin/health/revert/id/:groupId', validateRequest(healthRevertSchema), revertCleanup); // Supporting both formats
+router.post('/admin/health/revert/id/:groupId', validateRequest(healthRevertSchema), revertCleanup);
 router.get('/admin/health/leagues', getLeagueNames);
 router.post('/admin/health/check-league', validateRequest(healthCheckLeagueSchema), checkLeagueHealthName);
 router.post('/admin/health/check-deep', validateRequest(healthCheckDeepSchema), checkDeepHealth);
@@ -188,8 +249,6 @@ router.post('/admin/health/check-deep', validateRequest(healthCheckDeepSchema), 
 /**
  * @route Trophies System
  */
-import { importPlayerTrophies, getPlayersMissingTrophies, getPlayerTrophiesLocal, getNationalities, getPlayersByNationality } from '../controllers/v3/trophyController.js';
-
 router.post('/import/trophies', validateRequest(importTrophiesSchema), importPlayerTrophies);
 router.get('/import/trophies/candidates', getPlayersMissingTrophies);
 router.get('/player/:id/trophies', getPlayerTrophiesLocal);
@@ -197,10 +256,8 @@ router.get('/players/nationalities', getNationalities);
 router.get('/players/by-nationality', getPlayersByNationality);
 
 /**
- * @route Live Bet System (US_010, US_011, US_012)
+ * @route Live Bet System
  */
-import { getDailyFixtures, getUpcomingFixtures, getMatchDetails, saveMatchOdds, getMonitoringLeagues, toggleLeagueMonitoring } from '../controllers/v3/liveBetController.js';
-
 router.get('/live-bet/fixtures', getDailyFixtures);
 router.get('/live-bet/upcoming', getUpcomingFixtures);
 router.get('/live-bet/match/:id', getMatchDetails);
@@ -209,57 +266,47 @@ router.get('/live-bet/leagues/monitoring', getMonitoringLeagues);
 router.put('/live-bet/leagues/:id/monitoring', validateRequest(toggleMonitoringSchema), toggleLeagueMonitoring);
 
 /**
- * @route Bulk Odds Ingestion (US_140)
+ * @route Bulk Odds Ingestion
  */
-import { triggerFixtureDepthIngestion, triggerDateBulkIngestion } from '../controllers/v3/bulkOddsController.js';
 router.post('/live-bet/odds/fixture/:id', triggerFixtureDepthIngestion);
 router.post('/live-bet/odds/ingest-date', validateRequest(bulkOddsSchema), triggerDateBulkIngestion);
 
 /**
- * @route Preferences (US_017)
+ * @route Preferences
  */
-import { getPreferences, updatePreferences } from '../controllers/v3/preferencesController.js';
-
 router.get('/preferences', getPreferences);
 router.put('/preferences', validateRequest(preferencesSchema), updatePreferences);
 
 /**
- * @route Import Matrix (US_040, US_042)
+ * @route Import Matrix
  */
-import { getImportMatrixStatus, triggerAuditScan, triggerDeepSync, triggerBatchDeepSync } from '../controllers/v3/importMatrixController.js';
-
 router.get('/import/matrix-status', getImportMatrixStatus);
 router.post('/import/audit-scan', triggerAuditScan);
 router.post('/import/league/:id/deep-sync', triggerDeepSync);
 router.post('/import/leagues/batch-deep-sync', triggerBatchDeepSync);
 
 /**
- * @route Entity Resolution (US_061)
+ * @route Entity Resolution
  */
-import { getPotentialDuplicates, mergePlayers } from '../controllers/v3/resolutionController.js';
 router.get('/resolution/duplicates', validateRequest(duplicatesSchema), getPotentialDuplicates);
 router.post('/resolution/merge', validateRequest(mergeSchema), mergePlayers);
 
 /**
- * @route Health Prescriptions (US_062)
+ * @route Health Prescriptions
  */
-import { generatePrescriptions, getPrescriptions, executePrescription } from '../controllers/v3/healthController.js';
 router.post('/health/prescribe', generatePrescriptions);
 router.get('/health/prescriptions', validateRequest(prescriptionListSchema), getPrescriptions);
 router.post('/health/execute', validateRequest(prescriptionExecuteSchema), executePrescription);
 
 /**
- * @route Intelligence Hub (US_170, US_171)
+ * @route Intelligence Hub
  */
-import { getBacktest, getCalibrationAudit } from '../controllers/v3/intelligenceController.js';
-
 router.get('/intelligence/backtest', getBacktest);
 router.get('/intelligence/audit', getCalibrationAudit);
 
 /**
- * @route ML Management (US_174)
+ * @route ML Management
  */
-import { triggerModelRetrain, getModelStatus, buildForgeModels, getForgeBuildStatus, cancelForgeBuild, getForgeModels, retrainModel, getRetrainStatus, getEligibleHorizons, getLeagueModels } from '../controllers/v3/mlController.js';
 router.post('/ml/train', validateRequest(mlTrainSchema), triggerModelRetrain);
 router.get('/ml/status', getModelStatus);
 router.post('/forge/build-models', buildForgeModels);
@@ -272,13 +319,17 @@ router.get('/forge/eligible-horizons', getEligibleHorizons);
 router.get('/forge/league-models/:leagueId', getLeagueModels);
 
 /**
- * @route Forge Simulation Engine (V8)
+ * @route Forge Laboratory (PO Lifecycle)
  */
-import { triggerSimulation, checkJobStatus, getSimulationResults, checkSimulationReadiness, triggerBulkSimulation, checkBulkJobStatus } from '../controllers/v3/simulationController.js';
+router.post('/forge/breed', startBreeding);
+router.get('/forge/breed-status', getBreedingStatus);
+
+// Forge Simulation Engine (US_183, US_190)
 router.post('/simulation/start', triggerSimulation);
 router.get('/simulation/status', checkJobStatus);
 router.get('/simulation/readiness', checkSimulationReadiness);
 router.get('/simulation/results/:simId', getSimulationResults);
+router.get('/simulation/league/:leagueId', getLeagueSimulations);
 router.post('/simulation/bulk', triggerBulkSimulation);
 router.get('/simulation/bulk/status', checkBulkJobStatus);
 

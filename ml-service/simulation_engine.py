@@ -131,6 +131,7 @@ class LeagueReplayEngine:
                     
                     # Log progress for US_190 Telemetry
                     print(f"PROGRESS: {progress_pct}% | Match {idx+1}/{total} | Month: {curr_month}")
+                    print(f"HEARTBEAT: {progress_pct}")
                     sys.stdout.flush()
 
             logger.info(f"✅ Replay completed for simulation {self.simulation_id}")
