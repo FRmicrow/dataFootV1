@@ -2,6 +2,15 @@ import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import { runImportJob, syncPlayerCareerService } from '../../services/v3/leagueImportService.js';
+import {
+    syncLeagueFixtureStatsService,
+    syncLeaguePlayerStatsService
+} from '../../services/v3/tacticalStatsService.js';
+import {
+    syncSeasonLineups,
+    syncSeasonTrophies
+} from '../../services/v3/deepSyncService.js';
+import { syncLeagueEventsService } from '../../services/v3/fixtureService.js';
 
 /**
  * GET /api/v3/league/:apiId/available-seasons
@@ -209,9 +218,9 @@ export const importLeagueV3 = async (req, res) => {
         res.end();
     }
 };
-
 /**
  * POST /api/v3/import/batch
+ * Implementation of US-V3-BE-017: Batch Selection Execution
  */
 export const importBatchV3 = async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
@@ -224,36 +233,72 @@ export const importBatchV3 = async (req, res) => {
     sendLog.emit = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
     const { selection } = req.body;
-    // Input validation handled by middleware
 
     try {
-        sendLog(`📦 Batch Import Started: ${selection.length} items queued.`, 'info');
+        sendLog(`📦 Batch Import Started: ${selection.length} competitions in queue.`, 'info');
 
-        const totalTasks = selection.reduce((acc, item) => acc + item.seasons.length, 0);
-        let completedTasks = 0;
+        let totalSubTasks = 0;
+        selection.forEach(item => {
+            item.seasons.forEach(s => {
+                const pillars = (typeof s === 'object' ? s.pillars : null) || ['core'];
+                totalSubTasks += pillars.length;
+            });
+        });
+
+        let completedSubTasks = 0;
 
         for (const item of selection) {
-            const { leagueId, seasons, forceApiId = true } = item;
+            const { leagueId, seasons, forceApiId = false, forceRefresh = false } = item;
 
-            // Loop through each season for this league
-            for (const season of seasons) {
-                completedTasks++;
-                if (sendLog.emit) {
-                    sendLog.emit({ type: 'progress', step: 'overall', current: completedTasks, total: totalTasks });
-                }
-                try {
-                    const forceRefresh = item.forceRefresh || false;
-                    await runImportJob(leagueId, parseInt(season), sendLog, { forceApiId, forceRefresh });
-                } catch (err) {
-                    console.error(`Error in batch for League ${leagueId} Season ${season}:`, err);
-                    sendLog(`❌ Error importing League ${leagueId} Season ${season}: ${err.message || String(err)}`, 'error');
+            for (const s of seasons) {
+                const year = typeof s === 'object' ? s.year : s;
+                const pillars = (typeof s === 'object' ? s.pillars : null) || ['core'];
+
+                for (const pillar of pillars) {
+                    completedSubTasks++;
+                    if (sendLog.emit) {
+                        sendLog.emit({
+                            type: 'progress',
+                            step: 'overall',
+                            current: completedSubTasks,
+                            total: totalSubTasks,
+                            label: `Processing ${pillar.toUpperCase()} for ${year}`
+                        });
+                    }
+
+                    try {
+                        switch (pillar) {
+                            case 'core':
+                                await runImportJob(leagueId, parseInt(year), sendLog, { forceApiId, forceRefresh });
+                                break;
+                            case 'events':
+                                await syncLeagueEventsService(leagueId, parseInt(year), 2000, sendLog);
+                                break;
+                            case 'lineups':
+                                await syncSeasonLineups(leagueId, parseInt(year), sendLog);
+                                break;
+                            case 'fs':
+                                await syncLeagueFixtureStatsService(leagueId, parseInt(year), 2000, sendLog);
+                                break;
+                            case 'ps':
+                                await syncLeaguePlayerStatsService(leagueId, parseInt(year), 2000, sendLog);
+                                break;
+                            case 'trophies':
+                                await syncSeasonTrophies(leagueId, parseInt(year), sendLog);
+                                break;
+                            default:
+                                sendLog(`⚠️ Unknown pillar: ${pillar}`, 'warning');
+                        }
+                    } catch (err) {
+                        console.error(`Error in batch [${pillar}] for League ${leagueId} Season ${year}:`, err);
+                        sendLog(`❌ Error [${pillar}] ${year}: ${err.message || String(err)}`, 'error');
+                    }
                 }
             }
         }
 
-        sendLog('🎉 Batch Import Sequence Completed.', 'complete');
-        // Send a complete event with dummy data so frontend knows it's done
-        res.write(`data: ${JSON.stringify({ type: 'complete', leagueId: 0, season: 0 })}\n\n`);
+        sendLog('🎉 Batch Sequence Completed.', 'complete');
+        res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
         res.end();
     } catch (error) {
         console.error("V3 Batch Import Fatal Error:", error);

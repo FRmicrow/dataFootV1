@@ -104,50 +104,50 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                     </div>
                 ) : (
                     <table className="w-full text-sm text-left border-collapse table-fixed">
-                        <thead className="text-[9px] text-slate-400 uppercase bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 border-b border-slate-100 dark:border-slate-800">
+                        <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 dark:bg-slate-900/80 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 font-black">
                             <tr>
-                                <SortableHeader label="Player" sortKey="name" width="120px" />
-                                <SortableHeader label="Team" sortKey="team" width="100px" />
-                                <SortableHeader label="Pos" sortKey="pos" align="center" width="40px" />
-                                <SortableHeader label="App" sortKey="apps" align="center" width="40px" />
-                                <SortableHeader label="90s" sortKey="mins" align="center" width="40px" />
-                                <SortableHeader label="G" sortKey="goals" align="center" width="35px" />
-                                <SortableHeader label="A" sortKey="assists" align="center" width="35px" />
-                                <SortableHeader label="Y" sortKey="yellow" align="center" width="35px" />
-                                <SortableHeader label="Rat" sortKey="rating" align="center" width="50px" />
+                                <SortableHeader label="Player" sortKey="name" width="160px" />
+                                <SortableHeader label="Team" sortKey="team" width="120px" />
+                                <SortableHeader label="Pos" sortKey="pos" align="center" width="50px" />
+                                <SortableHeader label="App" sortKey="apps" align="center" width="50px" />
+                                <SortableHeader label="90s" sortKey="mins" align="center" width="50px" />
+                                <SortableHeader label="G" sortKey="goals" align="center" width="40px" />
+                                <SortableHeader label="A" sortKey="assists" align="center" width="40px" />
+                                <SortableHeader label="Y" sortKey="yellow" align="center" width="40px" />
+                                <SortableHeader label="Rat" sortKey="rating" align="center" width="60px" />
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {players.map((player) => (
                                 <tr key={`${player.player_id}-${player.team_id}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
-                                    <td className="px-2 py-2">
-                                        <Link to={`/player/${player.player_id}`} className="flex items-center gap-1.5 group/p">
-                                            <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
+                                    <td className="px-3 py-3">
+                                        <Link to={`/player/${player.player_id}`} className="flex items-center gap-2 group/p">
+                                            <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
                                                 <img src={player.photo_url} alt="" className="w-full h-full object-cover" />
                                             </div>
-                                            <span className="font-bold text-[10px] text-slate-700 dark:text-slate-200 group-hover/p:text-blue-600 dark:group-hover/p:text-blue-400 leading-tight line-clamp-2">
+                                            <span className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover/p:text-blue-600 dark:group-hover/p:text-blue-400 leading-tight">
                                                 {player.name}
                                             </span>
                                         </Link>
                                     </td>
-                                    <td className="px-2 py-2">
-                                        <Link to={`/club/${player.team_id}`} className="flex items-center gap-1.5 group/t">
-                                            <img src={player.team_logo} alt="" className="w-3 h-3 object-contain shrink-0" />
-                                            <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 group-hover/t:text-slate-900 dark:group-hover/t:text-slate-100 truncate">
+                                    <td className="px-3 py-3">
+                                        <Link to={`/club/${player.team_id}`} className="flex items-center gap-2 group/t">
+                                            <img src={player.team_logo} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover/t:text-slate-900 dark:group-hover/t:text-slate-100 truncate">
                                                 {player.team_name}
                                             </span>
                                         </Link>
                                     </td>
-                                    <td className="px-1 py-2 text-center">
-                                        <span className="text-[9px] font-black text-slate-400">{player.position?.substring(0, 1)}</span>
+                                    <td className="px-1 py-3 text-center">
+                                        <span className="text-xs font-black text-slate-400">{player.position?.substring(0, 1)}</span>
                                     </td>
-                                    <td className="px-1 py-2 text-center text-[10px] font-bold text-slate-600 dark:text-slate-300">{player.appearances}</td>
-                                    <td className="px-1 py-2 text-center text-[9px] font-medium text-slate-400">{Math.round(player.minutes / 90) || 0}</td>
-                                    <td className={`px-1 py-2 text-center text-[10px] font-black ${player.goals > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>{player.goals}</td>
-                                    <td className={`px-1 py-2 text-center text-[10px] font-black ${player.assists > 0 ? 'text-blue-500' : 'text-slate-300'}`}>{player.assists}</td>
-                                    <td className={`px-1 py-2 text-center text-[10px] font-black ${player.yellow > 0 ? 'text-amber-500' : 'text-slate-300'}`}>{player.yellow}</td>
-                                    <td className="px-1 py-2 text-center">
-                                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-500/5 px-1 rounded">
+                                    <td className="px-1 py-3 text-center text-sm font-bold text-slate-600 dark:text-slate-300">{player.appearances}</td>
+                                    <td className="px-1 py-3 text-center text-xs font-medium text-slate-400">{Math.round(player.minutes / 90) || 0}</td>
+                                    <td className={`px-1 py-3 text-center text-sm font-black ${player.goals > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>{player.goals}</td>
+                                    <td className={`px-1 py-3 text-center text-sm font-black ${player.assists > 0 ? 'text-blue-500' : 'text-slate-300'}`}>{player.assists}</td>
+                                    <td className={`px-1 py-3 text-center text-sm font-black ${player.yellow > 0 ? 'text-amber-500' : 'text-slate-300'}`}>{player.yellow}</td>
+                                    <td className="px-1 py-3 text-center">
+                                        <span className="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
                                             {player.rating || '-'}
                                         </span>
                                     </td>

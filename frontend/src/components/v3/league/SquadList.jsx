@@ -89,15 +89,15 @@ const SquadList = ({
                                     <img src={team.team_logo} alt="" className="w-8 h-8 object-contain" />
                                 </div>
                                 <div className="text-left flex-1 min-w-0">
-                                    <p className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
+                                    <p className={`font-black text-base truncate ${isSelected ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
                                         {team.team_name}
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                        <span className={`text-[10px] font-black uppercase ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
+                                        <span className={`text-xs font-black uppercase ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
                                             Rank #{team.rank}
                                         </span>
                                         <span className={isSelected ? 'text-blue-200/50' : 'text-slate-300'}>•</span>
-                                        <span className={`text-[10px] font-bold ${isSelected ? 'text-blue-50' : 'text-slate-500'}`}>
+                                        <span className={`text-xs font-bold ${isSelected ? 'text-blue-50' : 'text-slate-500'}`}>
                                             {team.points} Pts
                                         </span>
                                     </div>
@@ -134,14 +134,14 @@ const SquadList = ({
                                         {activeTeam?.team_name}
                                     </h2>
                                     <div className="flex items-center gap-3 mt-2">
-                                        <span className="flex items-center gap-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-black px-3 py-1 rounded-full border border-blue-500/20 uppercase tracking-tighter">
+                                        <span className="flex items-center gap-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-black px-4 py-1.5 rounded-full border border-blue-500/20 uppercase tracking-tighter">
                                             {counts.total} Registered Players
                                         </span>
-                                        <div className="flex gap-1">
-                                            <div className="px-2 py-0.5 bg-yellow-500/10 text-yellow-600 text-[10px] font-bold rounded-md border border-yellow-500/20">GK: {counts.GK}</div>
-                                            <div className="px-2 py-0.5 bg-blue-500/10 text-blue-600 text-[10px] font-bold rounded-md border border-blue-500/20">DF: {counts.DF}</div>
-                                            <div className="px-2 py-0.5 bg-green-500/10 text-green-600 text-[10px] font-bold rounded-md border border-green-500/20">MF: {counts.MF}</div>
-                                            <div className="px-2 py-0.5 bg-red-500/10 text-red-600 text-[10px] font-bold rounded-md border border-red-500/20">FW: {counts.FW}</div>
+                                        <div className="flex gap-2">
+                                            <div className="px-3 py-1 bg-yellow-500/10 text-yellow-600 text-xs font-bold rounded-md border border-yellow-500/20">GK: {counts.GK}</div>
+                                            <div className="px-3 py-1 bg-blue-500/10 text-blue-600 text-xs font-bold rounded-md border border-blue-500/20">DF: {counts.DF}</div>
+                                            <div className="px-3 py-1 bg-green-500/10 text-green-600 text-xs font-bold rounded-md border border-green-500/20">MF: {counts.MF}</div>
+                                            <div className="px-3 py-1 bg-red-500/10 text-red-600 text-xs font-bold rounded-md border border-red-500/20">FW: {counts.FW}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +163,7 @@ const SquadList = ({
                                 Object.entries(categorizedSquad).map(([category, players]) => (
                                     players.length > 0 && (
                                         <div key={category}>
-                                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 border-l-2 border-blue-500 pl-3">
+                                            <h4 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4 border-l-4 border-blue-500 pl-4">
                                                 {category}
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -185,20 +185,20 @@ const SquadList = ({
                                                             </div>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-black text-sm text-slate-800 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                            <p className="font-black text-base text-slate-800 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                                                 {player.name}
                                                             </p>
-                                                            <div className="flex items-center gap-3 mt-1">
-                                                                <div className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                                                            <div className="flex items-center gap-3 mt-1.5">
+                                                                <div className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
                                                                     <span className="text-slate-400">Apps:</span> {player.appearances}
                                                                 </div>
                                                                 {player.goals > 0 && (
-                                                                    <div className="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1">
+                                                                    <div className="text-xs font-bold text-emerald-600 uppercase flex items-center gap-1">
                                                                         <span>⚽</span> {player.goals}
                                                                     </div>
                                                                 )}
                                                                 {player.rating && (
-                                                                    <div className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded-md">
+                                                                    <div className="text-xs font-black text-blue-500 bg-blue-500/10 px-2 py-1 rounded-md">
                                                                         ⭐ {player.rating}
                                                                     </div>
                                                                 )}

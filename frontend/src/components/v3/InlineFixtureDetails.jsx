@@ -1,25 +1,39 @@
-
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import MatchDetailEvents from './MatchDetailEvents';
+import InlineMatchDetailTactical from './InlineMatchDetailTactical';
+import InlinePlayerStatCard from './InlinePlayerStatCard';
 import './InlineFixtureDetails.css';
 
 const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
     const [lineups, setLineups] = useState([]);
+    const [playerStats, setPlayerStats] = useState([]);
+    const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('events'); // Default: Timeline
 
     useEffect(() => {
-        fetchLineups();
+        fetchAllData();
     }, [fixtureId]);
 
-    const fetchLineups = async () => {
+    const fetchAllData = async () => {
         setLoading(true);
         try {
-            const res = await api.getFixtureLineups(fixtureId);
-            // The API returns { source: ..., lineups: [...] }
-            setLineups(res.lineups || []);
+            const [lineupRes, pStatsRes] = await Promise.all([
+                api.getFixtureLineups(fixtureId),
+                api.getFixturePlayerStats(fixtureId)
+            ]);
+
+            setLineups(lineupRes.lineups || []);
+            setPlayerStats(pStatsRes || []);
+
+            // Default select MOTM or highest rating if player_intel is active
+            if (pStatsRes && pStatsRes.length > 0) {
+                const best = [...pStatsRes].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))[0];
+                setSelectedPlayer(best);
+            }
         } catch (error) {
-            console.error("Failed to load lineups", error);
+            console.error("Failed to load match details", error);
         } finally {
             setLoading(false);
         }
@@ -58,13 +72,27 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
         const starting = getParsed(lineup.starting_xi);
         const subs = getParsed(lineup.substitutes);
 
+        const handlePlayerClick = (pApiId) => {
+            const fullStat = playerStats.find(s => s.player_api_id === pApiId);
+            if (fullStat) {
+                setSelectedPlayer(fullStat);
+                setActiveTab('player_intel');
+            }
+        };
+
         const renderPlayer = (entry, idx) => {
             const p = entry.player || {};
+            const isSelected = selectedPlayer?.player_api_id === p.id;
+
             return (
-                <div key={p.id || idx} className="inline-player-row">
-                    <span className="inline-player-number" style={{ fontSize: '12px' }}>{p.number}</span>
-                    <span className="inline-player-name" style={{ fontSize: '12px' }}>{p.name}</span>
-                    <span className="inline-player-role" style={{ fontSize: '11px' }}>{getRole(p.pos)}</span>
+                <div
+                    key={p.id || idx}
+                    className={`inline-player-row clickable ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handlePlayerClick(p.id)}
+                >
+                    <span className="inline-player-number">{p.number}</span>
+                    <span className="inline-player-name">{p.name}</span>
+                    <span className="inline-player-role">{getRole(p.pos)}</span>
                 </div>
             );
         };
@@ -100,11 +128,44 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
     };
 
     return (
-        <div className="inline-fixture-details">
+        <div className="inline-fixture-details fade-in">
             {renderSquad(homeLineup, 'home')}
 
-            <div className="timeline-column">
-                <MatchDetailEvents fixtureId={fixtureId} />
+            <div className="center-column">
+                <div className="inline-tabs">
+                    <button
+                        className={`tab-link ${activeTab === 'events' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('events')}
+                    >
+                        Timeline
+                    </button>
+                    <button
+                        className={`tab-link ${activeTab === 'tactical' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('tactical')}
+                    >
+                        Tactical
+                    </button>
+                    <button
+                        className={`tab-link ${activeTab === 'player_intel' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('player_intel')}
+                    >
+                        Player Intel
+                    </button>
+                </div>
+
+                <div className="tab-content">
+                    {activeTab === 'events' && (
+                        <div className="timeline-wrapper">
+                            <MatchDetailEvents fixtureId={fixtureId} />
+                        </div>
+                    )}
+                    {activeTab === 'tactical' && (
+                        <InlineMatchDetailTactical fixtureId={fixtureId} />
+                    )}
+                    {activeTab === 'player_intel' && (
+                        <InlinePlayerStatCard player={selectedPlayer} />
+                    )}
+                </div>
             </div>
 
             {renderSquad(awayLineup, 'away')}

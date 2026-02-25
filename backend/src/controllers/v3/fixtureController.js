@@ -104,6 +104,62 @@ export const getFixtureEvents = (req, res) => {
 };
 
 /**
+ * GET /api/v3/fixtures/:id/tactical-stats
+ * Serve team tactical stats comparison (FT/1H/2H)
+ */
+export const getFixtureTacticalStats = (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const stats = db.all(`
+            SELECT 
+                s.*,
+                t.name as team_name, t.logo_url as team_logo,
+                CASE WHEN t.team_id = f.home_team_id THEN 'home' ELSE 'away' END as side
+            FROM V3_Fixture_Stats s
+            JOIN V3_Fixtures f ON s.fixture_id = f.fixture_id
+            JOIN V3_Teams t ON s.team_id = t.team_id
+            WHERE s.fixture_id = ?
+        `, [id]);
+
+        res.json(stats);
+    } catch (error) {
+        console.error('Error fetching fixture tactical stats:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * GET /api/v3/fixtures/:id/player-stats
+ * Serve granular player performance data for a fixture
+ */
+export const getFixturePlayerTacticalStats = (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const stats = db.all(`
+            SELECT 
+                s.*,
+                p.api_id as player_api_id,
+                p.name as player_name, p.photo_url as player_photo,
+                t.name as team_name,
+                CASE WHEN t.team_id = f.home_team_id THEN 'home' ELSE 'away' END as side
+            FROM V3_Fixture_Player_Stats s
+            JOIN V3_Fixtures f ON s.fixture_id = f.fixture_id
+            JOIN V3_Players p ON s.player_id = p.player_id
+            JOIN V3_Teams t ON s.team_id = t.team_id
+            WHERE s.fixture_id = ?
+            ORDER BY side ASC, s.rating DESC
+        `, [id]);
+
+        res.json(stats);
+    } catch (error) {
+        console.error('Error fetching fixture player tactical stats:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
  * GET /api/v3/fixtures/:id
  * Get full fixture details (Header info)
  */

@@ -25,10 +25,14 @@ export const getImportMatrixStatus = (req, res) => {
                 s.imported_events,
                 s.imported_lineups,
                 s.imported_trophies,
+                s.imported_fixture_stats,
+                s.imported_player_stats,
                 s.last_sync_core,
                 s.last_sync_events,
                 s.last_sync_lineups,
-                s.last_sync_trophies
+                s.last_sync_trophies,
+                s.last_sync_fixture_stats,
+                s.last_sync_player_stats
             FROM V3_Leagues l
             JOIN V3_Countries c ON l.country_id = c.country_id
             LEFT JOIN V3_League_Seasons s ON l.league_id = s.league_id
@@ -60,13 +64,17 @@ export const getImportMatrixStatus = (req, res) => {
                         core: (row.imported_standings && row.imported_fixtures) ? 1 : (row.imported_fixtures ? 0.5 : 0),
                         events: row.imported_events || 0,
                         lineups: row.imported_lineups || 0,
-                        trophies: row.imported_trophies || 0
+                        trophies: row.imported_trophies || 0,
+                        fs: row.imported_fixture_stats || 0,
+                        ps: row.imported_player_stats || 0
                     },
                     last_sync: {
                         core: row.last_sync_core,
                         events: row.last_sync_events,
                         lineups: row.last_sync_lineups,
-                        trophies: row.last_sync_trophies
+                        trophies: row.last_sync_trophies,
+                        fs: row.last_sync_fixture_stats,
+                        ps: row.last_sync_player_stats
                     }
                 });
             }

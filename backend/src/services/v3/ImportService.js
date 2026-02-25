@@ -138,7 +138,84 @@ export const Mappers = {
         score_extratime_away: api.score?.extratime?.away,
         score_penalty_home: api.score?.penalty?.home,
         score_penalty_away: api.score?.penalty?.away
-    })
+    }),
+    fixtureStats: (fixtureId, teamId, half, statsArray) => {
+        const s = {};
+        statsArray.forEach(item => {
+            const key = item.type.toLowerCase().replace(/\s+/g, '_');
+            s[key] = item.value;
+        });
+
+        return {
+            fixture_id: fixtureId,
+            team_id: teamId,
+            half: half,
+            shots_on_goal: s.shots_on_goal || 0,
+            shots_off_goal: s.shots_off_goal || 0,
+            shots_inside_box: s.shots_inside_box || 0,
+            shots_outside_box: s.shots_outside_box || 0,
+            shots_total: s.total_shots || 0,
+            shots_blocked: s.blocked_shots || 0,
+            fouls: s.fouls || 0,
+            corner_kicks: s.corner_kicks || 0,
+            offsides: s.offsides || 0,
+            ball_possession: s.ball_possession || "0%",
+            yellow_cards: s.yellow_cards || 0,
+            red_cards: s.red_cards || 0,
+            goalkeeper_saves: s.goalkeeper_saves || 0,
+            passes_total: s.total_passes || 0,
+            passes_accurate: s.passes_accurate || 0,
+            pass_accuracy_pct: parseInt(s['passes_%'] || 0)
+        };
+    },
+    fixturePlayerStats: (fixtureId, teamId, playerApiData) => {
+        const p = playerApiData.player;
+        const s = playerApiData.statistics[0]; // API returns array of statistics per team context
+
+        return {
+            fixture_id: fixtureId,
+            team_id: teamId,
+            player_id: p.id, // Will be resolved to local ID in repository
+            is_start_xi: !playerApiData.substitute,
+            minutes_played: s.games.minutes || 0,
+            position: s.games.position,
+            rating: s.games.rating || "0.0",
+
+            goals_total: s.goals.total || 0,
+            goals_conceded: s.goals.conceded || 0,
+            goals_assists: s.goals.assists || 0,
+            goals_saves: s.goals.saves || 0,
+
+            shots_total: s.shots.total || 0,
+            shots_on: s.shots.on || 0,
+
+            passes_total: s.passes.total || 0,
+            passes_key: s.passes.key || 0,
+            passes_accuracy: parseInt(s.passes.accuracy || 0),
+
+            tackles_total: s.tackles.total || 0,
+            tackles_blocks: s.tackles.blocks || 0,
+            tackles_interceptions: s.tackles.interceptions || 0,
+
+            duels_total: s.duels.total || 0,
+            duels_won: s.duels.won || 0,
+
+            dribbles_attempts: s.dribbles.attempts || 0,
+            dribbles_success: s.dribbles.success || 0,
+
+            fouls_drawn: s.fouls.drawn || 0,
+            fouls_committed: s.fouls.committed || 0,
+
+            cards_yellow: s.cards.yellow || 0,
+            cards_red: s.cards.red || 0,
+
+            penalty_won: s.penalty.won || 0,
+            penalty_commited: s.penalty.commited || 0,
+            penalty_scored: s.penalty.scored || 0,
+            penalty_missed: s.penalty.missed || 0,
+            penalty_saved: s.penalty.saved || 0
+        };
+    }
 };
 
 export const ImportRepository = {
@@ -298,6 +375,66 @@ export const ImportRepository = {
                 cleanParams([f.api_id, f.league_id, f.season_year, f.round, f.date, f.timestamp, f.timezone, f.venue_id, f.status_long, f.status_short, f.elapsed,
                 f.home_team_id, f.away_team_id, f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away, f.score_fulltime_home, f.score_fulltime_away,
                 f.score_extratime_home, f.score_extratime_away, f.score_penalty_home, f.score_penalty_away]));
+        }
+    },
+    upsertFixtureStats: (s) => {
+        const existing = db.get(`SELECT fixture_stats_id FROM V3_Fixture_Stats WHERE fixture_id=? AND team_id=? AND half=?`,
+            cleanParams([s.fixture_id, s.team_id, s.half]));
+        if (existing) {
+            db.run(`UPDATE V3_Fixture_Stats SET 
+                shots_on_goal=?, shots_off_goal=?, shots_inside_box=?, shots_outside_box=?, shots_total=?, shots_blocked=?, 
+                fouls=?, corner_kicks=?, offsides=?, ball_possession=?, yellow_cards=?, red_cards=?, goalkeeper_saves=?, 
+                passes_total=?, passes_accurate=?, pass_accuracy_pct=?, updated_at=CURRENT_TIMESTAMP
+                WHERE fixture_stats_id=?`,
+                cleanParams([s.shots_on_goal, s.shots_off_goal, s.shots_inside_box, s.shots_outside_box, s.shots_total, s.shots_blocked,
+                s.fouls, s.corner_kicks, s.offsides, s.ball_possession, s.yellow_cards, s.red_cards, s.goalkeeper_saves,
+                s.passes_total, s.passes_accurate, s.pass_accuracy_pct, existing.fixture_stats_id]));
+        } else {
+            db.run(`INSERT INTO V3_Fixture_Stats (
+                fixture_id, team_id, half, shots_on_goal, shots_off_goal, shots_inside_box, shots_outside_box, shots_total, shots_blocked, 
+                fouls, corner_kicks, offsides, ball_possession, yellow_cards, red_cards, goalkeeper_saves, passes_total, passes_accurate, pass_accuracy_pct
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                cleanParams([s.fixture_id, s.team_id, s.half, s.shots_on_goal, s.shots_off_goal, s.shots_inside_box, s.shots_outside_box, s.shots_total, s.shots_blocked,
+                s.fouls, s.corner_kicks, s.offsides, s.ball_possession, s.yellow_cards, s.red_cards, s.goalkeeper_saves, s.passes_total, s.passes_accurate, s.pass_accuracy_pct]));
+        }
+    },
+    upsertFixturePlayerStats: (s) => {
+        // Resolve player_id from API ID to local ID
+        const localPlayer = db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", [s.player_id]);
+        if (!localPlayer) return; // Should not happen if players are synced first
+
+        const existing = db.get(`SELECT fixture_player_stats_id FROM V3_Fixture_Player_Stats WHERE fixture_id=? AND player_id=?`,
+            cleanParams([s.fixture_id, localPlayer.player_id]));
+
+        const params = [
+            s.fixture_id, s.team_id, localPlayer.player_id, s.is_start_xi, s.minutes_played, s.position, s.rating,
+            s.goals_total, s.goals_conceded, s.goals_assists, s.goals_saves,
+            s.shots_total, s.shots_on, s.passes_total, s.passes_key, s.passes_accuracy,
+            s.tackles_total, s.tackles_blocks, s.tackles_interceptions, s.duels_total, s.duels_won,
+            s.dribbles_attempts, s.dribbles_success, s.fouls_drawn, s.fouls_committed,
+            s.cards_yellow, s.cards_red, s.penalty_won, s.penalty_commited, s.penalty_scored, s.penalty_missed, s.penalty_saved
+        ];
+
+        if (existing) {
+            db.run(`UPDATE V3_Fixture_Player_Stats SET 
+                team_id=?, is_start_xi=?, minutes_played=?, position=?, rating=?,
+                goals_total=?, goals_conceded=?, goals_assists=?, goals_saves=?,
+                shots_total=?, shots_on=?, passes_total=?, passes_key=?, passes_accuracy=?,
+                tackles_total=?, tackles_blocks=?, tackles_interceptions=?, duels_total=?, duels_won=?,
+                dribbles_attempts=?, dribbles_success=?, fouls_drawn=?, fouls_committed=?,
+                cards_yellow=?, cards_red=?, penalty_won=?, penalty_commited=?, penalty_scored=?, penalty_missed=?, penalty_saved=?, updated_at=CURRENT_TIMESTAMP
+                WHERE fixture_player_stats_id=?`,
+                cleanParams([...params.slice(1), existing.fixture_player_stats_id]));
+        } else {
+            db.run(`INSERT INTO V3_Fixture_Player_Stats (
+                fixture_id, team_id, player_id, is_start_xi, minutes_played, position, rating,
+                goals_total, goals_conceded, goals_assists, goals_saves,
+                shots_total, shots_on, passes_total, passes_key, passes_accuracy,
+                tackles_total, tackles_blocks, tackles_interceptions, duels_total, duels_won,
+                dribbles_attempts, dribbles_success, fouls_drawn, fouls_committed,
+                cards_yellow, cards_red, penalty_won, penalty_commited, penalty_scored, penalty_missed, penalty_saved
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                cleanParams(params));
         }
     }
 };

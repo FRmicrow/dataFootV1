@@ -2,6 +2,10 @@
 import db from '../../config/database.js';
 import { runImportJob } from './leagueImportService.js';
 import { syncLeagueEventsService } from './fixtureService.js';
+import {
+    syncLeagueFixtureStatsService,
+    syncLeaguePlayerStatsService
+} from './tacticalStatsService.js';
 import StatsEngine from './StatsEngine.js';
 import footballApi from '../footballApi.js';
 
@@ -26,7 +30,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
 
     sendLog(`📅 Found ${seasons.length} seasons to inspect.`, 'info');
 
-    let totalTasks = seasons.length * 4; // Max 4 pillars per season
+    let totalTasks = seasons.length * 6; // Expanded to 6 pillars
     let completedTasks = 0;
 
     for (const season of seasons) {
@@ -75,20 +79,35 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
         }
         completedTasks++;
 
-        // Pillar 4: Trophies (Temporarily Disabled by User Request)
-        /*
+        // Pillar 4: Trophies (Skipped as per current state or if desired)
+        completedTasks++;
+
+        // Pillar 5: Fixture Stats (FS)
         try {
-            if (!season.imported_trophies) {
-                sendLog(`   [T] Trophies missing. Scanning and syncing trophies...`, 'info');
-                const trophies = await syncSeasonTrophies(leagueId, season_year, sendLog);
-                sendLog(`   ✅ Trophies synced: ${trophies.success} players.`, 'success');
+            if (!season.imported_fixture_stats) {
+                sendLog(`   [FS] Fixture Stats missing. Syncing tactical data...`, 'info');
+                const res = await syncLeagueFixtureStatsService(leagueId, season_year, 2000, sendLog);
+                sendLog(`   ✅ FS synced: ${res.success} fixtures.`, 'success');
             } else {
-                sendLog(`   [T] Trophies already complete. Skipping.`, 'success');
+                sendLog(`   [FS] FS already complete. Skipping.`, 'success');
             }
         } catch (err) {
-            sendLog(`   ❌ [T] Trophies sync failed: ${err.message}`, 'error');
+            sendLog(`   ❌ [FS] FS sync failed: ${err.message}`, 'error');
         }
-        */
+        completedTasks++;
+
+        // Pillar 6: Player Stats (PS)
+        try {
+            if (!season.imported_player_stats) {
+                sendLog(`   [PS] Player Stats missing. Syncing granular player data...`, 'info');
+                const res = await syncLeaguePlayerStatsService(leagueId, season_year, 2000, sendLog);
+                sendLog(`   ✅ PS synced: ${res.success} fixtures.`, 'success');
+            } else {
+                sendLog(`   [PS] PS already complete. Skipping.`, 'success');
+            }
+        } catch (err) {
+            sendLog(`   ❌ [PS] PS sync failed: ${err.message}`, 'error');
+        }
         completedTasks++;
 
         if (sendLog.emit) {
@@ -102,7 +121,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
 /**
  * Helper to sync lineups for a season (re-using logic from controller/StatsEngine)
  */
-async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
+export async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
     const sql = `
         SELECT f.fixture_id
         FROM V3_Fixtures f
@@ -149,7 +168,7 @@ async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
 /**
  * Helper to sync trophies for all players in a season
  */
-async function syncSeasonTrophies(leagueId, seasonYear, sendLog) {
+export async function syncSeasonTrophies(leagueId, seasonYear, sendLog) {
     // Find players who have stats in this league/season but NO trophy sync
     const sql = `
         SELECT DISTINCT p.player_id, p.api_id, p.name

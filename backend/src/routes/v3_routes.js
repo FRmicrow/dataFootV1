@@ -61,7 +61,9 @@ import {
     getEventCandidates,
     syncFixtureEvents,
     getFixtureEvents,
-    getFixtureDetails
+    getFixtureDetails,
+    getFixtureTacticalStats,
+    getFixturePlayerTacticalStats
 } from '../controllers/v3/fixtureController.js';
 import {
     getLineups,
@@ -155,6 +157,12 @@ import {
     getLeagueSimulations
 } from '../controllers/v3/simulationController.js';
 import { startBreeding, getBreedingStatus } from '../controllers/v3/forgeLaboratoryController.js';
+import {
+    triggerFixtureStatsSync,
+    triggerPlayerStatsSync,
+    triggerNormalization
+} from '../controllers/v3/tacticalStatsController.js';
+import { tacticalStatsSchema } from '../schemas/v3Schemas.js';
 
 const router = express.Router();
 
@@ -196,6 +204,8 @@ router.get('/league/:id/fixtures', getFixturesV3);
 router.get('/fixtures/events/candidates', getEventCandidates);
 router.post('/fixtures/events/sync', validateRequest(syncEventsSchema), syncFixtureEvents);
 router.get('/fixtures/:id/events', getFixtureEvents);
+router.get('/fixtures/:id/tactical-stats', getFixtureTacticalStats);
+router.get('/fixtures/:id/player-stats', getFixturePlayerTacticalStats);
 router.get('/fixtures/:id', getFixtureDetails);
 router.get('/fixtures/:id/lineups', getLineups);
 router.get('/fixtures/lineups/candidates', getLineupCandidates);
@@ -221,6 +231,9 @@ router.get('/club/:id', getClubProfile);
  */
 router.post('/import/league', validateRequest(importLeagueSchema), importLeagueV3);
 router.post('/import/batch', validateRequest(importBatchSchema), importBatchV3);
+router.post('/import/fixture-stats', validateRequest(tacticalStatsSchema), triggerFixtureStatsSync);
+router.post('/import/player-stats', validateRequest(tacticalStatsSchema), triggerPlayerStatsSync);
+router.post('/import/normalize', triggerNormalization);
 
 /**
  * @route Studio Data Engine

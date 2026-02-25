@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import MatchDetailLineups from './MatchDetailLineups';
 import MatchDetailEvents from './MatchDetailEvents';
+import MatchDetailTactical from './MatchDetailTactical';
+import MatchDetailPlayerVisuals from './MatchDetailPlayerVisuals';
 import './MatchDetailPage.css';
 
 const MatchDetailPage = () => {
@@ -21,8 +23,8 @@ const MatchDetailPage = () => {
     const fetchFixture = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`/api/fixtures/${id}`);
-            setFixture(res.data);
+            const res = await api.getFixture(id);
+            setFixture(res);
         } catch (e) {
             setError(e.message);
         } finally {
@@ -36,11 +38,11 @@ const MatchDetailPage = () => {
 
     const {
         home_name, home_logo, away_name, away_logo,
-        goals_home, goals_away, status_short, match_date,
+        goals_home, goals_away, status_short, date,
         league_name, league_logo
     } = fixture;
 
-    const dateStr = new Date(match_date).toLocaleString();
+    const dateStr = date ? new Date(date).toLocaleString() : '';
 
     return (
         <div className="match-detail-page fade-in">
@@ -84,13 +86,19 @@ const MatchDetailPage = () => {
                     className={`tab-btn ${activeTab === 'events' ? 'active' : ''}`}
                     onClick={() => setActiveTab('events')}
                 >
-                    Match Events
+                    Events
                 </button>
                 <button
-                    className={`tab-btn ${activeTab === 'stats' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('stats')}
+                    className={`tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('tactical')}
                 >
-                    Statistics
+                    Team Stats
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'player_intel' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('player_intel')}
+                >
+                    Player Intel
                 </button>
             </div>
 
@@ -102,11 +110,11 @@ const MatchDetailPage = () => {
                 {activeTab === 'events' && (
                     <MatchDetailEvents fixtureId={id} />
                 )}
-                {activeTab === 'stats' && (
-                    <div className="placeholder-tab">
-                        <h3>Match Statistics</h3>
-                        <p>Possession, Shots, etc.</p>
-                    </div>
+                {activeTab === 'tactical' && (
+                    <MatchDetailTactical fixtureId={id} />
+                )}
+                {activeTab === 'player_intel' && (
+                    <MatchDetailPlayerVisuals fixtureId={id} />
                 )}
             </div>
         </div>
