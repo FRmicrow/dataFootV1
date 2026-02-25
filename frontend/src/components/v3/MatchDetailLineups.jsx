@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import './MatchDetailLineups.css';
 
 const MatchDetailLineups = ({ fixtureId }) => {
@@ -14,9 +14,9 @@ const MatchDetailLineups = ({ fixtureId }) => {
     const fetchLineups = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`/api/fixtures/${fixtureId}/lineups`);
-            // res.data.lineups is array of 2
-            setLineups(res.data.lineups || []);
+            const res = await api.getFixtureLineups(fixtureId);
+            // res.lineups is array of 2 (since api.js returns response.data directly)
+            setLineups(res.lineups || []);
         } catch (e) {
             setError(e.message);
         } finally {

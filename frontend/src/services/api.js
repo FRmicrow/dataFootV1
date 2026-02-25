@@ -54,6 +54,8 @@ export default {
     getLeagueFixtures: (id, year) => api.get(`/league/${id}/fixtures?year=${year}`),
     getFixtureEvents: (id) => api.get(`/fixtures/${id}/events`),
     getFixtureLineups: (id) => api.get(`/fixtures/${id}/lineups`),
+    getFixtureTacticalStats: (id) => api.get(`/fixtures/${id}/tactical-stats`),
+    getFixturePlayerStats: (id) => api.get(`/fixtures/${id}/player-stats`),
 
     // --- Import & Sync Operations ---
     getCountries: () => api.get('/countries'), // For import dropdown
@@ -134,6 +136,9 @@ export default {
     // --- Deep Sync (League Activation) ---
     triggerDeepSync: (leagueId) => api.post(`/import/league/${leagueId}/deep-sync`),
     getSyncStatus: (leagueId) => api.get(`/league/${leagueId}/sync-status`),
+
+    // --- Tactical Stats & Normalization (US_F11) ---
+    normalizeSeason: (data) => api.post('/import/normalize', data),
 
     // --- Forge Laboratory (PO Vision) ---
     startBreeding: (leagueId) => api.post('/forge/breed', { leagueId }),

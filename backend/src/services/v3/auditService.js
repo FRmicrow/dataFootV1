@@ -48,11 +48,29 @@ export const performDiscoveryScan = async () => {
             updates.push("imported_lineups = 1, last_sync_lineups = CURRENT_TIMESTAMP");
         }
 
-        // 4. Audit Trophies (Simple check: do any players in this league/season have trophies synced?)
-        // This is a bit complex, but for now let's just check if any player in V3_Players has is_trophy_synced = 1
-        // Actually, the AC says cross-check V3_Fixtures, V3_Events, V3_Lineups. 
-        // Trophies are harder to link to a season unless we look at player stats for that season.
-        // Let's stick to the 3 pillars mentioned in AC first.
+        // 4. Audit Fixture Stats (FS)
+        const fsCount = db.get(`
+            SELECT COUNT(*) as count 
+            FROM V3_Fixture_Stats s
+            JOIN V3_Fixtures f ON s.fixture_id = f.fixture_id
+            WHERE f.league_id = ? AND f.season_year = ?
+        `, [league_id, season_year]).count;
+
+        if (fsCount > 0 && !season.imported_fixture_stats) {
+            updates.push("imported_fixture_stats = 1, last_sync_fixture_stats = CURRENT_TIMESTAMP");
+        }
+
+        // 5. Audit Player Stats (PS)
+        const psCount = db.get(`
+            SELECT COUNT(*) as count 
+            FROM V3_Fixture_Player_Stats s
+            JOIN V3_Fixtures f ON s.fixture_id = f.fixture_id
+            WHERE f.league_id = ? AND f.season_year = ?
+        `, [league_id, season_year]).count;
+
+        if (psCount > 0 && !season.imported_player_stats) {
+            updates.push("imported_player_stats = 1, last_sync_player_stats = CURRENT_TIMESTAMP");
+        }
 
         if (updates.length > 0) {
             const sql = `UPDATE V3_League_Seasons SET ${updates.join(', ')} WHERE league_season_id = ?`;

@@ -36,7 +36,7 @@ const StandingsTable = ({
             {groups.map(([groupName, teams], idx) => (
                 <div key={groupName} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                     <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                        <h3 className="font-semibold text-slate-800 dark:text-slate-100">{groupName}</h3>
+                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">{groupName}</h3>
 
                         {/* Dynamic Controls (Only on first group for now) */}
                         {idx === 0 && (
@@ -83,42 +83,42 @@ const StandingsTable = ({
                     </div>
 
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-700/50 dark:text-slate-400">
+                        <table className="w-full text-base text-left">
+                            <thead className="text-sm text-slate-500 uppercase bg-slate-50 dark:bg-slate-700/50 dark:text-slate-400 font-black">
                                 <tr>
-                                    <th className="px-4 py-3 w-12 text-center">#</th>
-                                    <th className="px-4 py-3">Team</th>
-                                    <th className="px-4 py-3 text-center">P</th>
-                                    <th className="px-4 py-3 text-center font-medium text-emerald-600">W</th>
-                                    <th className="px-4 py-3 text-center text-amber-600">D</th>
-                                    <th className="px-4 py-3 text-center text-rose-600">L</th>
-                                    <th className="px-4 py-3 text-center">+/-</th>
-                                    <th className="px-4 py-3 text-center font-bold text-slate-900 dark:text-white">Pts</th>
-                                    <th className="px-4 py-3 text-center hidden md:table-cell">Form</th>
+                                    <th className="px-6 py-4 w-16 text-center">#</th>
+                                    <th className="px-6 py-4">TEAM IDENTITY</th>
+                                    <th className="px-4 py-4 text-center">P</th>
+                                    <th className="px-4 py-4 text-center font-black text-emerald-600">W</th>
+                                    <th className="px-4 py-4 text-center text-amber-600">D</th>
+                                    <th className="px-4 py-4 text-center text-rose-600">L</th>
+                                    <th className="px-4 py-4 text-center">+/-</th>
+                                    <th className="px-6 py-4 text-center font-black text-slate-900 dark:text-white uppercase tracking-wider">Points</th>
+                                    <th className="px-4 py-4 text-center hidden md:table-cell">FORM</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                                 {teams.map((t) => (
                                     <tr key={t.team_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                        <td className="px-4 py-3 text-center font-medium text-slate-500">
-                                            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${t.rank <= 4 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : t.rank >= 18 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : ''}`}>
+                                        <td className="px-6 py-4 text-center font-black text-slate-500">
+                                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm ${t.rank <= 4 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : t.rank >= 18 ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'}`}>
                                                 {t.rank}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <Link to={`/club/${t.team_id}`} className="flex items-center gap-3 hover:text-blue-600 dark:hover:text-blue-400 font-medium text-slate-900 dark:text-slate-100 transition-colors">
-                                                <img src={t.team_logo} alt={t.team_name} className="w-6 h-6 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                                <span>{t.team_name}</span>
+                                        <td className="px-6 py-4">
+                                            <Link to={`/club/${t.team_id}`} className="flex items-center gap-4 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-slate-900 dark:text-slate-100 transition-all group">
+                                                <img src={t.team_logo} alt={t.team_name} className="w-8 h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform" onError={(e) => e.target.style.display = 'none'} />
+                                                <span className="truncate">{t.team_name}</span>
                                             </Link>
                                         </td>
-                                        <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400">{t.played}</td>
-                                        <td className="px-4 py-3 text-center font-medium text-slate-700 dark:text-slate-300">{t.win}</td>
-                                        <td className="px-4 py-3 text-center text-slate-500">{t.draw}</td>
-                                        <td className="px-4 py-3 text-center text-slate-500">{t.lose}</td>
-                                        <td className={`px-4 py-3 text-center font-medium ${t.goals_diff > 0 ? 'text-emerald-600' : t.goals_diff < 0 ? 'text-rose-600' : 'text-slate-500'}`}>
+                                        <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-bold">{t.played}</td>
+                                        <td className="px-4 py-4 text-center font-black text-slate-900 dark:text-slate-100">{t.win}</td>
+                                        <td className="px-4 py-4 text-center text-slate-500 font-medium">{t.draw}</td>
+                                        <td className="px-4 py-4 text-center text-slate-500 font-medium">{t.lose}</td>
+                                        <td className={`px-4 py-4 text-center font-black ${t.goals_diff > 0 ? 'text-emerald-600' : t.goals_diff < 0 ? 'text-rose-600' : 'text-slate-500'}`}>
                                             {t.goals_diff > 0 ? `+${t.goals_diff}` : t.goals_diff}
                                         </td>
-                                        <td className="px-4 py-3 text-center font-bold text-slate-900 dark:text-white bg-slate-50/50 dark:bg-slate-800/50">
+                                        <td className="px-6 py-4 text-center font-black text-lg text-blue-600 dark:text-blue-400 bg-blue-500/5 dark:bg-blue-500/10">
                                             {t.points}
                                         </td>
                                         <td className="px-4 py-3 text-center hidden md:table-cell">

@@ -20,8 +20,15 @@ export const importBatchSchema = z.object({
     body: z.object({
         selection: z.array(z.object({
             leagueId: z.coerce.number(),
-            seasons: z.array(z.coerce.number()),
-            forceApiId: z.boolean().optional()
+            seasons: z.array(z.union([
+                z.coerce.number(),
+                z.object({
+                    year: z.coerce.number(),
+                    pillars: z.array(z.string()).optional()
+                })
+            ])),
+            forceApiId: z.boolean().optional(),
+            forceRefresh: z.boolean().optional()
         })).min(1, "Batch must contain at least one item")
     })
 });
@@ -191,5 +198,13 @@ export const bulkOddsSchema = z.object({
 export const mlTrainSchema = z.object({
     body: z.object({
         force: z.boolean().optional()
+    })
+});
+
+export const tacticalStatsSchema = z.object({
+    body: z.object({
+        leagueId: z.coerce.number().positive(),
+        season: z.coerce.number().min(2000).max(2030),
+        limit: z.coerce.number().optional()
     })
 });

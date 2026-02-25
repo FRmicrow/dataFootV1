@@ -358,12 +358,14 @@ class FootballApi {
 
     /**
      * Get team statistics for a specific fixture
-     * GET /fixtures/statistics?fixture={id}
+     * GET /fixtures/statistics?fixture={id}&half=true
      */
-    async getFixtureStatistics(fixtureId) {
-        const requestId = `team-stats-fixture-${fixtureId}`;
+    async getFixtureStatistics(fixtureId, params = {}) {
+        const halfStr = params.half ? '-half' : '';
+        const requestId = `team-stats-fixture-${fixtureId}${halfStr}`;
         return this.makeRequest('/fixtures/statistics', {
-            fixture: fixtureId
+            fixture: fixtureId,
+            ...params
         }, requestId);
     }
 
