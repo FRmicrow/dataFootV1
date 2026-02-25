@@ -3,7 +3,7 @@ import SimulationService from '../../services/v3/simulationService.js';
 
 export const triggerSimulation = (req, res) => {
     try {
-        const { leagueId, seasonYear, mode, horizon } = req.body;
+        const { leagueId, seasonYear, mode, horizon, isAudit, calibrationTag } = req.body;
 
         if (!leagueId || !seasonYear) {
             return res.status(400).json({ error: 'Missing required parameters: leagueId, seasonYear' });
@@ -19,7 +19,14 @@ export const triggerSimulation = (req, res) => {
             });
         }
 
-        const result = SimulationQueueService.startSimulation(leagueId, seasonYear, mode || 'STATIC', horizon || 'FULL_HISTORICAL');
+        const result = SimulationQueueService.startSimulation(
+            leagueId,
+            seasonYear,
+            mode || 'STATIC',
+            horizon || 'FULL_HISTORICAL',
+            isAudit || 0,
+            calibrationTag || null
+        );
         res.json({ success: true, message: result.message });
     } catch (err) {
         console.error('Simulation trigger error:', err);
@@ -49,12 +56,12 @@ export const checkBulkJobStatus = (req, res) => {
 
 export const checkJobStatus = (req, res) => {
     try {
-        const { leagueId, seasonYear } = req.query;
+        const { leagueId, seasonYear, horizon } = req.query;
         if (!leagueId || !seasonYear) {
             return res.status(400).json({ error: 'Missing leagueId or seasonYear query params' });
         }
 
-        const status = SimulationQueueService.getJobStatus(leagueId, seasonYear);
+        const status = SimulationQueueService.getJobStatus(leagueId, seasonYear, horizon);
 
         if (!status) {
             return res.json({ status: 'NONE', message: 'No simulation has been run for this scope yet.' });
@@ -62,6 +69,16 @@ export const checkJobStatus = (req, res) => {
         res.json(status);
     } catch (err) {
         console.error('Job check error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const getLeagueSimulations = (req, res) => {
+    try {
+        const { leagueId } = req.params;
+        const jobs = SimulationQueueService.getAllSimulationsForLeague(leagueId);
+        res.json(jobs);
+    } catch (err) {
         res.status(500).json({ error: 'Internal server error' });
     }
 };

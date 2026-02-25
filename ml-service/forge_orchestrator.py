@@ -38,10 +38,14 @@ class ForgeOrchestrator:
     def get_connection(self):
         return sqlite3.connect(self.db_path)
 
-    def start_simulation(self, league_id: int, season_year: int, mode: str = 'STATIC', horizon: str = 'FULL_HISTORICAL'):
+    def start_simulation(self, league_id: int, season_year: int, mode: str = 'STATIC', horizon: str = 'FULL_HISTORICAL', sim_id: int = None):
         """
         Starts a simulation with horizon support.
         """
+        print(f"STAGE: INITIALIZING")
+        print("HEARTBEAT: 1")
+        sys.stdout.flush()
+        
         conn = self.get_connection()
         cur = conn.cursor()
         
@@ -67,9 +71,11 @@ class ForgeOrchestrator:
                 model_path = None
         
         if not model_path:
+            print(f"STAGE: TRAINING_MODELS")
+            print("HEARTBEAT: 1")
+            sys.stdout.flush()
             # Train a new model
             logger.info(f"⚠️ No active {horizon} model found for league {league_id}. Training now...")
-            sys.stdout.flush()
             
             model_path = train_model(
                 league_id=league_id, 
@@ -88,43 +94,71 @@ class ForgeOrchestrator:
                     logger.warning("⚠️ Using global fallback model.")
                     model_path = global_model_path
                 else:
-                    logger.error("❌ No valid model available. Cannot run simulation.")
-                    print("PROGRESS: 0% | FAILED: No model available")
+                    error_msg = "No valid model available. Cannot run simulation."
+                    logger.error(f"❌ {error_msg}")
+                    if sim_id:
+                        cur.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = ?, stage = 'ERROR' WHERE id = ?", (error_msg, sim_id))
+                        conn.commit()
+                    print(f"PROGRESS: 0% | FAILED: {error_msg}")
                     sys.stdout.flush()
                     return
 
-        # 2. Create Simulation Entry
-        cur.execute("""
-            INSERT INTO V3_Forge_Simulations (league_id, season_year, model_id, status, horizon_type)
-            VALUES (?, ?, ?, 'PENDING', ?)
-        """, (league_id, season_year, model_id, horizon))
-        sim_id = cur.lastrowid
+        # 2. Assign or Create Simulation Entry
+        if sim_id:
+            logger.info(f"📍 Using provided Simulation ID: {sim_id}")
+            cur.execute("""
+                UPDATE V3_Forge_Simulations SET model_id = ?, status = 'RUNNING', stage = 'PREPARING' 
+                WHERE id = ?
+            """, (model_id, sim_id))
+        else:
+            cur.execute("""
+                INSERT INTO V3_Forge_Simulations (league_id, season_year, model_id, status, horizon_type, stage)
+                VALUES (?, ?, ?, 'RUNNING', ?, 'PREPARING')
+            """, (league_id, season_year, model_id, horizon, 'PREPARING'))
+            sim_id = cur.lastrowid
+        
         conn.commit()
         conn.close()
         
-        logger.info(f"🆕 Simulation ID: {sim_id} | League {league_id} | Season {season_year} | Horizon: {horizon}")
+        logger.info(f"🆕 Active Simulation ID: {sim_id} | League {league_id} | Season {season_year} | Horizon: {horizon}")
+        print("HEARTBEAT: 1")
         sys.stdout.flush()
         
         try:
             if mode == 'STATIC':
+                print(f"STAGE: RUNNING_SIM")
+                sys.stdout.flush()
                 engine = LeagueReplayEngine(self.db_path, model_path, simulation_id=sim_id)
                 engine.run_replay(league_id, season_year)
             elif mode == 'WALK_FORWARD':
+                print(f"STAGE: WALK_FORWARD_LOOP")
+                sys.stdout.flush()
                 self._run_walk_forward_simulation(sim_id, league_id, season_year, horizon)
             else:
                 raise ValueError(f"Unknown mode: {mode}")
                 
             # Final Settlement
+            print(f"STAGE: CALIBRATING_METRICS")
+            print("HEARTBEAT: 1")
+            sys.stdout.flush()
             self.analytics.settle_simulation(sim_id)
+            
+            # Final Success Update
+            conn = self.get_connection()
+            conn.execute("UPDATE V3_Forge_Simulations SET status = 'COMPLETED', stage = 'FINISHED' WHERE id = ?", (sim_id,))
+            conn.commit()
+            conn.close()
+            
             logger.info(f"🏆 Forge Run {sim_id} Complete!")
             sys.stdout.flush()
             
         except Exception as e:
-            logger.error(f"❌ Forge Run {sim_id} Failed: {e}")
+            error_msg = str(e)
+            logger.error(f"❌ Forge Run {sim_id} Failed: {error_msg}")
             import traceback
             traceback.print_exc()
             conn = self.get_connection()
-            conn.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED' WHERE id = ?", (sim_id,))
+            conn.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = ?, stage = 'ERROR' WHERE id = ?", (error_msg, sim_id))
             conn.commit()
             conn.close()
 
@@ -193,8 +227,9 @@ if __name__ == "__main__":
     parser.add_argument('--mode', type=str, default='STATIC', choices=['STATIC', 'WALK_FORWARD'])
     parser.add_argument('--horizon', type=str, default='FULL_HISTORICAL', 
                         choices=['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING'])
+    parser.add_argument('--sim_id', type=int, help='Pre-existing Simulation ID')
     
     args = parser.parse_args()
     
     orchestrator = ForgeOrchestrator()
-    orchestrator.start_simulation(args.league, args.season, mode=args.mode, horizon=args.horizon)
+    orchestrator.start_simulation(args.league, args.season, mode=args.mode, horizon=args.horizon, sim_id=args.sim_id)

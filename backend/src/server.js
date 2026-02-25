@@ -61,16 +61,41 @@ const migrations = [
     },
     { table: 'V3_Predictions', column: 'edge_value', sql: "ALTER TABLE V3_Predictions ADD COLUMN edge_value REAL" },
     { table: 'V3_Predictions', column: 'confidence_score', sql: "ALTER TABLE V3_Predictions ADD COLUMN confidence_score INTEGER" },
-    { table: 'V3_Predictions', column: 'risk_level', sql: "ALTER TABLE V3_Predictions ADD COLUMN risk_level TEXT" }
+    { table: 'V3_Predictions', column: 'risk_level', sql: "ALTER TABLE V3_Predictions ADD COLUMN risk_level TEXT" },
+    {
+        table: 'V3_Forge_Simulations',
+        column: 'id',
+        sql: `CREATE TABLE IF NOT EXISTS V3_Forge_Simulations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            league_id INTEGER NOT NULL,
+            season_year INTEGER NOT NULL,
+            model_id INTEGER,
+            status TEXT CHECK(status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')) DEFAULT 'PENDING',
+            current_month TEXT,
+            total_months INTEGER,
+            completed_months INTEGER DEFAULT 0,
+            summary_metrics_json TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            horizon_type TEXT,
+            stage TEXT,
+            last_heartbeat DATETIME,
+            error_log TEXT,
+            FOREIGN KEY (model_id) REFERENCES V3_Model_Registry(id) ON DELETE SET NULL
+        )`
+    },
+    { table: 'V3_Forge_Simulations', column: 'stage', sql: "ALTER TABLE V3_Forge_Simulations ADD COLUMN stage TEXT" },
+    { table: 'V3_Forge_Simulations', column: 'last_heartbeat', sql: "ALTER TABLE V3_Forge_Simulations ADD COLUMN last_heartbeat DATETIME" },
+    { table: 'V3_Forge_Simulations', column: 'error_log', sql: "ALTER TABLE V3_Forge_Simulations ADD COLUMN error_log TEXT" }
 ];
 
+console.log('🏗️  Running DB Migrations...');
 for (const m of migrations) {
     try {
         db.run(m.sql);
-        console.log(`🔄 Migration: ${m.column} added to ${m.table}`);
+        console.log(`✅ Migration: ${m.column || 'table'} verified/added to ${m.table}`);
     } catch (e) {
-        if (!e.message?.includes('duplicate column')) {
-            console.warn(`Migration note (${m.table}.${m.column}):`, e.message);
+        if (!e.message?.includes('duplicate column') && !e.message?.includes('already exists')) {
+            console.warn(`⚠️ Migration note (${m.table}.${m.column}):`, e.message);
         }
     }
 }

@@ -216,18 +216,76 @@ def retrain_from_simulation(model_id: int, simulation_id: int) -> dict:
         print(f"      Improvement: {improvement:+.2%}")
         print(f"      New Brier: {new_brier:.4f} | New Log-Loss: {new_loss:.4f}")
         
-        # 9. Accept/Reject Gate: require >= 0.5% improvement
-        MIN_IMPROVEMENT = 0.005
+        # 9. Multi-Season Validation Gate (US_221)
+        # Validate against the 3 latest completed seasons to ensure robustness
+        print(f"   🛡️ Starting 3-Season Multi-Validation Gate (US_221)...")
         
-        if improvement < MIN_IMPROVEMENT:
-            print(f"   ⚠️ Improvement ({improvement:+.2%}) below threshold ({MIN_IMPROVEMENT:.1%}). Keeping old model.")
+        # Get 3 latest seasons excluding the one we just used for training if it was the absolute latest
+        latest_seasons_query = """
+            SELECT DISTINCT season_year FROM V3_Fixtures 
+            WHERE league_id = ? AND status_short IN ('FT', 'AET', 'PEN')
+            ORDER BY season_year DESC LIMIT 4
+        """
+        val_seasons = [r[0] for r in conn.execute(latest_seasons_query, (league_id,)).fetchall()]
+        # If we have enough seasons, pick 3. 
+        if len(val_seasons) > 1:
+            val_seasons = val_seasons[:3]
+        
+        print(f"      Validating across: {val_seasons}")
+        
+        total_val_matches = 0
+        total_old_correct = 0
+        total_new_correct = 0
+        
+        for s_year in val_seasons:
+            s_data = pd.read_sql_query("""
+                SELECT fixture_id, goals_home, goals_away 
+                FROM V3_Fixtures 
+                WHERE league_id = ? AND season_year = ? AND status_short IN ('FT', 'AET', 'PEN')
+            """, conn, params=(league_id, s_year))
+            
+            s_X = []
+            s_y = []
+            for _, row in s_data.iterrows():
+                try:
+                    v = factory.get_vector(int(row['fixture_id']), conn=conn)
+                    s_X.append([v[col] for col in factory.feature_columns])
+                    gh, ga = int(row['goals_home']), int(row['goals_away'])
+                    s_y.append(1 if gh > ga else (2 if ga > gh else 0))
+                except: continue
+                
+            if not s_X: continue
+            
+            s_X_df = pd.DataFrame(s_X, columns=factory.feature_columns)
+            s_y_arr = np.array(s_y)
+            
+            old_s_preds = old_model.predict(s_X_df)
+            new_s_preds = new_model.predict(s_X_df)
+            
+            total_val_matches += len(s_y_arr)
+            total_old_correct += accuracy_score(s_y_arr, old_s_preds, normalize=False)
+            total_new_correct += accuracy_score(s_y_arr, new_s_preds, normalize=False)
+        
+        avg_old_acc = total_old_correct / total_val_matches if total_val_matches > 0 else 0
+        avg_new_acc = total_new_correct / total_val_matches if total_val_matches > 0 else 0
+        aggregate_improvement = avg_new_acc - avg_old_acc
+        
+        print(f"      Aggregate Performance (3-Season Gate):")
+        print(f"         Baseline: {avg_old_acc:.2%}")
+        print(f"         Recalibrated: {avg_new_acc:.2%}")
+        print(f"         Net Gain: {aggregate_improvement:+.2%}")
+        
+        MIN_GATE_IMPROVEMENT = 0.005 # 0.5% threshold per US_221
+        
+        if aggregate_improvement < MIN_GATE_IMPROVEMENT:
+            print(f"   ❌ Rejected: Aggregate improvement ({aggregate_improvement:+.2%}) below gate threshold ({MIN_GATE_IMPROVEMENT:.1%}).")
             return {
                 "status": "rejected",
-                "message": f"New model accuracy ({new_accuracy:.2%}) did not improve enough over old ({old_accuracy_test:.2%}). Delta: {improvement:+.2%}",
-                "old_accuracy": float(old_accuracy_test),
-                "new_accuracy": float(new_accuracy),
-                "improvement": float(improvement),
-                "threshold": MIN_IMPROVEMENT
+                "message": f"Multi-validation gate failed. Net gain {aggregate_improvement:+.2%} < {MIN_GATE_IMPROVEMENT:.1%}.",
+                "old_accuracy": float(avg_old_acc),
+                "new_accuracy": float(avg_new_acc),
+                "improvement": float(aggregate_improvement),
+                "threshold": MIN_GATE_IMPROVEMENT
             }
         
         # 10. Accept: Save new model

@@ -110,9 +110,10 @@ export default {
 
     // --- Forge Simulation Engine (V8) ---
     startSimulation: (data) => api.post('/simulation/start', data),
-    getSimulationStatus: (leagueId, seasonYear) => api.get(`/simulation/status?leagueId=${leagueId}&seasonYear=${seasonYear}`),
+    getSimulationStatus: (leagueId, seasonYear, horizon) => api.get(`/simulation/status?leagueId=${leagueId}&seasonYear=${seasonYear}${horizon ? `&horizon=${horizon}` : ''}`),
     getSimulationReadiness: (leagueId, seasonYear) => api.get(`/simulation/readiness?leagueId=${leagueId}&seasonYear=${seasonYear}`),
     getSimulationResults: (simId) => api.get(`/simulation/results/${simId}`),
+    getLeagueSimulations: (leagueId) => api.get(`/simulation/league/${leagueId}`),
 
     // --- ML Management (V8) ---
     getMLStatus: () => api.get('/ml/status'),
@@ -133,4 +134,8 @@ export default {
     // --- Deep Sync (League Activation) ---
     triggerDeepSync: (leagueId) => api.post(`/import/league/${leagueId}/deep-sync`),
     getSyncStatus: (leagueId) => api.get(`/league/${leagueId}/sync-status`),
+
+    // --- Forge Laboratory (PO Vision) ---
+    startBreeding: (leagueId) => api.post('/forge/breed', { leagueId }),
+    getBreedingStatus: (leagueId) => api.get(`/forge/breed-status?leagueId=${leagueId}`),
 };
