@@ -475,8 +475,11 @@ export const queryLeagueRankings = (req, res) => {
 
         // 2. Helper to parse round number from string (e.g. "Regular Season - 18")
         const getRoundNumber = (roundStr) => {
-            const match = roundStr.match(/(\d+)$/);
-            return match ? parseInt(match[1]) : 0;
+            if (!roundStr || typeof roundStr !== 'string') return 0;
+            const parts = roundStr.split('-');
+            const lastPart = parts[parts.length - 1].trim();
+            const num = parseInt(lastPart);
+            return isNaN(num) ? 0 : num;
         };
 
         // 3. Process data into Rounds

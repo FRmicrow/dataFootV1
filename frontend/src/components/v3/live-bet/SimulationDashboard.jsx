@@ -196,7 +196,8 @@ const SimulationDashboard = () => {
             if (!data) return;
 
             // No simulation exists yet for this scope — silently skip
-            if (data.status === 'NONE') {
+            const jobStatusStr = String(data.status);
+            if (jobStatusStr === 'NONE') {
                 setJobStatus(null);
                 setPreviousSimAvailable(null);
                 return;
@@ -204,19 +205,20 @@ const SimulationDashboard = () => {
 
             setJobStatus(data);
 
-            if (data.status === 'running' || data.status === 'pending' || data.status === 'RUNNING' || data.status === 'PENDING') {
+            const statusLower = jobStatusStr.toLowerCase();
+            if (statusLower === 'running' || statusLower === 'pending') {
                 // Active sim — always show progress
                 setLoading(true);
                 setError(null);
                 setUserTriggeredSim(true); // User or system started it
-            } else if (data.status === 'completed' || data.status === 'COMPLETED') {
+            } else if (statusLower === 'completed') {
                 setLoading(false);
                 // US_212: Automated Retrieval - Auto-fill if completed
                 if (data.metrics) {
                     setMetrics(data.metrics);
                     setSimId(data.id || null);
                 }
-            } else if (data.status === 'failed' || data.status === 'FAILED') {
+            } else if (statusLower === 'failed') {
                 setLoading(false);
                 setError(data.error_log || data.error || 'Simulation Failed.');
             }

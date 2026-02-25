@@ -13,7 +13,7 @@ export const syncUpcomingProps = async (req, res) => {
     try {
         // 1. Get upcoming fixtures for top leagues (Rank <= 10)
         // We look for fixtures scheduled between TODAY and TODAY+5 days
-        const fixtures = await db.all(`
+        const fixtures = db.all(`
             SELECT f.fixture_id, f.api_id, f.league_id 
             FROM V3_Fixtures f
             JOIN V3_Leagues l ON f.league_id = l.league_id
@@ -35,7 +35,7 @@ export const syncUpcomingProps = async (req, res) => {
         for (const fixture of fixtures) {
             try {
                 // Check if we already have a prediction for this fixture
-                const existing = await db.get("SELECT id FROM V3_Predictions WHERE fixture_id = ?", [fixture.fixture_id]);
+                const existing = db.get("SELECT id FROM V3_Predictions WHERE fixture_id = ?", [fixture.fixture_id]);
                 if (existing) continue; // Skip if already exists
 
                 // Fetch from API
@@ -46,7 +46,7 @@ export const syncUpcomingProps = async (req, res) => {
                     const winner = p.predictions.winner || {};
                     const prob = p.predictions.percent || {};
 
-                    await db.run(`
+                    db.run(`
                         INSERT INTO V3_Predictions (
                             fixture_id, league_id, season,
                             winner_id, winner_name, winner_comment,
@@ -141,7 +141,7 @@ export const getPredictions = async (req, res) => {
 
         sql += " ORDER BY f.date ASC LIMIT 50";
 
-        const predictions = await db.all(sql, params);
+        const predictions = db.all(sql, params);
         res.json(predictions);
 
     } catch (e) {

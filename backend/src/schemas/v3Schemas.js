@@ -208,3 +208,35 @@ export const tacticalStatsSchema = z.object({
         limit: z.coerce.number().optional()
     })
 });
+
+export const leagueIdParamSchema = z.object({
+    params: z.object({
+        id: z.coerce.number().positive()
+    })
+});
+
+export const simulationStatusSchema = z.object({
+    query: z.object({
+        leagueId: z.coerce.number().positive(),
+        seasonYear: z.coerce.number().min(2000).max(2030),
+        horizon: z.enum(['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING']).optional()
+    })
+});
+
+export const breedingSchema = z.object({
+    body: z.object({
+        leagueId: z.coerce.number().positive()
+    })
+});
+
+export const breedingStatusSchema = z.object({
+    query: z.object({
+        leagueId: z.coerce.number().positive()
+    })
+});
+
+export const leagueIdV3ParamSchema = z.object({
+    params: z.object({
+        leagueId: z.coerce.number().positive()
+    })
+});

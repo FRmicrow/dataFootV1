@@ -1,8 +1,15 @@
+import { z } from 'zod';
 import {
     syncLeagueFixtureStatsService,
     syncLeaguePlayerStatsService,
     computePlayerSeasonNormalization
 } from '../../services/v3/tacticalStatsService.js';
+
+const syncSchema = z.object({
+    leagueId: z.union([z.string(), z.number()]).transform(v => parseInt(v)),
+    season: z.union([z.string(), z.number()]).transform(v => parseInt(v)),
+    limit: z.union([z.string(), z.number()]).optional().transform(v => v ? parseInt(v) : 50)
+});
 
 /**
  * POST /api/v3/import/fixture-stats
@@ -17,10 +24,17 @@ export const triggerFixtureStatsSync = async (req, res) => {
     };
     sendLog.emit = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
-    const { leagueId, season, limit = 50 } = req.body;
+    const validation = syncSchema.safeParse(req.body);
+    if (!validation.success) {
+        sendLog(`❌ Validation failed: ${validation.error.errors[0].message}`, 'error');
+        res.end();
+        return;
+    }
+
+    const { leagueId, season, limit } = validation.data;
 
     try {
-        const result = await syncLeagueFixtureStatsService(parseInt(leagueId), parseInt(season), limit, sendLog);
+        const result = await syncLeagueFixtureStatsService(leagueId, season, limit, sendLog);
         res.write(`data: ${JSON.stringify({ type: 'complete', ...result })}\n\n`);
         res.end();
     } catch (error) {
@@ -43,10 +57,17 @@ export const triggerPlayerStatsSync = async (req, res) => {
     };
     sendLog.emit = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
-    const { leagueId, season, limit = 50 } = req.body;
+    const validation = syncSchema.safeParse(req.body);
+    if (!validation.success) {
+        sendLog(`❌ Validation failed: ${validation.error.errors[0].message}`, 'error');
+        res.end();
+        return;
+    }
+
+    const { leagueId, season, limit } = validation.data;
 
     try {
-        const result = await syncLeaguePlayerStatsService(parseInt(leagueId), parseInt(season), limit, sendLog);
+        const result = await syncLeaguePlayerStatsService(leagueId, season, limit, sendLog);
         res.write(`data: ${JSON.stringify({ type: 'complete', ...result })}\n\n`);
         res.end();
     } catch (error) {

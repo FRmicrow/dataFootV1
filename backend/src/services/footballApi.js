@@ -146,7 +146,7 @@ class FootballApi {
         }
 
         // Create a deterministic requestId based on sorted keys
-        const paramKeys = Object.keys(params).sort();
+        const paramKeys = Object.keys(params).sort((a, b) => a.localeCompare(b));
         const paramString = paramKeys.map(k => `${k}-${params[k]}`).join('_');
         const requestId = `leagues-${paramString}`;
 

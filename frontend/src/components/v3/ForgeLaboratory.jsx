@@ -85,11 +85,12 @@ const ForgeLaboratory = () => {
     const checkStatus = async () => {
         if (!selectedLeague) return;
         try {
-            const status = await api.getBreedingStatus(selectedLeague);
-            setBreedingStatus(status);
-            if (status.status === 'RUNNING_SIMULATIONS' || status.status === 'BUILDING_MODELS') {
+            const currentStatus = await api.getBreedingStatus(selectedLeague);
+            setBreedingStatus(currentStatus);
+            const statusStr = String(currentStatus.status);
+            if (statusStr === 'RUNNING_SIMULATIONS' || statusStr === 'BUILDING_MODELS') {
                 setTimeout(checkStatus, 3000);
-            } else if (status.status === 'COMPLETED') {
+            } else if (statusStr === 'COMPLETED') {
                 refreshData();
             }
         } catch (err) { }
@@ -118,10 +119,11 @@ const ForgeLaboratory = () => {
         setCalibratingId(simId);
         try {
             const res = await api.retrainModel({ modelId, simulationId: simId });
-            if (res.status === 'accepted') {
+            const resStatus = String(res.status);
+            if (resStatus === 'accepted') {
                 alert(`✅ Promotion Successful!\n${res.message}\nNew Accuracy: ${(res.new_accuracy * 100).toFixed(2)}%`);
                 refreshData();
-            } else if (res.status === 'rejected') {
+            } else if (resStatus === 'rejected') {
                 alert(`❌ Recalibration Rejected.\nReason: ${res.message}`);
             } else {
                 alert("Error during calibration: " + res.message);
@@ -135,7 +137,7 @@ const ForgeLaboratory = () => {
 
     // US_222: Intelligence Performance Trend Strategy
     const trendData = useMemo(() => {
-        const seasons = [...new Set(simulations.map(s => s.season_year))].sort();
+        const seasons = [...new Set(simulations.map(s => s.season_year))].sort((a, b) => a - b);
         return seasons.map(year => {
             const row = { season: year };
             const yearSims = simulations.filter(s => s.season_year === year && s.status === 'COMPLETED');

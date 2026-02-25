@@ -70,7 +70,8 @@ export class QuantService {
 
         // Find best pick
         const bestOutcome = outcomes.reduce((prev, curr) =>
-            (analysis[curr].edge > analysis[prev].edge) ? curr : prev
+            (analysis[curr].edge > analysis[prev].edge) ? curr : prev,
+            outcomes[0]
         );
         const bestVal = analysis[bestOutcome];
 

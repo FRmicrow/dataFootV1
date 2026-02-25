@@ -40,7 +40,7 @@ const LeagueActivationStage = ({ leagueId, onComplete, onCancel }) => {
                         const pct = Math.min(50 + Math.floor((attempts / maxAttempts) * 50), 95);
                         setProgress(pct);
 
-                        if (syncRes.status === 'COMPLETED' || syncRes.is_syncing === false) {
+                        if (String(syncRes.status) === 'COMPLETED' || syncRes.is_syncing === false) {
                             clearInterval(interval);
                             setProgress(100);
                             setStatus('COMPLETE');
