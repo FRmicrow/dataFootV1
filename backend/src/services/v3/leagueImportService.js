@@ -4,6 +4,7 @@ import { cleanParams } from '../../utils/sqlHelpers.js';
 import { Mappers, ImportRepository as DB } from './ImportService.js';
 import { syncLeagueEventsService } from './fixtureService.js';
 import { CompetitionRanker } from '../../utils/v3/CompetitionRanker.js';
+import * as ImportControl from './importControlService.js';
 
 /**
  * V3 Import Logic Service
@@ -96,6 +97,7 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) 
     let currentTeam = 0;
     try {
         for (const t of teams) {
+            await ImportControl.checkAbortOrPause(sendLog);
             currentTeam++;
             if (sendLog.emit) {
                 sendLog.emit({ type: 'progress', step: 'teams', current: currentTeam, total: teams.length, label: `Importing ${t.team.name}` });
@@ -119,6 +121,7 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) 
         const chunk = teams.slice(i, i + TEAM_CHUNK_SIZE);
 
         await Promise.all(chunk.map(async (t) => {
+            await ImportControl.checkAbortOrPause(sendLog);
             const teamName = t.team.name;
             const teamApiId = t.team.id;
 
@@ -293,6 +296,7 @@ export const syncPlayerCareerService = async (playerId, sendLog) => {
 
     let yearsProcessed = 0;
     for (const year of yearsToProcess) {
+        await ImportControl.checkAbortOrPause(sendLog);
         yearsProcessed++;
         if (sendLog.emit) {
             sendLog.emit({ type: 'fetching', year, current: yearsProcessed, total: yearsToProcess.length });

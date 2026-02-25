@@ -11,6 +11,7 @@ import {
     syncSeasonTrophies
 } from '../../services/v3/deepSyncService.js';
 import { syncLeagueEventsService } from '../../services/v3/fixtureService.js';
+import * as ImportControl from '../../services/v3/importControlService.js';
 
 /**
  * GET /api/v3/league/:apiId/available-seasons
@@ -196,9 +197,22 @@ export const getLeaguesV3 = async (req, res) => {
  * POST /api/v3/import/league
  */
 export const importLeagueV3 = async (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no'
+    });
+
+    // Prime the stream for picky browsers/proxies (2KB of padding)
+    res.write(':[initial-ping]\n' + ': ' + ' '.repeat(2048) + '\n\n');
+    if (res.flushHeaders) res.flushHeaders();
+
+    req.on('close', () => {
+        if (!res.writableEnded) {
+            console.log(`🔌 [SSE] Connection closed by client.`);
+        }
+    });
 
     const sendLog = (message, type = 'info') => {
         res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
@@ -207,6 +221,7 @@ export const importLeagueV3 = async (req, res) => {
 
     const { leagueId, season, forceApiId = true, forceRefresh = false } = req.body;
     try {
+        ImportControl.resetImportState();
         const meta = await runImportJob(leagueId, parseInt(season), sendLog, { forceApiId, forceRefresh });
         res.write(`data: ${JSON.stringify({ type: 'complete', ...meta })}\n\n`);
         res.end();
@@ -223,9 +238,21 @@ export const importLeagueV3 = async (req, res) => {
  * Implementation of US-V3-BE-017: Batch Selection Execution
  */
 export const importBatchV3 = async (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no'
+    });
+
+    res.write(':[initial-ping]\n' + ': ' + ' '.repeat(2048) + '\n\n');
+    if (res.flushHeaders) res.flushHeaders();
+
+    req.on('close', () => {
+        if (!res.writableEnded) {
+            console.log(`🔌 [SSE] Connection closed by client.`);
+        }
+    });
 
     const sendLog = (message, type = 'info') => {
         res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
@@ -235,6 +262,7 @@ export const importBatchV3 = async (req, res) => {
     const { selection } = req.body;
 
     try {
+        ImportControl.resetImportState();
         sendLog(`📦 Batch Import Started: ${selection.length} competitions in queue.`, 'info');
 
         let totalSubTasks = 0;

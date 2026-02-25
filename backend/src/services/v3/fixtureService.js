@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import axios from 'axios';
+import * as ImportControl from './importControlService.js';
 
 const API_KEY = process.env.API_FOOTBALL_KEY;
 const API_BASE_URL = 'https://v3.football.api-sports.io';
@@ -67,6 +68,9 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
         // Optimized for high-throughput (targeting ~450 RPM)
         const CHUNK_SIZE = 5;
         for (let i = 0; i < targetFixtures.length; i += CHUNK_SIZE) {
+            // US_270: Check if we should abort or pause
+            await ImportControl.checkAbortOrPause(sendLog);
+
             const chunk = targetFixtures.slice(i, i + CHUNK_SIZE);
 
             if (sendLog && sendLog.emit && i % 10 === 0) {

@@ -20,7 +20,6 @@ import LiveBetDashboard from './components/v3/live-bet/LiveBetDashboard';
 import LiveBetMatchDetails from './components/v3/live-bet/LiveBetMatchDetails';
 import MonitoringConsole from './components/v3/live-bet/MonitoringConsole';
 import SimulationDashboard from './components/v3/live-bet/SimulationDashboard';
-import TelemetryConsole from './components/v3/TelemetryConsole';
 import ForgeLaboratory from './components/v3/ForgeLaboratory';
 import { ImportProvider } from './context/ImportContext.jsx';
 import './App.css';
@@ -93,7 +92,6 @@ function App() {
                         {/* Legacy V3 path redirects */}
                         <Route path="/v3/*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
-                    <TelemetryConsole />
                 </div>
             </ImportProvider>
         </Router>
