@@ -85,7 +85,37 @@ const migrations = [
     },
     { table: 'V3_Forge_Simulations', column: 'stage', sql: "ALTER TABLE V3_Forge_Simulations ADD COLUMN stage TEXT" },
     { table: 'V3_Forge_Simulations', column: 'last_heartbeat', sql: "ALTER TABLE V3_Forge_Simulations ADD COLUMN last_heartbeat DATETIME" },
-    { table: 'V3_Forge_Simulations', column: 'error_log', sql: "ALTER TABLE V3_Forge_Simulations ADD COLUMN error_log TEXT" }
+    { table: 'V3_Forge_Simulations', column: 'error_log', sql: "ALTER TABLE V3_Forge_Simulations ADD COLUMN error_log TEXT" },
+    // US_260: Import Status Registry
+    {
+        table: 'V3_Import_Status',
+        column: 'id',
+        sql: `CREATE TABLE IF NOT EXISTS V3_Import_Status (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            league_id INTEGER NOT NULL,
+            season_year INTEGER NOT NULL,
+            pillar TEXT NOT NULL CHECK(pillar IN ('core', 'events', 'lineups', 'trophies', 'fs', 'ps')),
+            status INTEGER NOT NULL DEFAULT 0 CHECK(status IN (0, 1, 2, 3, 4)),
+            consecutive_failures INTEGER DEFAULT 0,
+            total_items_expected INTEGER,
+            total_items_imported INTEGER DEFAULT 0,
+            last_checked_at DATETIME,
+            last_success_at DATETIME,
+            failure_reason TEXT,
+            data_range_start INTEGER,
+            data_range_end INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id),
+            UNIQUE(league_id, season_year, pillar)
+        )`
+    },
+    { table: 'V3_Import_Status', column: 'idx_league_season', sql: 'CREATE INDEX IF NOT EXISTS idx_import_status_league_season ON V3_Import_Status(league_id, season_year)' },
+    { table: 'V3_Import_Status', column: 'idx_pillar', sql: 'CREATE INDEX IF NOT EXISTS idx_import_status_pillar ON V3_Import_Status(pillar, status)' },
+    { table: 'V3_League_Seasons', column: 'imported_fixture_stats', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN imported_fixture_stats BOOLEAN DEFAULT 0" },
+    { table: 'V3_League_Seasons', column: 'imported_player_stats', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN imported_player_stats BOOLEAN DEFAULT 0" },
+    { table: 'V3_League_Seasons', column: 'last_sync_fixture_stats', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_fixture_stats DATETIME" },
+    { table: 'V3_League_Seasons', column: 'last_sync_player_stats', sql: "ALTER TABLE V3_League_Seasons ADD COLUMN last_sync_player_stats DATETIME" }
 ];
 
 console.log('🏗️  Running DB Migrations...');
@@ -98,6 +128,47 @@ for (const m of migrations) {
             console.warn(`⚠️ Migration note (${m.table}.${m.column}):`, e.message);
         }
     }
+}
+
+// US_260: Back-populate V3_Import_Status from existing boolean flags
+try {
+    const existingCount = db.get("SELECT COUNT(*) as count FROM V3_Import_Status");
+    if (existingCount && existingCount.count === 0) {
+        console.log('📋 US_260: Back-populating V3_Import_Status from boolean flags...');
+        const seasons = db.all("SELECT * FROM V3_League_Seasons");
+        let populated = 0;
+
+        for (const s of seasons) {
+            const { league_id, season_year } = s;
+            const pillars = [
+                {
+                    pillar: 'core',
+                    status: (s.imported_fixtures && s.imported_standings && s.imported_players) ? 2
+                        : (s.imported_fixtures && (!s.imported_standings || !s.imported_players)) ? 1
+                            : 0
+                },
+                { pillar: 'events', status: s.imported_events ? 2 : 0 },
+                { pillar: 'lineups', status: s.imported_lineups ? 2 : 0 },
+                { pillar: 'trophies', status: s.imported_trophies ? 2 : 0 },
+                { pillar: 'fs', status: s.imported_fixture_stats ? 2 : 0 },
+                { pillar: 'ps', status: s.imported_player_stats ? 2 : 0 }
+            ];
+
+            for (const p of pillars) {
+                try {
+                    db.run(
+                        `INSERT OR IGNORE INTO V3_Import_Status (league_id, season_year, pillar, status)
+                         VALUES (?, ?, ?, ?)`,
+                        [league_id, season_year, p.pillar, p.status]
+                    );
+                    populated++;
+                } catch (e) { /* unique constraint - skip */ }
+            }
+        }
+        console.log(`✅ US_260: Back-populated ${populated} status entries from ${seasons.length} seasons.`);
+    }
+} catch (e) {
+    console.warn('⚠️ US_260 back-population note:', e.message);
 }
 
 // --- P4: Security & Rate Limiting ---

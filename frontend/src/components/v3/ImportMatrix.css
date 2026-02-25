@@ -60,17 +60,7 @@
     border-color: #f59e0b;
 }
 
-.btn-batch {
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    cursor: pointer;
-    font-weight: 500;
-}
-
+/* US_267: Renamed button */
 .btn-normalize {
     background: rgba(129, 140, 248, 0.1);
     color: #818cf8;
@@ -90,6 +80,17 @@
 .btn-normalize:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+}
+
+.btn-batch {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    font-weight: 500;
 }
 
 .matrix-grid-wrapper {
@@ -192,10 +193,80 @@
     filter: brightness(1.2);
 }
 
+/* US_267: Status Code 0 — NONE (Grey) */
+.indicator.indicator-none {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* US_267: Status Code 1 — PARTIAL (Orange + pulse) */
+.indicator.indicator-partial {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    animation: partialPulse 2s ease-in-out infinite;
+}
+
+@keyframes partialPulse {
+
+    0%,
+    100% {
+        opacity: 0.8;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* US_267: Status Code 2 — COMPLETE (Green) */
+.indicator.indicator-complete {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* US_267: Status Code 3 — NO_DATA (Black/Dark) */
+.indicator.indicator-nodata {
+    background: rgba(15, 23, 42, 0.9);
+    color: #475569;
+    border: 1px solid rgba(71, 85, 105, 0.4);
+    cursor: not-allowed;
+    font-size: 10px;
+    letter-spacing: -1px;
+}
+
+/* US_267: Status Code 4 — LOCKED (Green + Lock icon) */
+.indicator.indicator-locked {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    cursor: not-allowed;
+    position: relative;
+}
+
+.indicator.indicator-locked .lock-icon {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    font-size: 7px;
+    filter: none;
+}
+
+/* Queued state (batch selection) */
+.indicator.queued {
+    background: #3b82f6;
+    color: white;
+    border: 1px solid #2563eb;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* Legacy backward compat classes */
 .indicator.missing {
-    background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
 }
 
 .indicator.partial {
@@ -210,33 +281,29 @@
     border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.indicator.queued {
-    background: #3b82f6;
-    color: white;
-    border: 1px solid #2563eb;
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-}
-
 .tooltip {
     position: relative;
 }
 
 .tooltip .tooltiptext {
     visibility: hidden;
-    width: 140px;
-    background-color: #334155;
-    color: #fff;
+    width: 180px;
+    background-color: #1e293b;
+    color: #e2e8f0;
     text-align: center;
-    border-radius: 6px;
-    padding: 5px 0;
+    border-radius: 8px;
+    padding: 8px 10px;
     position: absolute;
     z-index: 100;
     bottom: 125%;
     left: 50%;
-    margin-left: -70px;
+    margin-left: -90px;
     opacity: 0;
     transition: opacity 0.3s;
     font-size: 10px;
+    line-height: 1.4;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .tooltip:hover .tooltiptext {
@@ -282,28 +349,6 @@
     padding: 2px 8px;
     border-radius: 10px;
     margin-left: 6px;
-}
-
-.btn-deep-sync {
-    background: transparent;
-    border: none;
-    color: #f59e0b;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 0;
-    margin-left: 4px;
-    opacity: 0.6;
-    transition: opacity 0.2s, transform 0.2s;
-}
-
-.btn-deep-sync:hover:not(:disabled) {
-    opacity: 1;
-    transform: scale(1.2);
-}
-
-.btn-deep-sync:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
 }
 
 .btn-clear {
@@ -375,4 +420,247 @@
 .btn-cat:hover {
     background: rgba(56, 189, 248, 0.2);
     border-color: #38bdf8;
+}
+
+/* US_267: Season locked badge */
+.season-locked-badge {
+    font-size: 8px;
+    color: #22c55e;
+    display: block;
+    text-align: center;
+    margin-top: 2px;
+    opacity: 0.6;
+}
+
+/* US_267: Tooltip status label coloring */
+.tooltip-status-none {
+    color: #94a3b8;
+}
+
+.tooltip-status-partial {
+    color: #f59e0b;
+}
+
+.tooltip-status-complete {
+    color: #22c55e;
+}
+
+.tooltip-status-nodata {
+    color: #64748b;
+}
+
+.tooltip-status-locked {
+    color: #22c55e;
+}
+
+/* ═══════════════════════════════════════════
+   INLINE LOG PANEL — Top of page, above table
+   ═══════════════════════════════════════════ */
+.import-log-panel {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+    animation: panelSlideDown 0.3s ease-out;
+}
+
+@keyframes panelSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.log-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: #0f172a;
+    border-bottom: 1px solid #1e293b;
+}
+
+.log-panel-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.log-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+
+.log-status-dot.active {
+    background: #3b82f6;
+    box-shadow: 0 0 10px #3b82f6;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+.log-status-text {
+    font-size: 11px;
+    font-weight: 700;
+    color: #e2e8f0;
+    letter-spacing: 0.05em;
+}
+
+.log-progress-badge {
+    background: #3b82f6;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.log-step-label {
+    font-size: 10px;
+    color: #64748b;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.log-panel-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.log-ctrl-btn {
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.log-ctrl-btn:hover {
+    color: #f1f5f9;
+    border-color: #475569;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.log-ctrl-btn.pause:hover {
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.log-ctrl-btn.resume:hover {
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+.log-ctrl-btn.stop:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.log-ctrl-btn.close:hover {
+    border-color: #94a3b8;
+    color: #f1f5f9;
+}
+
+/* Progress bar */
+.log-progress-bar-container {
+    height: 3px;
+    background: #1e293b;
+}
+
+.log-progress-bar {
+    height: 100%;
+    background: linear-gradient(to right, #3b82f6, #60a5fa);
+    transition: width 0.5s ease-out;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Terminal log — 15 lines max */
+.log-terminal {
+    max-height: 300px;
+    /* ~15 lines at 18px line-height + padding */
+    overflow-y: auto;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.6;
+    background: #000;
+    position: relative;
+}
+
+.log-terminal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.log-terminal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.log-terminal::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+}
+
+.log-terminal::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+.log-entry {
+    margin-bottom: 1px;
+    word-break: break-word;
+}
+
+.log-ts {
+    color: #475569;
+    margin-right: 8px;
+    font-size: 10px;
+}
+
+.log-msg {
+    font-size: 12px;
+}
+
+/* Scroll-to-bottom button */
+.log-scroll-btn {
+    display: block;
+    width: 100%;
+    background: #1e293b;
+    border: none;
+    color: #3b82f6;
+    padding: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+
+.log-scroll-btn:hover {
+    background: #273549;
+    color: #60a5fa;
 }

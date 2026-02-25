@@ -126,7 +126,12 @@ import {
     getImportMatrixStatus,
     triggerAuditScan,
     triggerDeepSync,
-    triggerBatchDeepSync
+    triggerBatchDeepSync,
+    resetImportStatus,
+    stopImport,
+    pauseImport,
+    resumeImport,
+    getImportStateEndpoint
 } from '../controllers/v3/importMatrixController.js';
 import {
     getPotentialDuplicates,
@@ -300,8 +305,13 @@ router.put('/preferences', validateRequest(preferencesSchema), updatePreferences
  */
 router.get('/import/matrix-status', getImportMatrixStatus);
 router.post('/import/audit-scan', triggerAuditScan);
-router.post('/import/league/:id/deep-sync', triggerDeepSync);
+router.post('/import/league/:id/deep-sync', triggerDeepSync); // US_269: Returns 410 Gone
 router.post('/import/leagues/batch-deep-sync', triggerBatchDeepSync);
+router.post('/import/status/reset', resetImportStatus); // US_270: Manual override
+router.post('/import/stop', stopImport);
+router.post('/import/pause', pauseImport);
+router.post('/import/resume', resumeImport);
+router.get('/import/state', getImportStateEndpoint);
 
 /**
  * @route Entity Resolution

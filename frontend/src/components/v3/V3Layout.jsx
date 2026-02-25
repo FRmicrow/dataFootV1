@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import ImportLogPanel from './ImportLogPanel.jsx';
 import './V3Layout.css';
 
 const V3Layout = () => {
@@ -42,6 +43,7 @@ const V3Layout = () => {
             </aside>
 
             <main className="v3-main-content">
+                <ImportLogPanel />
                 <Outlet />
             </main>
         </div>
