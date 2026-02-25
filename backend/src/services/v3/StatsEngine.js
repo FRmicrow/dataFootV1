@@ -36,8 +36,11 @@ class StatsEngine {
 
         // 2. Helper to parse round
         const parseRound = (r) => {
-            const m = r.match(/(\d+)$/);
-            return m ? parseInt(m[1]) : 999;
+            if (!r || typeof r !== 'string') return 999;
+            const parts = r.split('-');
+            const lastPart = parts[parts.length - 1].trim();
+            const num = parseInt(lastPart);
+            return isNaN(num) ? 999 : num;
         };
 
         // 3. Aggregate Stats
@@ -168,14 +171,14 @@ class StatsEngine {
 
         const teamsMap = new Map();
         // Get API IDs for the two teams involved
-        const teams = await db.all(
+        const teams = db.all(
             `SELECT team_id, api_id FROM V3_Teams WHERE team_id IN (?, ?)`,
             [fixture.home_team_id, fixture.away_team_id]
         );
         teams.forEach(t => teamsMap.set(t.api_id, t.team_id));
 
         // 4. Insert Transaction
-        await db.run('BEGIN TRANSACTION');
+        db.run('BEGIN TRANSACTION');
         try {
             for (const teamLineup of lineups) {
                 const apiTeamId = teamLineup.team.id;
@@ -193,7 +196,7 @@ class StatsEngine {
                 const subs = JSON.stringify(teamLineup.substitutes);
 
                 // Upsert
-                await db.run(`
+                db.run(`
                     INSERT INTO V3_Fixture_Lineups (
                         fixture_id, team_id, coach_id, coach_name, formation, starting_xi, substitutes
                     ) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -214,9 +217,9 @@ class StatsEngine {
                     subs
                 ]);
             }
-            await db.run('COMMIT');
+            db.run('COMMIT');
         } catch (e) {
-            await db.run('ROLLBACK');
+            db.run('ROLLBACK');
             throw e;
         }
 

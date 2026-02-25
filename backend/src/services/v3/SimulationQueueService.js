@@ -74,6 +74,17 @@ class SimulationQueueService {
     }
 
     startSimulation(leagueId, seasonYear, mode = 'STATIC', horizon = 'FULL_HISTORICAL', isAudit = 0, calibrationTag = null) {
+        // Validation - US_251 Remediation
+        const allowedModes = ['STATIC', 'WALK_FORWARD'];
+        const allowedHorizons = ['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING'];
+
+        const safeLeagueId = parseInt(leagueId);
+        const safeSeasonYear = parseInt(seasonYear);
+
+        if (isNaN(safeLeagueId) || isNaN(safeSeasonYear)) throw new Error("League ID and Season Year must be valid numbers");
+        if (!allowedModes.includes(mode)) throw new Error(`Invalid simulation mode: ${mode}`);
+        if (!allowedHorizons.includes(horizon)) throw new Error(`Invalid horizon type: ${horizon}`);
+
         const existing = db.get("SELECT id FROM V3_Forge_Simulations WHERE league_id = ? AND season_year = ? AND horizon_type = ? AND status = 'RUNNING'", [leagueId, seasonYear, horizon]);
         if (existing) {
             throw new Error(`Simulation already active for League ${leagueId} Season ${seasonYear} [${horizon}] (ID: ${existing.id})`);

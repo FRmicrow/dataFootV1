@@ -6,7 +6,7 @@ export const getLineups = async (req, res) => {
 
     try {
         // 1. Try fetching from DB
-        const lineups = await db.all(
+        const lineups = db.all(
             "SELECT * FROM V3_Fixture_Lineups WHERE fixture_id = ?",
             [id]
         );
@@ -21,7 +21,7 @@ export const getLineups = async (req, res) => {
             }));
 
             // Sort Home First
-            const fixture = await db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
+            const fixture = db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
             if (fixture) {
                 data.sort((a, b) => a.team_id === fixture.home_team_id ? -1 : 1);
             }
@@ -40,7 +40,7 @@ export const getLineups = async (req, res) => {
         }
 
         // Re-fetch from DB to leverage uniform formatting
-        const newLineups = await db.all(
+        const newLineups = db.all(
             "SELECT * FROM V3_Fixture_Lineups WHERE fixture_id = ?",
             [id]
         );
@@ -52,7 +52,7 @@ export const getLineups = async (req, res) => {
         }));
 
         // Sort Home First
-        const fixture = await db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
+        const fixture = db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
         if (fixture) {
             data.sort((a, b) => a.team_id === fixture.home_team_id ? -1 : 1);
         }
@@ -91,7 +91,7 @@ export const getLineupCandidates = async (req, res) => {
             ORDER BY c.importance_rank ASC, c.name ASC, l.name ASC, f.season_year DESC
         `;
 
-        const candidates = await db.all(sql);
+        const candidates = db.all(sql);
         res.json(candidates);
     } catch (error) {
         console.error('Error finding lineup candidates:', error);
@@ -118,7 +118,7 @@ export const importLineupsBatch = async (req, res) => {
             LIMIT ?
         `;
 
-        const targets = await db.all(sql, [league_id, season_year, limit]);
+        const targets = db.all(sql, [league_id, season_year, limit]);
 
         if (targets.length === 0) {
             return res.json({ message: 'No missing lineups found for this selection.', processed: 0 });

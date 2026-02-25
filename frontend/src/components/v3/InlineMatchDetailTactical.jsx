@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../services/api';
 import './InlineMatchDetailTactical.css';
 
@@ -112,6 +113,10 @@ const InlineMatchDetailTactical = ({ fixtureId }) => {
             </div>
         </div>
     );
+};
+
+InlineMatchDetailTactical.propTypes = {
+    fixtureId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default InlineMatchDetailTactical;

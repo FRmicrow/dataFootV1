@@ -24,7 +24,13 @@ import {
     prescriptionListSchema,
     toggleMonitoringSchema,
     bulkOddsSchema,
-    mlTrainSchema
+    mlTrainSchema,
+    leagueIdParamSchema,
+    simulationStatusSchema,
+    breedingSchema,
+    breedingStatusSchema,
+    leagueIdV3ParamSchema,
+    tacticalStatsSchema
 } from '../schemas/v3Schemas.js';
 
 // Controller Imports
@@ -162,7 +168,6 @@ import {
     triggerPlayerStatsSync,
     triggerNormalization
 } from '../controllers/v3/tacticalStatsController.js';
-import { tacticalStatsSchema } from '../schemas/v3Schemas.js';
 
 const router = express.Router();
 
@@ -183,8 +188,8 @@ router.get('/leagues/structured', getStructuredLeagues);
 /**
  * @route Season Tracking
  */
-router.get('/leagues/:id/seasons', getLeagueSeasonsStatus);
-router.get('/league/:id/sync-status', getSyncStatus);
+router.get('/leagues/:id/seasons', validateRequest(leagueIdParamSchema), getLeagueSeasonsStatus);
+router.get('/league/:id/sync-status', validateRequest(leagueIdParamSchema), getSyncStatus);
 router.post('/leagues/seasons/init', validateRequest(initSeasonsSchema), initializeSeasons);
 router.get('/league/:id/season/:year', getSeasonOverview);
 router.get('/league/:id/season/:year/players', getSeasonPlayers);
@@ -329,17 +334,17 @@ router.get('/forge/models', getForgeModels);
 router.post('/forge/retrain', retrainModel);
 router.get('/forge/retrain-status', getRetrainStatus);
 router.get('/forge/eligible-horizons', getEligibleHorizons);
-router.get('/forge/league-models/:leagueId', getLeagueModels);
+router.get('/forge/league-models/:leagueId', validateRequest(leagueIdV3ParamSchema), getLeagueModels);
 
 /**
  * @route Forge Laboratory (PO Lifecycle)
  */
-router.post('/forge/breed', startBreeding);
-router.get('/forge/breed-status', getBreedingStatus);
+router.post('/forge/breed', validateRequest(breedingSchema), startBreeding);
+router.get('/forge/breed-status', validateRequest(breedingStatusSchema), getBreedingStatus);
 
 // Forge Simulation Engine (US_183, US_190)
 router.post('/simulation/start', triggerSimulation);
-router.get('/simulation/status', checkJobStatus);
+router.get('/simulation/status', validateRequest(simulationStatusSchema), checkJobStatus);
 router.get('/simulation/readiness', checkSimulationReadiness);
 router.get('/simulation/results/:simId', getSimulationResults);
 router.get('/simulation/league/:leagueId', getLeagueSimulations);

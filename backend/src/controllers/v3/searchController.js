@@ -6,17 +6,25 @@ import { cleanParams } from '../../utils/sqlHelpers.js';
  * Feature 27 - Local DB only
  */
 
+import { z } from 'zod';
+
+const searchSchema = z.object({
+    q: z.string().min(2, "Search term must be at least 2 characters."),
+    type: z.enum(['all', 'player', 'club']).optional().default('all'),
+    country: z.string().optional()
+});
+
 /**
  * GET /api/v3/search?q=term&type=all|player|club&country=France
  */
 export const searchV3 = async (req, res) => {
     try {
-        const { q, type = 'all', country } = req.query;
-
-        if (!q || q.length < 2) {
-            return res.status(400).json({ error: "Search term must be at least 2 characters." });
+        const validation = searchSchema.safeParse(req.query);
+        if (!validation.success) {
+            return res.status(400).json({ error: validation.error.errors[0].message });
         }
 
+        const { q, type, country } = validation.data;
         const searchTerm = `%${q}%`;
         let players = [];
         let clubs = [];

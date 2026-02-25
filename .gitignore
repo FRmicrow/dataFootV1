@@ -7,3 +7,7 @@ backend/*.db
 backend/backups/
 backend/database.sqlite-journal
 ml-service/venv/
+sonarqube*/
+.scannerwork/
+frontend/coverage/
+backend/coverage/

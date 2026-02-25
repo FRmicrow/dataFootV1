@@ -137,7 +137,7 @@ export class HealthPrescriptionService {
 
                 case 'DUPLICATE_CANDIDATE':
                     // Merge logic
-                    result = await ResolutionService.performMerge(prescription.target_entity_id, metadata.duplicate_id);
+                    result = ResolutionService.performMerge(prescription.target_entity_id, metadata.duplicate_id);
                     break;
 
                 case 'DATA_INCONSISTENCY':

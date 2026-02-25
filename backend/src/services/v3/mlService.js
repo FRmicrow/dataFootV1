@@ -155,7 +155,10 @@ export const getRetrainStatus = async () => {
 export const getEligibleHorizons = async (leagueId, seasonYear) => {
     try {
         const response = await axios.get(`${ML_SERVICE_URL}/forge/eligible-horizons`, {
-            params: { league_id: leagueId, season_year: seasonYear }
+            params: {
+                league_id: parseInt(leagueId),
+                season_year: parseInt(seasonYear)
+            }
         });
         return response.data;
     } catch (err) {
@@ -165,7 +168,8 @@ export const getEligibleHorizons = async (leagueId, seasonYear) => {
 
 export const getLeagueModels = async (leagueId) => {
     try {
-        const response = await axios.get(`${ML_SERVICE_URL}/forge/league-models/${leagueId}`);
+        const sanitizedLeagueId = parseInt(leagueId);
+        const response = await axios.get(`${ML_SERVICE_URL}/forge/league-models/${sanitizedLeagueId}`);
         return response.data;
     } catch (err) {
         return { success: false, models: [], has_models: false };

@@ -311,8 +311,8 @@ const HealthCenterPage = () => {
                     <div className="console-logs">
                         {logs.length === 0 ? (
                             <div className="console-empty">
-                                <p>// Systems online.</p>
-                                <p>// Waiting for diagnostic triggers...</p>
+                                <p>{`// Systems online.`}</p>
+                                <p>{`// Waiting for diagnostic triggers...`}</p>
                             </div>
                         ) : (
                             logs.map((log, i) => (

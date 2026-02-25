@@ -12,8 +12,8 @@ const Step4Export = () => {
     const chunksRef = useRef([]);
 
     // Config
-    const width = wizardData.format === '16:9' ? 1920 : (wizardData.format === '9:16' ? 1080 : 1080);
-    const height = wizardData.format === '16:9' ? 1080 : (wizardData.format === '9:16' ? 1920 : 1080);
+    const width = wizardData.format === '16:9' ? 1920 : 1080;
+    const height = wizardData.format === '9:16' ? 1920 : 1080;
     const duration = 1000 / wizardData.speed;
 
     // Logic to drive the animation during recording
