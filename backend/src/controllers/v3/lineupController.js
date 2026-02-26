@@ -158,3 +158,100 @@ export const importLineupsBatch = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+/**
+ * GET /api/v3/club/:id/typical-lineup?year=2023&competition=...
+ * US_284: Most Common Lineup Engine
+ */
+export const getTypicalLineup = async (req, res) => {
+    try {
+        const { id: teamId } = req.params;
+        const { year, competition } = req.query;
+
+        if (!year) return res.status(400).json({ error: "Missing year parameter" });
+
+        // 1. Identify the most used formation
+        let formationSql = `
+            SELECT fl.formation, COUNT(*) as usage_count
+            FROM V3_Fixture_Lineups fl
+            JOIN V3_Fixtures f ON fl.fixture_id = f.fixture_id
+            WHERE fl.team_id = ? AND f.season_year = ?
+        `;
+        const params = [teamId, year];
+
+        if (competition) {
+            formationSql += " AND f.league_id = ?";
+            params.push(competition);
+        }
+
+        formationSql += " GROUP BY fl.formation ORDER BY usage_count DESC LIMIT 1";
+
+        const topFormation = db.get(formationSql, params);
+
+        if (!topFormation) {
+            return res.json({ message: "No lineup data found for this selection.", formation: null, roster: [] });
+        }
+
+        // 2. Select the 11 players with highest starting_xi appearances for THIS formation
+        // We need to parse the JSON starting_xi from all fixtures with this formation
+        let lineupSql = `
+            SELECT fl.starting_xi, f.goals_home, f.goals_away, f.home_team_id, f.away_team_id
+            FROM V3_Fixture_Lineups fl
+            JOIN V3_Fixtures f ON fl.fixture_id = f.fixture_id
+            WHERE fl.team_id = ? AND f.season_year = ? AND fl.formation = ?
+        `;
+        const lineupParams = [teamId, year, topFormation.formation];
+
+        if (competition) {
+            lineupSql += " AND f.league_id = ?";
+            lineupParams.push(competition);
+        }
+
+        const matches = db.all(lineupSql, lineupParams);
+
+        const playerStats = {};
+        let wins = 0;
+
+        matches.forEach(m => {
+            const xi = JSON.parse(m.starting_xi || '[]');
+            xi.forEach(p => {
+                const pid = p.player.id;
+                if (!playerStats[pid]) {
+                    playerStats[pid] = {
+                        id: pid,
+                        name: p.player.name,
+                        number: p.player.number,
+                        pos: p.player.pos,
+                        grid: p.player.grid,
+                        appearances: 0,
+                        photo: p.player.photo
+                    };
+                }
+                playerStats[pid].appearances++;
+            });
+
+            // Win Rate calculation
+            const isHome = m.home_team_id == teamId;
+            const scoreOwn = isHome ? m.goals_home : m.goals_away;
+            const scoreOpp = isHome ? m.goals_away : m.goals_home;
+            if (scoreOwn > scoreOpp) wins++;
+        });
+
+        // Sort by appearances and take top 11
+        const typicalXI = Object.values(playerStats)
+            .sort((a, b) => b.appearances - a.appearances)
+            .slice(0, 11);
+
+        res.json({
+            formation: topFormation.formation,
+            usage: topFormation.usage_count,
+            win_rate: matches.length > 0 ? parseFloat(((wins / matches.length) * 100).toFixed(1)) : 0,
+            roster: typicalXI,
+            total_matches: matches.length
+        });
+
+    } catch (error) {
+        console.error("Error in getTypicalLineup:", error);
+        res.status(500).json({ error: error.message });
+    }
+};

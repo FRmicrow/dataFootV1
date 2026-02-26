@@ -60,9 +60,13 @@ import {
 } from '../controllers/v3/dashboardController.js';
 import {
     searchV3,
-    getClubProfile,
     getSearchCountries
 } from '../controllers/v3/searchController.js';
+import {
+    getClubProfile,
+    getClubTacticalSummary,
+    getClubMatches
+} from '../controllers/v3/clubController.js';
 import {
     getEventCandidates,
     syncFixtureEvents,
@@ -74,7 +78,8 @@ import {
 import {
     getLineups,
     getLineupCandidates,
-    importLineupsBatch
+    importLineupsBatch,
+    getTypicalLineup
 } from '../controllers/v3/lineupController.js';
 import {
     syncUpcomingProps,
@@ -198,7 +203,7 @@ router.get('/league/:id/sync-status', validateRequest(leagueIdParamSchema), getS
 router.post('/leagues/seasons/init', validateRequest(initSeasonsSchema), initializeSeasons);
 router.get('/league/:id/season/:year', getSeasonOverview);
 router.get('/league/:id/season/:year/players', getSeasonPlayers);
-router.get('/league/:leagueId/season/:year/team/:teamId/squad', getTeamSquad);
+router.get('/league/:leagueId/season/:year/club/:teamId/squad', getTeamSquad);
 router.get('/league/:apiId/available-seasons', getAvailableSeasons);
 
 /**
@@ -235,6 +240,9 @@ router.post('/player/:id/sync-career', validateRequest(syncCareerSchema), syncPl
 router.get('/search', validateRequest(searchSchema), searchV3);
 router.get('/search/countries', getSearchCountries);
 router.get('/club/:id', getClubProfile);
+router.get('/club/:id/tactical-summary', getClubTacticalSummary);
+router.get('/club/:id/matches', getClubMatches);
+router.get('/club/:id/typical-lineup', getTypicalLineup);
 
 /** 
  * Import System 

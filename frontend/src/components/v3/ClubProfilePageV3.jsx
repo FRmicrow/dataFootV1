@@ -1,52 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import api from '../../services/api';
 import './ClubProfilePageV3.css';
+
+// Tab Components
+import PerformanceTab from './ClubProfile/Tabs/PerformanceTab';
+import SquadTab from './ClubProfile/Tabs/SquadTab';
+import MatchesTab from './ClubProfile/Tabs/MatchesTab';
+import StatsTab from './ClubProfile/Tabs/StatsTab';
+import LineupTab from './ClubProfile/Tabs/LineupTab';
 
 const ClubProfilePageV3 = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // UI State
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('performance');
+
+    // Global Filters State
     const [selectedYear, setSelectedYear] = useState(null);
-    const [roster, setRoster] = useState([]);
+    const [selectedCompId, setSelectedCompId] = useState('all'); // 'all' or specific league_id
+
+    // sync tab with URL hash
+    useEffect(() => {
+        const hash = location.hash.replace('#', '');
+        const validTabs = ['performance', 'squad', 'lineup', 'matches', 'stats'];
+        if (hash && validTabs.includes(hash)) {
+            setActiveTab(hash);
+        } else {
+            setActiveTab('performance');
+        }
+    }, [location.hash]);
+
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId);
+        navigate(`#${tabId}`, { replace: true });
+    };
 
     useEffect(() => {
         const fetchClubProfile = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`/api/club/${id}`);
-                setData(res.data);
-                setRoster(res.data.roster);
-                setSelectedYear(res.data.rosterYear);
+                const fetchedData = await api.getClub(id, selectedYear, selectedCompId !== 'all' ? selectedCompId : null);
+                setData(fetchedData);
+
+                if (!selectedYear && fetchedData.rosterYear) {
+                    setSelectedYear(fetchedData.rosterYear);
+                }
             } catch (error) {
                 console.error("Failed to load club profile:", error);
             }
             setLoading(false);
         };
-        fetchClubProfile();
-    }, [id]);
+        if (id) fetchClubProfile();
+    }, [id, selectedYear, selectedCompId]);
 
-    const handleYearChange = async (year) => {
-        setSelectedYear(year);
-        try {
-            const res = await axios.get(`/api/club/${id}?year=${year}`);
-            setRoster(res.data.roster);
-        } catch (error) {
-            console.error("Failed to load roster:", error);
+    const club = data?.club;
+    const seasons = data?.seasons || [];
+    const availableYears = data?.availableYears || [];
+
+    const competitionsForYear = useMemo(() => {
+        if (!selectedYear) return [];
+        return seasons.filter(s => s.season_year === selectedYear);
+    }, [seasons, selectedYear]);
+
+    useEffect(() => {
+        if (selectedCompId !== 'all' && !competitionsForYear.find(c => c.league_id == selectedCompId)) {
+            setSelectedCompId('all');
         }
-    };
+    }, [selectedYear, competitionsForYear]);
 
-    // Group roster by position
-    const rosterByPosition = roster.reduce((acc, player) => {
-        const pos = player.position || 'Unknown';
-        if (!acc[pos]) acc[pos] = [];
-        acc[pos].push(player);
-        return acc;
-    }, {});
+    // US_V14: Dynamic Branding - Multi-color gradient from logo palette
+    const headerStyle = useMemo(() => {
+        const c1 = club?.accent_color || '#6366f1';
+        const c2 = club?.secondary_color || c1;
+        const c3 = club?.tertiary_color || '#0f172a';
 
-    const positionOrder = ['Goalkeeper', 'Defender', 'Midfielder', 'Attacker', 'Unknown'];
-    const sortedPositions = positionOrder.filter(p => rosterByPosition[p]?.length > 0);
+        return {
+            '--club-accent': c1,
+            '--club-secondary': c2,
+            '--club-tertiary': c3,
+            '--header-bg': `linear-gradient(165deg, ${c1}44 0%, ${c2}22 40%, ${c3}11 80%, transparent 100%)`,
+            '--header-border': `linear-gradient(90deg, ${c1}66, ${c2}33, transparent)`
+        };
+    }, [club]);
 
     if (loading) return (
         <div className="club-profile-premium loading-state">
@@ -55,225 +95,160 @@ const ClubProfilePageV3 = () => {
         </div>
     );
 
-    if (!data || !data.club) return (
+    if (!data || !club) return (
         <div className="club-profile-premium error-state">
             <h2>Club Not Found</h2>
             <Link to="/search" className="back-link">← Return to Universe</Link>
         </div>
     );
 
-    const { club, seasons, availableYears } = data;
+    const activeSeasons = selectedCompId === 'all'
+        ? seasons.filter(s => s.season_year === selectedYear)
+        : seasons.filter(s => s.season_year === selectedYear && s.league_id == selectedCompId);
+
+    const hasLineups = activeSeasons.some(s => s.imported_lineups === 1);
+    const hasStats = activeSeasons.some(s => s.imported_fixture_stats === 1);
+
+    const tabs = [
+        { id: 'performance', label: 'Overview' },
+        { id: 'squad', label: 'Roster' },
+        { id: 'lineup', label: 'Strategy', disabled: !hasLineups },
+        { id: 'matches', label: 'Calendar' },
+        { id: 'stats', label: 'Analytics', disabled: !hasStats }
+    ];
 
     return (
-        <div className="club-profile-premium">
-            {/* Ultra Hero Section */}
-            <section className="club-ultra-hero">
-                <div className="hero-background-fx">
-                    <div className="fx-circle"></div>
-                    <div className="fx-mesh"></div>
-                </div>
-
-                <div className="hero-content">
-                    <div className="hero-top">
-                        <Link to="/search" className="hero-back-hint">Discovery / Clubs / {club.name}</Link>
+        <div className="club-profile-v4-root">
+            {/* HEADER */}
+            <header className="club-header-v4" style={headerStyle}>
+                <div className="header-left">
+                    <div className="club-logo-outer">
+                        <div className="logo-glow" style={{ '--glow-color': club.secondary_color || club.accent_color || '#6366f1' }}></div>
+                        <img src={club.logo_url} alt={club.name} className="club-logo-v4" />
                     </div>
-
-                    <div className="hero-main">
-                        <div className="club-identifier">
-                            <div className="club-crest-container">
-                                <div className="crest-glow"></div>
-                                <img
-                                    src={club.logo_url}
-                                    alt={club.name}
-                                    className="club-crest-large"
-                                    onError={(e) => { e.target.src = 'https://media.api-sports.io/football/teams/0.png'; }}
-                                />
-                            </div>
-                            <div className="club-identity-info">
-                                <div className="club-tag-row">
-                                    <span className="club-country-tag">🇪🇸 {club.country}</span>
-                                    {club.founded && <span className="club-year-tag">Est. {club.founded}</span>}
-                                </div>
-                                <h1 className="club-title-big">{club.name}</h1>
-                                <div className="club-venue-row">
-                                    <span className="icon">🏛️</span>
-                                    <span>{club.venue_name}</span>
-                                    {club.venue_city && <span className="dot">•</span>}
-                                    <span>{club.venue_city}</span>
-                                </div>
-                            </div>
+                    <div className="club-info-v4">
+                        <h1 className="club-name-v4">{club.name}</h1>
+                        <div className="club-meta-v4">
+                            <span>{club.country}</span>
+                            <span className="dot"></span>
+                            <span>Founded {club.founded || '—'}</span>
+                            <span className="dot"></span>
+                            <span>{club.venue_city}</span>
                         </div>
-
-                        <div className="hero-stats-panel">
-                            <div className="h-stat-card">
-                                <span className="h-val">{seasons.length}</span>
-                                <span className="h-label">Tournaments</span>
-                            </div>
-                            <div className="h-stat-card">
-                                <span className="h-val">{availableYears.length}</span>
-                                <span className="h-label">Active Years</span>
-                            </div>
-                            <div className="h-stat-card">
-                                <span className="h-val">{roster.length}</span>
-                                <span className="h-label">Squad Size</span>
-                            </div>
+                        <div className="club-chips-row">
+                            <span className="info-chip">Season {selectedYear}</span>
+                            {competitionsForYear.find(c => c.league_id == selectedCompId)?.league_name && (
+                                <span className="info-chip accent">
+                                    {competitionsForYear.find(c => c.league_id == selectedCompId)?.league_name}
+                                </span>
+                            )}
+                            {club.manager && <span className="info-chip">Manager: {club.manager}</span>}
+                            <span className="info-chip timestamp">
+                                <span className="dot pulse"></span>
+                                Last updated: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </span>
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <div className="profile-grid">
-                {/* Left Column: Seasons History */}
-                <div className="profile-main-column">
-                    <section className="profile-panel-v3">
-                        <div className="panel-header">
-                            <span className="p-icon">📊</span>
-                            <h2>Season Performance</h2>
+                <div className="header-right">
+                    <div className="venue-card-v4" title="Open venue details">
+                        <img src={club.venue_image} alt={club.venue_name} className="venue-img-v4" />
+                        <div className="venue-info-overlay">
+                            <span className="venue-name">{club.venue_name}</span>
+                            <span className="venue-cap">
+                                {club.venue_capacity ? `${club.venue_capacity.toLocaleString()} capacity` : 'Capacity —'}
+                            </span>
                         </div>
-                        <div className="premium-table-container">
-                            <table className="premium-compact-table">
-                                <thead>
-                                    <tr>
-                                        <th>Season</th>
-                                        <th>Competition</th>
-                                        <th className="center">Apps</th>
-                                        <th className="center">Goals</th>
-                                        <th className="center">AST</th>
-                                        <th className="center">Rating</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {seasons.map((s, i) => (
-                                        <tr key={i}>
-                                            <td className="year-cell">{s.season_year}</td>
-                                            <td className="league-cell-premium">
-                                                <div className="l-box">
-                                                    {s.league_logo && <img src={s.league_logo} alt="" />}
-                                                    <span>{s.league_name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="center stat-num">{s.total_appearances || 0}</td>
-                                            <td className="center stat-num high">{s.total_goals || 0}</td>
-                                            <td className="center stat-num">{s.total_assists || 0}</td>
-                                            <td className="center">
-                                                <span className={`rating-pill-v3 ${parseFloat(s.avg_rating) >= 7 ? 'gold' : ''}`}>
-                                                    {s.avg_rating || '-'}
-                                                </span>
-                                            </td>
-                                            <td className="right">
-                                                <Link to={`/league/${s.league_id}/season/${s.season_year}`} className="btn-view-sm">
-                                                    Analyze →
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
+                    </div>
                 </div>
+            </header>
 
-                {/* Right Column: Venue & Squad Mini Map */}
-                <div className="profile-side-column">
-                    <section className="profile-panel-v3 venue-panel">
-                        <div className="panel-header">
-                            <span className="p-icon">🏟️</span>
-                            <h2>Venue Details</h2>
-                        </div>
-                        {club.venue_image && (
-                            <div className="venue-img-wrap">
-                                <img src={club.venue_image} alt="" className="venue-img-full" />
-                                <div className="img-overlay"></div>
-                            </div>
-                        )}
-                        <div className="venue-info-list">
-                            <div className="v-info-item">
-                                <span className="v-label">Name</span>
-                                <span className="v-value">{club.venue_name}</span>
-                            </div>
-                            <div className="v-info-item">
-                                <span className="v-label">Capacity</span>
-                                <span className="v-value">{club.venue_capacity?.toLocaleString()} seats</span>
-                            </div>
-                            <div className="v-info-item">
-                                <span className="v-label">Surface</span>
-                                <span className="v-value">{club.venue_surface}</span>
-                            </div>
-                        </div>
-                    </section>
+            {/* STICKY CONTROL BAR */}
+            <div className="global-control-bar">
+                <nav className="v4-tabs">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            className={`v4-tab-btn ${activeTab === tab.id ? 'active' : ''} ${tab.disabled ? 'disabled' : ''}`}
+                            onClick={() => !tab.disabled && handleTabChange(tab.id)}
+                            title={tab.disabled ? "No data for this season" : ""}
+                        >
+                            <span className="t-label">{tab.label}</span>
+                        </button>
+                    ))}
+                </nav>
 
-                    <section className="profile-panel-v3 squad-selector-panel">
-                        <div className="panel-header">
-                            <span className="p-icon">👥</span>
-                            <h2>Squad Selection</h2>
-                            <select
-                                className="premium-select-v3"
-                                value={selectedYear || ''}
-                                onChange={(e) => handleYearChange(parseInt(e.target.value))}
-                            >
-                                {availableYears.map(y => (
-                                    <option key={y} value={y}>{y} / {y + 1}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <p className="squad-info-p">Viewing roster and stats for the {selectedYear} / {selectedYear + 1} campaign.</p>
-                    </section>
+                <div className="filter-wrapper">
+                    <div className="filter-box">
+                        <label>Season</label>
+                        <select
+                            className="v4-select"
+                            value={selectedYear || ''}
+                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        >
+                            {availableYears.map(y => (
+                                <option key={y} value={y}>{y} / {(y + 1).toString().slice(2)}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="filter-box">
+                        <label>Competition</label>
+                        <select
+                            className="v4-select"
+                            value={selectedCompId}
+                            onChange={(e) => setSelectedCompId(e.target.value)}
+                        >
+                            <option value="all">All Competitions</option>
+                            {competitionsForYear.map(c => (
+                                <option key={c.league_id} value={c.league_id}>{c.league_name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            {/* Roster Full Width Section */}
-            <section className="profile-panel-v3 roster-full-section">
-                <div className="panel-header">
-                    <span className="p-icon">🏃</span>
-                    <h2>Active Roster ({selectedYear})</h2>
-                </div>
-
-                <div className="premium-roster-layout">
-                    {sortedPositions.map(position => (
-                        <div key={position} className="pos-group-v3">
-                            <div className="pos-group-header">
-                                <span className={`pos-indicator ${position.toLowerCase()}`}></span>
-                                <h3>{position}s</h3>
-                                <span className="pos-count">{rosterByPosition[position].length}</span>
-                            </div>
-                            <div className="pos-grid-v3">
-                                {rosterByPosition[position].map(player => (
-                                    <div
-                                        key={`${player.player_id}-${player.league_name}`}
-                                        className="premium-player-card"
-                                        onClick={() => navigate(`/player/${player.player_id}`)}
-                                    >
-                                        <div className="p-photo-v3">
-                                            <img
-                                                src={player.photo_url || ''}
-                                                alt=""
-                                                onError={(e) => { e.target.src = 'https://media.api-sports.io/football/players/0.png'; }}
-                                            />
-                                        </div>
-                                        <div className="p-data-v3">
-                                            <div className="p-name">{player.name}</div>
-                                            <div className="p-meta">{player.nationality}</div>
-                                            <div className="p-stats-row">
-                                                <div className="p-stat"><strong>{player.appearances || 0}</strong> APP</div>
-                                                <div className="p-stat high"><strong>{player.goals || 0}</strong> GLS</div>
-                                                <div className="p-stat"><strong>{player.assists || 0}</strong> AST</div>
-                                                {player.rating && (
-                                                    <div className="p-stat rating">
-                                                        <span className={parseFloat(player.rating) >= 7 ? 'good' : ''}>
-                                                            {parseFloat(player.rating).toFixed(1)}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
+            {/* TAB CONTENT */}
+            <main className="tab-content-area-v4">
+                {activeTab === 'performance' && (
+                    <PerformanceTab
+                        clubId={id}
+                        year={selectedYear}
+                        competitionId={selectedCompId}
+                        summary={data.summary}
+                        seasons={competitionsForYear}
+                    />
+                )}
+                {activeTab === 'squad' && (
+                    <SquadTab
+                        roster={data.roster}
+                        year={selectedYear}
+                    />
+                )}
+                {activeTab === 'lineup' && (
+                    <LineupTab
+                        clubId={id}
+                        year={selectedYear}
+                        competitionId={selectedCompId}
+                        roster={data.roster}
+                    />
+                )}
+                {activeTab === 'matches' && (
+                    <MatchesTab
+                        clubId={id}
+                        year={selectedYear}
+                        competitionId={selectedCompId}
+                    />
+                )}
+                {activeTab === 'stats' && (
+                    <StatsTab
+                        clubId={id}
+                        year={selectedYear}
+                        competitionId={selectedCompId}
+                    />
+                )}
+            </main>
         </div>
     );
 };
