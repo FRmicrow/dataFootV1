@@ -41,8 +41,18 @@ export default {
     getDynamicStandings: (params) => api.get(`/standings/dynamic?${new URLSearchParams(params)}`),
 
     // --- Clubs ---
-    getClub: (id, year) => api.get(year ? `/club/${id}?year=${year}` : `/club/${id}`),
-    getTeamSquad: (leagueId, year, teamId) => api.get(`/league/${leagueId}/season/${year}/team/${teamId}/squad`),
+    getClub: (id, year, competition) => {
+        let url = `/club/${id}`;
+        const params = new URLSearchParams();
+        if (year) params.append('year', year);
+        if (competition) params.append('competition', competition);
+        const query = params.toString();
+        return api.get(query ? `${url}?${query}` : url);
+    },
+    getClubTacticalSummary: (id, params) => api.get(`/club/${id}/tactical-summary`, { params }),
+    getClubMatches: (id, params) => api.get(`/club/${id}/matches`, { params }),
+    getTypicalLineup: (id, params) => api.get(`/club/${id}/typical-lineup`, { params }),
+    getTeamSquad: (leagueId, year, teamId) => api.get(`/league/${leagueId}/season/${year}/club/${teamId}/squad`),
 
     // --- Players ---
     getPlayer: (id) => api.get(`/player/${id}`),
