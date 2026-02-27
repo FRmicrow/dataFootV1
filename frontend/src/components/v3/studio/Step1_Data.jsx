@@ -121,23 +121,20 @@ const Step1_Data = () => {
     };
 
     const addLeague = (league) => {
-        if (!selectedLeagues.find(l => l.id === league.id)) {
-            setSelectedLeagues([...selectedLeagues, league]);
-        }
+        // Enforce single-select for League Insights as per UX recommendation
+        setSelectedLeagues([league]);
         setLeagueSearchQuery('');
     };
 
     const addCountry = (country) => {
-        if (!selectedCountries.includes(country)) {
-            setSelectedCountries([...selectedCountries, country]);
-        }
+        // Enforce single-select for Nationality Comparisons as per UX recommendation
+        setSelectedCountries([country]);
         setCountrySearchQuery('');
     };
 
     const addTeam = (team) => {
-        if (!selectedTeams.find(t => t.id === team.id)) {
-            setSelectedTeams([...selectedTeams, team]);
-        }
+        // Enforce single-select for Club Metrics as per UX recommendation
+        setSelectedTeams([team]);
         setTeamSearchQuery('');
         setTeamSearchResults([]);
     };
@@ -253,21 +250,21 @@ const Step1_Data = () => {
 
     return (
         <div className="step-container animate-fade-in">
-            <h2 className="step-title-v2">Data Architecture Selection</h2>
+            <h2 className="step-title-v2">Selection & Scope</h2>
 
             {/* 1. Mode Selector */}
             <div className="mode-selector">
-                <button className={`mode-btn ${mode === 'specific' ? 'active' : ''}`} onClick={() => setMode('specific')}>👤 Players</button>
-                <button className={`mode-btn ${mode === 'league' ? 'active' : ''}`} onClick={() => setMode('league')}>🏆 Leagues</button>
-                <button className={`mode-btn ${mode === 'country' ? 'active' : ''}`} onClick={() => setMode('country')}>🌍 Nationalities</button>
-                <button className={`mode-btn ${mode === 'club' ? 'active' : ''}`} onClick={() => setMode('club')}>🛡️ Clubs</button>
-                <button className={`mode-btn ${mode === 'standings' ? 'active' : ''}`} onClick={() => setMode('standings')}>📈 Standings</button>
+                <button className={`mode-btn ${mode === 'specific' ? 'active' : ''}`} onClick={() => setMode('specific')}>👤 Player Performance</button>
+                <button className={`mode-btn ${mode === 'league' ? 'active' : ''}`} onClick={() => setMode('league')}>🏆 League Insights</button>
+                <button className={`mode-btn ${mode === 'country' ? 'active' : ''}`} onClick={() => setMode('country')}>🌍 Nationality Comparisons</button>
+                <button className={`mode-btn ${mode === 'club' ? 'active' : ''}`} onClick={() => setMode('club')}>🛡️ Club Metrics</button>
+                <button className={`mode-btn ${mode === 'standings' ? 'active' : ''}`} onClick={() => setMode('standings')}>📈 League Standings</button>
             </div>
 
             {/* 2. Source Input Area */}
             <div className="form-group-v2">
                 <label className="form-label-v2">
-                    {mode === 'specific' ? 'Target Profiles' : mode === 'league' ? 'Active Leagues' : mode === 'country' ? 'Nationalities' : mode === 'club' ? 'Professional Clubs' : 'Championship Registry'}
+                    {mode === 'specific' ? 'Selected Players' : mode === 'league' ? 'Selected League' : mode === 'country' ? 'Selected Nationality' : mode === 'club' ? 'Selected Club' : 'Selected League'}
                 </label>
 
                 <div style={{ position: 'relative' }}>
@@ -275,7 +272,7 @@ const Step1_Data = () => {
                     {mode === 'specific' && (
                         <input
                             type="text"
-                            placeholder="Search clinical profiles (e.g. 'Haaland')..."
+                            placeholder="Search for players (e.g. 'Haaland')..."
                             value={playerSearchQuery}
                             onChange={(e) => setPlayerSearchQuery(e.target.value)}
                             className="input-v2"
@@ -285,18 +282,17 @@ const Step1_Data = () => {
                     {mode === 'league' || mode === 'standings' ? (
                         <input
                             type="text"
-                            placeholder="Locate competition registry..."
+                            placeholder="Search for a league..."
                             value={leagueSearchQuery}
                             onChange={(e) => setLeagueSearchQuery(e.target.value)}
                             className="input-v2"
-                            onFocus={() => { }} // Could show all on focus
                         />
                     ) : null}
 
                     {mode === 'country' && (
                         <input
                             type="text"
-                            placeholder="Identify talent territory..."
+                            placeholder="Search for a nationality..."
                             value={countrySearchQuery}
                             onChange={(e) => setCountrySearchQuery(e.target.value)}
                             className="input-v2"
@@ -306,7 +302,7 @@ const Step1_Data = () => {
                     {mode === 'club' && (
                         <input
                             type="text"
-                            placeholder="Locate professional club entity..."
+                            placeholder="Search for a club..."
                             value={teamSearchQuery}
                             onChange={(e) => setTeamSearchQuery(e.target.value)}
                             className="input-v2"
@@ -421,7 +417,7 @@ const Step1_Data = () => {
             {/* 4. Temporal Range */}
             <div className="form-group-v2">
                 <label className="form-label-v2">
-                    {mode === 'standings' ? 'Operational Season' : `Temporal Surveillance Window (${filters.years[0]} - ${filters.years[1]})`}
+                    {mode === 'standings' ? 'Season Filter' : `Date Range (${filters.years[0]} - ${filters.years[1]})`}
                 </label>
                 <div className="range-grid-v2">
                     {mode === 'standings' ? (
@@ -431,8 +427,8 @@ const Step1_Data = () => {
                             className="input-v2"
                             style={{ gridColumn: 'span 3' }}
                         >
-                            {Array.from({ length: 25 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                <option key={year} value={year}>{year - 1}/{year}</option>
+                            {Array.from({ length: 25 }, (_, i) => new Date().getFullYear() - i + 1).map(year => (
+                                <option key={year} value={year}>{year}/{year + 1}</option>
                             ))}
                         </select>
                     ) : (
@@ -444,17 +440,6 @@ const Step1_Data = () => {
                     )}
                 </div>
             </div>
-
-            {/* 5. Production Options */}
-            {mode !== 'standings' && (
-                <div className="form-group-v2">
-                    <label className="form-label-v2">Processing Logic</label>
-                    <div className="option-card-v2" onClick={() => setFilters(prev => ({ ...prev, cumulative: !prev.cumulative }))}>
-                        <input type="checkbox" checked={filters.cumulative} onChange={() => { }} />
-                        <span className="option-label-v2">Aggregate Historical Trajectory (Cumulative Sum)</span>
-                    </div>
-                </div>
-            )}
 
             {/* Actions */}
             <div className="step-actions" style={{ marginTop: '3rem' }}>

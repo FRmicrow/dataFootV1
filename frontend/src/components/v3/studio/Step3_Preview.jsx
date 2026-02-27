@@ -44,23 +44,25 @@ const Step3_Preview = () => {
     };
 
     const statName = formatStat(filters.stat);
-    const range = `${filters.years[0]}-${filters.years[1]}`;
+    const range = filters.years[0] === filters.years[1] ? filters.years[0] : `${filters.years[0]} - ${filters.years[1]}`;
 
-    let chartTitle = `Top ${statName} during ${range}`;
+    let chartTitle = `Who had the most ${statName} (${range})?`;
     if (chartData.meta.type === 'league_rankings') {
         const seasonYear = chartData.meta.season;
-        const seasonDisplay = `${seasonYear - 1}/${seasonYear}`;
+        const seasonDisplay = `${seasonYear}/${seasonYear + 1}`;
         const leagueName = chartData.meta.league_name || filters.contextLabel || "League";
-        chartTitle = `${leagueName} (${seasonDisplay})`;
+        chartTitle = `${leagueName}: Ranking Pulse (${seasonDisplay})`;
     } else if (filters.contextType === 'league' && filters.contextLabel) {
-        chartTitle = `Top ${statName} in ${filters.contextLabel} during ${range}`;
+        chartTitle = `Top ${statName} in ${filters.contextLabel} (${range})`;
     } else if (filters.contextType === 'country' && filters.contextLabel) {
-        chartTitle = `Top ${statName} for ${filters.contextLabel} during ${range}`;
+        chartTitle = `Best ${statName} from ${filters.contextLabel} (${range})`;
+    } else if (filters.contextType === 'specific' && filters.contextLabel) {
+        chartTitle = `Comparing ${statName}: ${filters.contextLabel} (${range})`;
     }
 
     return (
         <div className="step-container animate-fade-in" style={{ maxWidth: '1000px' }}>
-            <h2 className="step-title-v2">Visualization Engine Preview</h2>
+            <h2 className="step-title-v2">Creative Preview</h2>
 
             <div className="preview-stage-v2">
                 {/* HD Canvas Wrapper */}
@@ -109,8 +111,12 @@ const Step3_Preview = () => {
                         <span className="info-value-v2">{isPlaying ? 'LIVE RENDERING' : 'READY TO PLAY'}</span>
                     </div>
                     <div className="playback-info-v2">
-                        <span className="info-label-v2">Intelligence Scope</span>
+                        <span className="info-label-v2">Selected Metric</span>
                         <span className="info-value-v2">{statName} • {visual.speed}x</span>
+                    </div>
+                    <div className="playback-info-v2" style={{ opacity: 0.6 }}>
+                        <span className="info-label-v2">Data Source</span>
+                        <span className="info-value-v2">StatFoot API</span>
                     </div>
                 </div>
             </div>
