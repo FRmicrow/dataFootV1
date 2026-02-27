@@ -15,9 +15,10 @@ app = FastAPI(title="StatFoot V3 ML Service", version="1.2.0-rf-1x2")
 
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'model_1x2.joblib')
-IMPORTANCE_PATH = os.path.join(BASE_DIR, 'model_1x2_importance.json')
-DB_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', 'backend', 'database.sqlite'))
+MODELS_DIR = os.getenv('MODELS_PATH', BASE_DIR)
+MODEL_PATH = os.path.join(MODELS_DIR, 'model_1x2.joblib')
+IMPORTANCE_PATH = os.path.join(MODELS_DIR, 'model_1x2_importance.json')
+DB_PATH = os.getenv('DATABASE_PATH', os.path.abspath(os.path.join(BASE_DIR, '..', 'backend', 'database.sqlite')))
 
 # Global model state
 model = None

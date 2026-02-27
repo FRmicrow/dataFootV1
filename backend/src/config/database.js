@@ -6,7 +6,7 @@ import { existsSync } from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const dbPath = join(__dirname, '..', '..', 'database.sqlite');
+const dbPath = process.env.DATABASE_PATH || join(__dirname, '..', '..', 'database.sqlite');
 
 let db;
 
