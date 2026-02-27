@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import api from '../../services/api';
+import { Stack, Button } from '../../design-system';
 import './InlineMatchDetailTactical.css';
 
 const InlineMatchDetailTactical = ({ fixtureId }) => {
@@ -26,23 +26,27 @@ const InlineMatchDetailTactical = ({ fixtureId }) => {
         }
     };
 
-    if (loading) return <div className="inline-tac-loading">Loading tactical intelligence...</div>;
-    if (error) return <div className="inline-tac-error">{error}</div>;
-    if (stats.length === 0) return <div className="inline-tac-empty">No tactical data available for this match.</div>;
+    if (loading) return (
+        <div className="ds-tac-loading">
+            <div className="ds-button-spinner mb-sm" style={{ margin: '0 auto' }}></div>
+            Extracting tactical metrics...
+        </div>
+    );
+    if (error) return <div className="ds-tac-error">{error}</div>;
+    if (stats.length === 0) return <div className="ds-tac-empty">No tactical intelligence recorded.</div>;
 
     const currentStats = stats.filter(s => s.half === activeHalf);
     const homeStats = currentStats.find(s => s.side === 'home');
     const awayStats = currentStats.find(s => s.side === 'away');
 
     const statRows = [
-        { label: 'Ball Possession', key: 'ball_possession', type: 'percent' },
+        { label: 'Possession', key: 'ball_possession', type: 'percent' },
         { label: 'Total Shots', key: 'shots_total', type: 'number' },
         { label: 'Shots on Goal', key: 'shots_on_goal', type: 'number' },
         { label: 'Corner Kicks', key: 'corner_kicks', type: 'number' },
         { label: 'Offsides', key: 'offsides', type: 'number' },
         { label: 'Fouls', key: 'fouls', type: 'number' },
         { label: 'Yellow Cards', key: 'yellow_cards', type: 'number' },
-        { label: 'Total Passes', key: 'passes_total', type: 'number' },
         { label: 'Pass Accuracy', key: 'pass_accuracy_pct', type: 'percent' },
     ];
 
@@ -60,7 +64,7 @@ const InlineMatchDetailTactical = ({ fixtureId }) => {
         if (!stat) return 0;
         const val = stat[key];
         if (typeof val === 'string' && val.includes('%')) return parseInt(val);
-        return val;
+        return val ?? 0;
     };
 
     const renderStatBar = (row) => {
@@ -80,35 +84,37 @@ const InlineMatchDetailTactical = ({ fixtureId }) => {
         }
 
         return (
-            <div key={row.key} className="inline-tac-row">
-                <div className="tac-row-labels">
-                    <span className="tac-val home">{homeVal}</span>
-                    <span className="tac-label">{row.label}</span>
-                    <span className="tac-val away">{awayVal}</span>
+            <div key={row.key} className="ds-tac-row">
+                <div className="ds-tac-labels">
+                    <span className="val home">{homeVal}</span>
+                    <span className="label">{row.label}</span>
+                    <span className="val away">{awayVal}</span>
                 </div>
-                <div className="tac-bar-container">
-                    <div className="tac-bar home" style={{ width: `${homePct}%` }}></div>
-                    <div className="tac-bar away" style={{ width: `${awayPct}%` }}></div>
+                <div className="ds-tac-bar-track">
+                    <div className="bar home" style={{ width: `${homePct}%` }}></div>
+                    <div className="bar away" style={{ width: `${awayPct}%` }}></div>
                 </div>
             </div>
         );
     };
 
     return (
-        <div className="inline-match-detail-tactical">
-            <div className="half-selector">
+        <div className="ds-inline-tactical animate-fade-in">
+            <Stack direction="row" justify="center" gap="var(--spacing-xs)" className="mb-md">
                 {['1H', '2H', 'FT'].map(h => (
-                    <button
+                    <Button
                         key={h}
-                        className={`half-btn ${activeHalf === h ? 'active' : ''}`}
+                        size="xs"
+                        variant={activeHalf === h ? 'primary' : 'secondary'}
                         onClick={() => setActiveHalf(h)}
+                        style={{ minWidth: '48px' }}
                     >
                         {h}
-                    </button>
+                    </Button>
                 ))}
-            </div>
+            </Stack>
 
-            <div className="inline-tac-stats-list">
+            <div className="ds-tac-list">
                 {statRows.map(row => renderStatBar(row))}
             </div>
         </div>

@@ -1,0 +1,67 @@
+.ds-league-card {
+    transition: var(--transition-base);
+}
+
+.ds-league-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-primary-500);
+}
+
+.ds-league-card-logo-wrap {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-3xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.ds-league-card-logo-wrap img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.ds-league-card-info {
+    flex: 1;
+    min-width: 0;
+    /* Enable truncation */
+}
+
+.ds-league-card-name {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text-main);
+}
+
+.ds-league-card-meta {
+    font-size: 10px;
+    color: var(--color-text-dim);
+    font-weight: var(--font-weight-medium);
+}
+
+.ds-league-card-country {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3xs);
+}
+
+.ds-league-card-flag {
+    width: 14px;
+    height: auto;
+    border-radius: 1px;
+}
+
+.ds-league-card-country-name {
+    font-size: 10px;
+    color: var(--color-text-muted);
+}

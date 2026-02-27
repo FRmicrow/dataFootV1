@@ -132,19 +132,34 @@ const FixturesList = ({
 
     return (
         <Stack gap="var(--spacing-lg)" className="animate-fade-in">
-            <Card title="Calendar Overview" subtitle="Matchday progression">
-                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px' }}>
+            <Card title="Calendar Progress" subtitle="Chronological matchday selection">
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: '8px',
+                        overflowX: 'auto',
+                        paddingBottom: 'var(--spacing-xs)',
+                        msOverflowStyle: 'none',
+                        scrollbarWidth: 'none',
+                        maskImage: 'linear-gradient(to right, black 80%, transparent 100%)'
+                    }}
+                >
                     {(fixturesData.rounds || []).map(round => {
                         const isCurrent = round === currentRound;
                         const isSelected = round === selectedRound;
+                        // Abbreviate round name for density
+                        const shortLabel = round.replace('Regular Season - ', 'MD ').replace('Group ', 'GP ');
+
                         return (
                             <Button
                                 key={round}
                                 size="xs"
                                 variant={isSelected ? 'primary' : isCurrent ? 'secondary' : 'ghost'}
                                 onClick={() => setSelectedRound(round)}
+                                style={{ flexShrink: 0, fontWeight: 'bold' }}
+                                title={round} // Full label on hover
                             >
-                                {round.replace('Regular Season - ', 'MD ')}
+                                {shortLabel}
                             </Button>
                         );
                     })}

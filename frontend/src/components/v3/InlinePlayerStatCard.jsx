@@ -1,14 +1,14 @@
-
 import React from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import { Card, Stack, Grid, Badge } from '../../design-system';
 import './InlinePlayerStatCard.css';
 
 const InlinePlayerStatCard = ({ player }) => {
     if (!player) {
         return (
-            <div className="inline-player-empty">
-                <div className="empty-icon">👤</div>
-                <p>Select a player to view match intelligence</p>
+            <div className="ds-player-intel-empty">
+                <span className="empty-icon">👤</span>
+                <p>Select a tactical operative to view behavioral intelligence</p>
             </div>
         );
     }
@@ -30,84 +30,90 @@ const InlinePlayerStatCard = ({ player }) => {
     const radarData = getRadarData(player);
 
     const getRatingColor = (r) => {
-        if (!r || r === 'N/A') return '#475569';
+        if (!r || r === 'N/A') return 'var(--color-text-dim)';
         const rating = parseFloat(r);
-        if (rating >= 8) return '#10b981';
-        if (rating >= 7) return '#14b8a6';
-        if (rating >= 6.5) return '#f59e0b';
-        return '#ef4444';
+        if (rating >= 8) return 'var(--color-success-500)';
+        if (rating >= 7) return 'var(--color-primary-500)';
+        if (rating >= 6.5) return 'var(--color-accent-500)';
+        return 'var(--color-danger-500)';
     };
 
     return (
-        <div className="inline-player-stat-card fade-in">
-            <div className="p-card-header">
-                <img src={player.player_photo} alt="" className="p-header-img" />
-                <div className="p-header-info">
-                    <h4>{player.player_name}</h4>
-                    <span className="p-meta">{player.team_name} • {player.minutes_played}' Played</span>
+        <Card className="ds-player-intel-card animate-fade-in">
+            <header className="ds-intel-header">
+                <div className="ds-intel-photo">
+                    <img src={player.player_photo} alt="" />
                 </div>
-                <div className="p-header-rating-box" style={{ background: getRatingColor(player.rating) }}>
+                <div className="ds-intel-info">
+                    <h4>{player.player_name}</h4>
+                    <span className="ds-intel-meta">{player.team_name} • {player.minutes_played}' Action</span>
+                </div>
+                <div
+                    className="ds-intel-rating"
+                    style={{ background: getRatingColor(player.rating) }}
+                >
                     {player.rating}
                 </div>
-            </div>
+            </header>
 
-            <div className="p-card-main">
-                <div className="p-card-radar-box">
-                    <ResponsiveContainer width="100%" height={250}>
+            <main className="ds-intel-main">
+                <div className="ds-intel-radar">
+                    <ResponsiveContainer width="100%" height={220}>
                         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                            <PolarGrid stroke="#334155" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#f1f5f9', fontSize: 11, fontWeight: 700 }} />
-                            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 9 }} axisLine={false} />
+                            <PolarGrid stroke="var(--color-border)" />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--color-text-muted)', fontSize: 10, fontWeight: 700 }} />
+                            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                             <Radar
                                 name={player.player_name}
                                 dataKey="value"
-                                stroke="#3b82f6"
-                                fill="#3b82f6"
-                                fillOpacity={0.5}
+                                stroke="var(--color-primary-500)"
+                                fill="var(--color-primary-500)"
+                                fillOpacity={0.3}
                             />
                         </RadarChart>
                     </ResponsiveContainer>
                 </div>
 
-                <div className="p-radar-details">
+                <div className="ds-intel-stats">
                     {radarData.map(d => (
-                        <div key={d.subject} className="radar-detail-row">
-                            <span className="rd-subject">{d.subject}</span>
-                            <div className="rd-track">
-                                <div className="rd-bar" style={{ width: `${d.value}%`, background: d.subject === 'Rating' ? getRatingColor(player.rating) : '#3b82f6' }}></div>
+                        <div key={d.subject} className="ds-intel-stat-row">
+                            <span className="label">{d.subject}</span>
+                            <div className="track">
+                                <div
+                                    className="bar"
+                                    style={{
+                                        width: `${d.value}%`,
+                                        background: d.subject === 'Rating' ? getRatingColor(player.rating) : 'var(--color-primary-500)'
+                                    }}
+                                />
                             </div>
-                            <span className="rd-value">{d.display}</span>
+                            <span className="val">{d.display}</span>
                         </div>
                     ))}
                 </div>
-            </div>
+            </main>
 
-            <div className="p-card-grid-modern">
-                <div className="p-stat-box">
-                    <label>Goals / Assists</label>
-                    <div className="p-stat-val">
-                        <span>{player.goals_total || 0}</span>
-                        <span className="sep">/</span>
-                        <span>{player.goals_assists || 0}</span>
+            <footer className="ds-intel-footer">
+                <Grid columns="repeat(4, 1fr)" gap="var(--spacing-xs)">
+                    <div className="ds-intel-min-stat">
+                        <label>G/A</label>
+                        <span>{player.goals_total || 0}/{player.goals_assists || 0}</span>
                     </div>
-                </div>
-                <div className="p-stat-box">
-                    <label>Accuracy</label>
-                    <div className="p-stat-val">
-                        <span>{player.passes_total > 0 ? Math.round((player.passes_accuracy / player.passes_total) * 100) : 0}%</span>
-                        <span className="sub">({player.passes_total || 0})</span>
+                    <div className="ds-intel-min-stat">
+                        <label>Passes</label>
+                        <span>{player.passes_total || 0}</span>
                     </div>
-                </div>
-                <div className="p-stat-box">
-                    <label>Key Passes</label>
-                    <div className="p-stat-val">{player.passes_key || 0}</div>
-                </div>
-                <div className="p-stat-box">
-                    <label>Work Rate</label>
-                    <div className="p-stat-val">{player.duels_total || 0} duels</div>
-                </div>
-            </div>
-        </div>
+                    <div className="ds-intel-min-stat">
+                        <label>Key P</label>
+                        <span>{player.passes_key || 0}</span>
+                    </div>
+                    <div className="ds-intel-min-stat">
+                        <label>Duels</label>
+                        <span>{player.duels_total || 0}</span>
+                    </div>
+                </Grid>
+            </footer>
+        </Card>
     );
 };
 
