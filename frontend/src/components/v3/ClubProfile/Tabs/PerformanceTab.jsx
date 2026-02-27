@@ -1,96 +1,100 @@
 import React from 'react';
+import { Card, Table, Grid, Stack, Badge } from '../../../../design-system';
 
 const PerformanceTab = ({ clubId, year, competitionId, summary, seasons }) => {
 
-    // Filter to the specific competition if selected
     const activeComps = competitionId === 'all'
         ? seasons
         : seasons.filter(s => s.league_id == competitionId);
 
+    const columns = [
+        {
+            title: 'Competition',
+            key: 'league',
+            render: (_, comp) => (
+                <Stack direction="row" align="center" gap="var(--spacing-md)">
+                    <img src={comp.league_logo} alt="" style={{ width: '24px' }} />
+                    <span style={{ fontWeight: 'bold' }}>{comp.league_name}</span>
+                </Stack>
+            )
+        },
+        {
+            title: 'Rank / Round',
+            key: 'rank',
+            render: (_, comp) => (
+                <Badge variant={comp.competition_type === 'League' ? 'primary' : 'warning'}>
+                    {comp.competition_type === 'League' ? `#${comp.rank || '—'}` : (comp.round_reached || 'Group Stage')}
+                </Badge>
+            )
+        },
+        { title: 'P', dataIndex: 'played', key: 'p', align: 'center' },
+        { title: 'W', dataIndex: 'win', key: 'w', align: 'center', render: (v) => <span style={{ color: 'var(--color-success-500)' }}>{v}</span> },
+        { title: 'D', dataIndex: 'draw', key: 'd', align: 'center' },
+        { title: 'L', dataIndex: 'lose', key: 'l', align: 'center', render: (v) => <span style={{ color: 'var(--color-danger-500)' }}>{v}</span> },
+        {
+            title: 'GD',
+            key: 'gd',
+            align: 'center',
+            render: (_, comp) => {
+                const diff = (comp.goals_for || 0) - (comp.goals_against || 0);
+                return (
+                    <span style={{ color: diff > 0 ? 'var(--color-success-500)' : diff < 0 ? 'var(--color-danger-500)' : 'inherit' }}>
+                        {diff > 0 ? `+${diff}` : diff}
+                    </span>
+                );
+            }
+        },
+        { title: 'Sqr', dataIndex: 'squad_size', key: 'sqr', align: 'center' }
+    ];
+
     return (
-        <div className="performance-tab-v4">
-            <h2 className="section-title">Season Overview</h2>
+        <Stack gap="var(--spacing-xl)">
+            {/* Highlights */}
+            <Grid columns="repeat(4, 1fr)" gap="var(--spacing-md)">
+                <Card title="Win Rate" variant="compact">
+                    <Stack align="center" gap="4px">
+                        <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'bold', color: 'var(--color-accent-500)' }}>
+                            {summary?.win_rate ? `${parseFloat(summary.win_rate).toFixed(1)}%` : '—'}
+                        </div>
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>SEASON {year}</div>
+                    </Stack>
+                </Card>
+                <Card title="Games Played" variant="compact">
+                    <Stack align="center" gap="4px">
+                        <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'bold' }}>
+                            {summary?.total_played || '—'}
+                        </div>
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{competitionId === 'all' ? 'ALL COMPS' : 'SELECTED'}</div>
+                    </Stack>
+                </Card>
+                <Card title="Goals Scored" variant="compact">
+                    <Stack align="center" gap="4px">
+                        <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'bold', color: 'var(--color-primary-400)' }}>
+                            {summary?.goals_scored || '—'}
+                        </div>
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>AGGREGATED</div>
+                    </Stack>
+                </Card>
+                <Card title="Goals Against" variant="compact">
+                    <Stack align="center" gap="4px">
+                        <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'bold', color: 'var(--color-danger-500)' }}>
+                            {summary?.goals_conceded || '—'}
+                        </div>
+                        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>TOTAL</div>
+                    </Stack>
+                </Card>
+            </Grid>
 
-            {/* US_282: Global Season Highlights */}
-            <div className="performance-hero-stats">
-                <div className="hero-stat-box gold">
-                    <span className="h-val">{summary?.win_rate ? `${parseFloat(summary.win_rate).toFixed(1)}%` : '—'}</span>
-                    <span className="h-label">Win Rate</span>
-                    <small className="h-context">Season {year}</small>
-                </div>
-                <div className="hero-stat-box">
-                    <span className="h-val">{summary?.total_played || '—'}</span>
-                    <span className="h-label">Games Played</span>
-                    <small className="h-context">{competitionId === 'all' ? 'All Competitions' : 'Selected Comp'}</small>
-                </div>
-                <div className="hero-stat-box blue">
-                    <span className="h-val">{summary?.goals_scored || '—'}</span>
-                    <span className="h-label">Goals For</span>
-                    <small className="h-context">Aggregated</small>
-                </div>
-                <div className="hero-stat-box red">
-                    <span className="h-val">{summary?.goals_conceded || '—'}</span>
-                    <span className="h-label">Goals Against</span>
-                    <small className="h-context">Total</small>
-                </div>
-            </div>
-
-            <h2 className="section-title">Competition Summary</h2>
-
-            {activeComps.length > 0 ? (
-                <div className="table-container-v4">
-                    <table className="v4-common-table">
-                        <thead>
-                            <tr>
-                                <th className="sticky-col">Competition</th>
-                                <th>Type</th>
-                                <th>Result / Rank</th>
-                                <th className="center">P</th>
-                                <th className="center">W</th>
-                                <th className="center">D</th>
-                                <th className="center">L</th>
-                                <th className="center">GF</th>
-                                <th className="center">GA</th>
-                                <th className="center">GD</th>
-                                <th className="center">Sqr</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {activeComps.map(comp => (
-                                <tr key={comp.league_id} className="v4-row">
-                                    <td className="p-cell-v4 sticky-col">
-                                        <img src={comp.league_logo} alt="" className="mini-badge-v4" />
-                                        <div className="p-name-v4">
-                                            <span className="main-name">{comp.league_name}</span>
-                                        </div>
-                                    </td>
-                                    <td><span className="type-badge-v4">{comp.competition_type}</span></td>
-                                    <td>
-                                        <span className={`rank-pill ${comp.competition_type === 'League' ? 'league' : 'cup'}`}>
-                                            {comp.competition_type === 'League' ? `#${comp.rank || '—'}` : (comp.round_reached || 'Group Stage')}
-                                        </span>
-                                    </td>
-                                    <td className="center">{comp.played || 0}</td>
-                                    <td className="center win-color">{comp.win || 0}</td>
-                                    <td className="center draw-color">{comp.draw || 0}</td>
-                                    <td className="center loss-color">{comp.lose || 0}</td>
-                                    <td className="center">{comp.goals_for || 0}</td>
-                                    <td className="center">{comp.goals_against || 0}</td>
-                                    <td className="center">{comp.goals_for - comp.goals_against}</td>
-                                    <td className="center">{comp.squad_size || '—'}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <div className="empty-v4">
-                    <div className="empty-icon">📂</div>
-                    <h3>No campaign history found</h3>
-                    <p>Try selecting another season or resetting the competition filter.</p>
-                </div>
-            )}
-        </div>
+            {/* Competition Table */}
+            <Card title="Competition Campaigns" subtitle={`Season ${year} detail view`}>
+                <Table columns={columns} data={activeComps} />
+                {activeComps.length === 0 && (
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                        No campaign history found for this selection.
+                    </div>
+                )}
+            </Card>
+        </Stack>
     );
 };
 

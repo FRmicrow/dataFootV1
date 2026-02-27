@@ -1,323 +1,104 @@
 @import "tailwindcss";
 
-:root {
-  /* Premium Dark Theme Palette */
-  --bg-dark: #0f172a;
-  --bg-card: rgba(30, 41, 59, 0.7);
-  --bg-glass: rgba(15, 23, 42, 0.6);
+/* 
+   StatFoot v3 Core Styling
+   Relies on Design System tokens exported from src/design-system/tokens.css
+*/
 
-  /* Brand Gradients */
-  --gradient-primary: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --gradient-accent: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-
-  /* Text Colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-accent: #38bdf8;
-
-  /* Borders & Effects */
-  --border-glass: 1px solid rgba(255, 255, 255, 0.1);
-  --shadow-glow: 0 0 20px rgba(56, 189, 248, 0.15);
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.2);
-
-  /* Spacing */
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
-}
-
-html {
-  font-size: 18px;
-}
-
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-  background-image:
-    radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 25%);
-  min-height: 100vh;
-}
-
-/* Layout & Typography */
 .app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: var(--color-bg-main);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--spacing-sm);
   width: 100%;
-  box-sizing: border-box;
 }
 
-h1,
-h2,
-h3 {
-  margin: 0;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+/* Page Animations */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
 }
 
-.page-title {
-  font-size: 2.5rem;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 2rem;
-  text-align: center;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Glass Components */
-.card,
-.glass-panel {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: var(--border-glass);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-card);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Navigation */
-.nav {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(16px);
-  border-bottom: var(--border-glass);
-  padding: 1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.nav-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.nav-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-right: auto;
-}
-
-.nav-link {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-}
-
-.nav-link:hover,
-.nav-link.active {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.nav-link.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-accent);
-}
-
-.v3-nav-btn {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)) !important;
-  color: #a855f7 !important;
-  border: 1px solid rgba(168, 85, 247, 0.3) !important;
-  font-weight: 700 !important;
-}
-
-.v3-nav-btn:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3)) !important;
-  box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
-}
-
-/* Buttons */
-.btn {
-  border: none;
-  padding: 0.75rem 1.5rem;
+/* Custom Utilities that don't belong in base components */
+.ds-glass-panel {
+  background: var(--color-bg-card);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  padding: var(--spacing-sm);
 }
 
-.btn-primary {
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+.justify-start {
+  justify-content: flex-start !important;
 }
 
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
+.mt-sm {
+  margin-top: var(--spacing-xs);
 }
 
-.btn-success {
-  background: var(--gradient-success);
-  color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+.mt-md {
+  margin-top: var(--spacing-sm);
 }
 
-.btn-success:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+.mt-lg {
+  margin-top: var(--spacing-md);
 }
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+/* Global helper for text-clamping */
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Form Elements */
+/* Responsive Overrides */
+@media (max-width: 1024px) {
+  .ds-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Base Form Styling (Global) */
 input,
 select {
-  background: rgba(15, 23, 42, 0.6);
-  border: var(--border-glass);
-  color: var(--text-primary);
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  width: 100%;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  transition: var(--transition-fast);
 }
 
 input:focus,
 select:focus {
   outline: none;
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
-  background: rgba(15, 23, 42, 0.8);
+  border-color: var(--color-primary-500);
+  background: rgba(15, 23, 42, 0.6);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
 }
 
-/* Make sure option text is visible on dark backgrounds */
-select option {
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-}
-
-/* Tables */
-.table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: 1rem;
-}
-
-.table th {
-  text-align: left;
-  padding: 1rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: var(--border-glass);
-}
-
-.table td {
-  padding: 1rem;
-  border-bottom: var(--border-glass);
-  color: var(--text-primary);
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.player-photo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Status Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.badge-success {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.badge-warning {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-/* Utilities */
-.text-accent {
-  color: var(--text-accent);
-}
-
-.text-secondary {
-  color: var(--text-secondary);
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.mb-4 {
-  margin-bottom: 1rem;
-}
-
-.flex {
-  display: flex;
-}
-
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-between {
-  justify-content: space-between;
+/* Legacy Overrides for V2 components still in transition */
+.btn-primary {
+  background: var(--color-primary-600) !important;
+  color: white !important;
+  border-radius: var(--radius-sm) !important;
 }

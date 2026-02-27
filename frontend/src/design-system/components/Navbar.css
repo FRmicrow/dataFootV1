@@ -1,0 +1,54 @@
+.ds-navbar {
+    background: var(--color-bg-card);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 64px;
+}
+
+.ds-navbar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ds-navbar-brand {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-main);
+}
+
+.ds-navbar-links {
+    display: flex;
+    gap: var(--spacing-md);
+    height: 100%;
+}
+
+.ds-navbar-link {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-md);
+    text-decoration: none;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+    color: var(--link-color, var(--color-text-muted));
+}
+
+.ds-navbar-link:hover {
+    color: var(--link-color, var(--color-text-main));
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ds-navbar-link--active {
+    color: var(--link-color, var(--color-primary-400)) !important;
+    border-bottom-color: var(--link-color, var(--color-primary-400));
+}

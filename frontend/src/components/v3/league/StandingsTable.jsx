@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { Card, Table, Badge, Stack, Button } from '../../../design-system';
 
 const StandingsTable = ({
     standings,
@@ -11,9 +12,8 @@ const StandingsTable = ({
     isDynamicMode,
     loading
 }) => {
-    // Group standings by group_name
     const groupMap = standings.reduce((acc, curr) => {
-        const group = curr.group_name || 'Standings';
+        const group = curr.group_name || 'General Standings';
         if (!acc[group]) acc[group] = [];
         acc[group].push(curr);
         return acc;
@@ -21,128 +21,135 @@ const StandingsTable = ({
 
     const groups = Object.entries(groupMap);
 
+    const columns = [
+        {
+            title: '#',
+            dataIndex: 'rank',
+            key: 'rank',
+            align: 'center',
+            width: '60px',
+            render: (rank) => (
+                <div
+                    style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: 'var(--radius-sm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        background: rank <= 4 ? 'var(--color-primary-600)' : rank >= 18 ? 'var(--color-danger-500)' : 'var(--glass-bg)',
+                        color: rank <= 4 || rank >= 18 ? 'white' : 'inherit'
+                    }}
+                >
+                    {rank}
+                </div>
+            )
+        },
+        {
+            title: 'Club',
+            key: 'team',
+            render: (_, t) => (
+                <Link to={`/club/${t.team_id}`} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', textDecoration: 'none', color: 'inherit' }}>
+                    <img src={t.team_logo} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                    <span style={{ fontWeight: 'var(--font-weight-bold)' }}>{t.team_name}</span>
+                </Link>
+            )
+        },
+        { title: 'P', dataIndex: 'played', key: 'played', align: 'center', width: '40px' },
+        { title: 'W', dataIndex: 'win', key: 'win', align: 'center', width: '40px', render: (val) => <span style={{ color: 'var(--color-success-500)', fontWeight: 'bold' }}>{val}</span> },
+        { title: 'D', dataIndex: 'draw', key: 'draw', align: 'center', width: '40px' },
+        { title: 'L', dataIndex: 'lose', key: 'lose', align: 'center', width: '40px', render: (val) => <span style={{ color: 'var(--color-danger-500)' }}>{val}</span> },
+        {
+            title: '+/-',
+            dataIndex: 'goals_diff',
+            key: 'diff',
+            align: 'center',
+            width: '50px',
+            render: (val) => (
+                <span style={{ color: val > 0 ? 'var(--color-success-500)' : val < 0 ? 'var(--color-danger-500)' : 'inherit', opacity: 0.6 }}>
+                    {val > 0 ? `+${val}` : val}
+                </span>
+            )
+        },
+        {
+            title: 'PTS',
+            dataIndex: 'points',
+            key: 'points',
+            align: 'center',
+            width: '60px',
+            render: (pts) => <span style={{ fontSize: 'var(--font-size-base)', fontWeight: '900', color: 'var(--color-primary-400)' }}>{pts}</span>
+        },
+        {
+            title: 'Recent Form',
+            dataIndex: 'form',
+            key: 'form',
+            align: 'center',
+            width: '120px',
+            render: (form) => (
+                <Stack direction="row" gap="4px" justify="center">
+                    {form?.split('').map((char, i) => (
+                        <div
+                            key={i}
+                            style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                background: char === 'W' ? 'var(--color-success-500)' : char === 'D' ? 'var(--color-accent-500)' : char === 'L' ? 'var(--color-danger-500)' : 'var(--color-border)'
+                            }}
+                            title={char}
+                        />
+                    ))}
+                </Stack>
+            )
+        }
+    ];
+
     if (standings.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-gray-500 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <span className="text-4xl mb-4">📊</span>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Standing Data</h3>
-                <p>Ingest real standings from API-Football to see the official table.</p>
-            </div>
+            <Card>
+                <Stack align="center" justify="center" gap="var(--spacing-sm)" style={{ padding: 'var(--spacing-12)' }}>
+                    <span style={{ fontSize: '48px', opacity: 0.3 }}>📊</span>
+                    <h3>Official Table Missing</h3>
+                    <p style={{ color: 'var(--color-text-dim)', textAlign: 'center', maxWidth: '400px' }}>Registry synchronization required to populate local standings.</p>
+                    <Button variant="secondary" onClick={() => window.location.reload()}>Retry Sync</Button>
+                </Stack>
+            </Card>
         );
     }
 
     return (
-        <div className="space-y-6 animate-slide-up">
+        <Stack gap="var(--spacing-lg)" className="animate-fade-in">
             {groups.map(([groupName, teams], idx) => (
-                <div key={groupName} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                        <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">{groupName}</h3>
-
-                        {/* Dynamic Controls (Only on first group for now) */}
-                        {idx === 0 && (
-                            <div className="flex items-center gap-3 text-sm">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-slate-500">From</span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="50"
-                                        value={rangeStart}
-                                        onChange={e => setRangeStart(e.target.value)}
-                                        className="w-16 px-2 py-1 border rounded text-center dark:bg-slate-700 dark:border-slate-600"
-                                    />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-slate-500">To</span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="50"
-                                        value={rangeEnd}
-                                        onChange={e => setRangeEnd(e.target.value)}
-                                        className="w-16 px-2 py-1 border rounded text-center dark:bg-slate-700 dark:border-slate-600"
-                                    />
-                                </div>
-                                <button
-                                    onClick={handleRangeUpdate}
-                                    disabled={loading}
-                                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
-                                >
-                                    {loading ? '...' : 'Apply'}
-                                </button>
-                                {isDynamicMode && (
-                                    <button
-                                        onClick={() => window.location.reload()}
-                                        className="px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-                                    >
-                                        Reset
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-base text-left">
-                            <thead className="text-sm text-slate-500 uppercase bg-slate-50 dark:bg-slate-700/50 dark:text-slate-400 font-black">
-                                <tr>
-                                    <th className="px-6 py-4 w-16 text-center">#</th>
-                                    <th className="px-6 py-4">TEAM IDENTITY</th>
-                                    <th className="px-4 py-4 text-center">P</th>
-                                    <th className="px-4 py-4 text-center font-black text-emerald-600">W</th>
-                                    <th className="px-4 py-4 text-center text-amber-600">D</th>
-                                    <th className="px-4 py-4 text-center text-rose-600">L</th>
-                                    <th className="px-4 py-4 text-center">+/-</th>
-                                    <th className="px-6 py-4 text-center font-black text-slate-900 dark:text-white uppercase tracking-wider">Points</th>
-                                    <th className="px-4 py-4 text-center hidden md:table-cell">FORM</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                                {teams.map((t) => (
-                                    <tr key={t.team_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                        <td className="px-6 py-4 text-center font-black text-slate-500">
-                                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm ${t.rank <= 4 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : t.rank >= 18 ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'}`}>
-                                                {t.rank}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <Link to={`/club/${t.team_id}`} className="flex items-center gap-4 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-slate-900 dark:text-slate-100 transition-all group">
-                                                <img src={t.team_logo} alt={t.team_name} className="w-8 h-8 object-contain drop-shadow-md group-hover:scale-110 transition-transform" onError={(e) => e.target.style.display = 'none'} />
-                                                <span className="truncate">{t.team_name}</span>
-                                            </Link>
-                                        </td>
-                                        <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-bold">{t.played}</td>
-                                        <td className="px-4 py-4 text-center font-black text-slate-900 dark:text-slate-100">{t.win}</td>
-                                        <td className="px-4 py-4 text-center text-slate-500 font-medium">{t.draw}</td>
-                                        <td className="px-4 py-4 text-center text-slate-500 font-medium">{t.lose}</td>
-                                        <td className={`px-4 py-4 text-center font-black ${t.goals_diff > 0 ? 'text-emerald-600' : t.goals_diff < 0 ? 'text-rose-600' : 'text-slate-500'}`}>
-                                            {t.goals_diff > 0 ? `+${t.goals_diff}` : t.goals_diff}
-                                        </td>
-                                        <td className="px-6 py-4 text-center font-black text-lg text-blue-600 dark:text-blue-400 bg-blue-500/5 dark:bg-blue-500/10">
-                                            {t.points}
-                                        </td>
-                                        <td className="px-4 py-3 text-center hidden md:table-cell">
-                                            <div className="flex items-center justify-center gap-1">
-                                                {t.form?.split('').map((char, i) => (
-                                                    <span
-                                                        key={i}
-                                                        className={`w-2 h-2 rounded-full ${char === 'W' ? 'bg-emerald-500' :
-                                                            char === 'D' ? 'bg-amber-400' :
-                                                                char === 'L' ? 'bg-rose-500' : 'bg-slate-300'
-                                                            }`}
-                                                        title={char}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <Card
+                    key={groupName}
+                    title={groupName}
+                    subtitle={idx === 0 ? "Official league classification" : null}
+                    extra={idx === 0 && (
+                        <Stack direction="row" gap="var(--spacing-xs)" align="center">
+                            <input
+                                type="number"
+                                value={rangeStart}
+                                onChange={e => setRangeStart(e.target.value)}
+                                style={{ width: '48px', textAlign: 'center' }}
+                            />
+                            <span style={{ fontSize: '10px', color: 'var(--color-text-dim)' }}>TO</span>
+                            <input
+                                type="number"
+                                value={rangeEnd}
+                                onChange={e => setRangeEnd(e.target.value)}
+                                style={{ width: '48px', textAlign: 'center' }}
+                            />
+                            <Button size="xs" onClick={handleRangeUpdate} loading={loading}>History Filter</Button>
+                            {isDynamicMode && <Button size="xs" variant="ghost" onClick={() => window.location.reload()}>Reset</Button>}
+                        </Stack>
+                    )}
+                >
+                    <Table columns={columns} data={teams} interactive />
+                </Card>
             ))}
-        </div>
+        </Stack>
     );
 };
 

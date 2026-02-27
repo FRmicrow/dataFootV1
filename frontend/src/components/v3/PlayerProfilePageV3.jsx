@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
+import { Card, Grid, Stack, Badge, Table, Button } from '../../design-system';
 import './PlayerProfilePageV3.css';
 
 const PlayerProfilePageV3 = () => {
@@ -89,7 +90,6 @@ const PlayerProfilePageV3 = () => {
                                     setSyncStatus('complete');
                                     setTimeout(() => setSyncStatus('idle'), 5000);
                                 }
-                                // Trigger refresh of the page data
                                 api.getPlayer(id).then(data => setData(data));
                             }
                         } catch (e) {
@@ -104,8 +104,7 @@ const PlayerProfilePageV3 = () => {
         }
     };
 
-
-    const [careerView, setCareerView] = useState('year'); // 'year', 'club', 'country'
+    const [careerView, setCareerView] = useState('year');
 
     const { clubCareer, internationalCareer } = React.useMemo(() => {
         const full = (data && Array.isArray(data.career)) ? data.career : [];
@@ -118,7 +117,6 @@ const PlayerProfilePageV3 = () => {
         };
     }, [data]);
 
-    // View Logic (US-010, US_093)
     const { groupedCareer, sortedKeys } = React.useMemo(() => {
         let grouped = {};
         let keys = [];
@@ -131,8 +129,6 @@ const PlayerProfilePageV3 = () => {
                 return acc;
             }, {});
             keys = Object.keys(grouped).sort((a, b) => b - a);
-
-            // Sort each year by importance_rank
             keys.forEach(k => {
                 grouped[k].sort((a, b) => (a.importance_rank || 999) - (b.importance_rank || 999));
             });
@@ -145,8 +141,6 @@ const PlayerProfilePageV3 = () => {
                 return acc;
             }, {});
             keys = Object.keys(grouped).sort((a, b) => grouped[b].latest - grouped[a].latest);
-
-            // Sort each club by year (DESC) then importance_rank
             keys.forEach(k => {
                 grouped[k].rows.sort((a, b) => {
                     if (b.season_year !== a.season_year) return b.season_year - a.season_year;
@@ -162,8 +156,6 @@ const PlayerProfilePageV3 = () => {
                 return acc;
             }, {});
             keys = Object.keys(grouped).sort((a, b) => grouped[b].latest - grouped[a].latest);
-
-            // Sort each country by year (DESC) then importance_rank
             keys.forEach(k => {
                 grouped[k].rows.sort((a, b) => {
                     if (b.season_year !== a.season_year) return b.season_year - a.season_year;
@@ -174,7 +166,6 @@ const PlayerProfilePageV3 = () => {
         return { groupedCareer: grouped, sortedKeys: keys };
     }, [careerView, clubCareer]);
 
-    // Initialize expanded panels when keys change
     useEffect(() => {
         if (data && sortedKeys.length > 0) {
             const initial = {};
@@ -188,17 +179,20 @@ const PlayerProfilePageV3 = () => {
     };
 
     if (loading) return (
-        <div className="v3-player-profile loading-state">
-            <div className="spinner"></div>
+        <div className="v3-dashboard-page loading">
+            <div className="ds-button-spinner"></div>
             <p>Scanning Biological Data...</p>
         </div>
     );
 
     if (error) return (
-        <div className="v3-player-profile error-state">
-            <h2>⚠️ Data Link Lost</h2>
-            <p>{error}</p>
-            <button onClick={() => navigate(-1)} className="btn-v3">Return</button>
+        <div style={{ padding: '80px', textAlign: 'center' }}>
+            <Card style={{ maxWidth: '400px', margin: '0 auto' }}>
+                <span style={{ fontSize: '48px' }}>⚠️</span>
+                <h2 style={{ margin: '24px 0 12px' }}>Data Link Lost</h2>
+                <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>{error}</p>
+                <Button onClick={() => navigate(-1)}>Return</Button>
+            </Card>
         </div>
     );
 
@@ -209,7 +203,6 @@ const PlayerProfilePageV3 = () => {
     const renderTrophies = () => {
         if (!trophies || trophies.length === 0) return null;
 
-        // Step 1: Initial Grouping by Country
         const countryGroups = trophies.reduce((acc, t) => {
             const country = t.country || 'International';
             if (!acc[country]) {
@@ -220,26 +213,18 @@ const PlayerProfilePageV3 = () => {
                     leagues: {}
                 };
             }
-
-            // Step 2: Group by League within Country
             const leagueName = t.league_name || t.trophy;
             if (!acc[country].leagues[leagueName]) {
-                acc[country].leagues[leagueName] = {
-                    name: leagueName,
-                    items: []
-                };
+                acc[country].leagues[leagueName] = { name: leagueName, items: [] };
             }
             acc[country].leagues[leagueName].items.push(t);
             return acc;
         }, {});
 
-        // Step 3: Sort Countries by Rank
         const sortedCountries = Object.values(countryGroups).sort((a, b) => a.rank - b.rank);
 
-        // Process internal structure for each country
         const processedList = sortedCountries.map(country => {
             const leaguesList = Object.values(country.leagues).map(league => {
-                // Step 4: Group items by Place within League
                 const placeMap = league.items.reduce((pAcc, item) => {
                     const place = item.place || 'Winner';
                     if (!pAcc[place]) pAcc[place] = { place, seasons: [], count: 0 };
@@ -250,7 +235,6 @@ const PlayerProfilePageV3 = () => {
                     return pAcc;
                 }, {});
 
-                // Helper for Ranking Places
                 const getRank = (place) => {
                     const p = (place || '').toLowerCase();
                     if (p.includes('winner') || p.includes('1st') || p.includes('champion')) return 1;
@@ -259,459 +243,250 @@ const PlayerProfilePageV3 = () => {
                     return 99;
                 };
 
-                // Create sorted array of place groups
-                const placeGroups = Object.values(placeMap).map(pg => {
-                    // Sort seasons desc
-                    pg.seasons.sort((a, b) => String(b).localeCompare(String(a)));
-                    return pg;
-                }).sort((a, b) => getRank(a.place) - getRank(b.place));
-
-                return {
-                    name: league.name,
-                    placeGroups: placeGroups
-                };
+                const placeGroups = Object.values(placeMap).sort((a, b) => getRank(a.place) - getRank(b.place));
+                return { name: league.name, placeGroups };
             });
-
-            // Sort Leagues Alphabetically (or by count if preferred, utilizing US: League ASC)
-            leaguesList.sort((a, b) => a.name.localeCompare(b.name));
-
             return { ...country, leagues: leaguesList };
         });
 
         return (
-            <div className="dash-card" style={{ marginBottom: '20px' }}>
-                <div className="card-title">🏆 Honours</div>
-                <div className="trophy-list-container">
+            <Card title="Honours">
+                <Stack gap="var(--spacing-lg)">
                     {processedList.map((country) => (
-                        <div key={country.name} className="country-group">
-                            <div className="country-group-header">
-                                {country.flag && <img src={country.flag} alt={country.name} className="mini-flag" />}
-                                <span className="country-header-name">{country.name}</span>
-                            </div>
-                            <div className="country-trophies-list">
+                        <div key={country.name}>
+                            <Stack direction="row" align="center" gap="var(--spacing-sm)" className="mb-sm">
+                                {country.flag && <img src={country.flag} alt="" style={{ width: '16px' }} />}
+                                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'bold', color: 'var(--color-text-muted)' }}>{country.name}</span>
+                            </Stack>
+                            <Stack gap="var(--spacing-md)">
                                 {country.leagues.map((comp) => (
-                                    <div key={comp.name} className="trophy-competition-block" style={{ marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
-                                        <div className="trophy-name-header" style={{ marginBottom: '6px', fontSize: '0.95rem', fontWeight: '700', color: '#f1f5f9' }}>
-                                            {comp.name}
-                                        </div>
-                                        {comp.placeGroups.map((pg) => {
-                                            const getBadgeClass = (place) => {
-                                                const p = (place || '').toLowerCase();
-                                                if (p.includes('2nd') || p.includes('runner') || p.includes('finalist')) return 'silver';
-                                                if (p.includes('3rd')) return 'bronze';
-                                                return 'gold';
-                                            };
-                                            const badgeClass = getBadgeClass(pg.place);
-                                            const uniqueKey = `${comp.name}-${pg.place}`;
-                                            const isPremium = country.rank < 10;
-
-                                            return (
-                                                <div key={uniqueKey} className={`trophy-place-row ${isPremium ? 'premium-honour' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
-                                                    <span className={`trophy-count-badge ${badgeClass}`} style={{ minWidth: '80px', boxShadow: isPremium ? `0 0 10px ${badgeClass === 'gold' ? 'rgba(251, 191, 36, 0.3)' : 'transparent'}` : 'none' }}>
-                                                        {pg.count}x {pg.place}
-                                                    </span>
-                                                    <span className="trophy-years-list" style={{ fontSize: '0.8rem', color: isPremium ? '#cbd5e1' : '#94a3b8', fontWeight: isPremium ? '600' : '400' }}>
-                                                        {pg.seasons.join(', ')}
-                                                    </span>
-                                                </div>
-                                            );
-                                        })}
+                                    <div key={comp.name}>
+                                        <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold', marginBottom: '4px' }}>{comp.name}</div>
+                                        {comp.placeGroups.map((pg) => (
+                                            <Stack key={pg.place} direction="row" gap="var(--spacing-md)" align="baseline">
+                                                <Badge variant={pg.place.toLowerCase().includes('winner') ? 'warning' : 'neutral'} size="sm">
+                                                    {pg.count}x {pg.place}
+                                                </Badge>
+                                                <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{pg.seasons.join(', ')}</span>
+                                            </Stack>
+                                        ))}
                                     </div>
                                 ))}
-                            </div>
+                            </Stack>
                         </div>
                     ))}
-                </div>
-            </div>
+                </Stack>
+            </Card>
         );
     };
 
+    const careerColumns = (view) => [
+        ...(view !== 'club' ? [{
+            title: 'Team',
+            key: 'team',
+            render: (_, row) => (
+                <Stack direction="row" gap="var(--spacing-sm)" align="center">
+                    <img src={row.team_logo} alt="" style={{ width: '20px' }} />
+                    <span>{row.team_name}</span>
+                </Stack>
+            )
+        }] : []),
+        {
+            title: 'Competition',
+            key: 'league',
+            render: (_, row) => (
+                <Link to={`/league/${row.league_id}/season/${row.season_year}`} style={{ color: 'var(--color-primary-400)', fontWeight: 'bold' }}>
+                    {row.league_name}
+                    {(row.importance_rank || 999) <= 10 && <span style={{ marginLeft: '4px' }}>⭐</span>}
+                </Link>
+            )
+        },
+        ...(view !== 'year' ? [{ title: 'Season', dataIndex: 'season_year', key: 'season' }] : []),
+        { title: 'Apps', dataIndex: 'games_appearences', key: 'apps', align: 'center' },
+        { title: 'G', dataIndex: 'goals_total', key: 'goals', align: 'center', render: (val) => <strong style={{ color: 'var(--color-primary-400)' }}>{val}</strong> },
+        { title: 'A', dataIndex: 'goals_assists', key: 'assists', align: 'center' },
+        {
+            title: 'Rating',
+            dataIndex: 'games_rating',
+            key: 'rating',
+            align: 'center',
+            render: (val) => (
+                <Badge variant={parseFloat(val) > 7.5 ? 'success' : parseFloat(val) > 6.8 ? 'primary' : 'neutral'}>
+                    {val || 'N/A'}
+                </Badge>
+            )
+        }
+    ];
+
     return (
-        <div className="v3-player-profile animate-fade-in">
-            {/* Premium Hero Section */}
-            <header className="player-hero">
-                <div className="hero-content">
-                    <div className="player-photo-container">
-                        <img src={player.photo_url} alt={player.name} className="hero-photo" />
-                        <div className="photo-glow"></div>
+        <div className="v3-player-content animate-fade-in">
+            {/* Hero Header */}
+            <Card className="mb-xl">
+                <Stack direction="row" gap="var(--spacing-2xl)" align="center">
+                    <div style={{ position: 'relative' }}>
+                        <img src={player.photo_url} alt="" style={{ width: '120px', height: '120px', borderRadius: 'var(--radius-lg)', objectFit: 'cover', border: '2px solid var(--color-border)' }} />
+                        <div style={{ position: 'absolute', inset: 0, boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)', borderRadius: 'var(--radius-lg)' }}></div>
                     </div>
 
-                    <div className="player-main-info">
-                        <h1 className="player-name">{player.name}</h1>
-                        {currentContext && currentContext.team && (
-                            <div className={`current-club-badge ${currentContext.status === 'Inactive' ? 'historical' : 'active'}`}>
-                                <img src={currentContext.team.logo} alt="" className="club-mini-logo" />
-                                <span>{currentContext.status === 'Active' ? 'Current Club' : 'Last Club'}: <strong>{currentContext.team.name}</strong></span>
-                            </div>
-                        )}
-                        <div className="player-meta-badges">
-                            <span className="meta-badge">
-                                <span className="label">Nationality</span>
-                                <span className="value nationality-val">
-                                    {player.nationality_flag && <img src={player.nationality_flag} alt="" className="mini-flag" />}
-                                    {player.nationality}
-                                </span>
-                            </span>
-                            <span className="meta-badge">
-                                <span className="label">Age</span>
-                                <span className="value">{player.age}</span>
-                            </span>
-                            <span className="meta-badge">
-                                <span className="label">Height</span>
-                                <span className="value">{player.height || 'N/A'}</span>
-                            </span>
-                            <span className="meta-badge">
-                                <span className="label">Weight</span>
-                                <span className="value">{player.weight || 'N/A'}</span>
-                            </span>
-                            <span className="meta-badge">
-                                <span className="label">Foot</span>
-                                <span className="value foot-val">{player.preferred_foot || 'N/A'}</span>
-                            </span>
-                        </div>
-
-                        <div className="sync-container-inline">
-                            {syncStatus === 'idle' && (
-                                <button className="btn-deep-sync-ghost" onClick={handleDeepSync}>
-                                    <span className="icon">🔄</span>
-                                    Deep Sync History
-                                </button>
-                            )}
-                            {syncStatus === 'syncing' && (
-                                <div className="sync-active-strip">
-                                    <div className="sync-progress-info">
-                                        <span className="status-label">Synchronizing...</span>
-                                        <div className="dynamic-counters">
-                                            <span className="counter updated">Updated: {syncStats.updated}</span>
-                                            <span className="counter new">New: {syncStats.new}</span>
-                                        </div>
-                                    </div>
-                                    <div className="sync-bar-container">
-                                        <div className="sync-bar-fill"></div>
-                                    </div>
-                                    <div className="sync-mini-log">
-                                        {syncLogs.length > 0 && syncLogs[syncLogs.length - 1].message}
-                                    </div>
-                                </div>
-                            )}
-
-                            {syncStatus === 'complete' && (
-                                <div className="sync-complete-strip">
-                                    <span className="icon">✅</span>
-                                    <span className="msg">Bio-History Synchronized!</span>
-                                    <div className="final-stats">
-                                        {syncStats.updated} records updated, {syncStats.new} new added.
-                                    </div>
-                                </div>
-                            )}
-
-                            {syncStatus === 'resolving' && (
-                                <div className="sync-alert-strip">
-                                    <span className="icon">⚠️</span>
-                                    <span className="msg">Unknown Competitions Found</span>
-                                    <button className="btn-resolve-now" onClick={() => {
-                                        const resolver = document.getElementById('entity-resolver-anchor');
-                                        resolver?.scrollIntoView({ behavior: 'smooth' });
-                                    }}>Resolve Mapping Now</button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="hero-stats-overview">
-                    <div className="overview-stat">
-                        <span className="val">{careerList.reduce((sum, s) => sum + (s.games_appearences || 0), 0)}</span>
-                        <span className="lbl">Apps</span>
-                    </div>
-                    <div className="overview-stat">
-                        <span className="val">{careerList.reduce((sum, s) => sum + (s.goals_total || 0), 0)}</span>
-                        <span className="lbl">Goals</span>
-                    </div>
-                    <div className="overview-stat highlight">
-                        <span className="val">{(careerList.reduce((sum, s) => sum + (parseFloat(s.games_rating) || 0), 0) / (careerList.filter(s => s.games_rating).length || 1)).toFixed(2)}</span>
-                        <span className="lbl">Rating</span>
-                    </div>
-                </div>
-            </header>
-
-            {/* Entity Resolver Section (RESTORED) */}
-            {syncStatus === 'resolving' && unresolvedCompetitions.length > 0 && (
-                <section id="entity-resolver-anchor" className="entity-resolver-dashboard animate-slide-up">
-                    <div className="resolver-header">
-                        <div className="title-wrap">
-                            <span className="icon">🧠</span>
+                    <div style={{ flex: 1 }}>
+                        <Stack direction="row" justify="space-between" align="flex-start">
                             <div>
-                                <h2>Entity Resolution Required</h2>
-                                <p>We found {unresolvedCompetitions.length} competition(s) not yet in our V3 taxonomy. Map them to maintain clean data.</p>
-                            </div>
-                        </div>
-                        <button className="btn-close-resolver" onClick={() => setSyncStatus('idle')}>✕</button>
-                    </div>
-
-                    <div className="unresolved-list">
-                        {unresolvedCompetitions.map((comp, idx) => (
-                            <div key={idx} className="resolver-row">
-                                <div className="source-info">
-                                    <div className="source-label">API-Football Entry:</div>
-                                    <div className="source-name">{comp.name}</div>
-                                    <div className="source-meta">ID: {comp.api_id}</div>
-                                </div>
-                                <div className="mapping-action">
-                                    <div className="mapping-input-wrap">
-                                        <input
-                                            type="text"
-                                            placeholder="Search existing V3 Competition..."
-                                            className="v3-autocomplete-input"
-                                            list={`leagues-list-${idx}`}
-                                        />
-                                        <datalist id={`leagues-list-${idx}`}>
-                                            {allLeagues.map(l => (
-                                                <option key={l.api_id} value={l.name} />
-                                            ))}
-                                        </datalist>
-                                    </div>
-                                    <button className="btn-v3-map" onClick={() => {
-                                        // TODO: Implement actual mapping API call
-                                        alert(`Mapping ${comp.name} to existing league...`);
-                                        setUnresolvedCompetitions(prev => prev.filter((_, i) => i !== idx));
-                                        if (unresolvedCompetitions.length === 1) setSyncStatus('complete');
-                                    }}>Link Entity</button>
-                                    <button className="btn-v3-create" onClick={() => {
-                                        // TODO: Implement actual creation API call
-                                        const confirmCreate = window.confirm(`Create '${comp.name}' as a new V3 Competition?`);
-                                        if (confirmCreate) {
-                                            alert(`Created ${comp.name} as new V3 Competition.`);
-                                            setUnresolvedCompetitions(prev => prev.filter((_, i) => i !== idx));
-                                            if (unresolvedCompetitions.length === 1) setSyncStatus('complete');
-                                        }
-                                    }}>Create New</button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            <div className="profile-grid">
-                {/* Career History Table */}
-                <main className="career-history">
-                    {/* Universal Career Aggregation (US_091) */}
-                    <div className="dash-card club-totals-card animate-slide-up">
-                        <div className="card-title">📈 Performance Metrics</div>
-                        <table className="club-totals-table">
-                            <thead>
-                                <tr>
-                                    <th>Team</th>
-                                    <th className="center">Apps</th>
-                                    <th className="center">Goals</th>
-                                    <th className="center">Assists</th>
-                                    <th className="center">Rating</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {careerTotals.sort((a, b) => {
-                                    if (!!a.is_national_team !== !!b.is_national_team) return a.is_national_team ? -1 : 1;
-                                    return b.total_matches - a.total_matches;
-                                }).map(club => (
-                                    <tr key={club.team_id} className={club.is_national_team ? 'national-team-row' : ''}>
-                                        <td className="team-cell">
-                                            <img src={club.team_logo} alt="" className="mini-logo" />
-                                            <span>{club.team_name}</span>
-                                            {club.is_national_team && <span className="national-tag">NT</span>}
-                                        </td>
-                                        <td className="center">{club.total_matches}</td>
-                                        <td className="center highlight-goals">{club.total_goals}</td>
-                                        <td className="center">{club.total_assists}</td>
-                                        <td className="center">
-                                            <span className="rating-badge-mini">{club.avg_rating}</span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="section-header-flex">
-                        <div className="section-title">
-                            <span className="icon">🏟️</span>
-                            <h2>Performance History</h2>
-                        </div>
-                        <div className="view-switcher">
-                            <button className={careerView === 'year' ? 'active' : ''} onClick={() => setCareerView('year')}>By Year</button>
-                            <button className={careerView === 'club' ? 'active' : ''} onClick={() => setCareerView('club')}>By Club</button>
-                            <button className={careerView === 'country' ? 'active' : ''} onClick={() => setCareerView('country')}>By Country</button>
-                        </div>
-                    </div>
-
-                    {/* National Team Section (US_092/093 Separate) */}
-                    {internationalCareer.length > 0 && (
-                        <div className="career-group-block international-duty-section">
-                            <div className="group-header expanded pinned" style={{ background: 'rgba(251, 191, 36, 0.05)', borderLeft: '4px solid #fbbf24' }}>
-                                <span className="icon" style={{ marginRight: '10px' }}>🌍</span>
-                                <span className="key-val" style={{ color: '#fbbf24' }}>International Duty</span>
-                            </div>
-                            <div className="career-table-container">
-                                <table className="career-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Team</th>
-                                            <th>Competition</th>
-                                            <th>Season</th>
-                                            <th className="center">Apps</th>
-                                            <th className="center">G</th>
-                                            <th className="center">A</th>
-                                            <th className="center">Rating</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {internationalCareer.map((row, idx) => {
-                                            const isMajor = (row.importance_rank || 999) <= 10;
-                                            return (
-                                                <tr key={`intl-${idx}`} className="national-team-row highlight-row">
-                                                    <td className="team-cell">
-                                                        <img src={row.team_logo} alt="" className="mini-logo" />
-                                                        <span style={{ fontWeight: '700' }}>{row.team_name}</span>
-                                                    </td>
-                                                    <td className="league-cell">
-                                                        <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="league-link" style={{ color: '#fbbf24' }}>
-                                                            {row.league_name}
-                                                            <span className="star-indicator">⭐</span>
-                                                        </Link>
-                                                    </td>
-                                                    <td className="season-cell">{row.season_year}</td>
-                                                    <td className="center stat-important">{row.games_appearences}</td>
-                                                    <td className="center stat-important goals">{row.goals_total}</td>
-                                                    <td className="center">{row.goals_assists}</td>
-                                                    <td className="center">
-                                                        <span className="rating-badge" style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24' }}>
-                                                            {row.games_rating || '0.00'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-
-                    {sortedKeys.map(key => {
-                        const content = groupedCareer[key];
-                        const rows = Array.isArray(content) ? content : content.rows;
-                        const isExpanded = !!expandedPanels[key];
-
-                        return (
-                            <div key={key} className="career-group-block">
-                                <div className={`group-header ${isExpanded ? 'expanded' : ''}`} onClick={() => togglePanel(key)}>
-                                    {careerView === 'year' && <span className="key-val">{key} / {parseInt(key) + 1}</span>}
-                                    {careerView === 'club' && (
-                                        <div className="club-key">
-                                            <img src={content.logo} alt="" className="key-img" />
-                                            <span className="key-val">{key}</span>
-                                        </div>
-                                    )}
-                                    {careerView === 'country' && (
-                                        <div className="country-key">
-                                            {content.flag && <img src={content.flag} alt="" className="key-img-flag" />}
-                                            <span className="key-val">{key}</span>
-                                        </div>
-                                    )}
-                                    <span className={`chevron-icon ${isExpanded ? 'open' : ''}`}>▼</span>
-                                </div>
-
-                                {isExpanded && (
-                                    <div className="career-table-container animate-fade-in-down">
-                                        <table className="career-table">
-                                            <thead>
-                                                <tr>
-                                                    {careerView !== 'club' && <th>Team</th>}
-                                                    <th>Competition</th>
-                                                    {careerView !== 'year' && <th>Season</th>}
-                                                    <th className="center">Apps</th>
-                                                    <th className="center">G</th>
-                                                    <th className="center">A</th>
-                                                    <th className="center">Rating</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {rows.map((row, idx) => {
-                                                    const isMajor = (row.importance_rank || 999) <= 10;
-                                                    return (
-                                                        <tr key={`${key}-${idx}`} className={isMajor ? 'major-league-row' : ''}>
-                                                            {careerView !== 'club' && (
-                                                                <td className="team-cell">
-                                                                    <img src={row.team_logo} alt="" className="mini-logo" />
-                                                                    <span style={{ fontWeight: isMajor ? '700' : '400' }}>{row.team_name}</span>
-                                                                </td>
-                                                            )}
-                                                            <td className="league-cell">
-                                                                <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="league-link" style={{ color: isMajor ? '#fff' : '#6366f1' }}>
-                                                                    {row.league_name}
-                                                                    {isMajor && <span className="star-indicator">⭐</span>}
-                                                                </Link>
-                                                            </td>
-                                                            {careerView !== 'year' && <td className="season-cell">{row.season_year}</td>}
-                                                            <td className="center stat-important">{row.games_appearences}</td>
-                                                            <td className="center stat-important goals">{row.goals_total}</td>
-                                                            <td className="center">{row.goals_assists}</td>
-                                                            <td className="center">
-                                                                <span className="rating-badge" style={{
-                                                                    background: parseFloat(row.games_rating) > 7.5 ? 'rgba(16, 185, 129, 0.2)' :
-                                                                        parseFloat(row.games_rating) > 6.8 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)',
-                                                                    color: parseFloat(row.games_rating) > 7.5 ? '#10b981' :
-                                                                        parseFloat(row.games_rating) > 6.8 ? '#3b82f6' : '#94a3b8'
-                                                                }}>
-                                                                    {row.games_rating || 'N/A'}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <h1 style={{ fontSize: 'var(--font-size-3xl)', margin: '0 0 var(--spacing-sm) 0' }}>{player.name}</h1>
+                                {currentContext?.team && (
+                                    <Badge variant="primary">
+                                        <img src={currentContext.team.logo} alt="" style={{ width: '12px', marginRight: '8px' }} />
+                                        {currentContext.status === 'Active' ? 'Current' : 'Last'}: {currentContext.team.name}
+                                    </Badge>
                                 )}
                             </div>
-                        );
-                    })}
-                </main>
+                            <Stack direction="row" gap="var(--spacing-lg)">
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'bold' }}>{careerList.reduce((sum, s) => sum + (s.games_appearences || 0), 0)}</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Apps</div>
+                                </div>
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'bold', color: 'var(--color-primary-400)' }}>{careerList.reduce((sum, s) => sum + (s.goals_total || 0), 0)}</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Goals</div>
+                                </div>
+                            </Stack>
+                        </Stack>
 
-                {/* Sidebar Info */}
-                <aside className="player-sidebar">
-                    {renderTrophies()}
-                    <div className="dash-card">
-                        <div className="card-title">Bio Details</div>
-                        <div className="bio-list">
-                            <div className="bio-item">
-                                <span className="lbl">Birth Date</span>
-                                <span className="val">{player.birth_date || 'Unknown'}</span>
-                            </div>
-                            <div className="bio-item">
-                                <span className="lbl">Birth Place</span>
-                                <span className="val">{player.birth_place ? `${player.birth_place}, ${player.birth_country}` : 'Unknown'}</span>
-                            </div>
-                            <div className="bio-item">
+                        <Grid columns="repeat(auto-fit, minmax(100px, 1fr))" gap="var(--spacing-md)" className="mt-lg">
+                            <div className="bio-stat">
                                 <span className="lbl">Nationality</span>
-                                <span className="val">{player.nationality}</span>
+                                <span className="val">
+                                    {player.nationality_flag && <img src={player.nationality_flag} alt="" style={{ width: '14px', marginRight: '4px' }} />}
+                                    {player.nationality}
+                                </span>
                             </div>
-                            <div className="bio-item">
+                            <div className="bio-stat">
+                                <span className="lbl">Age</span>
+                                <span className="val">{player.age}</span>
+                            </div>
+                            <div className="bio-stat">
                                 <span className="lbl">Height</span>
-                                <span className="val">{player.height}</span>
+                                <span className="val">{player.height || 'N/A'}</span>
                             </div>
-                            <div className="bio-item">
-                                <span className="lbl">Weight</span>
-                                <span className="val">{player.weight}</span>
-                            </div>
-                            <div className="bio-item">
-                                <span className="lbl">Preferred Foot</span>
+                            <div className="bio-stat">
+                                <span className="lbl">Foot</span>
                                 <span className="val">{player.preferred_foot || 'N/A'}</span>
                             </div>
-                        </div>
+                        </Grid>
                     </div>
+                </Stack>
+
+                <div className="mt-xl">
+                    {syncStatus === 'idle' && (
+                        <Button variant="secondary" size="sm" onClick={handleDeepSync}>🔄 Deep Sync History</Button>
+                    )}
+                    {syncStatus === 'syncing' && (
+                        <Stack gap="var(--spacing-sm)">
+                            <Stack direction="row" justify="space-between">
+                                <span style={{ fontSize: 'var(--font-size-xs)' }}>Synchronizing...</span>
+                                <Badge variant="primary">{syncProgress}%</Badge>
+                            </Stack>
+                            <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div style={{ width: `${syncProgress}%`, height: '100%', background: 'var(--color-primary-500)' }}></div>
+                            </div>
+                        </Stack>
+                    )}
+                </div>
+            </Card>
+
+            <Grid columns="3fr 1fr" gap="var(--spacing-xl)">
+                <Stack gap="var(--spacing-xl)">
+                    {/* Performance Summary */}
+                    <Card title="Performance Metrics" subtitle="Consolidated career statistics">
+                        <Table
+                            columns={[
+                                {
+                                    title: 'Team',
+                                    key: 'team',
+                                    render: (_, club) => (
+                                        <Stack direction="row" gap="var(--spacing-sm)" align="center">
+                                            <img src={club.team_logo} alt="" style={{ width: '20px' }} />
+                                            <span>{club.team_name}</span>
+                                            {club.is_national_team && <Badge variant="warning" size="sm">NT</Badge>}
+                                        </Stack>
+                                    )
+                                },
+                                { title: 'Apps', dataIndex: 'total_matches', key: 'apps', align: 'center' },
+                                { title: 'Goals', dataIndex: 'total_goals', key: 'goals', align: 'center', render: (v) => <strong style={{ color: 'var(--color-primary-400)' }}>{v}</strong> },
+                                { title: 'Assists', dataIndex: 'total_assists', key: 'assists', align: 'center' },
+                                {
+                                    title: 'Rating',
+                                    dataIndex: 'avg_rating',
+                                    key: 'rating',
+                                    align: 'center',
+                                    render: (v) => <Badge variant="primary">{v}</Badge>
+                                }
+                            ]}
+                            data={careerTotals.sort((a, b) => b.total_matches - a.total_matches)}
+                        />
+                    </Card>
+
+                    <Stack direction="row" justify="space-between" align="center">
+                        <h2 style={{ fontSize: 'var(--font-size-xl)' }}>Performance History</h2>
+                        <Stack direction="row" gap="var(--spacing-sm)">
+                            <Button size="sm" variant={careerView === 'year' ? 'primary' : 'secondary'} onClick={() => setCareerView('year')}>By Year</Button>
+                            <Button size="sm" variant={careerView === 'club' ? 'primary' : 'secondary'} onClick={() => setCareerView('club')}>By Club</Button>
+                            <Button size="sm" variant={careerView === 'country' ? 'primary' : 'secondary'} onClick={() => setCareerView('country')}>By Country</Button>
+                        </Stack>
+                    </Stack>
+
+                    {/* International Duty */}
+                    {internationalCareer.length > 0 && (
+                        <Card title="International Duty" subtitle="National team performances">
+                            <Table columns={careerColumns('year')} data={internationalCareer} />
+                        </Card>
+                    )}
+
+                    {/* Grouped Career History */}
+                    <Stack gap="var(--spacing-lg)">
+                        {sortedKeys.map(key => {
+                            const content = groupedCareer[key];
+                            const rows = Array.isArray(content) ? content : content.rows;
+                            return (
+                                <Card
+                                    key={key}
+                                    title={careerView === 'year' ? `${key} / ${parseInt(key) + 1}` : key}
+                                >
+                                    <Table
+                                        columns={careerColumns(careerView)}
+                                        data={rows}
+                                    />
+                                </Card>
+                            );
+                        })}
+                    </Stack>
+                </Stack>
+
+                <aside>
+                    <Stack gap="var(--spacing-xl)">
+                        {renderTrophies()}
+                        <Card title="Bio Details">
+                            <Stack gap="var(--spacing-md)">
+                                <div className="bio-detail-row">
+                                    <span className="lbl">Birth Date</span>
+                                    <span className="val">{player.birth_date || 'Unknown'}</span>
+                                </div>
+                                <div className="bio-detail-row">
+                                    <span className="lbl">Birth Place</span>
+                                    <span className="val">{player.birth_place ? `${player.birth_place}, ${player.birth_country}` : 'Unknown'}</span>
+                                </div>
+                                <div className="bio-detail-row">
+                                    <span className="lbl">Height/Weight</span>
+                                    <span className="val">{player.height} / {player.weight}</span>
+                                </div>
+                                <div className="bio-detail-row">
+                                    <span className="lbl">Foot</span>
+                                    <span className="val">{player.preferred_foot || 'N/A'}</span>
+                                </div>
+                            </Stack>
+                        </Card>
+                    </Stack>
                 </aside>
-            </div>
+            </Grid>
         </div>
     );
 };

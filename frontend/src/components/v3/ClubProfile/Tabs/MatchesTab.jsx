@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../../../services/api';
 import { useNavigate } from 'react-router-dom';
+import { Card, Table, Badge, Stack, Button, Grid } from '../../../../design-system';
 
 const MatchesTab = ({ clubId, year, competitionId }) => {
     const navigate = useNavigate();
@@ -32,8 +33,6 @@ const MatchesTab = ({ clubId, year, competitionId }) => {
 
     const { finished, scheduled, competitionList } = useMemo(() => {
         const finishedStatuses = ['FT', 'AET', 'PEN'];
-
-        // Extract unique competitions from matches
         const comps = Array.from(new Set(matches.map(m => m.league_name || m.competition?.name))).filter(Boolean);
 
         let filtered = [...matches];
@@ -65,140 +64,130 @@ const MatchesTab = ({ clubId, year, competitionId }) => {
     }, [matches, clubId, winsOnly, defeatOnly, selectedCompName]);
 
     if (loading) return (
-        <div className="tab-loading">
-            <div className="spinner-v3 small"></div>
-            <span>Synchronizing fixtures...</span>
-        </div>
+        <Card style={{ padding: '80px', textAlign: 'center' }}>
+            <Stack align="center" gap="var(--spacing-md)">
+                <div className="ds-button-spinner"></div>
+                <div style={{ color: 'var(--color-text-muted)' }}>Synchronizing fixtures...</div>
+            </Stack>
+        </Card>
     );
 
-    const MatchCard = ({ m }) => {
+    const MatchRow = ({ m }) => {
         const isHome = String(m.home_id || m.home?.id) === String(clubId);
         const [hg, ag] = (m.score || `${m.home_goals}-${m.away_goals}`).split('-').map(Number);
         const result = hg === ag ? 'D' : (isHome ? (hg > ag ? 'W' : 'L') : (ag > hg ? 'W' : 'L'));
 
         return (
-            <div className="v4-match-row" onClick={() => navigate(`/match/${m.match_id || m.fixture_id}`)}>
-                <div className="match-time-v4">
-                    <span className="m-day">{new Date(m.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
-                    <span className="m-year">{new Date(m.date).getFullYear()}</span>
-                </div>
-
-                <div className="match-body-v4">
-                    <div className="match-header-row">
-                        <div className="comp-tag">
-                            <img src={m.league_logo || m.competition?.logo} alt="" className="tiny-logo" />
-                            {m.league_name || m.competition?.name}
-                        </div>
-                        <span className="match-venue">{m.venue_name || 'Ground TBD'}</span>
+            <div className={`ds-match-row ${result.toLowerCase()}`} onClick={() => navigate(`/match/${m.match_id || m.fixture_id}`)}>
+                <Stack direction="row" align="center" gap="var(--spacing-xl)">
+                    <div style={{ width: '60px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold' }}>{new Date(m.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{new Date(m.date).getFullYear()}</div>
                     </div>
 
-                    <div className="match-main-row">
-                        <div className={`m-team ${isHome ? 'is-subject' : ''}`}>
-                            <span className="m-name">{isHome ? 'Home' : (m.home_name || m.home?.name)}</span>
-                            <img src={m.home_logo || m.home?.logo} alt="" />
-                        </div>
+                    <div style={{ flex: 1 }}>
+                        <Stack gap="4px">
+                            <Stack direction="row" align="center" gap="8px">
+                                <img src={m.league_logo || m.competition?.logo} alt="" style={{ width: '14px' }} />
+                                <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>{m.league_name || m.competition?.name}</span>
+                            </Stack>
+                            <Stack direction="row" align="center" justify="space-between">
+                                <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1, justifyContent: 'flex-end' }}>
+                                    <span style={{ fontWeight: isHome ? 'bold' : 'normal', color: isHome ? 'white' : 'var(--color-text-muted)' }}>{isHome ? 'This Club' : (m.home_name || m.home?.name)}</span>
+                                    <img src={m.home_logo || m.home?.logo} alt="" style={{ width: '24px' }} />
+                                </Stack>
 
-                        <div className="m-result-box">
-                            {m.status === 'NS' || m.status === 'TBD' ? (
-                                <div className="m-time-pill">
-                                    {new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                <div className="ds-match-score">
+                                    {m.status === 'NS' ? (
+                                        <Badge variant="neutral">{new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Badge>
+                                    ) : (
+                                        <Stack direction="row" gap="4px" align="center">
+                                            <span className="s">{hg}</span>
+                                            <span className="v">-</span>
+                                            <span className="s">{ag}</span>
+                                        </Stack>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className={`m-score-pill ${result.toLowerCase()}`}>
-                                    <span className="s-hg">{hg}</span>
-                                    <span className="s-sep">-</span>
-                                    <span className="s-ag">{ag}</span>
-                                </div>
-                            )}
-                        </div>
 
-                        <div className={`m-team right ${!isHome ? 'is-subject' : ''}`}>
-                            <img src={m.away_logo || m.away?.logo} alt="" />
-                            <span className="m-name">{!isHome ? 'Away' : (m.away_name || m.away?.name)}</span>
-                        </div>
+                                <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1 }}>
+                                    <img src={m.away_logo || m.away?.logo} alt="" style={{ width: '24px' }} />
+                                    <span style={{ fontWeight: !isHome ? 'bold' : 'normal', color: !isHome ? 'white' : 'var(--color-text-muted)' }}>{!isHome ? 'This Club' : (m.away_name || m.away?.name)}</span>
+                                </Stack>
+                            </Stack>
+                        </Stack>
                     </div>
-                </div>
+
+                    <div style={{ width: '32px' }}>
+                        {m.status !== 'NS' && (
+                            <Badge variant={result === 'W' ? 'success' : result === 'L' ? 'danger' : 'warning'} size="sm">{result}</Badge>
+                        )}
+                    </div>
+                </Stack>
             </div>
         );
     };
 
     return (
-        <div className="matches-tab-v4">
-
-            <div className="matches-toolbar-v4">
-                <div className="toolbar-top">
-                    <div className="venue-filters-v4">
-                        {['all', 'home', 'away'].map(v => (
-                            <button
-                                key={v}
-                                className={`pill-btn ${venueFilter === v ? 'active' : ''}`}
-                                onClick={() => setVenueFilter(v)}
+        <Stack gap="var(--spacing-xl)">
+            {/* Toolbar */}
+            <Card>
+                <Stack gap="var(--spacing-md)">
+                    <Stack direction="row" justify="space-between" align="center">
+                        <Stack direction="row" gap="var(--spacing-sm)">
+                            {['all', 'home', 'away'].map(v => (
+                                <Button key={v} size="sm" variant={venueFilter === v ? 'primary' : 'secondary'} onClick={() => setVenueFilter(v)}>
+                                    {v.charAt(0).toUpperCase() + v.slice(1)}
+                                </Button>
+                            ))}
+                        </Stack>
+                        <Stack direction="row" gap="8px">
+                            <Badge
+                                variant={winsOnly ? 'success' : 'neutral'}
+                                onClick={() => { setWinsOnly(!winsOnly); setDefeatOnly(false); }}
+                                style={{ cursor: 'pointer' }}
                             >
-                                {v}
-                            </button>
-                        ))}
-                    </div>
+                                Wins Only
+                            </Badge>
+                            <Badge
+                                variant={defeatOnly ? 'danger' : 'neutral'}
+                                onClick={() => { setDefeatOnly(!defeatOnly); setWinsOnly(false); }}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                Defeats Only
+                            </Badge>
+                        </Stack>
+                    </Stack>
 
-                    <div className="comp-selector-v4">
-                        <button
-                            className={`pill-btn ${selectedCompName === 'all' ? 'active' : ''}`}
-                            onClick={() => setSelectedCompName('all')}
-                        >
-                            All Comps
-                        </button>
+                    <Stack direction="row" gap="4px" style={{ overflowX: 'auto', paddingBottom: '4px' }}>
+                        <Button size="xs" variant={selectedCompName === 'all' ? 'primary' : 'ghost'} onClick={() => setSelectedCompName('all')}>All Competitions</Button>
                         {competitionList.map(c => (
-                            <button
-                                key={c}
-                                className={`pill-btn ${selectedCompName === c ? 'active' : ''}`}
-                                onClick={() => setSelectedCompName(c)}
-                            >
-                                {c}
-                            </button>
+                            <Button key={c} size="xs" variant={selectedCompName === c ? 'primary' : 'ghost'} onClick={() => setSelectedCompName(c)}>{c}</Button>
                         ))}
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
+            </Card>
 
-                <div className="toolbar-bottom">
-                    <button
-                        className={`toggle-v4 win ${winsOnly ? 'active' : ''}`}
-                        onClick={() => { setWinsOnly(!winsOnly); setDefeatOnly(false); }}
-                    >
-                        Wins Only
-                    </button>
-                    <button
-                        className={`toggle-v4 loss ${defeatOnly ? 'active' : ''}`}
-                        onClick={() => { setDefeatOnly(!defeatOnly); setWinsOnly(false); }}
-                    >
-                        Defeats Only
-                    </button>
-                </div>
-            </div>
-
-            <div className="match-timeline-v4">
+            <Grid columns="1fr" gap="var(--spacing-lg)">
                 {scheduled.length > 0 && (
-                    <section className="timeline-section">
-                        <label className="timeline-label upcoming">Upcoming Fixtures</label>
-                        <div className="matches-list-v4">
-                            {scheduled.map(m => <MatchCard key={m.fixture_id || m.match_id} m={m} />)}
-                        </div>
-                    </section>
+                    <Card title="Upcoming Fixtures">
+                        <Stack gap="var(--spacing-xs)">
+                            {scheduled.map(m => <MatchRow key={m.fixture_id || m.match_id} m={m} />)}
+                        </Stack>
+                    </Card>
                 )}
 
-                <section className="timeline-section">
-                    <label className="timeline-label">Match History</label>
-                    <div className="matches-list-v4">
-                        {finished.map(m => <MatchCard key={m.fixture_id || m.match_id} m={m} />)}
-                    </div>
-                    {finished.length === 0 && (
-                        <div className="empty-matches">
-                            <div className="icon">🏟️</div>
-                            <h3>No matches recorded</h3>
-                            <p>Try clearing your active filters.</p>
-                        </div>
-                    )}
-                </section>
-            </div>
-        </div>
+                <Card title="Match History" subtitle="Full results for the selected period">
+                    <Stack gap="var(--spacing-xs)">
+                        {finished.map(m => <MatchRow key={m.fixture_id || m.match_id} m={m} />)}
+                        {finished.length === 0 && (
+                            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                                No completed matches found with current filters.
+                            </div>
+                        )}
+                    </Stack>
+                </Card>
+            </Grid>
+        </Stack>
     );
 };
 

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
+import { Card, Stack, Grid, Badge, Button } from '../../design-system';
 import './SearchPageV3.css';
 
 const CountrySelector = ({ countries, selected, onSelect }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef(null);
 
-    // Close on click outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (containerRef.current && !containerRef.current.contains(event.target)) {
@@ -23,59 +23,65 @@ const CountrySelector = ({ countries, selected, onSelect }) => {
     const others = countries.filter(c => c.importance_rank > 10);
 
     return (
-        <div className="custom-dropdown" ref={containerRef}>
+        <div className="ds-country-selector" ref={containerRef}>
             <div
-                className={`dropdown-trigger ${isOpen ? 'active' : ''}`}
+                className={`ds-selector-trigger ${isOpen ? 'active' : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
             >
                 {selected ? (
-                    <div className="selected-val">
-                        <img src={selectedCountryData?.flag_url} alt="" className="mini-flag" />
+                    <Stack direction="row" align="center" gap="8px">
+                        <img src={selectedCountryData?.flag_url} alt="" style={{ width: '16px' }} />
                         <span>{selected}</span>
-                    </div>
+                    </Stack>
                 ) : (
-                    <div className="selected-val">
-                        <span className="globe">🌍</span>
+                    <Stack direction="row" align="center" gap="8px">
+                        <span>🌍</span>
                         <span>All Regions</span>
-                    </div>
+                    </Stack>
                 )}
-                <span className={`chevron ${isOpen ? 'up' : 'down'}`}>▼</span>
+                <span style={{ fontSize: '10px' }}>{isOpen ? '▲' : '▼'}</span>
             </div>
 
             {isOpen && (
-                <div className="dropdown-menu animate-fade-in-down">
-                    <div className="menu-item all" onClick={() => { onSelect(''); setIsOpen(false); }}>
+                <div className="ds-selector-menu">
+                    <div className="ds-menu-item" onClick={() => { onSelect(''); setIsOpen(false); }}>
                         🌍 All Regions
                     </div>
 
                     {top10.length > 0 && (
-                        <div className="menu-group">
-                            <div className="group-label">Top 10 Nations</div>
+                        <div className="ds-menu-group">
+                            <div className="ds-group-label">Top Nations</div>
                             {top10.map(c => (
                                 <div
                                     key={c.name}
-                                    className={`menu-item ${selected === c.name ? 'active' : ''}`}
+                                    className={`ds-menu-item ${selected === c.name ? 'active' : ''}`}
                                     onClick={() => { onSelect(c.name); setIsOpen(false); }}
                                 >
-                                    <img src={c.flag_url} alt="" className="mini-flag" />
-                                    <span>{c.name}</span>
-                                    <span className="rank">#{c.importance_rank}</span>
+                                    <Stack direction="row" align="center" gap="8px" justify="space-between" style={{ width: '100%' }}>
+                                        <Stack direction="row" align="center" gap="8px">
+                                            <img src={c.flag_url} alt="" style={{ width: '16px' }} />
+                                            <span>{c.name}</span>
+                                        </Stack>
+                                        <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>#{c.importance_rank}</span>
+                                    </Stack>
                                 </div>
                             ))}
                         </div>
                     )}
 
                     {others.length > 0 && (
-                        <div className="menu-group">
-                            <div className="group-label">Other Regions</div>
+                        <div className="ds-menu-group">
+                            <div className="ds-group-label">Others</div>
                             {others.map(c => (
                                 <div
                                     key={c.name}
-                                    className={`menu-item ${selected === c.name ? 'active' : ''}`}
+                                    className={`ds-menu-item ${selected === c.name ? 'active' : ''}`}
                                     onClick={() => { onSelect(c.name); setIsOpen(false); }}
                                 >
-                                    <img src={c.flag_url} alt="" className="mini-flag" />
-                                    <span>{c.name}</span>
+                                    <Stack direction="row" align="center" gap="8px">
+                                        <img src={c.flag_url} alt="" style={{ width: '16px' }} />
+                                        <span>{c.name}</span>
+                                    </Stack>
                                 </div>
                             ))}
                         </div>
@@ -98,14 +104,12 @@ const SearchPageV3 = () => {
     const debounceRef = useRef(null);
     const inputRef = useRef(null);
 
-    // Fetch countries for filter dropdown
     useEffect(() => {
         api.getSearchCountries()
             .then(data => setCountries(data))
             .catch(err => console.error("Failed to fetch countries", err));
     }, []);
 
-    // Debounced search
     const doSearch = useCallback(async (searchQuery, searchType, searchCountry) => {
         if (!searchQuery || searchQuery.length < 2) {
             setResults({ players: [], clubs: [] });
@@ -138,191 +142,135 @@ const SearchPageV3 = () => {
     const totalResults = (results.players?.length || 0) + (results.clubs?.length || 0);
 
     return (
-        <div className="search-page-v3">
-            <div className="search-hero-bg"></div>
+        <div className="ds-search-page animate-fade-in">
+            <div className="ds-search-hero">
+                <Stack align="center" gap="var(--spacing-md)">
+                    <h1 style={{ fontSize: 'var(--font-size-4xl)', margin: 0 }}>Scout Engine</h1>
+                    <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', maxWidth: '600px' }}>
+                        Accessing 50+ professional leagues & 320,000+ player statistical profiles
+                    </p>
+                </Stack>
 
-            <div className="search-content-container">
-                {/* Header Section (US_101 - Clean SaaS High-Density) */}
-                <header className="search-header-premium">
-                    <h1>Search Engine</h1>
-                    <p className="search-subtitle">Accessing 50+ professional leagues & 320,000+ player statistical profiles</p>
-                </header>
-
-                {/* Search Box Box */}
-                <div className="search-box-container">
-                    <div className="search-input-glass">
-                        <span className="search-icon-main">🔍</span>
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            className="search-input-field"
-                            placeholder="Search by player name or club brand..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            autoFocus
-                        />
-                        {query && (
-                            <button className="search-clear-btn" onClick={() => { setQuery(''); inputRef.current?.focus(); }}>✕</button>
-                        )}
-                        <div className="search-focus-glow"></div>
-                    </div>
-
-                    <div className="search-filters-row">
-                        <div className="type-selector-premium">
-                            {['all', 'player', 'club'].map(t => (
-                                <button
-                                    key={t}
-                                    className={`type-option ${type === t ? 'active' : ''}`}
-                                    onClick={() => setType(t)}
-                                >
-                                    {t === 'all' && 'All'}
-                                    {t === 'player' && 'Players'}
-                                    {t === 'club' && 'Clubs'}
-                                </button>
-                            ))}
+                <div className="ds-search-container mt-2xl">
+                    <Stack gap="var(--spacing-lg)">
+                        <div className="ds-search-input-wrapper">
+                            <span className="ds-search-icon">🔍</span>
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                placeholder="Search by player name or club brand..."
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                autoFocus
+                            />
+                            {query && (
+                                <button className="ds-clear-btn" onClick={() => { setQuery(''); inputRef.current?.focus(); }}>✕</button>
+                            )}
                         </div>
 
-                        <div className="country-filter-wrap">
+                        <Stack direction="row" justify="space-between" align="center">
+                            <Stack direction="row" gap="var(--spacing-sm)" className="ds-filter-tabs">
+                                {['all', 'player', 'club'].map(t => (
+                                    <button
+                                        key={t}
+                                        className={`ds-filter-tab ${type === t ? 'active' : ''}`}
+                                        onClick={() => setType(t)}
+                                    >
+                                        {t === 'all' ? 'All' : t === 'player' ? 'Players' : 'Clubs'}
+                                    </button>
+                                ))}
+                            </Stack>
+
                             <CountrySelector
                                 countries={countries}
                                 selected={country}
                                 onSelect={setCountry}
                             />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Main Results Area */}
-                <div className="results-viewport">
-                    {loading && (
-                        <div className="search-loading-overlay">
-                            <div className="loading-spinner-v3"></div>
-                            <p>Querying V3 Data...</p>
-                        </div>
-                    )}
-
-                    {!loading && hasSearched && (
-                        <div className="results-layout">
-                            {/* Summary Bar */}
-                            <div className="results-summary">
-                                <span>Showing <strong>{totalResults}</strong> matches for <span className="query-highlight">"{query}"</span></span>
-                                <div className="sort-indicator">Sorted by Relevance & Prestige</div>
-                            </div>
-
-                            <div className="results-grid-container">
-                                {/* Clubs Column/Grid */}
-                                {results.clubs?.length > 0 && (type === 'all' || type === 'club') && (
-                                    <section className="results-section-v3">
-                                        <div className="section-head">
-                                            <span className="icon">🏟️</span>
-                                            <h2>Clubs</h2>
-                                            <span className="count-badge">{results.clubs.length}</span>
-                                        </div>
-                                        <div className="rich-results-list">
-                                            {results.clubs.map(c => (
-                                                <div
-                                                    key={c.team_id}
-                                                    className="rich-card club-result"
-                                                    onClick={() => navigate(`/club/${c.team_id}`)}
-                                                >
-                                                    <div className="card-logo-box">
-                                                        <img
-                                                            src={c.logo_url || ''}
-                                                            alt=""
-                                                            onError={(e) => { e.target.src = 'https://media.api-sports.io/football/teams/0.png'; }}
-                                                        />
-                                                    </div>
-                                                    <div className="card-main">
-                                                        <h3 className="card-title">{c.name}</h3>
-                                                        <div className="card-sub">
-                                                            {c.country_flag && <img src={c.country_flag} alt="" className="mini-flag" />}
-                                                            <span>{c.country}</span>
-                                                            {c.founded && <span className="dot">•</span>}
-                                                            {c.founded && <span>Est. {c.founded}</span>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="card-action">
-                                                        <span>View</span>
-                                                        <span className="arrow">→</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
-                                )}
-
-                                {/* Players Column/Grid */}
-                                {results.players?.length > 0 && (type === 'all' || type === 'player') && (
-                                    <section className="results-section-v3">
-                                        <div className="section-head">
-                                            <span className="icon">👤</span>
-                                            <h2>Players</h2>
-                                            <span className="count-badge">{results.players.length}</span>
-                                        </div>
-                                        <div className="rich-results-list">
-                                            {results.players.map(p => (
-                                                <div
-                                                    key={p.player_id}
-                                                    className="rich-card player-result"
-                                                    onClick={() => navigate(`/player/${p.player_id}`)}
-                                                >
-                                                    <div className="card-photo-box">
-                                                        <img
-                                                            src={p.photo_url || ''}
-                                                            alt=""
-                                                            className="player-photo-sm"
-                                                            onError={(e) => { e.target.src = 'https://media.api-sports.io/football/players/0.png'; }}
-                                                        />
-                                                    </div>
-                                                    <div className="card-main">
-                                                        <h3 className="card-title">{p.name}</h3>
-                                                        <div className="card-sub">
-                                                            {p.nationality_flag && <img src={p.nationality_flag} alt="" className="mini-flag" />}
-                                                            <span>{p.nationality}</span>
-                                                            {p.age && <span className="dot">•</span>}
-                                                            {p.age && <span>{p.age} years</span>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="card-action">
-                                                        <span>Profile</span>
-                                                        <span className="arrow">→</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
-                                )}
-                            </div>
-
-                            {/* Empty Result Message */}
-                            {totalResults === 0 && (
-                                <div className="no-results-premium">
-                                    <div className="empty-state-icon">🔎</div>
-                                    <h3>No Data Found</h3>
-                                    <p>We couldn't find any clubs or players matching "{query}".</p>
-                                    <button className="primary-btn-v3" onClick={() => navigate('/import')}>Import More Leagues</button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {!loading && !hasSearched && (
-                        <div className="search-empty-state-v3">
-                            <div className="exploration-mesh"></div>
-                            <div className="empty-content">
-                                <div className="empty-icon-box">⚽</div>
-                                <h2>Scout Engine Ready</h2>
-                                <p>Query deep statistical profiles and historical milestones across 50+ global leagues.</p>
-                                <div className="quick-info">
-                                    <div className="q-item"><span>🏆</span> Top Leagues First</div>
-                                    <div className="q-item"><span>📊</span> Deep Player Stats</div>
-                                    <div className="q-item"><span>🏟️</span> Club History</div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                        </Stack>
+                    </Stack>
                 </div>
             </div>
+
+            <main className="ds-search-main">
+                {loading && (
+                    <Stack align="center" justify="center" style={{ padding: '80px' }}>
+                        <div className="ds-button-spinner"></div>
+                        <p className="mt-md" style={{ color: 'var(--color-text-muted)' }}>Querying V3 Data...</p>
+                    </Stack>
+                )}
+
+                {!loading && hasSearched && (
+                    <Stack gap="var(--spacing-xl)">
+                        <div style={{ padding: '0 var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                            Showing <strong>{totalResults}</strong> matches for <span style={{ color: 'var(--color-primary-400)' }}>"{query}"</span>
+                        </div>
+
+                        <Grid columns="1fr 1fr" gap="var(--spacing-xl)">
+                            {/* Clubs */}
+                            {(type === 'all' || type === 'club') && (
+                                <Card title="Clubs" extra={<Badge variant="primary">{results.clubs?.length || 0}</Badge>}>
+                                    <Stack gap="var(--spacing-xs)">
+                                        {results.clubs?.map(c => (
+                                            <div key={c.team_id} className="ds-result-row" onClick={() => navigate(`/club/${c.team_id}`)}>
+                                                <Stack direction="row" align="center" gap="var(--spacing-md)">
+                                                    <div className="ds-result-image">
+                                                        <img src={c.logo_url} alt="" onError={(e) => { e.target.src = 'https://media.api-sports.io/football/teams/0.png'; }} />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-sm)' }}>{c.name}</div>
+                                                        <Stack direction="row" align="center" gap="4px">
+                                                            {c.country_flag && <img src={c.country_flag} alt="" style={{ width: '12px' }} />}
+                                                            <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{c.country}</span>
+                                                        </Stack>
+                                                    </div>
+                                                </Stack>
+                                                <span className="ds-arrow">→</span>
+                                            </div>
+                                        ))}
+                                        {results.clubs?.length === 0 && <div className="ds-empty-msg">No clubs found</div>}
+                                    </Stack>
+                                </Card>
+                            )}
+
+                            {/* Players */}
+                            {(type === 'all' || type === 'player') && (
+                                <Card title="Players" extra={<Badge variant="primary">{results.players?.length || 0}</Badge>}>
+                                    <Stack gap="var(--spacing-xs)">
+                                        {results.players?.map(p => (
+                                            <div key={p.player_id} className="ds-result-row" onClick={() => navigate(`/player/${p.player_id}`)}>
+                                                <Stack direction="row" align="center" gap="var(--spacing-md)">
+                                                    <div className="ds-result-image ds-round">
+                                                        <img src={p.photo_url} alt="" onError={(e) => { e.target.src = 'https://media.api-sports.io/football/players/0.png'; }} />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-sm)' }}>{p.name}</div>
+                                                        <Stack direction="row" align="center" gap="4px">
+                                                            {p.nationality_flag && <img src={p.nationality_flag} alt="" style={{ width: '12px' }} />}
+                                                            <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{p.nationality} • {p.age}y</span>
+                                                        </Stack>
+                                                    </div>
+                                                </Stack>
+                                                <span className="ds-arrow">→</span>
+                                            </div>
+                                        ))}
+                                        {results.players?.length === 0 && <div className="ds-empty-msg">No players found</div>}
+                                    </Stack>
+                                </Card>
+                            )}
+                        </Grid>
+                    </Stack>
+                )}
+
+                {!loading && !hasSearched && (
+                    <Stack align="center" justify="center" gap="var(--spacing-lg)" style={{ padding: '120px 0' }}>
+                        <div style={{ fontSize: '64px', opacity: 0.5 }}>⚽</div>
+                        <h2 style={{ fontSize: 'var(--font-size-2xl)', margin: 0 }}>Scout Engine Ready</h2>
+                        <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', maxWidth: '400px' }}>
+                            Query deep statistical profiles and historical milestones across 50+ global leagues.
+                        </p>
+                    </Stack>
+                )}
+            </main>
         </div>
     );
 };

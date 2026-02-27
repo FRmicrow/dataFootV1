@@ -1,0 +1,45 @@
+import React from 'react';
+
+/**
+ * Grid component for 2D layouts.
+ * @param {string} columns - CSS grid-template-columns value.
+ * @param {string} gap - Spacing between items (defaults to var(--spacing-sm) = 24px).
+ */
+export const Grid = ({ children, columns = 'repeat(auto-fill, minmax(300px, 1fr))', gap = 'var(--spacing-sm)', className = '', style = {} }) => {
+    return (
+        <div
+            className={`ds-grid ${className}`}
+            style={{
+                display: 'grid',
+                gridTemplateColumns: columns,
+                gap,
+                ...style
+            }}
+        >
+            {children}
+        </div>
+    );
+};
+
+/**
+ * Stack component for flex-based 1D layouts.
+ * @param {string} direction - flex-direction (row/column).
+ * @param {string} gap - Spacing between items (defaults to var(--spacing-xs) = 12px).
+ */
+export const Stack = ({ children, direction = 'column', gap = 'var(--spacing-xs)', align = 'stretch', justify = 'flex-start', className = '', style = {} }) => {
+    return (
+        <div
+            className={`ds-stack ${className}`}
+            style={{
+                display: 'flex',
+                flexDirection: direction,
+                gap,
+                alignItems: align,
+                justifyContent: justify,
+                ...style
+            }}
+        >
+            {children}
+        </div>
+    );
+};

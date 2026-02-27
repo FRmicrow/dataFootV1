@@ -22,6 +22,9 @@ import MonitoringConsole from './components/v3/live-bet/MonitoringConsole';
 import SimulationDashboard from './components/v3/live-bet/SimulationDashboard';
 import ForgeLaboratory from './components/v3/ForgeLaboratory';
 import { ImportProvider } from './context/ImportContext.jsx';
+import DesignSystemPage from './components/v3/DesignSystemPage';
+import { Navbar } from './design-system';
+import './design-system/tokens.css';
 import './App.css';
 
 function App() {
@@ -29,35 +32,7 @@ function App() {
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <ImportProvider>
                 <div className="app">
-                    <nav className="nav">
-                        <div className="nav-content">
-                            <div className="nav-title">⚽ StatFoot</div>
-                            <NavLink to="/dashboard" className="nav-link">
-                                Dashboard
-                            </NavLink>
-                            <NavLink to="/leagues" className="nav-link">
-                                Leagues
-                            </NavLink>
-                            <NavLink to="/search" className="nav-link">
-                                Search
-                            </NavLink>
-                            <NavLink to="/studio" className="nav-link">
-                                Studio
-                            </NavLink>
-                            <NavLink to="/forge/lab" className="nav-link" style={{ color: '#8b5cf6', fontWeight: 'bold' }}>
-                                🧪 Forge Lab
-                            </NavLink>
-                            <NavLink to="/import" className="nav-link">
-                                Import
-                            </NavLink>
-                            <NavLink to="/live-bet" className="nav-link" style={{ color: '#f59e0b', fontWeight: 'bold' }}>
-                                🔥 Live Bet
-                            </NavLink>
-                            <NavLink to="/health" className="nav-link" style={{ color: '#10b981' }}>
-                                🛡️ Health
-                            </NavLink>
-                        </div>
-                    </nav>
+                    <Navbar />
 
                     <Routes>
                         {/* Redirect root to dashboard */}
@@ -87,6 +62,7 @@ function App() {
                             <Route path="/live-bet/match/:id" element={<LiveBetMatchDetails />} />
                             <Route path="/live-bet/alpha" element={<SimulationDashboard />} />
                             <Route path="/match/:id" element={<MatchDetailPage />} />
+                            <Route path="/design" element={<DesignSystemPage />} />
                         </Route>
 
                         {/* Legacy V3 path redirects */}

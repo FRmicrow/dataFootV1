@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
+import { Card, Table, Badge, Stack, Button, Grid } from '../../../../design-system';
 
 const StatsTab = ({ clubId, year, competitionId }) => {
     const [stats, setStats] = useState(null);
     const [history, setHistory] = useState(null);
     const [view, setView] = useState('overview'); // 'overview' or 'history'
     const [loading, setLoading] = useState(true);
-    const [searchHistory, setSearchHistory] = useState('');
     const [coreOnly, setCoreOnly] = useState(true);
 
     useEffect(() => {
@@ -35,108 +35,90 @@ const StatsTab = ({ clubId, year, competitionId }) => {
     }, [clubId, year, competitionId, view]);
 
     if (loading) return (
-        <div className="tab-loading">
-            <div className="spinner-v3 small"></div>
-            <span>Mining tactical performance patterns...</span>
-        </div>
+        <Card style={{ padding: '80px', textAlign: 'center' }}>
+            <Stack align="center" gap="var(--spacing-md)">
+                <div className="ds-button-spinner"></div>
+                <div style={{ color: 'var(--color-text-muted)' }}>Mining tactical performance patterns...</div>
+            </Stack>
+        </Card>
     );
 
-    const MetricCard = ({ label, value, subValue, group }) => (
-        <div className={`v4-metric-card group-${group?.toLowerCase().replace(/&/g, '').replace(/ /g, '-')}`}>
-            <span className="m-label">{label}</span>
-            <div className="m-val-row">
-                <span className="m-value">{value || '—'}</span>
-                {subValue && <span className="m-sub">{subValue}</span>}
-            </div>
+    const MetricRow = ({ label, value, subValue, variant = 'neutral' }) => (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>{label}</span>
+            <Stack align="flex-end" gap="2px">
+                <span style={{ fontWeight: 'bold' }}>{value || '—'}</span>
+                {subValue && <span style={{ fontSize: '10px', opacity: 0.6 }}>{subValue}</span>}
+            </Stack>
         </div>
     );
 
     if (view === 'overview') {
         if (!stats || !stats.all) return (
-            <div className="empty-state-card-v4">
-                <div className="empty-icon">📊</div>
-                <h3>Tactical data pending</h3>
-                <p>Detailed performance metrics aren't available for this selection yet.</p>
-            </div>
+            <Card style={{ padding: '80px', textAlign: 'center' }}>
+                <span style={{ fontSize: '48px', opacity: 0.5 }}>📊</span>
+                <h3 className="mt-md">Tactical data pending</h3>
+                <p style={{ color: 'var(--color-text-muted)' }}>Detailed performance metrics aren't available for this selection yet.</p>
+            </Card>
         );
         const s = stats.all;
 
         return (
-            <div className="stats-tab-v4">
-                <div className="view-selector-v4">
-                    <button className="active">Overview</button>
-                    <button onClick={() => setView('history')}>Season History</button>
-                </div>
+            <Stack gap="var(--spacing-xl)">
+                <Stack direction="row" gap="var(--spacing-sm)">
+                    <Button variant="primary" size="sm">Overview</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setView('history')}>Season History</Button>
+                </Stack>
 
-                <div className="stats-sections-v4">
-                    <section className="metric-group-v4">
-                        <h3 className="group-title">Possession & Passing</h3>
-                        <div className="metrics-grid-v4">
-                            <MetricCard label="Ball Possession" value={`${s.possession}%`} group="pos" />
-                            <MetricCard label="Pass Accuracy" value={`${s.pass_accuracy}%`} group="pos" />
-                            <MetricCard label="Corners / Match" value={s.corners_per_match} group="pos" />
-                            <MetricCard label="Touches in Box" value={s.touches_per_match || '—'} group="pos" />
-                        </div>
-                    </section>
+                <Grid columns="1fr 1fr 1fr" gap="var(--spacing-lg)">
+                    <Card title="Possession & Passing">
+                        <Stack>
+                            <MetricRow label="Ball Possession" value={`${s.possession}%`} />
+                            <MetricRow label="Pass Accuracy" value={`${s.pass_accuracy}%`} />
+                            <MetricRow label="Corners / Match" value={s.corners_per_match} />
+                            <MetricRow label="Touches in Box" value={s.touches_per_match} />
+                        </Stack>
+                    </Card>
 
-                    <section className="metric-group-v4">
-                        <h3 className="group-title">Shooting & Efficiency</h3>
-                        <div className="metrics-grid-v4">
-                            <MetricCard label="Shots / Match" value={s.shots_per_match} subValue={`${s.shots_on_target_per_match} Target`} group="atk" />
-                            <MetricCard label="Goal Conv. Rate" value={`${s.shot_conversion}%`} group="atk" />
-                            <MetricCard label="Big Chances / M" value={s.big_chances_per_match || '—'} group="atk" />
-                            <MetricCard label="Goals Scored / M" value={s.goals_scored_per_match} group="atk" />
-                        </div>
-                    </section>
+                    <Card title="Shooting & Efficiency">
+                        <Stack>
+                            <MetricRow label="Shots / Match" value={s.shots_per_match} subValue={`${s.shots_on_target_per_match} Target`} />
+                            <MetricRow label="Goal Conv. Rate" value={`${s.shot_conversion}%`} />
+                            <MetricRow label="Big Chances / M" value={s.big_chances_per_match} />
+                            <MetricRow label="Goals Scored / M" value={s.goals_scored_per_match} />
+                        </Stack>
+                    </Card>
 
-                    <section className="metric-group-v4">
-                        <h3 className="group-title">Defense & Discipline</h3>
-                        <div className="metrics-grid-v4">
-                            <MetricCard label="Clean Sheet %" value={`${s.clean_sheet_pct}%`} group="def" />
-                            <MetricCard label="Gls Conceded / M" value={s.goals_conceded_per_match} group="def" />
-                            <MetricCard label="Saves / Match" value={s.saves_per_match || '—'} group="def" />
-                            <MetricCard label="Yellow / Match" value={s.yellow_cards_per_match || '—'} group="def" />
-                        </div>
-                    </section>
-                </div>
+                    <Card title="Defense & Discipline">
+                        <Stack>
+                            <MetricRow label="Clean Sheet %" value={`${s.clean_sheet_pct}%`} />
+                            <MetricRow label="Gls Conceded / M" value={s.goals_conceded_per_match} />
+                            <MetricRow label="Saves / Match" value={s.saves_per_match} />
+                            <MetricRow label="Yellow / Match" value={s.yellow_cards_per_match} />
+                        </Stack>
+                    </Card>
+                </Grid>
 
-                <div className="split-performance-v4-compact">
-                    <h3 className="group-title-mini">Home / Away Split</h3>
-                    <table className="v4-performance-split-table-mini">
-                        <thead>
-                            <tr>
-                                <th align="left">Metric</th>
-                                <th align="center">HOME</th>
-                                <th align="center">AWAY</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Win Rate</td>
-                                <td align="center">{stats.home?.win_rate || '—'}%</td>
-                                <td align="center">{stats.away?.win_rate || '—'}%</td>
-                            </tr>
-                            <tr>
-                                <td>Gls Scored / M</td>
-                                <td align="center">{stats.home?.goals_scored_per_match || '—'}</td>
-                                <td align="center">{stats.away?.goals_scored_per_match || '—'}</td>
-                            </tr>
-                            <tr>
-                                <td>Possession</td>
-                                <td align="center">{stats.home?.possession || '—'}%</td>
-                                <td align="center">{stats.away?.possession || '—'}%</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                <Card title="Home / Away Split" subtitle="Performance variations by venue">
+                    <Table
+                        columns={[
+                            { title: 'Metric', dataIndex: 'metric', key: 'metric' },
+                            { title: 'Home', dataIndex: 'home', key: 'home', align: 'center', render: (v) => <Badge variant="primary">{v}</Badge> },
+                            { title: 'Away', dataIndex: 'away', key: 'away', align: 'center', render: (v) => <Badge variant="neutral">{v}</Badge> }
+                        ]}
+                        data={[
+                            { metric: 'Win Rate', home: `${stats.home?.win_rate || 0}%`, away: `${stats.away?.win_rate || 0}%` },
+                            { metric: 'Gls Scored / M', home: stats.home?.goals_scored_per_match || 0, away: stats.away?.goals_scored_per_match || 0 },
+                            { metric: 'Possession', home: `${stats.home?.possession || 0}%`, away: `${stats.away?.possession || 0}%` },
+                        ]}
+                    />
+                </Card>
+            </Stack>
         );
     }
 
     // HISTORY VIEW
-    if (!history) return <div className="tab-loading">Archiving history...</div>;
-    const years = Object.keys(history).sort((a, b) => b - a);
-
+    const years = history ? Object.keys(history).sort((a, b) => b - a) : [];
     const allMetrics = [
         { key: 'win_rate', label: 'Win Rate (%)', core: true },
         { key: 'points_per_match', label: 'Points / Match', core: true },
@@ -146,51 +128,37 @@ const StatsTab = ({ clubId, year, competitionId }) => {
         { key: 'possession', label: 'Possession (%)', core: false },
         { key: 'pass_accuracy', label: 'Pass Accuracy (%)', core: false },
         { key: 'shot_conversion', label: 'Shot Conv. (%)', core: false },
-        { key: 'shots_per_match', label: 'Shots / Match', core: false },
-        { key: 'average_rating', label: 'Squad Rating', core: false }
     ];
 
     const filteredMetrics = coreOnly ? allMetrics.filter(m => m.core) : allMetrics;
 
     return (
-        <div className="stats-tab-v4">
-            <div className="view-selector-v4">
-                <button onClick={() => setView('overview')}>Overview</button>
-                <button className="active">Season History</button>
-            </div>
+        <Stack gap="var(--spacing-xl)">
+            <Stack direction="row" justify="space-between" align="center">
+                <Stack direction="row" gap="var(--spacing-sm)">
+                    <Button variant="secondary" size="sm" onClick={() => setView('overview')}>Overview</Button>
+                    <Button variant="primary" size="sm">Season History</Button>
+                </Stack>
+                <Button size="xs" variant="ghost" onClick={() => setCoreOnly(!coreOnly)}>
+                    {coreOnly ? 'Show Detailed Metrics' : 'Show Core Only'}
+                </Button>
+            </Stack>
 
-            <div className="history-controls-v4">
-                <button
-                    className={`toggle-btn ${coreOnly ? 'active' : ''}`}
-                    onClick={() => setCoreOnly(!coreOnly)}
-                >
-                    {coreOnly ? 'Show All Metrics' : 'Show Core Only'}
-                </button>
-            </div>
-
-            <div className="history-table-wrapper-v4">
-                <table className="v4-history-summary-table">
-                    <thead>
-                        <tr>
-                            <th className="sticky-metric-col">Tactical Metric</th>
-                            {years.map(y => <th key={y} align="center" className="year-header">{y}</th>)}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredMetrics.map(m => (
-                            <tr key={m.key}>
-                                <td className="sticky-metric-col label-cell">{m.label}</td>
-                                {years.map(y => (
-                                    <td key={y} align="center" className="val-cell">
-                                        {history[y] && history[y][m.key] ? history[y][m.key] : '—'}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <Card title="Tactical Evolution" subtitle="Year-over-year performance trends">
+                <Table
+                    columns={[
+                        { title: 'Metric', dataIndex: 'label', key: 'label' },
+                        ...years.map(y => ({
+                            title: y,
+                            key: y,
+                            align: 'center',
+                            render: (_, m) => <span style={{ fontWeight: 'bold' }}>{history[y]?.[m.key] || '—'}</span>
+                        }))
+                    ]}
+                    data={filteredMetrics}
+                />
+            </Card>
+        </Stack>
     );
 };
 
