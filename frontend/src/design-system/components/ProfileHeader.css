@@ -1,0 +1,100 @@
+.ds-profile-header {
+    width: 100%;
+    padding: var(--spacing-2xl) var(--spacing-xl) var(--spacing-xl);
+    border-radius: var(--radius-2xl);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: var(--spacing-lg);
+}
+
+.ds-profile-header-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.ds-profile-avatar-container {
+    width: 120px;
+    height: 120px;
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-2xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-xl);
+}
+
+.ds-profile-avatar {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.ds-profile-title {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-black);
+    color: var(--color-text-main);
+    letter-spacing: -0.02em;
+}
+
+.ds-profile-badges {
+    display: flex;
+    gap: var(--spacing-2xs);
+}
+
+.ds-profile-subtitles {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2xs);
+}
+
+.ds-profile-subtitle {
+    font-size: var(--font-size-base);
+    color: var(--color-text-muted);
+}
+
+.ds-profile-separator {
+    opacity: 0.3;
+}
+
+.ds-profile-stats-bar {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ds-profile-stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-profile-stat-label {
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.ds-profile-stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-black);
+    color: var(--color-text-main);
+}
+
+@media (max-width: 768px) {
+    .ds-profile-header {
+        padding: var(--spacing-xl) var(--spacing-md) var(--spacing-md);
+    }
+
+    .ds-profile-avatar-container {
+        width: 80px;
+        height: 80px;
+    }
+
+    .ds-profile-title {
+        font-size: var(--font-size-2xl);
+    }
+}

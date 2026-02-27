@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { Card, Grid, Stack, Badge, Button } from '../../design-system';
+import {
+    Card, Grid, Stack, Badge, Button,
+    Tabs, ProfileHeader
+} from '../../design-system';
 
 // Components
 import LeagueOverview from './league/LeagueOverview';
@@ -128,84 +131,72 @@ const SeasonOverviewPage = () => {
     };
 
     if (loading && !data) return (
-        <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
+        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div className="ds-button-spinner" style={{ marginBottom: '12px' }}></div>
             <p style={{ color: 'var(--color-text-dim)' }}>Mining league intelligence...</p>
         </div>
     );
 
     if (error) return (
-        <Card style={{ maxWidth: '400px', margin: '80px auto', textAlign: 'center' }}>
-            <span style={{ fontSize: '48px' }}>🚨</span>
-            <h2 className="mt-md">Sync Error</h2>
-            <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>{error}</p>
-            <Button variant="primary" onClick={() => navigate('/import')}>Initialize Modules</Button>
-        </Card>
+        <div style={{ padding: '80px', textAlign: 'center' }}>
+            <Card style={{ maxWidth: '400px', margin: '0 auto' }}>
+                <span style={{ fontSize: '48px' }}>🚨</span>
+                <h2 style={{ margin: '24px 0 12px' }}>Sync Error</h2>
+                <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>{error}</p>
+                <Button variant="primary" onClick={() => navigate('/import')}>Initialize Modules</Button>
+            </Card>
+        </div>
     );
 
     if (!data) return null;
 
     const { league, topScorers, topAssists, topRated, availableYears, isFinished, hallOfFame } = data;
 
+    const tabItems = [
+        { id: 'overview', label: 'Surveillance', icon: '🔭' },
+        { id: 'standings', label: 'Standings', icon: '📊', hidden: league.type === 'Cup' },
+        { id: 'fixtures', label: 'Results', icon: '📅' },
+        { id: 'squads', label: 'Squads', icon: '👥' }
+    ];
+
     return (
         <div className="animate-fade-in" style={{ padding: 'var(--spacing-sm)', maxWidth: '1400px', margin: '0 auto' }}>
-            {/* Competition Header */}
-            <header style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <Stack direction="row" justify="space-between" align="center" style={{ marginBottom: 'var(--spacing-md)' }}>
-                    <Stack direction="row" gap="var(--spacing-md)" align="center">
-                        <div style={{ width: '48px', height: '48px', background: 'white', borderRadius: 'var(--radius-sm)', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src={league.logo_url} alt="" style={{ maxWidth: '100%', maxHeight: '100%' }} />
-                        </div>
-                        <div>
-                            <Stack direction="row" gap="var(--spacing-xs)" align="center">
-                                <Badge variant="neutral" size="sm">
-                                    <img src={league.flag_url} alt="" style={{ width: '12px', marginRight: '4px' }} />
-                                    {league.country_name}
-                                </Badge>
-                                <Badge variant={isFinished ? 'neutral' : 'success'} size="sm">
-                                    {isFinished ? 'Finished' : 'Live'}
-                                </Badge>
-                            </Stack>
-                            <h1 style={{ margin: '4px 0 0', fontSize: 'var(--font-size-2xl)' }}>{league.league_name}</h1>
-                        </div>
-                    </Stack>
+            <ProfileHeader
+                title={league.league_name}
+                image={league.logo_url}
+                subtitles={[league.country_name, `Season ${year}`]}
+                badges={[
+                    { label: isFinished ? 'Finished' : 'Live', variant: isFinished ? 'neutral' : 'success' }
+                ]}
+                stats={hallOfFame?.winner ? [
+                    { label: 'Champion', value: hallOfFame.winner.name }
+                ] : []}
+                actions={
+                    <select
+                        value={year}
+                        onChange={handleSeasonChange}
+                        style={{
+                            background: 'var(--glass-bg)',
+                            color: 'white',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '4px 12px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        {(availableYears || [year]).map(y => (
+                            <option key={y} value={y}>{y} Edition</option>
+                        ))}
+                    </select>
+                }
+            />
 
-                    <Stack direction="row" gap="var(--spacing-md)" align="center">
-                        {isFinished && hallOfFame?.winner && (
-                            <Badge variant="warning" style={{ padding: '8px 16px' }}>
-                                🏆 CAMPION: {hallOfFame.winner.name}
-                            </Badge>
-                        )}
-                        <select
-                            value={year}
-                            onChange={handleSeasonChange}
-                            style={{ fontWeight: 'bold' }}
-                        >
-                            {(availableYears || [year]).map(y => (
-                                <option key={y} value={y}>{y} Edition</option>
-                            ))}
-                        </select>
-                    </Stack>
-                </Stack>
-
-                {/* Sub Navigation */}
-                <Stack direction="row" gap="0" className="v3-main-nav">
-                    {[
-                        { id: 'overview', label: 'Surveillance' },
-                        { id: 'standings', label: 'Standings', hidden: league.type === 'Cup' },
-                        { id: 'fixtures', label: 'Results' },
-                        { id: 'squads', label: 'Squads' }
-                    ].filter(t => !t.hidden).map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`nav-tab ${activeTab === tab.id ? 'active' : ''}`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </Stack>
-            </header>
+            <Tabs
+                items={tabItems}
+                activeId={activeTab}
+                onChange={setActiveTab}
+                className="mb-lg"
+            />
 
             <main>
                 {activeTab === 'overview' && (

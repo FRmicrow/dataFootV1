@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { Card, Grid, Stack, Badge, Button } from '../../design-system';
+import {
+    Card, Grid, Stack, Badge, Button,
+    Progress, MetricCard
+} from '../../design-system';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend, AreaChart, Area
@@ -31,9 +34,9 @@ const V3Dashboard = () => {
     }, []);
 
     if (loading || !stats) return (
-        <div className="v3-dashboard-page loading">
-            <div className="ds-button-spinner"></div>
-            <p>Initializing Intelligence Hub...</p>
+        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="ds-button-spinner" style={{ marginBottom: '12px' }}></div>
+            <p style={{ color: 'var(--color-text-dim)' }}>Initializing Intelligence Hub...</p>
         </div>
     );
 
@@ -42,103 +45,67 @@ const V3Dashboard = () => {
     return (
         <div className="v3-dashboard-content animate-fade-in">
             {/* 1. Intelligence Header */}
-            <header className="v3-header">
-                <Stack direction="row" justify="space-between" align="flex-end" className="header-container">
+            <header className="v3-header" style={{ marginBottom: 'var(--spacing-xl)' }}>
+                <Stack direction="row" justify="space-between" align="center">
                     <div className="header-meta">
-                        <Badge variant="primary" size="md">OPERATIONAL COMMAND</Badge>
-                        <h1 className="hub-title">Intelligence Hub</h1>
-                        <p className="hub-subtitle">Real-time surveillance of the professional scouting ecosystem</p>
+                        <Badge variant="primary" style={{ marginBottom: '4px' }}>OPERATIONAL COMMAND</Badge>
+                        <h1 style={{ fontSize: 'var(--font-size-4xl)', fontWeight: 'var(--font-weight-black)', letterSpacing: '-0.02em' }}>Intelligence Hub</h1>
+                        <p style={{ color: 'var(--color-text-muted)' }}>Real-time surveillance of the professional scouting ecosystem</p>
                     </div>
 
-                    <div className="kpi-bars">
-                        {/* Coverage KPI */}
-                        <div className="kpi-item">
-                            <div className="kpi-label">
-                                <span>Data Coverage</span>
-                                <span className="kpi-val">{health_summary.coverage_percent}%</span>
-                            </div>
-                            <div className="kpi-track">
-                                <div
-                                    className="kpi-fill coverage"
-                                    style={{ width: `${health_summary.coverage_percent}%` }}
-                                ></div>
-                            </div>
-                        </div>
-
-                        {/* Health KPI */}
-                        <div className="kpi-item">
-                            <div className="kpi-label">
-                                <span>System Health</span>
-                                <span className="kpi-val">{health_summary.score}/100</span>
-                            </div>
-                            <div className="kpi-track">
-                                <div
-                                    className="kpi-fill health"
-                                    style={{
-                                        width: `${health_summary.score}%`,
-                                        background: health_summary.score > 80 ? 'var(--color-success-500)' : health_summary.score > 50 ? 'var(--color-accent-500)' : 'var(--color-danger-500)'
-                                    }}
-                                ></div>
-                            </div>
-                        </div>
-                    </div>
+                    <Stack direction="row" gap="var(--spacing-lg)" style={{ minWidth: '400px' }}>
+                        <Progress
+                            label="Data Coverage"
+                            value={health_summary.coverage_percent}
+                            showLabel
+                            className="flex-1"
+                        />
+                        <Progress
+                            label="System Health"
+                            value={health_summary.score}
+                            variant={health_summary.score > 80 ? 'success' : health_summary.score > 50 ? 'warning' : 'danger'}
+                            showLabel
+                            className="flex-1"
+                        />
+                    </Stack>
                 </Stack>
             </header>
 
             {/* 2. Volumetrics Grid */}
-            <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-lg)" className="mb-xl">
-                <Card>
-                    <div className="stat-label">Leagues tracked</div>
-                    <div className="stat-value">{volumetrics.total_leagues}</div>
-                    <div className="stat-sub">Live monitoring enabled</div>
-                </Card>
-                <Card>
-                    <div className="stat-label">Scouted Clubs</div>
-                    <div className="stat-value">{volumetrics.total_clubs}</div>
-                    <div className="stat-sub">Across 55+ countries</div>
-                </Card>
-                <Card className="highlight-card">
-                    <div className="stat-label">Active Profiles</div>
-                    <div className="stat-value">{volumetrics.total_players.toLocaleString()}</div>
-                    <div className="stat-sub">Verified statistical history</div>
-                </Card>
-                <Card>
-                    <div className="stat-label">Match Instances</div>
-                    <div className="stat-value">{volumetrics.total_fixtures.toLocaleString()}</div>
-                    <div className="stat-sub">Deep event coverage</div>
-                </Card>
+            <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-md)" style={{ marginBottom: 'var(--spacing-xl)' }}>
+                <MetricCard label="Leagues" value={volumetrics.total_leagues} subValue="Live monitoring enabled" icon="📡" />
+                <MetricCard label="Clubs" value={volumetrics.total_clubs} subValue="Across 55+ countries" icon="🏟️" />
+                <MetricCard
+                    label="Players"
+                    value={volumetrics.total_players.toLocaleString()}
+                    subValue="Verified profiles"
+                    variant="featured"
+                    icon="👥"
+                />
+                <MetricCard label="Fixtures" value={volumetrics.total_fixtures.toLocaleString()} subValue="Event coverage" icon="⚽" />
             </Grid>
 
             {/* 3. Visual Intelligence Layer */}
-            <Grid columns="repeat(2, 1fr)" gap="var(--spacing-lg)" className="mb-xl">
-                <Card title="Nationality Distribution" subtitle="Top 10 talent producers">
+            <Grid columns="repeat(2, 1fr)" gap="var(--spacing-lg)" style={{ marginBottom: 'var(--spacing-xl)' }}>
+                <Card title="Nationality Distribution" subtitle="Top talent producing countries">
                     <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer>
                             <BarChart data={players_by_country} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                <XAxis
-                                    dataKey="name"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
-                                />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-dim)', fontSize: 10 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-dim)', fontSize: 10 }} />
                                 <Tooltip
-                                    contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}
+                                    contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backdropFilter: 'var(--glass-blur)' }}
                                     itemStyle={{ color: '#fff' }}
-                                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                                 />
-                                <Bar dataKey="count" fill="var(--color-primary-500)" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="count" fill="var(--color-primary-600)" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>
 
-                <Card title="Continental Coverage" subtitle="Global distribution of entities">
+                <Card title="Continental Scope" subtitle="Global distribution of scouted entities">
                     <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer>
                             <PieChart>
@@ -148,31 +115,25 @@ const V3Dashboard = () => {
                                     nameKey="continent"
                                     cx="50%"
                                     cy="45%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
+                                    innerRadius={70}
+                                    outerRadius={90}
+                                    paddingAngle={8}
                                 >
                                     {distribution?.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}
-                                    itemStyle={{ color: '#fff' }}
+                                    contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backdropFilter: 'var(--glass-blur)' }}
                                 />
-                                <Legend
-                                    verticalAlign="bottom"
-                                    height={36}
-                                    iconType="circle"
-                                    formatter={(value) => <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>{value}</span>}
-                                />
+                                <Legend verticalAlign="bottom" align="center" iconType="circle" />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>
 
                 <div style={{ gridColumn: 'span 2' }}>
-                    <Card title="Fixture Acquisition Trends" subtitle="Annual growth of data ingestion">
+                    <Card title="Sync Acceleration" subtitle="Historical ingestion performance">
                         <div style={{ width: '100%', height: 250 }}>
                             <ResponsiveContainer>
                                 <AreaChart data={fixture_trends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -183,29 +144,12 @@ const V3Dashboard = () => {
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                    <XAxis
-                                        dataKey="year"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
-                                    />
-                                    <YAxis
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
-                                    />
+                                    <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-dim)', fontSize: 10 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-dim)', fontSize: 10 }} />
                                     <Tooltip
-                                        contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}
-                                        itemStyle={{ color: '#fff' }}
+                                        contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backdropFilter: 'var(--glass-blur)' }}
                                     />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="count"
-                                        stroke="var(--color-primary-500)"
-                                        strokeWidth={3}
-                                        fillOpacity={1}
-                                        fill="url(#colorFixtures)"
-                                    />
+                                    <Area type="monotone" dataKey="count" stroke="var(--color-primary-500)" strokeWidth={3} fillOpacity={1} fill="url(#colorFixtures)" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
@@ -216,55 +160,39 @@ const V3Dashboard = () => {
             {/* 4. Operational Grid */}
             <Grid columns="2fr 1fr" gap="var(--spacing-lg)">
                 <Card title="Registry Operations" subtitle="Management of core entities">
-                    <Stack gap="var(--spacing-md)">
-                        <div className="action-row" onClick={() => navigate('/import')}>
-                            <div className="action-icon">📥</div>
-                            <div className="action-content">
-                                <h4>Data Acquisition</h4>
-                                <p>Initialize new competitive seasons and cross-verify registries.</p>
+                    <Stack gap="var(--spacing-sm)">
+                        {[
+                            { icon: '📥', title: 'Data Acquisition', desc: 'Initialize new competitive seasons', path: '/import' },
+                            { icon: '🔭', title: 'Scout Explorer', desc: 'Browse hierarchies and entity analysis', path: '/leagues' },
+                            { icon: '🛡️', title: 'Integrity Matrix', desc: 'Resolve orphan dependencies', path: '/import/matrix-status' }
+                        ].map((action, i) => (
+                            <div key={i} className="action-row" onClick={() => navigate(action.path)}>
+                                <div style={{ fontSize: '24px' }}>{action.icon}</div>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ margin: 0 }}>{action.title}</h4>
+                                    <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{action.desc}</p>
+                                </div>
+                                <div className="action-arrow">→</div>
                             </div>
-                            <div className="action-arrow">→</div>
-                        </div>
-
-                        <div className="action-row" onClick={() => navigate('/leagues')}>
-                            <div className="action-icon">🔭</div>
-                            <div className="action-content">
-                                <h4>Scout Explorer</h4>
-                                <p>Browse hierarchies and perform deep-dive entity analysis.</p>
-                            </div>
-                            <div className="action-arrow">→</div>
-                        </div>
-
-                        <div className="action-row" onClick={() => navigate('/import/matrix-status')}>
-                            <div className="action-icon">🛡️</div>
-                            <div className="action-content">
-                                <h4>Integrity Matrix</h4>
-                                <p>Analyze data completeness and resolve orphan dependencies.</p>
-                            </div>
-                            <div className="action-arrow">→</div>
-                        </div>
+                        ))}
                     </Stack>
                 </Card>
 
-                <Card title="Critical Metrics" subtitle="System health identifiers">
-                    <Stack gap="var(--spacing-lg)">
-                        <div className="metric-row">
-                            <span className="label">Orphaned Profiles</span>
-                            <Badge variant={health_summary.orphans > 0 ? 'danger' : 'success'}>
-                                {health_summary.orphans}
-                            </Badge>
-                        </div>
-                        <div className="metric-row">
-                            <span className="label">Partial Seasons</span>
-                            <Badge variant={health_summary.partial_seasons > 0 ? 'warning' : 'success'}>
-                                {health_summary.partial_seasons}
-                            </Badge>
-                        </div>
-                        <div className="metric-row">
-                            <span className="label">Fully Synced Hubs</span>
-                            <span className="stat-value-sm">{volumetrics.imported_seasons}</span>
-                        </div>
-                        <Button variant="secondary" onClick={() => navigate('/import/matrix-status')}>View integrity report</Button>
+                <Card title="Integrity Score" subtitle="System health markers">
+                    <Stack gap="var(--spacing-md)">
+                        <Grid columns="1fr auto" align="center" style={{ padding: 'var(--spacing-xs)', borderBottom: '1px solid var(--color-border)' }}>
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-dim)' }}>Orphaned Profiles</span>
+                            <Badge variant={health_summary.orphans > 0 ? 'danger' : 'success'}>{health_summary.orphans}</Badge>
+                        </Grid>
+                        <Grid columns="1fr auto" align="center" style={{ padding: 'var(--spacing-xs)', borderBottom: '1px solid var(--color-border)' }}>
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-dim)' }}>Partial Seasons</span>
+                            <Badge variant={health_summary.partial_seasons > 0 ? 'warning' : 'success'}>{health_summary.partial_seasons}</Badge>
+                        </Grid>
+                        <Grid columns="1fr auto" align="center" style={{ padding: 'var(--spacing-xs)' }}>
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-dim)' }}>Legacy Modules</span>
+                            <span style={{ fontWeight: 'bold' }}>{volumetrics.imported_seasons}</span>
+                        </Grid>
+                        <Button variant="secondary" onClick={() => navigate('/import/matrix-status')}>Full Audit Report</Button>
                     </Stack>
                 </Card>
             </Grid>

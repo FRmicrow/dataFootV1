@@ -49,33 +49,24 @@
     --color-text-inverse: #0f172a;
 
     /* --- Spacing: 12px Modular Scale --- */
-    --spacing-1: 4px;
-    --spacing-2: 8px;
-    --spacing-3: 12px;
-    /* 1 x 12px */
-    --spacing-4: 16px;
-    --spacing-6: 24px;
-    /* 2 x 12px */
-    --spacing-9: 36px;
-    /* 3 x 12px */
-    --spacing-12: 48px;
-    /* 4 x 12px */
-    --spacing-15: 60px;
-    /* 5 x 12px */
-    --spacing-18: 72px;
-    /* 6 x 12px */
-    --spacing-24: 96px;
-    /* 8 x 12px */
+    /* Internal reference units */
+    --spacing-unit: 12px;
 
-    /* Semantic Aliases */
-    --spacing-3xs: var(--spacing-1);
-    --spacing-2xs: var(--spacing-2);
-    --spacing-xs: var(--spacing-3);
-    --spacing-sm: var(--spacing-6);
-    --spacing-md: var(--spacing-9);
-    --spacing-lg: var(--spacing-12);
-    --spacing-xl: var(--spacing-18);
-    --spacing-2xl: var(--spacing-24);
+    --spacing-3xs: 4px;
+    --spacing-2xs: 8px;
+    --spacing-xs: var(--spacing-unit);
+    --spacing-sm: calc(var(--spacing-unit) * 1.5);
+    /* 18px */
+    --spacing-md: calc(var(--spacing-unit) * 2);
+    /* 24px */
+    --spacing-lg: calc(var(--spacing-unit) * 3);
+    /* 36px */
+    --spacing-xl: calc(var(--spacing-unit) * 4);
+    /* 48px */
+    --spacing-2xl: calc(var(--spacing-unit) * 6);
+    /* 72px */
+    --spacing-3xl: calc(var(--spacing-unit) * 8);
+    /* 96px */
 
     /* --- Typography --- */
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -124,6 +115,20 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
+    /* --- Z-Index Layers --- */
+    --z-index-base: 0;
+    --z-index-dropdown: 1000;
+    --z-index-sticky: 1100;
+    --z-index-navbar: 1200;
+    --z-index-fixed: 1300;
+    --z-index-modal: 1400;
+    --z-index-popover: 1500;
+    --z-index-tooltip: 1600;
+
+    /* --- Focus & States --- */
+    --focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.5);
+    --focus-offset: 2px;
+
     /* --- Animation --- */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -165,6 +170,11 @@ a {
 
 a:hover {
     color: var(--color-primary-300);
+}
+
+:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
 }
 
 ::-webkit-scrollbar {
