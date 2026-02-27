@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import './MatchDetailEvents.css'; // Will create this
+import { Stack, Badge } from '../../design-system';
+import './MatchDetailEvents.css';
 
 const MatchDetailEvents = ({ fixtureId }) => {
     const [events, setEvents] = useState([]);
@@ -35,49 +36,42 @@ const MatchDetailEvents = ({ fixtureId }) => {
         return '•';
     };
 
-    if (loading) return <div className="events-loading">Loading Events...</div>;
-    if (error) return <div className="events-error">Error: {error}</div>;
-    if (events.length === 0) return <div className="events-empty">No events recorded.</div>;
+    if (loading) return (
+        <div className="ds-events-loading">
+            <div className="ds-button-spinner mb-sm" style={{ margin: '0 auto' }}></div>
+            Synchronizing event log...
+        </div>
+    );
+    if (error) return <div className="ds-events-error">Error: {error}</div>;
+    if (events.length === 0) return <div className="ds-events-empty">No strategic events recorded.</div>;
 
     return (
-        <div className="match-events-timeline">
+        <div className="ds-match-events-timeline animate-fade-in">
             {events.map((ev, idx) => {
                 const isHome = ev.is_home_team === 1;
                 return (
-                    <div key={idx} className="event-timeline-row">
-                        {/* Home Side */}
-                        <div className={`event-side home-side ${isHome ? 'active' : ''}`}>
-                            {isHome && (
-                                <>
-                                    <div className="ev-detail">
-                                        <span className="ev-player">{ev.player_name}</span>
-                                        {ev.assist_name && <span className="ev-assist">({ev.assist_name})</span>}
-                                        <span className="ev-type-text">{ev.detail}</span>
-                                    </div>
-                                    <div className="ev-icon">{renderEventIcon(ev.type, ev.detail)}</div>
-                                </>
-                            )}
+                    <div key={idx} className={`ds-ev-row ${isHome ? 'home' : 'away'}`}>
+                        {/* Time Column */}
+                        <div className="ds-ev-time">
+                            {ev.time_elapsed}{ev.extra_minute ? `+${ev.extra_minute}` : ''}'
                         </div>
 
-                        {/* Center Axis */}
-                        <div className="event-time-axis">
-                            <div className="ev-time-badge">
-                                {ev.time_elapsed}{ev.extra_minute ? `+${ev.extra_minute}` : ''}'
-                            </div>
+                        {/* icon */}
+                        <div className="ds-ev-icon-wrap">
+                            {renderEventIcon(ev.type, ev.detail)}
                         </div>
 
-                        {/* Away Side */}
-                        <div className={`event-side away-side ${!isHome ? 'active' : ''}`}>
-                            {!isHome && (
-                                <>
-                                    <div className="ev-icon">{renderEventIcon(ev.type, ev.detail)}</div>
-                                    <div className="ev-detail">
-                                        <span className="ev-player">{ev.player_name}</span>
-                                        {ev.assist_name && <span className="ev-assist">({ev.assist_name})</span>}
-                                        <span className="ev-type-text">{ev.detail}</span>
-                                    </div>
-                                </>
-                            )}
+                        {/* Content */}
+                        <div className="ds-ev-content">
+                            <Stack gap="2px">
+                                <span className="ds-ev-player">{ev.player_name}</span>
+                                <Stack direction="row" gap="4px" align="center">
+                                    <span className="ds-ev-detail">{ev.detail}</span>
+                                    {ev.assist_name && (
+                                        <Badge variant="neutral" size="xs">Ass: {ev.assist_name}</Badge>
+                                    )}
+                                </Stack>
+                            </Stack>
                         </div>
                     </div>
                 );

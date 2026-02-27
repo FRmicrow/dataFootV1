@@ -3,6 +3,7 @@ import api from '../../services/api';
 import MatchDetailEvents from './MatchDetailEvents';
 import InlineMatchDetailTactical from './InlineMatchDetailTactical';
 import InlinePlayerStatCard from './InlinePlayerStatCard';
+import { Stack, Grid, Tabs, Card, Badge } from '../../design-system';
 import './InlineFixtureDetails.css';
 
 const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
@@ -10,7 +11,7 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
     const [playerStats, setPlayerStats] = useState([]);
     const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('events'); // Default: Timeline
+    const [activeTab, setActiveTab] = useState('events');
 
     useEffect(() => {
         fetchAllData();
@@ -27,10 +28,10 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
             setLineups(lineupRes.lineups || []);
             setPlayerStats(pStatsRes || []);
 
-            // Default select MOTM or highest rating if player_intel is active
             if (pStatsRes && pStatsRes.length > 0) {
                 const best = [...pStatsRes].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))[0];
                 setSelectedPlayer(best);
+                // setActiveTab('player_intel'); // Only if needed
             }
         } catch (error) {
             console.error("Failed to load match details", error);
@@ -44,14 +45,16 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
         return typeof data === 'string' ? JSON.parse(data) : data;
     };
 
-    if (loading) return <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>Loading squads...</div>;
+    if (loading) return (
+        <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-dim)' }}>
+            <div className="ds-button-spinner mb-sm" style={{ margin: '0 auto' }}></div>
+            Mining tactical data...
+        </div>
+    );
 
-    // Identify Home vs Away based on team IDs passed or default order
-    // Typically index 0 is Home if sorted by controller, but matching ID is safer
     let homeLineup = lineups.find(l => l.team_id === homeTeamId);
     let awayLineup = lineups.find(l => l.team_id === awayTeamId);
 
-    // Fallback if IDs not provided or mismatch
     if (!homeLineup && lineups.length > 0) homeLineup = lineups[0];
     if (!awayLineup && lineups.length > 1) awayLineup = lineups[1];
 
@@ -60,12 +63,10 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
         return pos;
     };
 
-    const renderSquad = (lineup, side) => {
+    const renderSquad = (lineup, title) => {
         if (!lineup) return (
-            <div className={`inline-lineup-column ${side}`}>
-                <div style={{ padding: '20px', color: '#64748b', fontStyle: 'italic', fontSize: '12px' }}>
-                    Lineup not available
-                </div>
+            <div className="ds-inline-squad-empty">
+                Squad intelligence unavailable
             </div>
         );
 
@@ -80,95 +81,84 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
             }
         };
 
-        const renderPlayer = (entry, idx) => {
+        const PlayerRow = ({ entry }) => {
             const p = entry.player || {};
             const isSelected = selectedPlayer?.player_api_id === p.id;
-
             return (
                 <div
-                    key={p.id || idx}
-                    className={`inline-player-row clickable ${isSelected ? 'selected' : ''}`}
+                    className={`ds-inline-player-row ${isSelected ? 'active' : ''}`}
                     onClick={() => handlePlayerClick(p.id)}
                 >
-                    <span className="inline-player-number">{p.number}</span>
-                    <span className="inline-player-name">{p.name}</span>
-                    <span className="inline-player-role">{getRole(p.pos)}</span>
+                    <span className="ds-inline-player-num">{p.number}</span>
+                    <span className="ds-inline-player-name">{p.name}</span>
+                    <Badge variant="neutral" size="sm">{getRole(p.pos)}</Badge>
                 </div>
             );
         };
 
         return (
-            <div className={`inline-lineup-column ${side}`}>
-                <div className="inline-lineup-header">
-                    <h3>Starting XI</h3>
-                    <div className="inline-lineup-meta">
-                        {lineup.formation && <span>{lineup.formation}</span>}
-                    </div>
+            <div className="ds-inline-squad-col">
+                <div className="ds-inline-squad-header">
+                    <h4>Starting XI</h4>
+                    {lineup.formation && <Badge variant="primary" size="xs">{lineup.formation}</Badge>}
+                </div>
+                <div className="ds-inline-player-list">
+                    {starting.map((entry, i) => <PlayerRow key={i} entry={entry} />)}
                 </div>
 
-                <div className="inline-player-list">
-                    {starting.map(renderPlayer)}
+                <h4 className="ds-inline-squad-section-title">Reserves</h4>
+                <div className="ds-inline-player-list">
+                    {subs.map((entry, i) => <PlayerRow key={i} entry={entry} />)}
                 </div>
 
-                <div className="inline-lineup-header" style={{ marginTop: '20px' }}>
-                    <h3>Substitutes</h3>
-                </div>
-
-                <div className="inline-player-list">
-                    {subs.map(renderPlayer)}
-                </div>
-
-                <div className="inline-lineup-header" style={{ marginTop: '20px', border: 'none' }}>
-                    <div className="inline-lineup-meta" style={{ fontSize: '12px' }}>
-                        Coach: <strong style={{ color: '#e2e8f0' }}>{lineup.coach_name}</strong>
-                    </div>
+                <div className="ds-inline-coach">
+                    <span>Technical Director</span>
+                    <strong>{lineup.coach_name}</strong>
                 </div>
             </div>
         );
     };
 
+    const tabItems = [
+        { id: 'events', label: 'Timeline', icon: '⏱️' },
+        { id: 'tactical', label: 'Tactical', icon: '🎯' },
+        { id: 'player_intel', label: 'Intelligence', icon: '🧠' }
+    ];
+
     return (
-        <div className="inline-fixture-details fade-in">
-            {renderSquad(homeLineup, 'home')}
+        <div className="ds-inline-fixture-details animate-slide-down">
+            <Grid columns="1fr 1.5fr 1fr" gap="var(--spacing-md)" className="ds-inline-grid-wrapper">
+                {/* Home Squad */}
+                {renderSquad(homeLineup, 'Home')}
 
-            <div className="center-column">
-                <div className="inline-tabs">
-                    <button
-                        className={`tab-link ${activeTab === 'events' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('events')}
-                    >
-                        Timeline
-                    </button>
-                    <button
-                        className={`tab-link ${activeTab === 'tactical' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('tactical')}
-                    >
-                        Tactical
-                    </button>
-                    <button
-                        className={`tab-link ${activeTab === 'player_intel' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('player_intel')}
-                    >
-                        Player Intel
-                    </button>
+                {/* Center Content */}
+                <div className="ds-inline-center-panel">
+                    <Tabs
+                        items={tabItems}
+                        activeId={activeTab}
+                        onChange={setActiveTab}
+                        variant="pills"
+                        className="mb-md"
+                    />
+
+                    <div className="ds-inline-tab-content">
+                        {activeTab === 'events' && (
+                            <div className="ds-inline-timeline-scroll">
+                                <MatchDetailEvents fixtureId={fixtureId} />
+                            </div>
+                        )}
+                        {activeTab === 'tactical' && (
+                            <InlineMatchDetailTactical fixtureId={fixtureId} />
+                        )}
+                        {activeTab === 'player_intel' && (
+                            <InlinePlayerStatCard player={selectedPlayer} />
+                        )}
+                    </div>
                 </div>
 
-                <div className="tab-content">
-                    {activeTab === 'events' && (
-                        <div className="timeline-wrapper">
-                            <MatchDetailEvents fixtureId={fixtureId} />
-                        </div>
-                    )}
-                    {activeTab === 'tactical' && (
-                        <InlineMatchDetailTactical fixtureId={fixtureId} />
-                    )}
-                    {activeTab === 'player_intel' && (
-                        <InlinePlayerStatCard player={selectedPlayer} />
-                    )}
-                </div>
-            </div>
-
-            {renderSquad(awayLineup, 'away')}
+                {/* Away Squad */}
+                {renderSquad(awayLineup, 'Away')}
+            </Grid>
         </div>
     );
 };

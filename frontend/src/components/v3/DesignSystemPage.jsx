@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
     Card, Button, Badge, Table, Grid, Stack,
-    Tabs, Progress, MetricCard, ProfileHeader
+    Tabs, Progress, MetricCard, ProfileHeader,
+    LeagueCard
 } from '../../design-system';
 
 const DesignSystemPage = () => {
@@ -62,6 +63,28 @@ const DesignSystemPage = () => {
                             ]}
                             data={spacingTokens}
                         />
+                    </Card>
+                </section>
+
+                <section>
+                    <h3 className="mb-md">Token Governance</h3>
+                    <Card>
+                        <Stack gap="var(--spacing-md)">
+                            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
+                                All components MUST consume tokens from <code>tokens.css</code>.
+                                Hardcoded values (e.g., <code>#ff0000</code> or <code>12px</code>) are strictly prohibited.
+                            </p>
+                            <Grid columns="1fr 1fr" gap="var(--spacing-lg)">
+                                <Stack gap="var(--spacing-xs)">
+                                    <Badge variant="primary">Spacing Rule</Badge>
+                                    <p style={{ fontSize: '11px' }}>Use <code>var(--spacing-*)</code> for layout.</p>
+                                </Stack>
+                                <Stack gap="var(--spacing-xs)">
+                                    <Badge variant="accent">Color Rule</Badge>
+                                    <p style={{ fontSize: '11px' }}>Use <code>var(--color-*)</code> for all fills.</p>
+                                </Stack>
+                            </Grid>
+                        </Stack>
                     </Card>
                 </section>
             </Stack>
@@ -144,6 +167,27 @@ const DesignSystemPage = () => {
         ),
         layouts: (
             <Stack gap="var(--spacing-xl)">
+                <section>
+                    <h3 className="mb-md">Competition Modules</h3>
+                    <Grid columns="repeat(auto-fill, minmax(280px, 1fr))" gap="var(--spacing-md)">
+                        <LeagueCard
+                            name="Premier League"
+                            logo="https://media.api-sports.io/football/leagues/39.png"
+                            rank={1}
+                            seasonsCount={15}
+                            countryName="England"
+                        />
+                        <LeagueCard
+                            name="UEFA Champions League"
+                            logo="https://media.api-sports.io/football/leagues/2.png"
+                            rank={1}
+                            isCup
+                            seasonsCount={20}
+                            countryName="Europe"
+                        />
+                    </Grid>
+                </section>
+
                 <section>
                     <h3 className="mb-md">Hero Profile Patterns</h3>
                     <ProfileHeader

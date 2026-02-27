@@ -108,12 +108,18 @@ const StandingsTable = ({
 
     if (standings.length === 0) {
         return (
-            <Card>
-                <Stack align="center" justify="center" gap="var(--spacing-sm)" style={{ padding: 'var(--spacing-12)' }}>
-                    <span style={{ fontSize: '48px', opacity: 0.3 }}>📊</span>
-                    <h3>Official Table Missing</h3>
-                    <p style={{ color: 'var(--color-text-dim)', textAlign: 'center', maxWidth: '400px' }}>Registry synchronization required to populate local standings.</p>
-                    <Button variant="secondary" onClick={() => window.location.reload()}>Retry Sync</Button>
+            <Card style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Stack align="center" justify="center" gap="var(--spacing-md)">
+                    <div style={{ fontSize: '64px', marginBottom: 'var(--spacing-sm)', opacity: 0.5 }}>📉</div>
+                    <h3 style={{ fontSize: 'var(--font-size-2xl)' }}>Classification Matrix Empty</h3>
+                    <p style={{ color: 'var(--color-text-dim)', textAlign: 'center', maxWidth: '450px', fontSize: 'var(--font-size-sm)' }}>
+                        Performance data for this specific season context has not been synchronized.
+                        Synchronize the league registry to initialize the operational table.
+                    </p>
+                    <Stack direction="row" gap="var(--spacing-sm)" style={{ marginTop: 'var(--spacing-md)' }}>
+                        <Button variant="primary" onClick={() => window.location.reload()}>🔄 Refresh Registry</Button>
+                        <Button variant="secondary" onClick={() => window.location.href = '/import'}>⚙️ System Setup</Button>
+                    </Stack>
                 </Stack>
             </Card>
         );

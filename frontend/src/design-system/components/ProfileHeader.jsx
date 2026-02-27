@@ -13,8 +13,15 @@ const ProfileHeader = ({
     stats = []
 }) => {
     const headerStyle = coverImage
-        ? { backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.4), var(--color-bg-main)), url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-        : { background: `linear-gradient(135deg, ${accentColor || 'var(--color-primary-900)'}, var(--color-bg-main))` };
+        ? {
+            backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.4), var(--color-bg-main)), url(${coverImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+        }
+        : {
+            background: `linear-gradient(135deg, ${accentColor ? accentColor + '33' : 'var(--color-primary-900)'} 0%, var(--color-bg-main) 100%)`,
+            borderBottom: `2px solid ${accentColor || 'var(--color-primary-500)'}`
+        };
 
     return (
         <div className="ds-profile-header" style={headerStyle}>

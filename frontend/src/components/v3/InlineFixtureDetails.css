@@ -1,219 +1,138 @@
-.inline-fixture-details {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr 1fr;
-    gap: 15px;
-    padding: 24px;
-    background: #020617;
-    /* Darker background for more contrast */
-    border-top: 1px solid #1e293b;
-    border-bottom: 1px solid #1e293b;
-    color: #f1f5f9;
-    animation: slideDown 0.3s ease-out;
+.ds-inline-fixture-details {
+    padding: var(--spacing-md);
+    background: var(--color-bg-main);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    margin-top: var(--spacing-sm);
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.ds-inline-grid-wrapper {
+    min-height: 400px;
 }
 
-/* Lineup Columns */
-.inline-lineup-column {
+.ds-inline-squad-col {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--spacing-xs);
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: var(--spacing-2xs);
 }
 
-.inline-lineup-header {
-    margin-bottom: 5px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #334155;
+.ds-inline-squad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: var(--spacing-3xs);
+    border-bottom: 1px solid var(--color-border);
 }
 
-.inline-lineup-header h3 {
+.ds-inline-squad-header h4 {
     margin: 0;
-    font-size: 14px;
-    color: #f1f5f9;
-    /* Higher contrast */
+    font-size: var(--font-size-xs);
     text-transform: uppercase;
-    font-weight: 800;
-    letter-spacing: 1px;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
 }
 
-.inline-lineup-meta {
-    font-size: 11px;
-    color: #64748b;
-    margin-top: 2px;
+.ds-inline-squad-section-title {
+    margin: var(--spacing-sm) 0 0;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    color: var(--color-text-dim);
 }
 
-.inline-player-list {
+.ds-inline-player-list {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-/* Player Row - Standardized Grid Layout */
-.inline-player-row {
+.ds-inline-player-row {
     display: grid;
-    grid-template-columns: 25px 1fr 25px;
-    /* Fixed - Flexible - Fixed */
+    grid-template-columns: 24px 1fr 32px;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    cursor: default;
-}
-
-.inline-player-row.clickable {
+    gap: var(--spacing-xs);
+    padding: var(--spacing-2xs);
+    border-radius: var(--radius-sm);
     cursor: pointer;
+    transition: var(--transition-fast);
 }
 
-.inline-player-row.clickable:hover {
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
+.ds-inline-player-row:hover {
+    background: var(--glass-bg);
 }
 
-.inline-player-row.selected {
-    background: rgba(59, 130, 246, 0.2);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    color: #60a5fa;
+.ds-inline-player-row.active {
+    background: var(--color-primary-900);
+    border: 1px solid var(--color-primary-500);
 }
 
-.inline-player-row.selected .inline-player-name {
-    color: #60a5fa;
-    font-weight: 700;
-}
-
-.inline-player-number {
+.ds-inline-player-num {
     font-weight: 800;
-    color: #3b82f6;
-    /* More prominent */
+    color: var(--color-primary-400);
+    font-size: var(--font-size-sm);
     text-align: center;
-    font-size: 16px !important;
 }
 
-.inline-player-name {
-    color: #f8fafc;
-    /* Higher contrast */
-    font-weight: 600;
-    font-size: 16px !important;
-    white-space: normal;
-    word-break: break-word;
-    line-height: 1.2;
+.ds-inline-player-name {
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.inline-player-role {
-    font-size: 14px !important;
-    color: #94a3b8;
-    background: #1e293b;
-    padding: 2px 4px;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: 700;
-}
-
-/* Alignment Specifics - Consistent Order for Both Sides */
-.inline-lineup-column.home .inline-player-row,
-.inline-lineup-column.away .inline-player-row {
-    /* Ensure the grid template applies identically */
-    direction: ltr;
-}
-
-/* Optional: Align the container text slightly differently if desired, 
-   but user asked for strict "Num - Name - Role" order. 
-   So we keep the grid identical. */
-
-.center-column {
-    border-left: 1px solid #1e293b;
-    border-right: 1px solid #1e293b;
-    padding: 0 15px;
+.ds-inline-coach {
+    margin-top: auto;
+    padding-top: var(--spacing-md);
     display: flex;
     flex-direction: column;
-    background: rgba(15, 23, 42, 0.5);
-    /* Slight glass effect */
+    font-size: 10px;
 }
 
-.inline-tabs {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    border-bottom: 1px solid #1e293b;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-}
-
-.tab-link {
-    background: none;
-    border: none;
-    color: #64748b;
-    padding: 8px 5px;
-    font-size: 12px;
-    font-weight: 600;
+.ds-inline-coach span {
+    color: var(--color-text-dim);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
 }
 
-.tab-link:hover {
-    color: #e2e8f0;
+.ds-inline-coach strong {
+    color: var(--color-text-main);
 }
 
-.tab-link.active {
-    color: #3b82f6;
+.ds-inline-center-panel {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
 }
 
-.tab-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -6px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #3b82f6;
-    border-radius: 2px;
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-}
-
-.tab-content {
+.ds-inline-tab-content {
     flex: 1;
     overflow-y: auto;
-    max-height: 500px;
-    padding: 5px;
 }
 
-.timeline-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
+.ds-inline-timeline-scroll {
+    max-height: 400px;
+    overflow-y: auto;
 }
 
-.timeline-wrapper .match-events-timeline {
-    background: transparent;
-    padding: 0;
-    width: 100%;
+.ds-inline-squad-empty {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--color-text-dim);
+    font-style: italic;
+    font-size: var(--font-size-xs);
 }
 
-@media (max-width: 900px) {
-    .inline-fixture-details {
-        grid-template-columns: 1fr;
+@media (max-width: 1024px) {
+    .ds-inline-grid-wrapper {
+        grid-template-columns: 1fr !important;
     }
 
-    .center-column {
-        border: none;
-        border-top: 1px solid #1e293b;
-        border-bottom: 1px solid #1e293b;
-        padding: 20px 0;
-        margin: 20px 0;
+    .ds-inline-center-panel {
+        order: -1;
+        margin-bottom: var(--spacing-md);
     }
 }
