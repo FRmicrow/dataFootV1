@@ -34,18 +34,20 @@ const Step4_Export = () => {
     };
 
     const statName = formatStat(filters.stat);
-    const range = `${filters.years[0]}-${filters.years[1]}`;
+    const range = filters.years[0] === filters.years[1] ? filters.years[0] : `${filters.years[0]} - ${filters.years[1]}`;
 
-    let chartTitle = `Top ${statName} during ${range}`;
+    let chartTitle = `Who had the most ${statName} (${range})?`;
     if (chartData.meta.type === 'league_rankings') {
         const seasonYear = chartData.meta.season;
-        const seasonDisplay = `${seasonYear - 1}/${seasonYear}`;
+        const seasonDisplay = `${seasonYear}/${seasonYear + 1}`;
         const leagueName = chartData.meta.league_name || filters.contextLabel || "League";
-        chartTitle = `${leagueName} (${seasonDisplay})`;
+        chartTitle = `${leagueName}: Ranking Pulse (${seasonDisplay})`;
     } else if (filters.contextType === 'league' && filters.contextLabel) {
-        chartTitle = `Top ${statName} in ${filters.contextLabel} during ${range}`;
+        chartTitle = `Top ${statName} in ${filters.contextLabel} (${range})`;
     } else if (filters.contextType === 'country' && filters.contextLabel) {
-        chartTitle = `Top ${statName} for ${filters.contextLabel} during ${range}`;
+        chartTitle = `Best ${statName} from ${filters.contextLabel} (${range})`;
+    } else if (filters.contextType === 'specific' && filters.contextLabel) {
+        chartTitle = `Comparing ${statName}: ${filters.contextLabel} (${range})`;
     }
 
     const startRecording = async () => {
@@ -104,7 +106,7 @@ const Step4_Export = () => {
 
     return (
         <div className="step-container animate-fade-in">
-            <h2 className="step-title-v2">Master Asset Production</h2>
+            <h2 className="step-title-v2">Export & Distribution</h2>
 
             <div className="export-layout-v2">
                 {/* Render Stage */}
@@ -178,7 +180,7 @@ const Step4_Export = () => {
 
                         {!recordUrl && !isRecording && (
                             <button className="btn-primary-v2" onClick={startRecording}>
-                                Initialize Render
+                                Export for Social Media
                             </button>
                         )}
 
@@ -211,7 +213,7 @@ const Step4_Export = () => {
                     </div>
 
                     <p style={{ fontSize: '0.75rem', color: '#475569', lineHeight: 1.5, padding: '0 1rem' }}>
-                        Note: The render sequence captures individual frames directly from the GPU buffer. Maintain the browser focus during this operation to ensure frame synchronization.
+                        Note: Asset dimensions are optimized for TikTok, Instagram Reels, and X (Twitter) safe zones. Maintain browser focus during render to ensure frame synchronization.
                     </p>
                 </div>
             </div>

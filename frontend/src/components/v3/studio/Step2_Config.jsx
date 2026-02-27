@@ -15,19 +15,19 @@ const Step2_Config = () => {
 
     return (
         <div className="step-container animate-fade-in">
-            <h2 className="step-title-v2">Visual Intelligence Configuration</h2>
+            <h2 className="step-title-v2">Chart & Animation Settings</h2>
 
             {/* Chart Type Selection */}
             <div className="form-group-v2">
-                <label className="form-label-v2">Visualization Blueprint</label>
+                <label className="form-label-v2">Chart Layout</label>
                 <div className="config-grid-v2">
                     <div
                         className={`config-card-v2 ${visual.type === 'bar_race' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('bar_race')}
                     >
                         <div className="card-icon-v2">📊</div>
-                        <h4 className="card-title-v2">Bar Chart Race</h4>
-                        <p className="card-desc-v2">Dynamic ranking evolution with high-density temporal shifting.</p>
+                        <h4 className="card-title-v2">Ranking bar chart</h4>
+                        <p className="card-desc-v2">Ordered comparison of totals evolving over time.</p>
                     </div>
 
                     <div
@@ -35,8 +35,8 @@ const Step2_Config = () => {
                         onClick={() => handleTypeChange('line')}
                     >
                         <div className="card-icon-v2">📈</div>
-                        <h4 className="card-title-v2">Trajectory Line</h4>
-                        <p className="card-desc-v2">Precise comparative progress analysis over multiple match cycles.</p>
+                        <h4 className="card-title-v2">Trend line</h4>
+                        <p className="card-desc-v2">Comparative progress analysis across multiple periods.</p>
                     </div>
 
                     <div
@@ -44,8 +44,8 @@ const Step2_Config = () => {
                         onClick={() => handleTypeChange('league_race')}
                     >
                         <div className="card-icon-v2">🏁</div>
-                        <h4 className="card-title-v2">Standings Pulse</h4>
-                        <p className="card-desc-v2">Real-time championship table movement simulation.</p>
+                        <h4 className="card-title-v2">Standing bar race</h4>
+                        <p className="card-desc-v2">Animated ranking of clubs over specific matchdays.</p>
                     </div>
 
                     <div
@@ -53,8 +53,8 @@ const Step2_Config = () => {
                         onClick={() => handleTypeChange('bump')}
                     >
                         <div className="card-icon-v2">🎢</div>
-                        <h4 className="card-title-v2">Bump Matrix</h4>
-                        <p className="card-desc-v2">Fluid rank evolution flow mapping connectivity and trends.</p>
+                        <h4 className="card-title-v2">Bump chart</h4>
+                        <p className="card-desc-v2">Visualizes ranking changes and position fluctuations.</p>
                     </div>
                 </div>
             </div>
@@ -62,7 +62,7 @@ const Step2_Config = () => {
             {/* Row Options: Theme & Format */}
             <div className="options-row-v2">
                 <div className="form-group-v2">
-                    <label className="form-label-v2">Atmospheric Theme</label>
+                    <label className="form-label-v2">Visual Theme</label>
                     <select value={visual.theme} onChange={(e) => handleThemeChange(e.target.value)} className="input-v2">
                         <option value="v3_dark">V3 Obsidian (Signature)</option>
                         <option value="light">Clinical White</option>
@@ -97,7 +97,7 @@ const Step2_Config = () => {
 
             {/* Animation Speed */}
             <div className="form-group-v2">
-                <label className="form-label-v2">Kinetic Velocity</label>
+                <label className="form-label-v2">Animation Speed</label>
                 <div className="slider-container-v2">
                     <div className="slider-header-v2">
                         <span className="slider-label-v2" style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>TRANSITION PACE</span>
