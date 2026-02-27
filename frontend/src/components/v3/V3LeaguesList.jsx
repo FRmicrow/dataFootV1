@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { Card, Grid, Stack, Badge, Button } from '../../design-system';
+import {
+    Card, Grid, Stack, Badge, Button,
+    Tabs
+} from '../../design-system';
 import './V3LeaguesList.css';
 
 const V3LeaguesList = () => {
     const [structuredData, setStructuredData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('NATIONAL'); // Default to National
+    const [activeTab, setActiveTab] = useState('NATIONAL');
     const [expandedCountries, setExpandedCountries] = useState({});
     const navigate = useNavigate();
 
-    // Featured API IDs (Premier League, La Liga, Serie A, etc.)
     const FEATURED_IDS = [2, 3, 39, 140, 78, 135, 61];
 
     useEffect(() => {
@@ -25,29 +27,23 @@ const V3LeaguesList = () => {
                 setLoading(false);
             }
         };
-
         fetchStructuredLeagues();
     }, []);
 
     const toggleCountry = (countryName) => {
-        setExpandedCountries(prev => ({
-            ...prev,
-            [countryName]: !prev[countryName]
-        }));
+        setExpandedCountries(prev => ({ ...prev, [countryName]: !prev[countryName] }));
     };
 
     const handleCardClick = (league) => {
         navigate(`/league/${league.id}`);
     };
 
-    // Calculate total count
     const totalLeaguesCount = structuredData ? (
         structuredData.international.global.length +
         Object.values(structuredData.international.continental).reduce((acc, curr) => acc + curr.length, 0) +
         structuredData.national.reduce((acc, curr) => acc + curr.leagues.length, 0)
     ) : 0;
 
-    // Extract featured leagues for the top section
     const getFeaturedLeagues = () => {
         if (!structuredData) return [];
         const all = [
@@ -61,39 +57,41 @@ const V3LeaguesList = () => {
     const featured = getFeaturedLeagues();
 
     if (loading) return (
-        <div className="v3-leagues-page loading">
-            <div className="ds-button-spinner"></div>
-            <p>Accessing Competition Vault...</p>
+        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="ds-button-spinner" style={{ marginBottom: '12px' }}></div>
+            <p style={{ color: 'var(--color-text-dim)' }}>Accessing Competition Vault...</p>
         </div>
     );
 
     if (!structuredData) return (
-        <div className="v3-leagues-page">
-            <div className="empty-state">
-                <span className="icon">📂</span>
+        <div style={{ padding: '80px', textAlign: 'center' }}>
+            <Card style={{ maxWidth: '400px', margin: '0 auto' }}>
+                <span style={{ fontSize: '48px' }}>📂</span>
                 <h3>No Verified Data Found</h3>
-                <p>Run the import matrix to populate leagues.</p>
-            </div>
+                <p style={{ margin: '12px 0 24px', color: 'var(--color-text-muted)' }}>Run the import matrix to populate leagues.</p>
+                <Button variant="primary" onClick={() => navigate('/import')}>Initialize Matrix</Button>
+            </Card>
         </div>
     );
 
     return (
-        <div className="v3-leagues-content animate-fade-in">
-            <header className="v3-header">
-                <Stack direction="row" justify="space-between" align="baseline">
-                    <h1 className="hub-title">Competitions</h1>
-                    <Badge variant="primary" size="md">{totalLeaguesCount} Active Modules</Badge>
+        <div className="v3-leagues-content animate-fade-in" style={{ padding: 'var(--spacing-sm)', maxWidth: '1400px', margin: '0 auto' }}>
+            <header style={{ marginBottom: 'var(--spacing-xl)' }}>
+                <Stack direction="row" justify="space-between" align="center">
+                    <div>
+                        <Badge variant="primary" style={{ marginBottom: '4px' }}>Competition Registry</Badge>
+                        <h1 style={{ fontSize: 'var(--font-size-4xl)', fontWeight: 'var(--font-weight-black)' }}>Global Circuits</h1>
+                    </div>
+                    <Badge variant="neutral">{totalLeaguesCount} Active Modules</Badge>
                 </Stack>
             </header>
 
-            {/* Top Featured Section */}
             {featured.length > 0 && (
-                <section className="featured-section mb-xl">
-                    <h2 className="section-title">
-                        <span className="icon">⭐</span>
-                        Top Competitions
-                    </h2>
-                    <Grid columns="repeat(auto-fill, minmax(280px, 1fr))" gap="var(--spacing-lg)">
+                <section style={{ marginBottom: 'var(--spacing-2xl)' }}>
+                    <h3 style={{ fontSize: 'var(--font-size-sm)', textTransform: 'uppercase', color: 'var(--color-text-dim)', marginBottom: 'var(--spacing-md)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>⭐</span> Top Tier Intelligence
+                    </h3>
+                    <Grid columns="repeat(auto-fill, minmax(280px, 1fr))" gap="var(--spacing-md)">
                         {featured.map(league => (
                             <LeagueCard key={league.id} league={league} onClick={() => handleCardClick(league)} />
                         ))}
@@ -101,30 +99,22 @@ const V3LeaguesList = () => {
                 </section>
             )}
 
-            <Stack direction="row" gap="0" className="v3-main-nav mb-lg">
-                <button
-                    className={`nav-tab ${activeTab === 'NATIONAL' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('NATIONAL')}
-                >
-                    <span className="tab-icon">🏴󠁡󠁦󠁬󠁧󠁿</span>
-                    National
-                </button>
-                <button
-                    className={`nav-tab ${activeTab === 'INTERNATIONAL' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('INTERNATIONAL')}
-                >
-                    <span className="tab-icon">🌍</span>
-                    International
-                </button>
-            </Stack>
+            <Tabs
+                items={[
+                    { id: 'NATIONAL', label: 'National Systems', icon: '🏴' },
+                    { id: 'INTERNATIONAL', label: 'International Circuits', icon: '🌍' }
+                ]}
+                activeId={activeTab}
+                onChange={setActiveTab}
+                className="mb-lg"
+            />
 
             <div className="leagues-container">
                 {activeTab === 'INTERNATIONAL' ? (
-                    <div className="tab-content international-view">
-                        {/* Global Section */}
+                    <Stack gap="var(--spacing-2xl)">
                         {structuredData.international.global.length > 0 && (
-                            <section className="international-section mb-xl">
-                                <h3 className="group-title">Global</h3>
+                            <section>
+                                <h3 className="ds-section-subtitle">Global</h3>
                                 <Grid columns="repeat(auto-fill, minmax(240px, 1fr))" gap="var(--spacing-md)">
                                     {structuredData.international.global.map(league => (
                                         <LeagueCard key={league.id} league={league} onClick={() => handleCardClick(league)} />
@@ -133,10 +123,9 @@ const V3LeaguesList = () => {
                             </section>
                         )}
 
-                        {/* Continental Groupings */}
                         {Object.entries(structuredData.international.continental).map(([continent, items]) => (
-                            <section key={continent} className="international-section mb-xl">
-                                <h3 className="group-title">{continent}</h3>
+                            <section key={continent}>
+                                <h3 className="ds-section-subtitle">{continent}</h3>
                                 <Grid columns="repeat(auto-fill, minmax(240px, 1fr))" gap="var(--spacing-md)">
                                     {items.map(league => (
                                         <LeagueCard key={league.id} league={league} onClick={() => handleCardClick(league)} />
@@ -144,55 +133,48 @@ const V3LeaguesList = () => {
                                 </Grid>
                             </section>
                         ))}
-                    </div>
+                    </Stack>
                 ) : (
-                    <div className="tab-content national-view">
-                        <Stack gap="var(--spacing-lg)">
-                            {structuredData.national.map(country => {
-                                const showTop = country.leagues.slice(0, 5);
-                                const showOthers = country.leagues.slice(5);
-                                const isExpanded = expandedCountries[country.name];
+                    <Stack gap="var(--spacing-lg)">
+                        {structuredData.national.map(country => {
+                            const showTop = country.leagues.slice(0, 5);
+                            const showOthers = country.leagues.slice(5);
+                            const isExpanded = expandedCountries[country.name];
 
-                                return (
-                                    <Card key={country.name} className="country-group-card">
-                                        <div className="country-header mb-md">
-                                            <Stack direction="row" align="center" gap="var(--spacing-md)">
-                                                {country.flag && <img src={country.flag} alt="" className="country-flag" />}
-                                                <h3 className="country-name">{country.name}</h3>
-                                                <Badge variant="neutral">Tier {country.rank}</Badge>
-                                            </Stack>
+                            return (
+                                <Card key={country.name} className="v3-country-group">
+                                    <div style={{ marginBottom: 'var(--spacing-md)', paddingBottom: 'var(--spacing-xs)', borderBottom: '1px solid var(--color-border)' }}>
+                                        <Stack direction="row" align="center" gap="var(--spacing-md)">
+                                            {country.flag && <img src={country.flag} alt="" style={{ width: '20px' }} />}
+                                            <h3 style={{ margin: 0, fontSize: 'var(--font-size-xl)' }}>{country.name}</h3>
+                                            <Badge variant="neutral" size="sm">Tier {country.rank}</Badge>
+                                        </Stack>
+                                    </div>
+
+                                    <Grid columns="repeat(auto-fill, minmax(220px, 1fr))" gap="var(--spacing-md)">
+                                        {showTop.map(league => (
+                                            <LeagueCard key={league.id} league={league} onClick={() => handleCardClick(league)} />
+                                        ))}
+                                    </Grid>
+
+                                    {showOthers.length > 0 && (
+                                        <div className={`v3-others-wrap ${isExpanded ? 'active' : ''}`}>
+                                            <button className="v3-toggle" onClick={() => toggleCountry(country.name)}>
+                                                {isExpanded ? 'Show Less' : `+ ${showOthers.length} other competitions`}
+                                            </button>
+                                            {isExpanded && (
+                                                <Grid columns="repeat(auto-fill, minmax(220px, 1fr))" gap="var(--spacing-md)" style={{ marginTop: 'var(--spacing-md)' }}>
+                                                    {showOthers.map(league => (
+                                                        <LeagueCard key={league.id} league={league} onClick={() => handleCardClick(league)} />
+                                                    ))}
+                                                </Grid>
+                                            )}
                                         </div>
-
-                                        <Grid columns="repeat(auto-fill, minmax(220px, 1fr))" gap="var(--spacing-md)">
-                                            {showTop.map(league => (
-                                                <LeagueCard key={league.id} league={league} onClick={() => handleCardClick(league)} />
-                                            ))}
-                                        </Grid>
-
-                                        {showOthers.length > 0 && (
-                                            <div className={`others-accordion mt-md ${isExpanded ? 'active' : ''}`}>
-                                                <button
-                                                    className="accordion-trigger"
-                                                    onClick={() => toggleCountry(country.name)}
-                                                >
-                                                    {isExpanded ? 'Collapse List' : `+ ${showOthers.length} other competitions`}
-                                                    <span className={`chevron ${isExpanded ? 'up' : 'down'}`}>▼</span>
-                                                </button>
-
-                                                <div className={`others-content ${isExpanded ? 'expanded' : ''}`}>
-                                                    <Grid columns="repeat(auto-fill, minmax(220px, 1fr))" gap="var(--spacing-md)" className="mt-md">
-                                                        {showOthers.map(league => (
-                                                            <LeagueCard key={league.id} league={league} onClick={() => handleCardClick(league)} />
-                                                        ))}
-                                                    </Grid>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </Card>
-                                );
-                            })}
-                        </Stack>
-                    </div>
+                                    )}
+                                </Card>
+                            );
+                        })}
+                    </Stack>
                 )}
             </div>
         </div>
@@ -204,19 +186,17 @@ const LeagueCard = ({ league, onClick }) => (
         onClick={onClick}
         className="v3-league-card"
         extra={<Badge variant={league.is_cup ? 'warning' : 'primary'} size="sm">{league.is_cup ? 'Cup' : 'League'}</Badge>}
+        interactive
     >
         <Stack direction="row" gap="var(--spacing-md)" align="center">
-            <div className="league-logo-container">
-                <img src={league.logo} alt={league.name} className="league-card-logo" />
+            <div className="v3-logo-wrap">
+                <img src={league.logo} alt={league.name} />
             </div>
-            <div className="league-card-info">
-                <h4 className="league-name">{league.name}</h4>
-                <Stack direction="row" gap="var(--spacing-sm)" align="center">
-                    <span className="rank-indicator">#{league.rank} Rank</span>
-                    {league.seasons_count > 0 && (
-                        <span className="season-count">{league.seasons_count} Seasons</span>
-                    )}
-                </Stack>
+            <div>
+                <h4 style={{ margin: 0, fontSize: 'var(--font-size-sm)' }}>{league.name}</h4>
+                <div style={{ fontSize: '10px', color: 'var(--color-text-dim)', marginTop: '4px' }}>
+                    Rank #{league.rank} • {league.seasons_count} Seasons
+                </div>
             </div>
         </Stack>
     </Card>

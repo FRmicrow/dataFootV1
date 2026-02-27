@@ -3,49 +3,55 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-full);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
     line-height: 1;
     white-space: nowrap;
 }
 
 /* Variants */
 .ds-badge--neutral {
-    background: var(--color-bg-card-hover);
-    color: var(--color-text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-text-dim);
+    border: 1px solid var(--color-border);
 }
 
 .ds-badge--primary {
-    background: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
-    color: var(--color-primary-400);
+    background: color-mix(in srgb, var(--color-primary-500) 15%, transparent);
+    color: var(--color-primary-300);
+    border: 1px solid color-mix(in srgb, var(--color-primary-500) 30%, transparent);
 }
 
 .ds-badge--success {
-    background: color-mix(in srgb, var(--color-success-500) 20%, transparent);
+    background: color-mix(in srgb, var(--color-success-500) 15%, transparent);
     color: var(--color-success-500);
+    border: 1px solid color-mix(in srgb, var(--color-success-500) 30%, transparent);
 }
 
 .ds-badge--warning {
-    background: color-mix(in srgb, var(--color-accent-500) 20%, transparent);
+    background: color-mix(in srgb, var(--color-accent-500) 15%, transparent);
     color: var(--color-accent-400);
+    border: 1px solid color-mix(in srgb, var(--color-accent-500) 30%, transparent);
 }
 
 .ds-badge--danger {
-    background: color-mix(in srgb, var(--color-danger-500) 20%, transparent);
+    background: color-mix(in srgb, var(--color-danger-500) 15%, transparent);
     color: var(--color-danger-500);
+    border: 1px solid color-mix(in srgb, var(--color-danger-500) 30%, transparent);
 }
 
 /* Sizes */
 .ds-badge--sm {
-    padding: 2px 8px;
-    font-size: var(--font-size-xs);
+    padding: 2px var(--spacing-2xs);
+    font-size: 10px;
+    letter-spacing: 0.02em;
 }
 
 .ds-badge--md {
-    padding: 4px 12px;
-    font-size: var(--font-size-sm);
+    padding: var(--spacing-3xs) var(--spacing-xs);
+    font-size: var(--font-size-xs);
 }
 
 .ds-badge--lg {
-    padding: 6px 16px;
-    font-size: var(--font-size-base);
+    padding: var(--spacing-2xs) var(--spacing-md);
+    font-size: var(--font-size-sm);
 }

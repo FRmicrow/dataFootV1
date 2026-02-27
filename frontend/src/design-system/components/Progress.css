@@ -1,0 +1,63 @@
+.ds-progress {
+    width: 100%;
+}
+
+.ds-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: var(--spacing-2xs);
+}
+
+.ds-progress-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.ds-progress-value {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-main);
+}
+
+.ds-progress-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+}
+
+.ds-progress-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width var(--transition-slow);
+}
+
+/* Sizes */
+.ds-progress--sm .ds-progress-track {
+    height: 4px;
+}
+
+.ds-progress--lg .ds-progress-track {
+    height: 12px;
+}
+
+/* Variants */
+.ds-progress-fill--primary {
+    background: linear-gradient(90deg, var(--color-primary-600), var(--color-primary-400));
+}
+
+.ds-progress-fill--success {
+    background: linear-gradient(90deg, var(--color-success-600), var(--color-success-500));
+}
+
+.ds-progress-fill--danger {
+    background: linear-gradient(90deg, var(--color-danger-600), var(--color-danger-500));
+}
+
+.ds-progress-fill--warning {
+    background: linear-gradient(90deg, var(--color-warning-500), #fbbf24);
+}

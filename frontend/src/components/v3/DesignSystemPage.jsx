@@ -1,230 +1,214 @@
-import React from 'react';
-import { Card, Button, Badge, Table, Grid, Stack } from '../../design-system';
+import React, { useState } from 'react';
+import {
+    Card, Button, Badge, Table, Grid, Stack,
+    Tabs, Progress, MetricCard, ProfileHeader
+} from '../../design-system';
 
 const DesignSystemPage = () => {
-    const tableColumns = [
-        { title: 'Token Name', dataIndex: 'name', key: 'name' },
-        { title: 'Value', dataIndex: 'value', key: 'value', render: (val) => <code>{val}</code> },
-        {
-            title: 'Preview', key: 'preview', render: (_, record) => (
-                <div style={{
-                    width: '32px',
-                    height: '24px',
-                    backgroundColor: record.value.includes('#') || record.value.includes('rgba') || record.value.includes('var') ? record.value : 'transparent',
-                    backgroundImage: record.value.includes('gradient') ? record.value : 'none',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-xs)'
-                }}></div>
-            )
-        }
+    const [activeTab, setActiveTab] = useState('foundations');
+    const [progressValue, setProgressValue] = useState(65);
+
+    const colorTokens = [
+        { name: '--color-primary-600', value: '#7c3aed', desc: 'Main brand color, call to actions' },
+        { name: '--color-accent-500', value: '#f59e0b', desc: 'Highlights, featured stats' },
+        { name: '--color-success-500', value: '#10b981', desc: 'Positive trends, active status' },
+        { name: '--color-danger-500', value: '#f43f5e', desc: 'Negative trends, errors' },
+        { name: '--color-bg-main', value: '#0f172a', desc: 'Base page background' },
+        { name: '--color-bg-card', value: 'rgba(30, 41, 59, 0.7)', desc: 'Surface for content grouping' },
     ];
 
-    const colorData = [
-        { name: '--color-primary-600', value: 'var(--color-primary-600)' },
-        { name: '--color-accent-500', value: 'var(--color-accent-500)' },
-        { name: '--color-success-500', value: 'var(--color-success-500)' },
-        { name: '--color-danger-500', value: 'var(--color-danger-500)' },
-        { name: '--color-bg-main', value: 'var(--color-bg-main)' },
-        { name: '--color-bg-card', value: 'var(--color-bg-card)' },
+    const spacingTokens = [
+        { name: '--spacing-3xs', value: '4px', desc: 'Micro adjustments' },
+        { name: '--spacing-2xs', value: '8px', desc: 'Inner component padding' },
+        { name: '--spacing-xs', value: '12px', desc: 'The 1u modular unit' },
+        { name: '--spacing-sm', value: '18px', desc: 'Component transitions' },
+        { name: '--spacing-md', value: '24px', desc: 'Page-level grouping' },
+        { name: '--spacing-lg', value: '36px', desc: 'Section spacing' },
+        { name: '--spacing-xl', value: '48px', desc: 'Large container padding' },
     ];
 
-    const spacingData = [
-        { name: '--spacing-xs', value: '12px (1u)', preview: '12px' },
-        { name: '--spacing-sm', value: '24px (2u)', preview: '24px' },
-        { name: '--spacing-md', value: '36px (3u)', preview: '36px' },
-        { name: '--spacing-lg', value: '48px (4u)', preview: '48px' },
-        { name: '--spacing-xl', value: '72px (6u)', preview: '72px' },
-    ];
-
-    const dummyTableData = [
-        { id: 1, name: 'Premier League', status: 'Active', team: 'Arsenal', rating: 7.4 },
-        { id: 2, name: 'La Liga', status: 'Pending', team: 'Real Madrid', rating: 7.2 },
-        { id: 3, name: 'Serie A', status: 'Locked', team: 'Inter', rating: 6.9 },
-    ];
-
-    const dummyTableCols = [
-        { title: 'Competition', dataIndex: 'name', key: 'name', render: (v) => <strong>{v}</strong> },
-        { title: 'Main Team', dataIndex: 'team', key: 'team' },
-        {
-            title: 'In Sync',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status) => (
-                <Badge variant={status === 'Active' ? 'success' : status === 'Locked' ? 'danger' : 'warning'}>
-                    {status}
-                </Badge>
-            )
-        },
-        {
-            title: 'Avg Rating',
-            dataIndex: 'rating',
-            key: 'rating',
-            align: 'center',
-            render: (r) => <Badge variant={r >= 7.2 ? 'primary' : 'neutral'}>{r.toFixed(1)}</Badge>
-        },
-        {
-            title: 'Action',
-            key: 'action',
-            render: () => <Button size="xs" variant="ghost">Details</Button>
-        }
-    ];
-
-    return (
-        <div style={{ padding: 'var(--spacing-lg)', maxWidth: '1600px', margin: '0 auto', color: 'var(--color-text-main)' }} className="animate-fade-in">
-            <header style={{ marginBottom: 'var(--spacing-xl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--spacing-md)' }}>
-                <Stack direction="row" justify="space-between" align="center">
-                    <div>
-                        <Badge variant="primary" style={{ marginBottom: 'var(--spacing-xs)' }}>System Core v3.1</Badge>
-                        <h1 style={{ fontSize: 'var(--font-size-5xl)', margin: 0, letterSpacing: '-0.04em' }}>StatFoot Design Language</h1>
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xl)', marginTop: 'var(--spacing-xs)', maxWidth: '600px' }}>
-                            A modular, 12px-based design system optimized for high-density statistical visualization and real-time betting interfaces.
-                        </p>
-                    </div>
-                </Stack>
-            </header>
-
-            <Grid columns="280px 1fr" gap="var(--spacing-lg)">
-                {/* Navigation Sidebar */}
-                <aside style={{ borderRight: '1px solid var(--color-border)', paddingRight: 'var(--spacing-lg)' }}>
-                    <Stack gap="var(--spacing-1)">
-                        <label style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-text-dim)', marginBottom: '8px', letterSpacing: '0.1em' }}>Foundations</label>
-                        <Button variant="ghost" className="justify-start">Color Palette</Button>
-                        <Button variant="ghost" className="justify-start">Typography</Button>
-                        <Button variant="ghost" className="justify-start">Spacing Scale</Button>
-
-                        <label style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-text-dim)', margin: '24px 0 8px', letterSpacing: '0.1em' }}>Components</label>
-                        <Button variant="ghost" className="justify-start">Buttons & Badges</Button>
-                        <Button variant="ghost" className="justify-start">Cards & Surfaces</Button>
-                        <Button variant="ghost" className="justify-start">Data Tables</Button>
-                        <Button variant="ghost" className="justify-start">Layout (Grid/Stack)</Button>
-                    </Stack>
-                </aside>
-
-                <Stack gap="var(--spacing-xl)">
-                    {/* Foundations */}
-                    <section id="tokens">
-                        <Stack gap="var(--spacing-lg)">
-                            <div>
-                                <h2 style={{ fontSize: 'var(--font-size-3xl)', marginBottom: 'var(--spacing-sm)' }}>01. Foundations</h2>
-                                <p style={{ color: 'var(--color-text-muted)' }}>The core building blocks of visual identity.</p>
-                            </div>
-
-                            <Grid columns="1fr 1fr" gap="var(--spacing-lg)">
-                                <Card title="Primary Colors" subtitle="Identity and interactive elements">
-                                    <Table columns={tableColumns} data={colorData} />
-                                </Card>
-                                <Card title="Spacing (12px Scale)" subtitle="Strict units for alignment">
-                                    <Table
-                                        columns={[
-                                            { title: 'Token', dataIndex: 'name', key: 'name' },
-                                            { title: 'Value', dataIndex: 'value', key: 'value' },
-                                            {
-                                                title: 'Visual',
-                                                key: 'v',
-                                                render: (_, r) => <div style={{ height: '8px', background: 'var(--color-primary-500)', width: r.preview, borderRadius: '4px' }}></div>
-                                            }
-                                        ]}
-                                        data={spacingData}
-                                    />
-                                </Card>
-                            </Grid>
-                        </Stack>
-                    </section>
-
-                    {/* Components */}
-                    <section id="components">
-                        <Stack gap="var(--spacing-lg)">
-                            <div>
-                                <h2 style={{ fontSize: 'var(--font-size-3xl)', marginBottom: 'var(--spacing-sm)' }}>02. Interaction Lab</h2>
-                                <p style={{ color: 'var(--color-text-muted)' }}>Reusable UI patterns and their states.</p>
-                            </div>
-
-                            <Card title="Buttons & Badges">
-                                <Stack gap="var(--spacing-lg)">
-                                    <Stack gap="var(--spacing-xs)">
-                                        <p style={{ fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', color: 'var(--color-text-dim)' }}>Button Variants</p>
-                                        <Stack direction="row" gap="var(--spacing-sm)" align="center">
-                                            <Button variant="primary">Primary</Button>
-                                            <Button variant="secondary">Secondary</Button>
-                                            <Button variant="ghost">Ghost</Button>
-                                            <Button variant="danger">Danger</Button>
-                                        </Stack>
+    const Sections = {
+        foundations: (
+            <Stack gap="var(--spacing-xl)">
+                <section>
+                    <h3 className="mb-md">Color Palette</h3>
+                    <Grid columns="repeat(auto-fill, minmax(300px, 1fr))" gap="var(--spacing-md)">
+                        {colorTokens.map(t => (
+                            <Card key={t.name}>
+                                <Stack direction="row" gap="var(--spacing-md)" align="center">
+                                    <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-sm)', background: t.value, border: '1px solid var(--color-border)' }} />
+                                    <Stack gap="2px">
+                                        <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-primary-400)' }}>{t.name}</code>
+                                        <span style={{ fontSize: 'var(--font-size-sm)' }}>{t.desc}</span>
                                     </Stack>
-
-                                    <Grid columns="1fr 1fr" gap="var(--spacing-lg)">
-                                        <Stack gap="var(--spacing-xs)">
-                                            <p style={{ fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', color: 'var(--color-text-dim)' }}>Sizes</p>
-                                            <Stack direction="row" gap="var(--spacing-sm)" align="center">
-                                                <Button size="xs">XS</Button>
-                                                <Button size="sm">Small</Button>
-                                                <Button size="md">Medium</Button>
-                                                <Button size="lg">Large</Button>
-                                            </Stack>
-                                        </Stack>
-                                        <Stack gap="var(--spacing-xs)">
-                                            <p style={{ fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', color: 'var(--color-text-dim)' }}>Badges</p>
-                                            <Stack direction="row" gap="var(--spacing-sm)" align="center">
-                                                <Badge variant="primary">Primary</Badge>
-                                                <Badge variant="success">Success</Badge>
-                                                <Badge variant="warning">Warning</Badge>
-                                                <Badge variant="danger">Danger</Badge>
-                                                <Badge variant="neutral">Neutral</Badge>
-                                            </Stack>
-                                        </Stack>
-                                    </Grid>
                                 </Stack>
                             </Card>
+                        ))}
+                    </Grid>
+                </section>
 
-                            <Card title="Data Presentation" subtitle="High-density information grids">
-                                <Table
-                                    columns={dummyTableCols}
-                                    data={dummyTableData}
-                                    onRowClick={(row) => alert(`Selected ${row.name}`)}
-                                />
-                            </Card>
-                        </Stack>
-                    </section>
-
-                    {/* Layout Examples */}
-                    <section id="layout">
+                <section>
+                    <h3 className="mb-md">Spacing System (12px Scale)</h3>
+                    <Card>
+                        <Table
+                            columns={[
+                                { title: 'Token', dataIndex: 'name', key: 'name' },
+                                { title: 'Value', dataIndex: 'value', key: 'value' },
+                                {
+                                    title: 'Visual',
+                                    key: 'visual',
+                                    render: (_, r) => <div style={{ height: '12px', background: 'var(--color-primary-500)', width: r.value, borderRadius: 'var(--radius-xs)' }} />
+                                }
+                            ]}
+                            data={spacingTokens}
+                        />
+                    </Card>
+                </section>
+            </Stack>
+        ),
+        components: (
+            <Stack gap="var(--spacing-xl)">
+                <section>
+                    <h3 className="mb-md">Buttons & Badges</h3>
+                    <Card>
                         <Stack gap="var(--spacing-lg)">
-                            <div>
-                                <h2 style={{ fontSize: 'var(--font-size-3xl)', marginBottom: 'var(--spacing-sm)' }}>03. Structure</h2>
-                                <p style={{ color: 'var(--color-text-muted)' }}>Composition principles using Grid and Stack.</p>
-                            </div>
-
-                            <Grid columns="repeat(3, 1fr)" gap="var(--spacing-lg)">
-                                <Card title="Live Match" subtitle="Composition example">
-                                    <Stack align="center" gap="var(--spacing-sm)">
-                                        <Stack direction="row" align="center" gap="var(--spacing-lg)">
-                                            <img src="https://media.api-sports.io/football/teams/42.png" alt="" style={{ width: '48px' }} />
-                                            <div style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'bold' }}>2 - 0</div>
-                                            <img src="https://media.api-sports.io/football/teams/33.png" alt="" style={{ width: '48px' }} />
-                                        </Stack>
-                                        <Badge variant="success" size="sm">Partie en cours</Badge>
-                                    </Stack>
-                                </Card>
-                                <Card title="Player Profile" subtitle="Card overlay example">
-                                    <Stack direction="row" gap="var(--spacing-sm)" align="center">
-                                        <div style={{ width: '40px', height: '40px', background: 'var(--color-primary-600)', borderRadius: '50%' }}></div>
-                                        <Stack gap="2px">
-                                            <div style={{ fontWeight: 'bold' }}>Martin Ødegaard</div>
-                                            <div style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>MF • ARSENAL</div>
-                                        </Stack>
-                                    </Stack>
-                                </Card>
-                                <Card title="Form Guide" subtitle="Micro-viz example">
-                                    <Stack direction="row" gap="4px" justify="center" style={{ marginTop: '12px' }}>
-                                        {['W', 'W', 'D', 'W', 'L'].map((f, i) => (
-                                            <Badge key={i} variant={f === 'W' ? 'success' : f === 'D' ? 'warning' : 'danger'} size="sm" style={{ width: '24px', height: '24px', padding: 0 }}>{f}</Badge>
-                                        ))}
-                                    </Stack>
-                                </Card>
-                            </Grid>
+                            <Stack gap="var(--spacing-xs)">
+                                <label style={{ fontSize: '10px', color: 'var(--color-text-dim)', textTransform: 'uppercase' }}>Variants</label>
+                                <Stack direction="row" gap="var(--spacing-sm)">
+                                    <Button variant="primary">Primary Action</Button>
+                                    <Button variant="secondary">Secondary</Button>
+                                    <Button variant="ghost">Ghost Button</Button>
+                                    <Button variant="danger">Danger</Button>
+                                </Stack>
+                            </Stack>
+                            <Stack gap="var(--spacing-xs)">
+                                <label style={{ fontSize: '10px', color: 'var(--color-text-dim)', textTransform: 'uppercase' }}>States</label>
+                                <Stack direction="row" gap="var(--spacing-sm)">
+                                    <Button loading>Processing</Button>
+                                    <Button disabled>Disabled State</Button>
+                                    <Badge variant="success">Active Signal</Badge>
+                                    <Badge variant="warning">Warning Notice</Badge>
+                                </Stack>
+                            </Stack>
                         </Stack>
-                    </section>
-                </Stack>
-            </Grid>
+                    </Card>
+                </section>
+
+                <section>
+                    <h3 className="mb-md">Navigation & Feedback</h3>
+                    <Grid columns="1fr 1fr" gap="var(--spacing-lg)">
+                        <Card title="Tabs Navigation">
+                            <Tabs
+                                items={[
+                                    { id: '1', label: 'Dashboard', icon: '📊' },
+                                    { id: '2', label: 'Analytics', icon: '📈' },
+                                    { id: '3', label: 'Settings', icon: '⚙️' },
+                                ]}
+                                activeId="1"
+                                onChange={() => { }}
+                            />
+                            <div style={{ marginTop: '24px' }}>
+                                <Tabs
+                                    variant="pills"
+                                    items={[
+                                        { id: 'all', label: 'All Results' },
+                                        { id: 'win', label: 'Wins' },
+                                        { id: 'draw', label: 'Draws' },
+                                    ]}
+                                    activeId="all"
+                                    onChange={() => { }}
+                                />
+                            </div>
+                        </Card>
+                        <Card title="Progress Indicators">
+                            <Stack gap="var(--spacing-md)">
+                                <Progress label="Model Accuracy" value={progressValue} showLabel />
+                                <Progress label="Sync Progress" value={40} variant="success" size="sm" />
+                                <Progress value={90} variant="danger" size="lg" />
+                                <Button size="xs" onClick={() => setProgressValue(v => (v + 10) % 100)}>Update Simulation</Button>
+                            </Stack>
+                        </Card>
+                    </Grid>
+                </section>
+
+                <section>
+                    <h3 className="mb-md">Metric & Visualization</h3>
+                    <Grid columns="repeat(4, 1fr)" gap="var(--spacing-md)">
+                        <MetricCard label="Total Vol" value="12.4M" trend={12} icon="💰" />
+                        <MetricCard label="Active Users" value="84.2K" trend={-4} icon="👥" />
+                        <MetricCard label="Server Load" value="24%" variant="featured" icon="⚡" />
+                        <MetricCard label="Processing" value="..." loading />
+                    </Grid>
+                </section>
+            </Stack>
+        ),
+        layouts: (
+            <Stack gap="var(--spacing-xl)">
+                <section>
+                    <h3 className="mb-md">Hero Profile Patterns</h3>
+                    <ProfileHeader
+                        title="Lille OSC"
+                        subtitles={['Ligue 1', 'France', 'Founded 1944']}
+                        image="https://media.api-sports.io/football/teams/79.png"
+                        accentColor="#E01E2E"
+                        badges={[{ label: 'Elite Tier', variant: 'primary', icon: '⭐️' }]}
+                        stats={[
+                            { label: 'Rank', value: '#4' },
+                            { label: 'Goals', value: '38' },
+                            { label: 'Clean Sheets', value: '14' }
+                        ]}
+                        actions={<Button>Edit Profile</Button>}
+                    />
+                </section>
+
+                <section>
+                    <h3 className="mb-md">Complex Data Grid</h3>
+                    <Card>
+                        <Table
+                            columns={[
+                                { title: 'Competition', key: 'comp', render: () => <strong>Ligue 1</strong> },
+                                { title: 'Performance', key: 'perf', render: () => <Progress value={75} size="sm" /> },
+                                { title: 'Trend', key: 'trend', render: () => <Badge variant="success">Upward</Badge> },
+                                { title: 'Rating', key: 'rat', render: () => <Badge variant="primary">7.8</Badge> },
+                            ]}
+                            data={[{}, {}, {}]}
+                        />
+                    </Card>
+                </section>
+            </Stack>
+        )
+    };
+
+    return (
+        <div style={{ padding: 'var(--spacing-xl)', maxWidth: '1400px', margin: '0 auto' }} className="animate-fade-in">
+            <header style={{ marginBottom: 'var(--spacing-2xl)' }}>
+                <Badge variant="primary" style={{ marginBottom: 'var(--spacing-xs)' }}>DS v3.2 PRO</Badge>
+                <h1 style={{ fontSize: 'var(--font-size-5xl)', letterSpacing: '-0.04em' }}>StatFoot Design Language</h1>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-lg)', marginTop: 'var(--spacing-xs)' }}>
+                    Next-generation component library for data-heavy football analytics.
+                </p>
+            </header>
+
+            <Tabs
+                items={[
+                    { id: 'foundations', label: '01. Foundations', icon: '💎' },
+                    { id: 'components', label: '02. Component Lab', icon: '⚙️' },
+                    { id: 'layouts', label: '03. Layout Patterns', icon: '🖼️' },
+                ]}
+                activeId={activeTab}
+                onChange={setActiveTab}
+                className="mb-xl"
+            />
+
+            <main>
+                {Sections[activeTab]}
+            </main>
+
+            <footer style={{ marginTop: 'var(--spacing-3xl)', padding: 'var(--spacing-xl) 0', borderTop: '1px solid var(--color-border)', textAlign: 'center' }}>
+                <p style={{ color: 'var(--color-text-dim)', fontSize: 'var(--font-size-xs)' }}>
+                    &copy; 2026 STATFOOT DESIGN SYSTEM • BUILT WITH MODULAR PRINCIPLES
+                </p>
+            </footer>
         </div>
     );
 };
