@@ -1,0 +1,102 @@
+.ds-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    transition: var(--transition-base);
+    cursor: pointer;
+    border: 1px solid transparent;
+    outline: none;
+    font-family: var(--font-family);
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+/* Variants */
+.ds-button--primary {
+    background: var(--color-primary-600);
+    color: var(--color-primary-50);
+}
+
+.ds-button--primary:hover:not(:disabled) {
+    background: var(--color-primary-500);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.ds-button--secondary {
+    background: var(--color-bg-card);
+    border-color: var(--color-border);
+    color: var(--color-text-main);
+    backdrop-filter: var(--glass-blur);
+}
+
+.ds-button--secondary:hover:not(:disabled) {
+    background: var(--color-bg-card-hover);
+    border-color: var(--color-border-hover);
+}
+
+.ds-button--ghost {
+    background: transparent;
+    color: var(--color-text-muted);
+}
+
+.ds-button--ghost:hover:not(:disabled) {
+    background: var(--glass-bg);
+    color: var(--color-text-main);
+}
+
+.ds-button--danger {
+    background: var(--color-danger-500);
+    color: white;
+}
+
+.ds-button--danger:hover:not(:disabled) {
+    background: var(--color-danger-600);
+}
+
+/* Sizes */
+.ds-button--xs {
+    padding: 2px 8px;
+    font-size: var(--font-size-xs);
+    border-radius: var(--radius-sm);
+}
+
+.ds-button--sm {
+    padding: var(--spacing-1) var(--spacing-3);
+    font-size: var(--font-size-sm);
+}
+
+.ds-button--md {
+    padding: var(--spacing-2) var(--spacing-6);
+    font-size: var(--font-size-base);
+}
+
+.ds-button--lg {
+    padding: var(--spacing-3) var(--spacing-9);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+}
+
+.ds-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+.ds-button-spinner {
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: ds-spin 0.8s linear infinite;
+}
+
+@keyframes ds-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

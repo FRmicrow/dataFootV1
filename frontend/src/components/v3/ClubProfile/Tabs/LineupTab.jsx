@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../../../services/api';
+import { Card, Table, Badge, Stack, Button, Grid } from '../../../../design-system';
 
 const LineupTab = ({ clubId, year, competitionId, roster }) => {
     const [lineup, setLineup] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showNames, setShowNames] = useState(true);
 
     useEffect(() => {
         const fetchLineup = async () => {
@@ -23,19 +26,10 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
         if (year) fetchLineup();
     }, [clubId, year, competitionId]);
 
-
-
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showNames, setShowNames] = useState(true);
-
     const formationCoords = useMemo(() => {
         const formation = lineup?.formation || '4-3-3';
-        // Handle both 4.3.3 and 4-3-3
         const parts = formation.includes('.') ? formation.split('.') : formation.split('-');
         const coords = [];
-
-        // Always 11 players. Row 1 is always GK.
-        // Pitch: Left (10%) to Right (90%)
 
         // GK
         coords.push({ left: '8%', top: '50%' });
@@ -43,7 +37,6 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
         const rows = parts.map(Number);
         const rowCount = rows.length;
 
-        // Distribute rows between 28% and 88%
         const startX = 28;
         const endX = 88;
         const xStep = rowCount > 1 ? (endX - startX) / (rowCount - 1) : 0;
@@ -76,7 +69,7 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
         return [...raw].sort((a, b) => getPriority(a.position) - getPriority(b.position));
     }, [lineup]);
 
-    const bench = (lineup?.roster || []).slice(11, 16); // Top 5 subs
+    const bench = (lineup?.roster || []).slice(11, 16);
 
     const groupedRoster = useMemo(() => {
         if (!roster) return {};
@@ -91,126 +84,128 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
     }, [roster, searchQuery]);
 
     if (loading) return (
-        <div className="tab-loading">
-            <div className="spinner-v3 small"></div>
-            <span>Analyzing tactical formations...</span>
-        </div>
+        <Card style={{ padding: '80px', textAlign: 'center' }}>
+            <Stack align="center" gap="var(--spacing-md)">
+                <div className="ds-button-spinner"></div>
+                <div style={{ color: 'var(--color-text-muted)' }}>Analyzing tactical formations...</div>
+            </Stack>
+        </Card>
     );
 
     return (
-        <div className="lineup-tab-v4">
-            <h2 className="section-title">Tactical Hub</h2>
-
-            <div className="lineup-split-container">
-                {/* Left 30%: Optimized Roster Sidebar */}
-                <aside className="lineup-roster-sidebar">
-                    <div className="sidebar-header">
-                        <div className="s-head-main">
-                            <h4>Squad Personnel</h4>
-                            <span className="count-pill">{roster?.length}</span>
-                        </div>
+        <div className="lineup-tab-v4 animate-fade-in">
+            <Grid columns="300px 1fr" gap="var(--spacing-xl)">
+                {/* Sidebar */}
+                <Card title="Squad Registry" extra={<Badge variant="primary">{roster?.length}</Badge>}>
+                    <Stack gap="var(--spacing-md)">
                         <input
                             type="text"
-                            className="sidebar-search"
                             placeholder="Find player..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
+                            style={{ width: '100%', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', color: 'white' }}
                         />
-                    </div>
-
-                    <div className="roster-grouped-list">
-                        {Object.keys(groupedRoster).map(pos => (
-                            <div key={pos} className="pos-group-mini">
-                                <label>{pos}s</label>
-                                {groupedRoster[pos].map(p => {
-                                    const starter = activeStarters.find(r => r.id === p.player_id);
-                                    return (
-                                        <div key={p.player_id} className={`mini-player-card ${starter ? 'is-starter' : ''}`}>
-                                            <img src={p.photo_url} alt="" className="p-avatar" />
-                                            <div className="p-details">
-                                                <span className="p-name">{p.name}</span>
-                                                <span className="p-stats">{p.appearances || 0} apps</span>
-                                            </div>
-                                            {starter && <div className="starter-glyph">11</div>}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
-                    </div>
-                </aside>
-
-                {/* Right 70%: Professional Tactical Pitch */}
-                <main className="lineup-pitch-main">
-                    <header className="tactical-header-premium">
-                        <div className="t-head-left">
-                            <span className="t-label">Most Common Formation</span>
-                            <h2 className="t-value">{lineup?.formation || '4-3-3'} <span className="t-badge">PRIMARY SYSTEM</span></h2>
+                        <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                            {Object.keys(groupedRoster).map(pos => (
+                                <div key={pos} style={{ marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px' }}>{pos}s</div>
+                                    <Stack gap="4px">
+                                        {groupedRoster[pos].map(p => {
+                                            const isStarter = activeStarters.find(r => r.id === p.player_id);
+                                            return (
+                                                <div key={p.player_id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px', background: isStarter ? 'rgba(99, 102, 241, 0.1)' : 'transparent', borderRadius: '4px', border: isStarter ? '1px solid var(--color-primary-500)' : '1px solid transparent' }}>
+                                                    <img src={p.photo_url} alt="" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                                                    <div style={{ flex: 1, fontSize: 'var(--font-size-xs)' }}>
+                                                        <div style={{ fontWeight: isStarter ? 'bold' : 'normal' }}>{p.name}</div>
+                                                        <div style={{ fontSize: '9px', opacity: 0.6 }}>{p.appearances || 0} apps</div>
+                                                    </div>
+                                                    {isStarter && <Badge variant="primary" size="sm">XI</Badge>}
+                                                </div>
+                                            );
+                                        })}
+                                    </Stack>
+                                </div>
+                            ))}
                         </div>
-                        <div className="t-head-right">
-                            <div className="t-stat">
-                                <span className="s-val">{lineup?.usage || 0}</span>
-                                <span className="s-lab">Matches</span>
+                    </Stack>
+                </Card>
+
+                {/* Pitch */}
+                <Stack gap="var(--spacing-lg)">
+                    <Card>
+                        <Stack direction="row" justify="space-between" align="center">
+                            <div>
+                                <Badge variant="primary" size="sm" style={{ marginBottom: '4px' }}>Most Common</Badge>
+                                <h2 style={{ margin: 0 }}>{lineup?.formation || '4-3-3'}</h2>
                             </div>
-                            <div className="t-stat win">
-                                <span className="s-val">{lineup?.win_rate || 0}%</span>
-                                <span className="s-lab">Win Rate</span>
-                            </div>
-                            <div className="t-toggle">
-                                <button onClick={() => setShowNames(!showNames)}>
+                            <Stack direction="row" gap="var(--spacing-xl)">
+                                <Stack align="center">
+                                    <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold' }}>{lineup?.usage || 0}</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>MATCHES</div>
+                                </Stack>
+                                <Stack align="center">
+                                    <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold', color: 'var(--color-success-500)' }}>{lineup?.win_rate || 0}%</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>WIN RATE</div>
+                                </Stack>
+                                <Button size="sm" variant="secondary" onClick={() => setShowNames(!showNames)}>
                                     {showNames ? 'Hide Names' : 'Show Names'}
-                                </button>
-                            </div>
-                        </div>
-                    </header>
+                                </Button>
+                            </Stack>
+                        </Stack>
 
-                    <div className="pitch-canvas-outer premium">
-                        <div className="football-pitch v4">
-                            <div className="pitch-lines-v4">
-                                <div className="p-penalty home"></div>
-                                <div className="p-penalty away"></div>
-                                <div className="p-circle"></div>
-                                <div className="p-half"></div>
+                        <div style={{ marginTop: '24px', position: 'relative', background: 'radial-gradient(circle at center, #2d3748 0%, #1a202c 100%)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', height: '500px', overflow: 'hidden' }}>
+                            {/* Pitch Lines - Simplified CSS Pitch */}
+                            <div style={{ position: 'absolute', top: '5%', bottom: '5%', left: '2%', right: '2%', border: '2px solid rgba(255,255,255,0.2)', pointerEvents: 'none' }}>
+                                <div style={{ position: 'absolute', top: '0', bottom: '0', left: '50%', width: '2px', background: 'rgba(255,255,255,0.2)' }}></div>
+                                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100px', height: '100px', border: '2px solid rgba(255,255,255,0.2)', borderRadius: '50%' }}></div>
                             </div>
 
-                            <div className="starters-layer">
-                                {activeStarters.map((p, idx) => (
-                                    <div
-                                        key={p.id}
-                                        className="pitch-player-v4"
-                                        style={{
-                                            left: formationCoords[idx]?.left || '50%',
-                                            top: formationCoords[idx]?.top || '50%',
-                                            transform: 'translate(-50%, -50%)'
-                                        }}
-                                    >
-                                        <div className="p-marker" title={p.name}>
-                                            <img src={p.photo_url || p.photo} alt={p.name} className="p-photo" />
-                                            {p.number && <span className="p-num">{p.number}</span>}
-                                        </div>
-                                        {showNames && <span className="p-name-ribbon">{p.name}</span>}
+                            {activeStarters.map((p, idx) => (
+                                <div
+                                    key={p.id}
+                                    style={{
+                                        position: 'absolute',
+                                        left: formationCoords[idx]?.left || '50%',
+                                        top: formationCoords[idx]?.top || '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        zIndex: 2
+                                    }}
+                                >
+                                    <div style={{ position: 'relative', width: '48px', height: '48px', border: '2px solid var(--color-primary-500)', borderRadius: '50%', background: 'var(--color-bg-card)', padding: '2px', boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)' }}>
+                                        <img src={p.photo_url || p.photo} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                        {p.number && (
+                                            <span style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: 'var(--color-primary-500)', color: 'white', fontSize: '10px', padding: '1px 4px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                                {p.number}
+                                            </span>
+                                        )}
                                     </div>
-                                ))}
-                            </div>
+                                    {showNames && (
+                                        <span style={{ fontSize: '10px', marginTop: '6px', padding: '2px 8px', background: 'rgba(0,0,0,0.6)', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+                                            {p.name}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    </div>
+                    </Card>
 
-                    {/* BENCH SECTION */}
                     {bench.length > 0 && (
-                        <div className="bench-section-v4">
-                            <label>Most Frequent Substitutes</label>
-                            <div className="bench-list">
+                        <Card title="Frequent Substitutes">
+                            <Stack direction="row" gap="var(--spacing-md)" justify="center">
                                 {bench.map(p => (
-                                    <div key={p.id} className="bench-player">
-                                        <img src={p.photo_url || p.photo} alt="" />
-                                        <span>{p.name}</span>
-                                    </div>
+                                    <Stack key={p.id} align="center" gap="4px">
+                                        <img src={p.photo_url || p.photo} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)' }} />
+                                        <span style={{ fontSize: '10px' }}>{p.name}</span>
+                                    </Stack>
                                 ))}
-                            </div>
-                        </div>
+                            </Stack>
+                        </Card>
                     )}
-                </main>
-            </div>
+                </Stack>
+            </Grid>
         </div>
     );
 };

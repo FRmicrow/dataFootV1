@@ -1,0 +1,57 @@
+.ds-table-container {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.ds-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-main);
+}
+
+.ds-table th {
+    padding: var(--spacing-3) var(--spacing-6);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--color-text-muted);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.ds-table td {
+    padding: var(--spacing-3) var(--spacing-6);
+    border-bottom: 1px solid var(--color-border);
+    transition: var(--transition-fast);
+}
+
+.ds-table tr:last-child td {
+    border-bottom: none;
+}
+
+.ds-table--interactive tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-primary-300);
+}
+
+.ds-table-row--interactive {
+    cursor: pointer;
+}
+
+.ds-table-loading,
+.ds-table-empty {
+    text-align: center;
+    padding: var(--spacing-12) !important;
+    color: var(--color-text-muted);
+}
+
+.ds-table-loading .ds-button-spinner {
+    margin: 0 auto;
+    margin-bottom: var(--spacing-3);
+}
