@@ -130,10 +130,14 @@ const ClubProfilePageV3 = () => {
                         <h1 className="club-name-v4">{club.name}</h1>
                         <div className="club-meta-v4">
                             <span>{club.country}</span>
+                            {club.founded && (
+                                <>
+                                    <span className="dot"></span>
+                                    <span>Founded {club.founded}</span>
+                                </>
+                            )}
                             <span className="dot"></span>
-                            <span>Founded {club.founded || '—'}</span>
-                            <span className="dot"></span>
-                            <span>{club.venue_city}</span>
+                            <span dangerouslySetInnerHTML={{ __html: club.venue_city }}></span>
                         </div>
                         <div className="club-chips-row">
                             <span className="info-chip">Season {selectedYear}</span>
@@ -145,7 +149,7 @@ const ClubProfilePageV3 = () => {
                             {club.manager && <span className="info-chip">Manager: {club.manager}</span>}
                             <span className="info-chip timestamp">
                                 <span className="dot pulse"></span>
-                                Last updated: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                Live data
                             </span>
                         </div>
                     </div>
@@ -155,7 +159,7 @@ const ClubProfilePageV3 = () => {
                     <div className="venue-card-v4" title="Open venue details">
                         <img src={club.venue_image} alt={club.venue_name} className="venue-img-v4" />
                         <div className="venue-info-overlay">
-                            <span className="venue-name">{club.venue_name}</span>
+                            <span className="venue-name" dangerouslySetInnerHTML={{ __html: club.venue_name }}></span>
                             <span className="venue-cap">
                                 {club.venue_capacity ? `${club.venue_capacity.toLocaleString()} capacity` : 'Capacity —'}
                             </span>
