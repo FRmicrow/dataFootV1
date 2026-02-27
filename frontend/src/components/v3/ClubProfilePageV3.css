@@ -1,11 +1,11 @@
 .club-profile-v4-root {
-    max-width: 1400px;
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1.5rem 2rem 4rem;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    /* Consistent Vertical Rhythm */
+    gap: 32px;
+    min-height: 100vh;
 }
 
 /* ================= V4 PREMIUM HEADER ================= */
@@ -13,26 +13,21 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2.5rem 3rem;
-    background: var(--header-bg, #1e293b);
+    padding: 3rem 4rem;
+    background: var(--header-bg, #0f172a);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border-radius: 0 0 32px 32px;
 }
 
 .club-header-v4::before {
     content: '';
     position: absolute;
-    left: 0;
-    top: 0;
-    width: 40%;
-    height: 100%;
-    background: linear-gradient(90deg,
-            var(--club-accent, #6366f1) 0%,
-            var(--club-secondary, #6366f1) 15%,
-            transparent 100%);
-    opacity: 0.4;
+    inset: 0;
+    background: radial-gradient(circle at 10% 30%, var(--club-accent, #6366f1) 0%, transparent 60%);
+    opacity: 0.15;
     pointer-events: none;
     z-index: 0;
 }
@@ -40,58 +35,66 @@
 .header-left {
     display: flex;
     align-items: center;
-    gap: 2.5rem;
+    gap: 3rem;
     position: relative;
     z-index: 2;
 }
 
 .club-logo-outer {
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
 }
 
 .logo-glow {
     position: absolute;
-    inset: -5px;
+    inset: -15px;
     background: radial-gradient(circle, var(--glow-color, #6366f1) 0%, transparent 70%);
-    filter: blur(10px);
-    opacity: 0.15;
+    filter: blur(20px);
+    opacity: 0.2;
 }
 
 .club-logo-v4 {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
 }
 
 .club-name-v4 {
-    font-size: 3rem;
+    font-size: 4rem;
     font-weight: 900;
     margin: 0;
-    letter-spacing: -1px;
+    letter-spacing: -2px;
     background: linear-gradient(to right, #fff, #94a3b8);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    line-height: 1;
 }
 
 .club-meta-v4 {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-top: 8px;
+    gap: 16px;
+    margin-top: 12px;
     color: #94a3b8;
-    font-weight: 500;
-    font-size: 0.95rem;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
 }
 
 .club-meta-v4 .dot {
-    width: 4px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
+    width: 5px;
+    height: 5px;
+    background: #6366f1;
     border-radius: 50%;
+    box-shadow: 0 0 10px #6366f1;
 }
 
 .header-right {
@@ -138,100 +141,113 @@
 
 /* ================= GLOBAL CONTROL BAR ================= */
 .global-control-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(15, 23, 42, 0.98);
-    backdrop-filter: blur(20px);
-    padding: 0.6rem 1.2rem;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
     position: sticky;
-    top: 15px;
+    top: 1.5rem;
     z-index: 100;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.filter-wrapper {
     display: flex;
-    gap: 2rem;
-}
-
-.filter-box {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.filter-box label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    color: #64748b;
-    font-weight: 800;
-    letter-spacing: 1px;
-    margin-left: 8px;
-}
-
-.v4-select {
-    background: #0f172a;
+    justify-content: center;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(25px);
+    padding: 0.75rem 1.5rem;
+    border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    cursor: pointer;
-    min-width: 160px;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.v4-select:focus {
-    border-color: #6366f1;
+    box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.6);
+    gap: 3rem;
+    margin-bottom: 2rem;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .v4-tabs {
     display: flex;
-    gap: 8px;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .v4-tab-btn {
     background: transparent;
     border: none;
     padding: 8px 18px;
-    border-radius: 10px;
-    color: rgba(255, 255, 255, 0.7);
-    /* Labels nearly white */
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.5);
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.v4-tab-btn:hover {
-    background: rgba(255, 255, 255, 0.02);
-    /* Very subtle hover */
-    color: #fff;
+.v4-tab-btn:hover:not(.disabled) {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .v4-tab-btn.active {
-    background: #0f172a;
-    /* Darker than the bar */
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #6366f1 !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
 }
 
 .v4-tab-btn.disabled {
-    opacity: 0.3;
+    opacity: 0.2;
     cursor: not-allowed;
-    filter: grayscale(1);
+}
+
+.filter-wrapper {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.filter-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.filter-box label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+}
+
+.v4-select {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    min-width: 140px;
+    outline: none;
+    transition: all 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 14px;
+    padding-right: 32px;
+}
+
+.v4-select:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    background-color: rgba(30, 41, 59, 0.8);
+}
+
+.v4-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .v4-tab-btn .lock {
@@ -1537,30 +1553,29 @@
 }
 
 
-/* ================= UNIFIED TABLE STYLES ================= */
+/* ================= V4 COMMON TABLES ================= */
 .table-container-v4 {
-    background: rgba(15, 23, 42, 0.4);
-    border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    overflow: hidden;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
+    overflow-x: auto;
 }
 
 .v4-common-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    /* Vertical spacing between rows */
+    margin-top: -8px;
 }
 
 .v4-common-table th {
-    background: rgba(15, 23, 42, 0.6);
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     text-align: left;
-    font-size: 0.75rem;
-    text-transform: uppercase;
     color: #64748b;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.03);
 }
 
 .v4-common-table th.center {
@@ -1568,18 +1583,30 @@
 }
 
 .v4-common-table td {
-    padding: 0.6rem 0.8rem;
-    /* Tighten rows */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    vertical-align: middle;
+    padding: 1.25rem;
+    background: rgba(30, 41, 59, 0.3);
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.v4-common-table td:first-child {
+    border-radius: 16px 0 0 16px;
+}
+
+.v4-common-table td:last-child {
+    border-radius: 0 16px 16px 0;
 }
 
 .v4-common-table .v4-row:hover td {
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(99, 102, 241, 0.15);
+    color: #fff;
+    transform: scale(1.002);
 }
 
-.v4-common-table .v4-row.interactive {
-    cursor: pointer;
+.v4-common-table .v4-row:nth-child(even) td {
+    background: rgba(30, 41, 59, 0.15);
 }
 
 .v4-common-table .center {
@@ -1589,8 +1616,20 @@
 .v4-common-table .sticky-col {
     position: sticky;
     left: 0;
-    background: #0f172a;
     z-index: 5;
+    background: rgba(15, 23, 42, 1);
+}
+
+.v4-common-table .win-color {
+    color: #4ade80;
+}
+
+.v4-common-table .draw-color {
+    color: #fbbf24;
+}
+
+.v4-common-table .loss-color {
+    color: #f87171;
 }
 
 /* Specific chips and pills */
@@ -3164,74 +3203,241 @@
 .m-time-pill {
     background: rgba(99, 102, 241, 0.1);
     color: #818cf8;
-    padding: 4px 12px;
-    border-radius: 8px;
+    padding: 6px 14px;
+    border-radius: 10px;
     font-weight: 800;
+    font-size: 0.9rem;
 }
 
-/* COMPACT ANALYTICS */
-.stats-sections-v4 {
+/* MATCHES TOOLBAR */
+.matches-toolbar-v4 {
+    background: rgba(15, 23, 42, 0.4);
+    padding: 1.5rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 2.5rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
 }
 
-.metrics-grid-v4 {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+.toolbar-top,
+.toolbar-bottom {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
 }
 
-.v4-metric-card {
-    padding: 12px 16px;
+.pill-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pill-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.pill-btn.active {
+    background: #6366f1;
+    color: #fff;
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.toggle-v4 {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #64748b;
+    padding: 8px 20px;
     border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.v4-metric-card .m-value {
-    font-size: 1.3rem;
+.toggle-v4.win.active {
+    background: rgba(74, 222, 128, 0.1);
+    color: #4ade80;
+    border-color: #4ade80;
 }
 
-/* CALENDAR REDUCED SPACE */
-.matches-tab-v4 {
-    margin-top: -10px;
+.toggle-v4.loss.active {
+    background: rgba(248, 113, 113, 0.1);
+    color: #f87171;
+    border-color: #f87171;
 }
 
-.matches-toolbar-v4 {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+/* SQUAD CONTROLS */
+.squad-controls {
+    margin-bottom: 2.5rem;
+    display: flex;
+    justify-content: center;
 }
 
+.pos-filters {
+    display: flex;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 6px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pos-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    padding: 8px 20px;
+    border-radius: 16px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.pos-btn .count-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+}
+
+.pos-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pos-btn.active {
+    background: #6366f1;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.pos-btn.active .count-badge {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.view-selector-v4 {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.view-selector-v4 button {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.view-selector-v4 button:hover {
+    color: #fff;
+}
+
+.view-selector-v4 button.active {
+    color: #6366f1;
+}
+
+.view-selector-v4 button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #6366f1;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.v4-metric-card .m-val-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.v4-metric-card .m-sub {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 700;
+}
 
 .group-title-mini {
     font-size: 0.75rem;
     text-transform: uppercase;
     color: #64748b;
-    margin-bottom: 8px;
-    font-weight: 800;
+    margin-bottom: 1rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.split-performance-v4-compact {
+    background: rgba(30, 41, 59, 0.3);
+    padding: 2rem;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 2rem;
 }
 
 .v4-performance-split-table-mini {
     width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8rem;
+    border-collapse: separate;
+    border-spacing: 0 4px;
 }
 
 .v4-performance-split-table-mini th {
-    padding: 8px;
-    background: rgba(15, 23, 42, 0.4);
-    color: #94a3b8;
+    padding: 12px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.v4-performance-split-table-mini th:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.v4-performance-split-table-mini th:last-child {
+    border-radius: 0 8px 8px 0;
 }
 
 .v4-performance-split-table-mini td {
-    padding: 6px 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    color: #e2e8f0;
+    padding: 14px 20px;
+    border-bottom: none;
+    background: rgba(255, 255, 255, 0.02);
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.95rem;
 }
 
-.split-performance-v4-compact {
-    background: rgba(15, 23, 42, 0.2);
-    padding: 1rem;
-    border-radius: 12px;
+.v4-performance-split-table-mini tr:hover td {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .performance-hero-stats {
@@ -3279,15 +3485,51 @@
 
 /* SQUAD TABLE COMPACTNESS */
 .p-info-v4 {
-    width: 200px;
-    /* Constrain Role & Info */
+    width: 130px;
 }
 
 .p-meta-compact {
     display: flex;
     align-items: center;
-    gap: 6px;
-    white-space: nowrap;
+    gap: 16px;
+}
+
+.pos-tag-mini {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: #94a3b8;
+    min-width: 20px;
+    text-align: center;
+}
+
+.pos-tag-mini.goalkeeper {
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.1);
+}
+
+.pos-tag-mini.defender {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.pos-tag-mini.midfielder {
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.1);
+}
+
+.pos-tag-mini.attacker {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.1);
+}
+
+.p-age {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    font-weight: 700;
+    letter-spacing: -0.2px;
 }
 
 /* ANALYTICS FURTHER COMPACTNESS */

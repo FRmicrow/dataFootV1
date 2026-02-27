@@ -80,16 +80,18 @@ const SquadTab = ({ roster, year }) => {
                                                     'England': 'gb', 'Spain': 'es', 'Italy': 'it', 'France': 'fr', 'Germany': 'de',
                                                     'Portugal': 'pt', 'Netherlands': 'nl', 'Brazil': 'br', 'Argentina': 'ar', 'Belgium': 'be',
                                                     'Norway': 'no', 'Denmark': 'dk', 'Sweden': 'se', 'Switzerland': 'ch', 'Croatia': 'hr',
-                                                    'Serbia': 'rs', 'Algeria': 'dz', 'Nigeria': 'ng', 'Japan': 'jp'
+                                                    'Serbia': 'rs', 'Algeria': 'dz', 'Nigeria': 'ng', 'Japan': 'jp', 'Turkey': 'tr', 'Türkiye': 'tr'
                                                 };
                                                 const code = natMap[p.nationality] || 'un';
                                                 return <img src={`https://flagcdn.com/w20/${code}.png`} alt={p.nationality} className="nat-flag-v4" />;
                                             })()}
-                                            <span className="p-nat-name">{p.nationality}</span>
                                         </div>
-                                        <span className="divider">•</span>
-                                        <span className={`pos-tag-mini ${p.position?.toLowerCase()}`}>{p.position}</span>
-                                        <span className="divider">•</span>
+                                        <span className={`pos-tag-mini ${p.position?.toLowerCase()}`}>
+                                            {p.position === 'Goalkeeper' ? 'G' :
+                                                p.position === 'Defender' ? 'D' :
+                                                    p.position === 'Midfielder' ? 'M' :
+                                                        p.position === 'Attacker' ? 'A' : p.position?.charAt(0)}
+                                        </span>
                                         <span className="p-age">{p.age}y</span>
                                     </div>
                                 </td>

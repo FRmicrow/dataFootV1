@@ -129,7 +129,7 @@ export const getClubProfile = async (req, res) => {
         if (rosterYear) {
             let rosterSql = `
                 SELECT 
-                    p.player_id, p.name, p.photo_url, p.nationality,
+                    p.player_id, p.name, p.photo_url, p.nationality, p.age,
                     ps.games_position as position,
                     SUM(ps.games_appearences) as appearances,
                     SUM(ps.goals_total) as goals,
