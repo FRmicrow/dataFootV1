@@ -3,8 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import {
     Card, Stack, Grid, Badge, Button,
-    Tabs, ProfileHeader
+    Tabs, ProfileHeader, ControlBar
 } from '../../design-system';
+
+
 import './ClubProfilePageV3.css';
 
 // Tab Components
@@ -100,11 +102,11 @@ const ClubProfilePageV3 = () => {
     const hasStats = activeSeasons.some(s => s.imported_fixture_stats === 1);
 
     const tabItems = [
-        { id: 'performance', label: 'Overview', icon: '💎' },
-        { id: 'squad', label: 'Roster', icon: '👥' },
-        { id: 'lineup', label: 'Strategy', icon: '📋', disabled: !hasLineups },
-        { id: 'matches', label: 'Calendar', icon: '📅' },
-        { id: 'stats', label: 'Analytics', icon: '📈', disabled: !hasStats }
+        { id: 'performance', label: 'Overview' },
+        { id: 'squad', label: 'Roster' },
+        { id: 'lineup', label: 'Strategy', disabled: !hasLineups },
+        { id: 'matches', label: 'Calendar' },
+        { id: 'stats', label: 'Analytics', disabled: !hasStats }
     ];
 
     return (
@@ -116,7 +118,7 @@ const ClubProfilePageV3 = () => {
                 accentColor={club.accent_color}
                 subtitles={[club.country, club.venue_name, club.venue_city]}
                 badges={[
-                    { label: 'Verified Hub', variant: 'success', icon: '🛡️' },
+                    { label: 'Verified Hub', variant: 'success' },
                     { label: `Rank #${club.rank || 'N/A'}`, variant: 'primary' }
                 ]}
                 stats={[
@@ -126,19 +128,20 @@ const ClubProfilePageV3 = () => {
                 ]}
             />
 
-            <div className="ds-club-control-bar">
-                <Grid columns="1fr auto" gap="var(--spacing-lg)" align="center">
+            <ControlBar
+                left={
                     <Tabs
                         items={tabItems}
                         activeId={activeTab}
                         onChange={handleTabChange}
                     />
-
+                }
+                right={
                     <Stack direction="row" gap="var(--spacing-md)">
                         <div className="ds-filter-box">
                             <label>Season</label>
                             <select value={selectedYear || ''} onChange={(e) => setSelectedYear(parseInt(e.target.value))}>
-                                {availableYears.map(y => <option key={y} value={y}>{y}/{y + 1}</option>)}
+                                {availableYears.map(y => <option key={y} value={y}>{y}/{parseInt(y) + 1}</option>)}
                             </select>
                         </div>
                         <div className="ds-filter-box">
@@ -149,8 +152,8 @@ const ClubProfilePageV3 = () => {
                             </select>
                         </div>
                     </Stack>
-                </Grid>
-            </div>
+                }
+            />
 
             <main className="ds-club-content">
                 {activeTab === 'performance' && (

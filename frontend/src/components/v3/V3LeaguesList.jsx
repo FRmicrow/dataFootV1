@@ -118,8 +118,8 @@ const V3LeaguesList = () => {
 
             <Tabs
                 items={[
-                    { id: 'NATIONAL', label: 'National Systems', icon: '🏴' },
-                    { id: 'INTERNATIONAL', label: 'International Circuits', icon: '🌍' }
+                    { id: 'NATIONAL', label: 'National Systems' },
+                    { id: 'INTERNATIONAL', label: 'International Circuits' }
                 ]}
                 activeId={activeTab}
                 onChange={setActiveTab}

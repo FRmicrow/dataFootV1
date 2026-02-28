@@ -121,8 +121,7 @@ const StandingsTable = ({
             <Card style={{ minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ textAlign: 'center', maxWidth: '500px', padding: 'var(--spacing-xl)' }}>
                     <div style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto var(--spacing-lg)' }}>
-                        <div style={{ fontSize: '80px' }}>🏟️</div>
-                        <div style={{ position: 'absolute', bottom: 0, right: 0, fontSize: '40px' }}>🔍</div>
+                        <div style={{ fontSize: '48px', color: 'var(--color-primary-600)', fontWeight: 'black' }}>OFFLINE</div>
                     </div>
                     <h3 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-black)', marginBottom: 'var(--spacing-sm)' }}>Classification Matrix Offline</h3>
                     <p style={{ color: 'var(--color-text-dim)', fontSize: 'var(--font-size-sm)', lineHeight: '1.6', marginBottom: 'var(--spacing-xl)' }}>

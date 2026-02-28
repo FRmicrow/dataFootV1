@@ -1,6 +1,6 @@
 .ds-player-intel-card {
     padding: var(--spacing-sm);
-    background: rgba(15, 23, 42, 0.4);
+    background: var(--color-bg-card);
     border: 1px solid var(--color-border);
 }
 
@@ -36,7 +36,7 @@
 }
 
 .ds-intel-meta {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
     color: var(--color-text-dim);
 }
 
@@ -47,8 +47,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-    font-size: 12px;
+    font-weight: var(--font-weight-black);
+    font-size: var(--font-size-xs);
     color: white;
     box-shadow: var(--shadow-sm);
 }
@@ -73,15 +73,15 @@
 }
 
 .ds-intel-stat-row .label {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
     text-transform: uppercase;
     color: var(--color-text-dim);
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
 }
 
 .ds-intel-stat-row .track {
     height: 4px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-border);
     border-radius: var(--radius-full);
     overflow: hidden;
 }
@@ -89,12 +89,12 @@
 .ds-intel-stat-row .bar {
     height: 100%;
     border-radius: var(--radius-full);
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width var(--transition-slow);
 }
 
 .ds-intel-stat-row .val {
-    font-size: 11px;
-    font-weight: 800;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-black);
     color: var(--color-text-main);
     text-align: right;
 }
@@ -119,8 +119,8 @@
 }
 
 .ds-intel-min-stat span {
-    font-size: 12px;
-    font-weight: 800;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-black);
     color: var(--color-primary-400);
 }
 

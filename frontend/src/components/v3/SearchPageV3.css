@@ -3,8 +3,8 @@
 }
 
 .ds-search-hero {
-    padding: 80px 20px 40px;
-    background: radial-gradient(circle at top center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+    padding: var(--spacing-2xl) var(--spacing-md) var(--spacing-xl);
+    background: radial-gradient(circle at top center, var(--color-primary-bg) 0%, transparent 70%);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -18,7 +18,7 @@
     backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-2xl);
+    box-shadow: var(--shadow-xl);
 }
 
 .ds-search-input-wrapper {
@@ -29,31 +29,31 @@
 
 .ds-search-icon {
     position: absolute;
-    left: 16px;
+    left: var(--spacing-md);
     color: var(--color-text-muted);
 }
 
 .ds-search-input-wrapper input {
     width: 100%;
-    padding: 16px 48px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: var(--glass-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    color: white;
+    color: var(--color-text-main);
     font-size: var(--font-size-lg);
-    transition: all 0.2s ease;
+    transition: var(--transition-fast) ease;
 }
 
 .ds-search-input-wrapper input:focus {
     outline: none;
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--color-primary-500);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    box-shadow: var(--focus-ring);
 }
 
 .ds-clear-btn {
     position: absolute;
-    right: 16px;
+    right: var(--spacing-md);
     background: none;
     border: none;
     color: var(--color-text-muted);
@@ -61,8 +61,8 @@
 }
 
 .ds-filter-tabs {
-    background: rgba(0, 0, 0, 0.2);
-    padding: 4px;
+    background: var(--color-slate-900);
+    padding: var(--spacing-3xs);
     border-radius: var(--radius-md);
 }
 

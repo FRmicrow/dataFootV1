@@ -166,24 +166,31 @@ const PlayerProfilePageV3 = () => {
             <ProfileHeader
                 title={player.name}
                 image={player.photo_url}
+                accentColor={currentContext?.team?.accent_color || 'var(--color-primary-500)'}
                 subtitles={[
                     player.nationality,
-                    `${player.age} Years Old`,
+                    `${player.age} yrs`,
                     player.height,
                     player.preferred_foot ? `Preferred: ${player.preferred_foot}` : ''
                 ].filter(Boolean)}
                 badges={[
-                    { label: currentContext?.team?.name || 'Free Agent', variant: 'primary', icon: '👤' },
+                    {
+                        label: currentContext?.team?.name || 'Free Agent',
+                        variant: 'primary',
+                        icon: currentContext?.team?.logo_url && (
+                            <img src={currentContext.team.logo_url} alt="" style={{ width: '12px', height: '12px', borderRadius: '4px' }} />
+                        )
+                    },
                     { label: player.position || 'Unknown', variant: 'neutral' }
                 ]}
                 stats={[
                     { label: 'Total Apps', value: totalApps },
                     { label: 'Career Goals', value: totalGoals },
-                    { label: 'Birth Date', value: player.birth_date || 'N/A' }
+                    { label: 'Born', value: player.birth_date || 'N/A' }
                 ]}
                 actions={
                     syncStatus === 'idle' ? (
-                        <Button variant="secondary" size="sm" onClick={handleDeepSync}>🔄 Deep Sync</Button>
+                        <Button variant="secondary" size="sm" onClick={handleDeepSync}>Deep Sync</Button>
                     ) : (
                         <div style={{ minWidth: '150px' }}>
                             <Progress value={syncProgress} variant="primary" size="sm" showLabel />
@@ -192,7 +199,7 @@ const PlayerProfilePageV3 = () => {
                 }
             />
 
-            <Grid columns="2.5fr 1fr" gap="var(--spacing-xl)">
+            <Grid columns="2.5fr 1fr" gap="var(--spacing-xl)" className="mb-xl">
                 <Stack gap="var(--spacing-xl)">
                     <Card title="Career Snapshot" subtitle="Consolidated performance metrics by club">
                         <Table
@@ -201,10 +208,12 @@ const PlayerProfilePageV3 = () => {
                                     title: 'Team',
                                     key: 'team',
                                     render: (_, club) => (
-                                        <Stack direction="row" gap="var(--spacing-2xs)" align="center">
-                                            <img src={club.team_logo} alt="" style={{ width: '18px' }} />
-                                            <span>{club.team_name}</span>
-                                        </Stack>
+                                        <Link to={`/club/${club.team_id}`} className="ds-link-team">
+                                            <Stack direction="row" gap="var(--spacing-2xs)" align="center">
+                                                <img src={club.team_logo} alt="" style={{ width: '18px' }} />
+                                                <span style={{ fontWeight: 'bold' }}>{club.team_name}</span>
+                                            </Stack>
+                                        </Link>
                                     )
                                 },
                                 { title: 'Apps', dataIndex: 'total_matches', key: 'apps', align: 'center' },
@@ -217,20 +226,71 @@ const PlayerProfilePageV3 = () => {
                     </Card>
 
                     <Stack direction="row" justify="space-between" align="center">
-                        <h2 style={{ fontSize: 'var(--font-size-xl)' }}>Timeline</h2>
-                        <Stack direction="row" gap="var(--spacing-2xs)">
-                            <Button size="xs" variant={careerView === 'year' ? 'primary' : 'secondary'} onClick={() => setCareerView('year')}>Annual View</Button>
+                        <h2 style={{ fontSize: 'var(--font-size-xl)' }}>Professional Timeline</h2>
+                        <Stack direction="row" gap="var(--spacing-2xs)" dense>
+                            <Button size="xs" variant={careerView === 'year' ? 'primary' : 'secondary'} onClick={() => setCareerView('year')}>Annual</Button>
                             <Button size="xs" variant={careerView === 'club' ? 'primary' : 'secondary'} onClick={() => setCareerView('club')}>Club View</Button>
                         </Stack>
                     </Stack>
 
                     <Stack gap="var(--spacing-md)">
                         {sortedKeys.map(key => {
-                            const rows = careerView === 'year' ? groupedCareer[key] : groupedCareer[key].rows;
+                            const isClubView = careerView === 'club';
+                            const rows = isClubView ? groupedCareer[key].rows : groupedCareer[key];
+                            const teamLogo = isClubView ? rows[0]?.team_logo : null;
+
                             return (
-                                <Card key={key} title={careerView === 'year' ? `${key}/${parseInt(key) + 1}` : key} ghost>
-                                    <Table columns={careerColumns(careerView)} data={rows} />
-                                </Card>
+                                <div key={key} className="timeline-section">
+                                    <div className="timeline-separator">
+                                        {isClubView && teamLogo && <img src={teamLogo} alt="" className="timeline-club-icon" />}
+                                        <span className="timeline-label">{isClubView ? key : `${key}/${parseInt(key) + 1}`}</span>
+                                    </div>
+                                    <Card ghost>
+                                        <Table
+                                            columns={[
+                                                ...(careerView !== 'club' ? [{
+                                                    title: 'Team',
+                                                    key: 'team',
+                                                    render: (_, row) => (
+                                                        <Link to={`/club/${row.team_id}`} className="ds-link-team">
+                                                            <Stack direction="row" gap="var(--spacing-2xs)" align="center">
+                                                                <img src={row.team_logo} alt="" style={{ width: '16px' }} />
+                                                                <span>{row.team_name}</span>
+                                                            </Stack>
+                                                        </Link>
+                                                    )
+                                                }] : []),
+                                                {
+                                                    title: 'Competition',
+                                                    key: 'league',
+                                                    render: (_, row) => (
+                                                        <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="ds-link">
+                                                            <Stack direction="row" gap="8px" align="center">
+                                                                <img src={`https://media.api-sports.io/football/leagues/${row.league_id}.png`} alt="" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+                                                                {row.league_name}
+                                                            </Stack>
+                                                        </Link>
+                                                    )
+                                                },
+                                                ...(careerView !== 'year' ? [{ title: 'Season', dataIndex: 'season_year', key: 'season' }] : []),
+                                                { title: 'Apps', dataIndex: 'games_appearences', key: 'apps', align: 'center' },
+                                                { title: 'Goals', dataIndex: 'goals_total', key: 'goals', align: 'center', render: (v) => <strong style={{ color: 'var(--color-primary-400)' }}>{v}</strong> },
+                                                {
+                                                    title: 'Rating',
+                                                    dataIndex: 'games_rating',
+                                                    key: 'rating',
+                                                    align: 'center',
+                                                    render: (val) => (
+                                                        <Badge variant={parseFloat(val) > 7.3 ? 'success' : parseFloat(val) > 6.7 ? 'primary' : 'neutral'}>
+                                                            {val || '--'}
+                                                        </Badge>
+                                                    )
+                                                }
+                                            ]}
+                                            data={rows}
+                                        />
+                                    </Card>
+                                </div>
                             );
                         })}
                     </Stack>
@@ -239,19 +299,26 @@ const PlayerProfilePageV3 = () => {
                 <aside>
                     <Stack gap="var(--spacing-xl)">
                         {trophies.length > 0 && (
-                            <Card title="Honours Hub">
-                                <Stack gap="var(--spacing-md)">
-                                    {trophies.map((t, idx) => (
-                                        <Stack key={idx} direction="row" justify="space-between" align="center">
-                                            <div>
-                                                <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold' }}>{t.league_name || t.trophy}</div>
-                                                <div style={{ fontSize: '10px', color: 'var(--color-text-dim)' }}>{t.season}</div>
+                            <Card title="Honor Hub">
+                                <Stack gap="var(--spacing-xs)">
+                                    {trophies
+                                        .sort((a, b) => (a.importance_rank || 99) - (b.importance_rank || 99) || b.season - a.season)
+                                        .map((t, idx) => (
+                                            <div key={idx} className="honor-item">
+                                                <div className="honor-left">
+                                                    <Badge variant={t.place?.toLowerCase().includes('winner') ? 'warning' : 'neutral'} size="xs" dense>
+                                                        {t.place?.toLowerCase().includes('winner') ? 'Winner' : 'Runner-up'}
+                                                    </Badge>
+                                                </div>
+                                                <div className="honor-main">
+                                                    <Stack direction="row" gap="8px" align="center">
+                                                        <img src={`https://media.api-sports.io/football/leagues/${t.league_id}.png`} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+                                                        <span className="honor-league">{t.league_name || t.trophy}</span>
+                                                    </Stack>
+                                                    <div className="honor-seasons">{t.season}</div>
+                                                </div>
                                             </div>
-                                            <Badge variant={t.place?.toLowerCase().includes('winner') ? 'warning' : 'neutral'}>
-                                                {t.place || 'Champion'}
-                                            </Badge>
-                                        </Stack>
-                                    ))}
+                                        ))}
                                 </Stack>
                             </Card>
                         )}

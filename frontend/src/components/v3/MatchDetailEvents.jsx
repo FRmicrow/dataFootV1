@@ -48,23 +48,47 @@ const MatchDetailEvents = ({ fixtureId }) => {
     return (
         <div className="ds-match-events-list animate-fade-in">
             {events.map((ev, idx) => {
-                const isHome = ev.is_home_team === 1;
-                const timeStr = `${ev.time_elapsed}${ev.extra_minute ? `+${ev.extra_minute}` : ''}'`;
+                const isHome = Number(ev.is_home_team) === 1;
+                const timeStr = `${ev.time_elapsed}${ev.extra_minute ? `+${ev.extra_minute}` : ''}${ev.extra_minute ? '' : "'"}`;
 
                 return (
-                    <div key={idx} className={`ds-ev-item ${isHome ? 'home' : 'away'}`}>
-                        <div className="ds-ev-time">{timeStr}</div>
-                        <div className="ds-ev-icon">
-                            {renderEventIcon(ev.type, ev.detail)}
+                    <div key={idx} className={`ds-ev-row ${isHome ? 'home' : 'away'}`}>
+                        {/* Home Spot (40%) */}
+                        <div className="ds-ev-col-home">
+                            {isHome && (
+                                <div className="ds-ev-data-wrap">
+                                    <span className="ds-ev-player">{ev.player_name}</span>
+                                    <div className="ds-ev-meta">
+                                        <span className="ds-ev-detail">{ev.detail}</span>
+                                        {ev.assist_name && (
+                                            <Badge variant="neutral" size="xs">Ass: {ev.assist_name}</Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <div className="ds-ev-info">
-                            <span className="ds-ev-player">{ev.player_name}</span>
-                            <div className="ds-ev-meta">
-                                <span className="ds-ev-detail">{ev.detail}</span>
-                                {ev.assist_name && (
-                                    <Badge variant="neutral" size="xs">Ass: {ev.assist_name}</Badge>
-                                )}
+
+                        {/* Center Spot (10%) */}
+                        <div className="ds-ev-col-center">
+                            <div className="ds-ev-time-stamp">{timeStr}</div>
+                            <div className="ds-ev-timeline-icon">
+                                {renderEventIcon(ev.type, ev.detail)}
                             </div>
+                        </div>
+
+                        {/* Away Spot (40%) */}
+                        <div className="ds-ev-col-away">
+                            {!isHome && (
+                                <div className="ds-ev-data-wrap">
+                                    <span className="ds-ev-player">{ev.player_name}</span>
+                                    <div className="ds-ev-meta">
+                                        <span className="ds-ev-detail">{ev.detail}</span>
+                                        {ev.assist_name && (
+                                            <Badge variant="neutral" size="xs">Ass: {ev.assist_name}</Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );

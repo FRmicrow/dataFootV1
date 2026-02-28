@@ -100,8 +100,8 @@ const Step2_Config = () => {
                 <label className="form-label-v2">Animation Speed</label>
                 <div className="slider-container-v2">
                     <div className="slider-header-v2">
-                        <span className="slider-label-v2" style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>TRANSITION PACE</span>
-                        <span className="slider-value-v2" style={{ color: '#6366f1', fontWeight: 800 }}>{visual.speed}x</span>
+                        <span className="slider-label-v2">TRANSITION PACE</span>
+                        <span className="slider-value-v2">{visual.speed}x</span>
                     </div>
                     <input
                         type="range"
@@ -118,7 +118,7 @@ const Step2_Config = () => {
             {/* Navigation */}
             <div className="nav-actions-v2">
                 <button className="btn-secondary-v2" onClick={prevStep}>← Adjust Registry</button>
-                <button className="btn-primary-v2" style={{ flex: 1 }} onClick={() => goToStep(3)}>
+                <button className="btn-primary-v2" onClick={() => goToStep(3)}>
                     Synchronize Preview →
                 </button>
             </div>

@@ -121,7 +121,7 @@ const FixturesList = ({
             <Card padding="0">
                 {groupedFixtures.length === 0 ? (
                     <Stack align="center" gap="var(--spacing-sm)" style={{ padding: 'var(--spacing-2xl)' }}>
-                        <span style={{ fontSize: '48px', opacity: 0.2 }}>📅</span>
+                        <div style={{ fontSize: '11px', fontWeight: 'black', color: 'var(--color-text-dim)', letterSpacing: '0.2em' }}>NO DATA RECORDED</div>
                         <p style={{ color: 'var(--color-text-dim)', textTransform: 'uppercase', fontWeight: 'bold' }}>Schedule Empty</p>
                     </Stack>
                 ) : (

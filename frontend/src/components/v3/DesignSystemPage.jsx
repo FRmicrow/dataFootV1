@@ -10,50 +10,51 @@ const DesignSystemPage = () => {
     const [progressValue, setProgressValue] = useState(65);
 
     const colorTokens = [
-        { name: '--color-primary-600', value: '#7c3aed', desc: 'Main brand color, call to actions' },
-        { name: '--color-accent-500', value: '#f59e0b', desc: 'Highlights, featured stats' },
-        { name: '--color-success-500', value: '#10b981', desc: 'Positive trends, active status' },
-        { name: '--color-danger-500', value: '#f43f5e', desc: 'Negative trends, errors' },
+        { name: '--color-primary-500', value: '#8b5cf6', desc: 'Main brand color (Purple)' },
+        { name: '--color-blue-500', value: '#3b82f6', desc: 'Information & Primary actions (Blue)' },
+        { name: '--color-accent-500', value: '#f59e0b', desc: 'Highlights & Featured stats' },
+        { name: '--color-success-500', value: '#10b981', desc: 'Positive trends & Success states' },
+        { name: '--color-danger-500', value: '#f43f5e', desc: 'Negative trends & Errors' },
+        { name: '--color-slate-800', value: '#1e293b', desc: 'Surface background for cards' },
         { name: '--color-bg-main', value: '#0f172a', desc: 'Base page background' },
-        { name: '--color-bg-card', value: 'rgba(30, 41, 59, 0.7)', desc: 'Surface for content grouping' },
     ];
 
     const spacingTokens = [
         { name: '--spacing-3xs', value: '4px', desc: 'Micro adjustments' },
-        { name: '--spacing-xs', value: '12px', desc: 'The 1u modular unit' },
-        { name: '--spacing-md', value: '24px', desc: 'Page-level grouping' },
-        { name: '--spacing-xl', value: '48px', desc: 'Large container padding' },
+        { name: '--spacing-xs', value: '12px', desc: 'Base modular unit' },
+        { name: '--spacing-md', value: '24px', desc: 'Standard grouping' },
+        { name: '--spacing-xl', value: '48px', desc: 'Large container gaps' },
     ];
 
     const Sections = {
         foundations: (
             <Stack gap="var(--spacing-xl)">
                 <section>
-                    <h3 className="mb-md">Token Governance</h3>
+                    <h3 className="mb-md">Operational Protocols</h3>
                     <Card featured>
                         <Stack gap="var(--spacing-md)">
                             <Stack direction="row" gap="var(--spacing-sm)" align="center">
-                                <span style={{ fontSize: '32px' }}>⚖️</span>
+                                <span style={{ fontSize: 'var(--font-size-3xl)' }}>⚖️</span>
                                 <div>
-                                    <h4 style={{ margin: 0 }}>Operational Protocols</h4>
+                                    <h4 style={{ margin: 0 }}>Token Enforcement Policy</h4>
                                     <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                                        All tactical UI modules MUST consume tokens from <code>tokens.css</code>.
-                                        Hardcoded hex/pixel values trigger deployment failure.
+                                        All UI components MUST consume tokens from <code>tokens.css</code>.
+                                        Hardcoded hex/rgba values are violations of the design system architecture.
                                     </p>
                                 </div>
                             </Stack>
                             <Grid columns="repeat(3, 1fr)" gap="var(--spacing-lg)">
-                                <Stack gap="var(--spacing-xs)">
-                                    <Badge variant="primary">Spacing Invariant</Badge>
-                                    <p style={{ fontSize: '11px' }}>Favour <code>var(--spacing-xs)</code> (12px) for internal padding.</p>
+                                <Stack gap="var(--spacing-2xs)">
+                                    <Badge variant="primary">Spacing</Badge>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>Use 12px incremental units: <code>var(--spacing-*)</code></p>
                                 </Stack>
-                                <Stack gap="var(--spacing-xs)">
+                                <Stack gap="var(--spacing-2xs)">
                                     <Badge variant="accent">Color Spectrum</Badge>
-                                    <p style={{ fontSize: '11px' }}>NEVER use custom hashes. Use <code>var(--color-*)</code> semantic mapping.</p>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>Strict semantic mapping: <code>var(--color-*)</code></p>
                                 </Stack>
-                                <Stack gap="var(--spacing-xs)">
-                                    <Badge variant="success">Radius Sync</Badge>
-                                    <p style={{ fontSize: '11px' }}>Global curvature defined by <code>var(--radius-*)</code> tokens.</p>
+                                <Stack gap="var(--spacing-2xs)">
+                                    <Badge variant="success">Radius</Badge>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>Standardized corners: <code>var(--radius-*)</code></p>
                                 </Stack>
                             </Grid>
                         </Stack>
@@ -224,19 +225,19 @@ const DesignSystemPage = () => {
     return (
         <div style={{ padding: 'var(--spacing-xl)', maxWidth: '1400px', margin: '0 auto' }} className="animate-fade-in">
             <header style={{ marginBottom: 'var(--spacing-2xl)' }}>
-                <Badge variant="accent" style={{ marginBottom: 'var(--spacing-xs)' }}>DS v4.0 PRO • TACTICAL CORE</Badge>
+                <Badge variant="accent" style={{ marginBottom: 'var(--spacing-xs)' }}>DS v5.0 ELITE • TACTICAL ARCHITECTURE</Badge>
                 <h1 style={{ fontSize: 'var(--font-size-5xl)', letterSpacing: '-0.05em', fontWeight: 900 }}>StatFoot Command OS</h1>
                 <p style={{ color: 'var(--color-text-dim)', fontSize: 'var(--font-size-lg)', marginTop: 'var(--spacing-xs)', maxWidth: '800px' }}>
-                    Standardized UI architecture for planetary-scale football intelligence.
-                    Every module is stress-tested for density, legibility, and tactical accuracy.
+                    Standardized UI architecture for high-performance football intelligence.
+                    Every component is engineered for density, legibility, and architectural integrity.
                 </p>
             </header>
 
             <Tabs
                 items={[
-                    { id: 'foundations', label: '01. Logical Core', icon: '💎' },
-                    { id: 'components', label: '02. Module Lab', icon: '⚙️' },
-                    { id: 'layouts', label: '03. Tactical Patterns', icon: '🖼️' },
+                    { id: 'foundations', label: '01. Foundations', icon: '💎' },
+                    { id: 'components', label: '02. Components', icon: '⚙️' },
+                    { id: 'layouts', label: '03. Layout Patterns', icon: '🖼️' },
                 ]}
                 activeId={activeTab}
                 onChange={setActiveTab}
@@ -249,8 +250,8 @@ const DesignSystemPage = () => {
 
             <footer style={{ marginTop: 'var(--spacing-3xl)', padding: 'var(--spacing-xl) 0', borderTop: '1px solid var(--color-border)', textAlign: 'center' }}>
                 <div style={{ opacity: 0.3, marginBottom: 'var(--spacing-sm)', fontSize: '24px' }}>🛡️</div>
-                <p style={{ color: 'var(--color-text-dim)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
-                    PROPRIETARY TACTICAL ENGINE • BUILT WITH MODULAR PRINCIPLES
+                <p style={{ color: 'var(--color-text-dim)', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+                    PROPRIETARY TACTICAL ENGINE • DESIGN SYSTEM V5.1
                 </p>
             </footer>
         </div>
