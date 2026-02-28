@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
-    Stack, Grid, Badge, Card, Button,
-    MetricCard
+    Stack, Grid, Badge, Button,
+    MetricCard, PlayerCard, TeamSelector
 } from '../../../design-system';
 import './SquadList.css';
 
@@ -13,7 +12,8 @@ const SquadList = ({
     squadLoading,
     teamSquad
 }) => {
-    const [selectedPlayer, setSelectedPlayer] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [teamSearch, setTeamSearch] = useState('');
 
     useEffect(() => {
         if (!selectedTeamId && teams.length > 0) {
@@ -21,9 +21,19 @@ const SquadList = ({
         }
     }, [teams, selectedTeamId, setSelectedTeamId]);
 
+    const filteredTeams = useMemo(() => {
+        if (!teamSearch) return teams;
+        return teams.filter(t => t.team_name.toLowerCase().includes(teamSearch.toLowerCase()));
+    }, [teams, teamSearch]);
+
+    const filteredSquad = useMemo(() => {
+        if (!searchTerm) return teamSquad;
+        return teamSquad.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }, [teamSquad, searchTerm]);
+
     const counts = useMemo(() => {
-        const acc = { GK: 0, DF: 0, MF: 0, FW: 0, total: teamSquad.length };
-        teamSquad.forEach(p => {
+        const acc = { GK: 0, DF: 0, MF: 0, FW: 0, total: filteredSquad.length };
+        filteredSquad.forEach(p => {
             const pos = p.position?.toLowerCase();
             if (pos?.includes('goalkeeper')) acc.GK++;
             else if (pos?.includes('defender')) acc.DF++;
@@ -31,7 +41,7 @@ const SquadList = ({
             else if (pos?.includes('attacker') || pos?.includes('forward')) acc.FW++;
         });
         return acc;
-    }, [teamSquad]);
+    }, [filteredSquad]);
 
     const categorizedSquad = useMemo(() => {
         const groups = {
@@ -41,7 +51,7 @@ const SquadList = ({
             'Attackers': []
         };
 
-        teamSquad.forEach(p => {
+        filteredSquad.forEach(p => {
             const pos = p.position?.toLowerCase();
             if (pos?.includes('goalkeeper')) groups['Goalkeepers'].push(p);
             else if (pos?.includes('defender')) groups['Defenders'].push(p);
@@ -54,39 +64,19 @@ const SquadList = ({
         });
 
         return groups;
-    }, [teamSquad]);
+    }, [filteredSquad]);
 
     const activeTeam = teams.find(t => String(t.team_id) === String(selectedTeamId));
 
     return (
         <div className="ds-squad-explorer animate-slide-up">
-            <aside className="ds-squad-sidebar">
-                <div className="ds-squad-sidebar-header">
-                    <h3>Tactical Roster</h3>
-                    <p>Selection Matrix</p>
-                </div>
-                <div className="ds-squad-sidebar-list">
-                    {teams.map(team => {
-                        const isSelected = String(team.team_id) === String(selectedTeamId);
-                        return (
-                            <button
-                                key={team.team_id}
-                                onClick={() => setSelectedTeamId(team.team_id)}
-                                className={`ds-squad-team-btn ${isSelected ? 'active' : ''}`}
-                            >
-                                <div className="ds-squad-team-logo-wrap">
-                                    <img src={team.team_logo} alt="" />
-                                </div>
-                                <div className="ds-squad-team-info">
-                                    <span className="name">{team.team_name}</span>
-                                    <span className="rank">Rank #{team.rank}</span>
-                                </div>
-                                {isSelected && <div className="ds-active-indicator" />}
-                            </button>
-                        );
-                    })}
-                </div>
-            </aside>
+            <TeamSelector
+                teams={teams}
+                selectedTeamId={selectedTeamId}
+                onSelect={setSelectedTeamId}
+                searchTerm={teamSearch}
+                onSearchChange={setTeamSearch}
+            />
 
             <main className="ds-squad-main">
                 {!selectedTeamId ? (
@@ -104,15 +94,26 @@ const SquadList = ({
                                 </div>
                                 <div>
                                     <h2 className="ds-squad-title">{activeTeam?.team_name}</h2>
-                                    <Stack direction="row" gap="var(--spacing-xs)" align="center" style={{ marginTop: '4px' }}>
+                                    <Stack direction="row" gap="var(--spacing-xs)" align="center" style={{ marginTop: 'var(--spacing-2xs)' }}>
                                         <Badge variant="primary">{counts.total} Players</Badge>
                                         <Badge variant="neutral">Tier {activeTeam?.rank}</Badge>
                                     </Stack>
                                 </div>
                             </Stack>
-                            <Button variant="secondary" onClick={() => window.location.href = `/club/${selectedTeamId}`}>
-                                Full Intelligence Profile
-                            </Button>
+                            <Stack direction="row" gap="var(--spacing-md)" align="center">
+                                <div className="ds-squad-search-wrap">
+                                    <input
+                                        type="text"
+                                        className="ds-squad-input"
+                                        placeholder="Find operative..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <Button variant="secondary" onClick={() => window.location.href = `/club/${selectedTeamId}`}>
+                                    Intelligence Profile
+                                </Button>
+                            </Stack>
                         </div>
 
                         <div className="ds-squad-content scrollbar-custom">
@@ -132,34 +133,22 @@ const SquadList = ({
                                 Object.entries(categorizedSquad).map(([category, players]) => (
                                     players.length > 0 && (
                                         <section key={category} className="ds-squad-category">
-                                            <h4 className="ds-category-title">{category}</h4>
-                                            <Grid columns="repeat(auto-fill, minmax(280px, 1fr))" gap="var(--spacing-md)">
+                                            <h4 className="ds-category-title" data-category={category.toLowerCase()}>
+                                                {category}
+                                            </h4>
+                                            <Grid columns="repeat(auto-fill, minmax(300px, 1fr))" gap="var(--spacing-md)">
                                                 {players.map(player => (
-                                                    <Card
+                                                    <PlayerCard
                                                         key={player.player_id}
-                                                        interactive
+                                                        photo={player.photo_url}
+                                                        name={player.name}
+                                                        position={player.position}
+                                                        number={player.number}
+                                                        appearances={player.appearances}
+                                                        goals={player.goals}
+                                                        rating={player.rating}
                                                         onClick={() => window.location.href = `/player/${player.player_id}`}
-                                                        className="ds-player-card"
-                                                    >
-                                                        <Stack direction="row" gap="var(--spacing-md)" align="center">
-                                                            <div className="ds-player-photo-wrap">
-                                                                <img src={player.photo_url} alt="" />
-                                                                <div className={`ds-player-pos-tag ${category.toLowerCase()}`}>
-                                                                    {category[0]}
-                                                                </div>
-                                                            </div>
-                                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                                <p className="ds-player-name">{player.name}</p>
-                                                                <Stack direction="row" gap="var(--spacing-sm)" align="center" style={{ marginTop: '4px' }}>
-                                                                    <span style={{ fontSize: '10px', color: 'var(--color-text-dim)' }}>
-                                                                        Apps: {player.appearances}
-                                                                    </span>
-                                                                    {player.goals > 0 && <Badge variant="success" size="xs">⚽ {player.goals}</Badge>}
-                                                                    {player.rating && <Badge variant="primary" size="xs">⭐ {player.rating}</Badge>}
-                                                                </Stack>
-                                                            </div>
-                                                        </Stack>
-                                                    </Card>
+                                                    />
                                                 ))}
                                             </Grid>
                                         </section>

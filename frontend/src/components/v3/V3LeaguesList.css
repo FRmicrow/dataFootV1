@@ -30,19 +30,19 @@
     display: flex;
     align-items: center;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.02);
-    transition: background 0.2s;
+    background: var(--glass-bg);
+    transition: var(--transition-base);
 }
 
 .v3-country-header:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-bg-card-hover);
 }
 
 .v3-flag-circle {
     width: 32px;
     height: 32px;
     border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--glass-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -70,7 +70,7 @@
 .v3-country-body {
     padding: var(--spacing-md);
     border-top: 1px solid var(--color-border);
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .animate-slide-down {

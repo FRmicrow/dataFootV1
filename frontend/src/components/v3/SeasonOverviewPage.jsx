@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import {
-    Card, Grid, Stack, Badge, Button,
-    Tabs, ProfileHeader
+    Card, Stack, Button,
+    Tabs, LeagueHeader
 } from '../../design-system';
 
 // Components
@@ -160,28 +160,31 @@ const SeasonOverviewPage = () => {
     ];
 
     return (
-        <div className="animate-fade-in" style={{ padding: 'var(--spacing-sm)', maxWidth: '1400px', margin: '0 auto' }}>
-            <ProfileHeader
-                title={league.league_name}
-                image={league.logo_url}
-                subtitles={[league.country_name, `Season ${year}`]}
-                badges={[
-                    { label: isFinished ? 'Finished' : 'Live', variant: isFinished ? 'neutral' : 'success' }
-                ]}
-                stats={hallOfFame?.winner ? [
-                    { label: 'Champion', value: hallOfFame.winner.name }
-                ] : []}
+        <div className="animate-fade-in" style={{ padding: 'var(--spacing-sm)', maxWidth: '1400px', margin: '0 auto', height: 'calc(100vh - 40px)', display: 'flex', flexDirection: 'column' }}>
+            <LeagueHeader
+                league={{
+                    id: id,
+                    name: league.league_name,
+                    logo: league.logo_url,
+                    rank: league.rank,
+                    country: { name: league.country_name },
+                    type: league.type
+                }}
+                activeSeason={year}
+                seasonsCount={availableYears?.length}
                 actions={
                     <select
                         value={year}
                         onChange={handleSeasonChange}
                         style={{
-                            background: 'var(--glass-bg)',
+                            background: 'rgba(255,255,255,0.05)',
                             color: 'white',
                             border: '1px solid var(--color-border)',
                             borderRadius: 'var(--radius-sm)',
-                            padding: '4px 12px',
-                            fontWeight: 'bold'
+                            padding: '6px 12px',
+                            fontWeight: 'bold',
+                            fontSize: '12px',
+                            outline: 'none'
                         }}
                     >
                         {(availableYears || [year]).map(y => (
@@ -198,33 +201,41 @@ const SeasonOverviewPage = () => {
                 className="mb-lg"
             />
 
-            <main>
+            <main className="season-tab-content" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                 {activeTab === 'overview' && (
-                    <LeagueOverview
-                        leagueId={id} season={year}
-                        standings={standings} topScorers={topScorers}
-                        topAssists={topAssists} topRated={topRated}
-                    />
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }} className="animate-slide-up">
+                        <LeagueOverview
+                            leagueId={id} season={year}
+                            standings={standings} topScorers={topScorers}
+                            topAssists={topAssists} topRated={topRated}
+                        />
+                    </div>
                 )}
                 {activeTab === 'standings' && (
-                    <StandingsTable
-                        standings={standings} rangeStart={rangeStart} setRangeStart={setRangeStart}
-                        rangeEnd={rangeEnd} setRangeEnd={setRangeEnd}
-                        handleRangeUpdate={handleRangeUpdate} isDynamicMode={isDynamicMode} loading={loading}
-                    />
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }} className="animate-slide-up scrollbar-custom">
+                        <StandingsTable
+                            standings={standings} rangeStart={rangeStart} setRangeStart={setRangeStart}
+                            rangeEnd={rangeEnd} setRangeEnd={setRangeEnd}
+                            handleRangeUpdate={handleRangeUpdate} isDynamicMode={isDynamicMode} loading={loading}
+                        />
+                    </div>
                 )}
                 {activeTab === 'fixtures' && (
-                    <FixturesList
-                        fixturesData={fixturesData} selectedRound={selectedRound}
-                        setSelectedRound={setSelectedRound}
-                    />
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }} className="animate-slide-up scrollbar-custom">
+                        <FixturesList
+                            fixturesData={fixturesData} selectedRound={selectedRound}
+                            setSelectedRound={setSelectedRound}
+                        />
+                    </div>
                 )}
                 {activeTab === 'squads' && (
-                    <SquadList
-                        teams={standings} selectedTeamId={selectedTeamId}
-                        setSelectedTeamId={setSelectedTeamId} squadLoading={squadLoading}
-                        teamSquad={teamSquad}
-                    />
+                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }} className="animate-slide-up">
+                        <SquadList
+                            teams={standings} selectedTeamId={selectedTeamId}
+                            setSelectedTeamId={setSelectedTeamId} squadLoading={squadLoading}
+                            teamSquad={teamSquad}
+                        />
+                    </div>
                 )}
             </main>
         </div>

@@ -1,6 +1,8 @@
 .ds-squad-explorer {
     display: flex;
-    height: calc(100vh - 240px);
+    flex: 1;
+    height: 100%;
+    min-height: 0;
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
@@ -8,113 +10,12 @@
     box-shadow: var(--shadow-xl);
 }
 
-.ds-squad-sidebar {
-    width: 320px;
-    border-right: 1px solid var(--color-border);
-    background: rgba(255, 255, 255, 0.02);
-    display: flex;
-    flex-direction: column;
-}
-
-.ds-squad-sidebar-header {
-    padding: var(--spacing-md);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.ds-squad-sidebar-header h3 {
-    margin: 0;
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-black);
-}
-
-.ds-squad-sidebar-header p {
-    margin: 4px 0 0;
-    font-size: 10px;
-    text-transform: uppercase;
-    color: var(--color-text-dim);
-    letter-spacing: 0.1em;
-}
-
-.ds-squad-sidebar-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--spacing-sm);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-2xs);
-}
-
-.ds-squad-team-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    transition: var(--transition-base);
-    text-align: left;
-    position: relative;
-}
-
-.ds-squad-team-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.ds-squad-team-btn.active {
-    background: var(--color-primary-900);
-    border-color: var(--color-primary-500);
-    color: var(--color-text-main);
-    box-shadow: var(--shadow-md);
-}
-
-.ds-squad-team-logo-wrap {
-    width: 32px;
-    height: 32px;
-    background: white;
-    border-radius: var(--radius-sm);
-    padding: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.ds-squad-team-logo-wrap img {
-    max-width: 100%;
-    max-height: 100%;
-}
-
-.ds-squad-team-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.ds-squad-team-info .name {
-    font-weight: var(--font-weight-bold);
-    font-size: var(--font-size-sm);
-}
-
-.ds-squad-team-info .rank {
-    font-size: 10px;
-    color: var(--color-text-dim);
-}
-
-.ds-active-indicator {
-    width: 4px;
-    height: 24px;
-    background: var(--color-primary-400);
-    border-radius: var(--radius-full);
-}
-
 .ds-squad-main {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
+    min-height: 0;
 }
 
 .ds-squad-header {
@@ -151,82 +52,63 @@
     flex: 1;
     overflow-y: auto;
     padding: var(--spacing-lg);
+    min-height: 0;
+}
+
+.ds-squad-search-wrap {
+    width: 240px;
+}
+
+.ds-squad-input {
+    width: 100%;
+    padding: var(--spacing-2xs) var(--spacing-sm);
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-main);
+    font-size: var(--font-size-xs);
+    transition: var(--transition-base);
+}
+
+.ds-squad-input:focus {
+    border-color: var(--color-primary-500);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
 .ds-category-title {
     font-size: var(--font-size-xs);
     text-transform: uppercase;
     color: var(--color-text-dim);
+    margin-top: var(--spacing-lg);
     margin-bottom: var(--spacing-md);
     letter-spacing: 0.2em;
     border-left: 3px solid var(--color-primary-500);
     padding-left: var(--spacing-sm);
 }
 
+.ds-category-title:first-of-type {
+    margin-top: 0;
+}
+
+.ds-category-title[data-category="goalkeepers"] {
+    border-color: var(--color-accent-600);
+}
+
+.ds-category-title[data-category="defenders"] {
+    border-color: var(--color-primary-600);
+}
+
+.ds-category-title[data-category="midfielders"] {
+    border-color: var(--color-success-600);
+}
+
+.ds-category-title[data-category="attackers"] {
+    border-color: var(--color-danger-600);
+}
+
 .ds-squad-category {
-    margin-bottom: var(--spacing-2xl);
-}
-
-.ds-player-card {
-    transition: var(--transition-base);
-}
-
-.ds-player-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--color-primary-400);
-}
-
-.ds-player-photo-wrap {
-    position: relative;
-    width: 48px;
-    height: 48px;
-}
-
-.ds-player-photo-wrap img {
-    width: 100%;
-    height: 100%;
-    border-radius: var(--radius-full);
-    object-fit: cover;
-    border: 2px solid var(--color-border);
-}
-
-.ds-player-pos-tag {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 20px;
-    height: 20px;
-    border-radius: var(--radius-xs);
-    font-size: 10px;
-    font-weight: 900;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid var(--color-bg-card);
-}
-
-.ds-player-pos-tag.goalkeepers {
-    background: var(--color-accent-600);
-}
-
-.ds-player-pos-tag.defenders {
-    background: var(--color-primary-600);
-}
-
-.ds-player-pos-tag.midfielders {
-    background: var(--color-success-600);
-}
-
-.ds-player-pos-tag.attackers {
-    background: var(--color-danger-600);
-}
-
-.ds-player-name {
-    margin: 0;
-    font-weight: var(--font-weight-bold);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-main);
+    margin-bottom: var(--spacing-md);
 }
 
 .ds-squad-loader {
@@ -252,30 +134,9 @@
     font-size: 64px;
 }
 
-/* Custom Scrollbar */
-.scrollbar-custom::-webkit-scrollbar {
-    width: 6px;
-}
-
-.scrollbar-custom::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.scrollbar-custom::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 10px;
-}
-
 @media (max-width: 1024px) {
     .ds-squad-explorer {
         flex-direction: column;
         height: auto;
-    }
-
-    .ds-squad-sidebar {
-        width: 100%;
-        height: 300px;
-        border-right: none;
-        border-bottom: 1px solid var(--color-border);
     }
 }

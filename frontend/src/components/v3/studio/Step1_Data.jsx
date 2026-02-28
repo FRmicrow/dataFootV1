@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStudio } from './StudioContext';
+import { Tabs } from '../../../design-system';
 import './Step1_Data.css';
 
 const Step1_Data = () => {
@@ -253,13 +254,19 @@ const Step1_Data = () => {
             <h2 className="step-title-v2">Selection & Scope</h2>
 
             {/* 1. Mode Selector */}
-            <div className="mode-selector">
-                <button className={`mode-btn ${mode === 'specific' ? 'active' : ''}`} onClick={() => setMode('specific')}>👤 Player Performance</button>
-                <button className={`mode-btn ${mode === 'league' ? 'active' : ''}`} onClick={() => setMode('league')}>🏆 League Insights</button>
-                <button className={`mode-btn ${mode === 'country' ? 'active' : ''}`} onClick={() => setMode('country')}>🌍 Nationality Comparisons</button>
-                <button className={`mode-btn ${mode === 'club' ? 'active' : ''}`} onClick={() => setMode('club')}>🛡️ Club Metrics</button>
-                <button className={`mode-btn ${mode === 'standings' ? 'active' : ''}`} onClick={() => setMode('standings')}>📈 League Standings</button>
-            </div>
+            <Tabs
+                items={[
+                    { id: 'specific', label: 'Player Performance', icon: '👤' },
+                    { id: 'league', label: 'League Insights', icon: '🏆' },
+                    { id: 'country', label: 'Nationality Comparisons', icon: '🌍' },
+                    { id: 'club', label: 'Club Metrics', icon: '🛡️' },
+                    { id: 'standings', label: 'League Standings', icon: '📈' },
+                ]}
+                activeId={mode}
+                onChange={setMode}
+                variant="pills"
+                className="mb-lg"
+            />
 
             {/* 2. Source Input Area */}
             <div className="form-group-v2">

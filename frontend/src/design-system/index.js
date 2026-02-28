@@ -9,6 +9,10 @@ export { default as Progress } from './components/Progress';
 export { default as MetricCard } from './components/MetricCard';
 export { default as ProfileHeader } from './components/ProfileHeader';
 export { default as LeagueCard } from './components/LeagueCard';
+export { default as PlayerCard } from './components/PlayerCard';
+export { default as FixtureRow } from './components/FixtureRow';
+export { default as TeamSelector } from './components/TeamSelector';
+export { default as LeagueHeader } from './components/LeagueHeader';
 
 import './tokens.css';
 import './components/Tabs.css';
@@ -16,3 +20,6 @@ import './components/Progress.css';
 import './components/MetricCard.css';
 import './components/ProfileHeader.css';
 import './components/LeagueCard.css';
+import './components/PlayerCard.css';
+import './components/FixtureRow.css';
+import './components/TeamSelector.css';
