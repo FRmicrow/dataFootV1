@@ -1,5 +1,6 @@
 import React from 'react';
-import { Stack, Badge, Grid } from '../index';
+import { Stack, Grid } from './Grid';
+import Badge from './Badge';
 import './ProfileHeader.css';
 
 const LEAGUE_COLOR_MAP = {
@@ -27,19 +28,22 @@ const ProfileHeader = ({
     badges = [],
     actions,
     stats = [],
-    genericData = [] // New prop for generic league information
+    genericData = []
 }) => {
-    const finalAccentColor = accentColor || (leagueId ? LEAGUE_COLOR_MAP[String(leagueId)] : null);
-
-    const headerStyle = {
-        background: `linear-gradient(135deg, ${finalAccentColor ? finalAccentColor + '33' : 'var(--color-primary-900)'} 0%, var(--color-bg-main) 100%)`,
-        borderBottom: `2px solid ${finalAccentColor || 'var(--color-primary-500)'}`
-    };
+    const finalAccentColor = accentColor ||
+        (leagueId && LEAGUE_COLOR_MAP[String(leagueId)]) ||
+        'var(--color-primary-500)';
 
     return (
-        <div className="ds-profile-header" style={headerStyle}>
+        <div
+            className="ds-profile-header"
+            style={{
+                '--header-accent': finalAccentColor,
+                '--header-accent-alpha': `${finalAccentColor}33`
+            }}
+        >
             <div className="ds-profile-header-content">
-                <Grid columns="auto 1fr auto" gap="var(--spacing-lg)" align="center">
+                <Grid columns="auto 1fr auto" gap="var(--spacing-md)" align="center">
                     {/* Avatar/Logo Slot */}
                     {image && (
                         <div className="ds-profile-avatar-container">
@@ -47,39 +51,40 @@ const ProfileHeader = ({
                         </div>
                     )}
 
-                    {/* Info Slot */}
+                    {/* Info Slot - Compact Column */}
                     <div className="ds-profile-info">
-                        <Stack gap="var(--spacing-2xs)">
+                        <Stack gap="2px">
                             <div className="ds-profile-badges">
                                 {badges.map((b, i) => (
                                     <Badge key={i} variant={b.variant || 'neutral'} size="xs">
-                                        {b.icon && <span style={{ marginRight: '4px' }}>{b.icon}</span>}
+                                        {b.icon && <span className="ds-badge-icon-wrap">{b.icon}</span>}
                                         {b.label}
                                     </Badge>
                                 ))}
                             </div>
                             <h1 className="ds-profile-title">{title}</h1>
 
-                            <Stack direction="row" gap="var(--spacing-md)" align="center" wrap>
-                                <div className="ds-profile-subtitles">
-                                    {subtitles.map((s, i) => (
-                                        <span key={i} className="ds-profile-subtitle">
-                                            {i > 0 && <span className="ds-profile-separator">•</span>}
-                                            {s}
-                                        </span>
-                                    ))}
-                                </div>
-                                {genericData.length > 0 && (
-                                    <div className="ds-profile-generic-data">
-                                        {genericData.map((d, i) => (
-                                            <span key={i} className="ds-profile-generic-item">
-                                                <Badge variant="neutral" size="xs">{d}</Badge>
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </Stack>
+                            <div className="ds-profile-subtitles">
+                                {subtitles.map((s, i) => (
+                                    <span key={i} className="ds-profile-subtitle">
+                                        {i > 0 && <span className="ds-profile-separator">•</span>}
+                                        {s}
+                                    </span>
+                                ))}
+                            </div>
                         </Stack>
+
+                        {/* Integrated Stats for density */}
+                        {stats.length > 0 && (
+                            <div className="ds-profile-compact-stats">
+                                {stats.map((st, i) => (
+                                    <div key={i} className="ds-profile-stat-item">
+                                        <span className="ds-profile-stat-label">{st.label}</span>
+                                        <span className="ds-profile-stat-value">{st.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Venue/Right Slot */}
@@ -92,20 +97,6 @@ const ProfileHeader = ({
                         {actions && <div className="ds-profile-actions">{actions}</div>}
                     </Stack>
                 </Grid>
-
-                {/* Stats Grid */}
-                {stats.length > 0 && (
-                    <div className="ds-profile-stats-bar">
-                        <Grid columns={`repeat(${stats.length}, 1fr)`} gap="var(--spacing-md)">
-                            {stats.map((st, i) => (
-                                <div key={i} className="ds-profile-stat-item">
-                                    <span className="ds-profile-stat-label">{st.label}</span>
-                                    <span className="ds-profile-stat-value">{st.value}</span>
-                                </div>
-                            ))}
-                        </Grid>
-                    </div>
-                )}
             </div>
         </div>
     );

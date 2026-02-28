@@ -1,67 +1,67 @@
 .import-events-page {
-    padding: 2rem;
-    color: #f1f5f9;
-    font-family: 'Outfit', sans-serif;
+    padding: var(--spacing-lg);
+    color: var(--color-text-main);
+    font-family: var(--font-family);
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .page-header {
-    margin-bottom: 3rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 1.5rem;
+    margin-bottom: var(--spacing-xl);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-md);
 }
 
 .page-header h1 {
-    font-size: 2rem;
-    font-weight: 800;
-    margin: 0 0 0.5rem 0;
-    background: linear-gradient(90deg, #fff, #94a3b8);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-black);
+    margin: 0 0 var(--spacing-2xs) 0;
+    background: linear-gradient(90deg, white, var(--color-text-muted));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .page-header p {
-    color: #94a3b8;
+    color: var(--color-text-muted);
     margin: 0;
 }
 
 .loading-spinner {
     text-align: center;
-    padding: 3rem;
-    color: #64748b;
+    padding: var(--spacing-xl);
+    color: var(--color-text-dim);
 }
 
 /* List Styles */
 .candidates-list {
-    background: #1e293b;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--color-slate-800);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-lg);
 }
 
 .list-header {
     display: grid;
     grid-template-columns: 2fr 1fr 1.5fr 1fr;
-    padding: 1rem 1.5rem;
-    background: rgba(15, 23, 42, 0.6);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    font-weight: 700;
-    color: #64748b;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-slate-900);
+    border-bottom: 1px solid var(--color-border);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-dim);
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
     letter-spacing: 1px;
 }
 
 .candidate-row {
     display: grid;
     grid-template-columns: 2fr 1fr 1.5fr 1fr;
-    padding: 1.25rem 1.5rem;
+    padding: var(--spacing-md);
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-    transition: background 0.2s;
+    border-bottom: 1px solid var(--color-border);
+    transition: background var(--transition-fast);
 }
 
 .candidate-row:last-child {
@@ -69,7 +69,7 @@
 }
 
 .candidate-row:hover {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--glass-bg);
 }
 
 .candidate-row.row-complete {
@@ -80,50 +80,48 @@
 .col-league {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--spacing-xs);
 }
 
 .league-logo {
     width: 36px;
     height: 36px;
     object-fit: contain;
-    background: #fff;
-    border-radius: 50%;
+    background: white;
+    border-radius: var(--radius-full);
     padding: 4px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-sm);
 }
 
 .league-name {
-    font-weight: 700;
-    font-size: 1rem;
-    color: #f8fafc;
-    /* Higher contrast text */
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+    color: var(--color-text-main);
 }
 
 .col-season {
-    color: #94a3b8;
-    font-weight: 500;
+    color: var(--color-text-muted);
+    font-weight: var(--font-weight-medium);
 }
 
 /* Status Badges */
 .badge {
     display: inline-block;
     padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 700;
+    border-radius: var(--radius-xs);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
 }
 
 .badge-warning {
-    background: rgba(234, 179, 8, 0.1);
-    color: #eab308;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-500);
     border: 1px solid rgba(234, 179, 8, 0.2);
 }
 
 .badge-success {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
+    background: var(--color-success-bg);
+    color: var(--color-success-500);
     border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
@@ -131,30 +129,30 @@
 .col-action {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-xs);
 }
 
 .btn-sync {
-    background: #6366f1;
+    background: var(--color-primary-500);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: var(--spacing-2xs) var(--spacing-md);
+    border-radius: var(--radius-sm);
     font-family: inherit;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition-fast);
 }
 
 .btn-sync:hover:not(:disabled) {
-    background: #4f46e5;
+    background: var(--color-primary-600);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .btn-sync:disabled {
-    background: #334155;
-    color: #94a3b8;
+    background: var(--color-slate-700);
+    color: var(--color-text-dim);
     cursor: not-allowed;
     opacity: 0.7;
 }

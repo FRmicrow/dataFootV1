@@ -1,5 +1,5 @@
 import React from 'react';
-import { ProfileHeader } from '../index';
+import ProfileHeader from './ProfileHeader';
 
 /**
  * Domain-specific header for Leagues.
@@ -25,7 +25,7 @@ const LeagueHeader = ({
             image={league.logo}
             badges={[
                 { label: league.type === 'league' ? 'League' : 'Cup', variant: league.type === 'league' ? 'primary' : 'warning' },
-                { label: `Season ${activeSeason}`, variant: 'neutral', icon: '📅' }
+                { label: `Season ${activeSeason}`, variant: 'neutral' }
             ]}
             actions={actions}
             genericData={[

@@ -26,14 +26,27 @@ export const Grid = ({ children, columns = 'repeat(auto-fill, minmax(300px, 1fr)
  * @param {string} direction - flex-direction (row/column).
  * @param {string} gap - Spacing between items (defaults to var(--spacing-xs) = 12px).
  */
-export const Stack = ({ children, direction = 'column', gap = 'var(--spacing-xs)', align = 'stretch', justify = 'flex-start', className = '', style = {} }) => {
+export const Stack = ({
+    children,
+    direction = 'column',
+    gap = 'var(--spacing-xs)',
+    align = 'stretch',
+    justify = 'flex-start',
+    row = false,
+    dense = false,
+    className = '',
+    style = {}
+}) => {
+    const finalDirection = row ? 'row' : direction;
+    const finalGap = dense ? 'var(--spacing-2xs)' : gap;
+
     return (
         <div
             className={`ds-stack ${className}`}
             style={{
                 display: 'flex',
-                flexDirection: direction,
-                gap,
+                flexDirection: finalDirection,
+                gap: finalGap,
                 alignItems: align,
                 justifyContent: justify,
                 ...style

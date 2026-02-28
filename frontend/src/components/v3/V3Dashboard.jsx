@@ -73,16 +73,15 @@ const V3Dashboard = () => {
 
             {/* 2. Volumetrics Grid */}
             <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-md)" style={{ marginBottom: 'var(--spacing-xl)' }}>
-                <MetricCard label="Leagues" value={volumetrics.total_leagues} subValue="Live monitoring enabled" icon="📡" />
-                <MetricCard label="Clubs" value={volumetrics.total_clubs} subValue="Across 55+ countries" icon="🏟️" />
+                <MetricCard label="Leagues" value={volumetrics.total_leagues} subValue="Live monitoring enabled" />
+                <MetricCard label="Clubs" value={volumetrics.total_clubs} subValue="Across 55+ countries" />
                 <MetricCard
                     label="Players"
                     value={volumetrics.total_players.toLocaleString()}
                     subValue="Verified profiles"
                     variant="featured"
-                    icon="👥"
                 />
-                <MetricCard label="Fixtures" value={volumetrics.total_fixtures.toLocaleString()} subValue="Event coverage" icon="⚽" />
+                <MetricCard label="Fixtures" value={volumetrics.total_fixtures.toLocaleString()} subValue="Event coverage" />
             </Grid>
 
             {/* 3. Visual Intelligence Layer */}
@@ -162,12 +161,11 @@ const V3Dashboard = () => {
                 <Card title="Registry Operations" subtitle="Management of core entities">
                     <Stack gap="var(--spacing-sm)">
                         {[
-                            { icon: '📥', title: 'Data Acquisition', desc: 'Initialize new competitive seasons', path: '/import' },
-                            { icon: '🔭', title: 'Scout Explorer', desc: 'Browse hierarchies and entity analysis', path: '/leagues' },
-                            { icon: '🛡️', title: 'Integrity Matrix', desc: 'Resolve orphan dependencies', path: '/import/matrix-status' }
+                            { title: 'Data Acquisition', desc: 'Initialize new competitive seasons', path: '/import' },
+                            { title: 'Scout Explorer', desc: 'Browse hierarchies and entity analysis', path: '/leagues' },
+                            { title: 'Integrity Matrix', desc: 'Resolve orphan dependencies', path: '/import/matrix-status' }
                         ].map((action, i) => (
                             <div key={i} className="action-row" onClick={() => navigate(action.path)}>
-                                <div style={{ fontSize: '24px' }}>{action.icon}</div>
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ margin: 0 }}>{action.title}</h4>
                                     <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{action.desc}</p>
