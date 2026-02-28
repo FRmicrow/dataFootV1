@@ -110,8 +110,10 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                     </select>
                 </Stack>
             }
+            style={{ flex: 1, height: '100%', minHeight: '600px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+            className="animate-slide-up"
         >
-            <div style={{ height: '500px', overflowY: 'auto' }}>
+            <div className="ds-card-body scrollbar-custom" style={{ padding: 0, overflowY: 'auto', flex: 1 }}>
                 <Table
                     columns={columns.map(col => ({
                         ...col,

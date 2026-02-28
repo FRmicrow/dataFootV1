@@ -1,0 +1,88 @@
+.ds-fixture-row {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+    transition: var(--transition-base);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.ds-fixture-row:hover {
+    background: var(--glass-bg);
+}
+
+.ds-fixture-row.is-active {
+    background: rgba(99, 102, 241, 0.08);
+    border-left: 3px solid var(--color-primary-500);
+}
+
+.ds-fixture-team-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ds-fixture-logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.ds-fixture-score-wrap {
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ds-fixture-score {
+    display: flex;
+    gap: 8px;
+    font-family: 'Inter', monospace;
+    font-size: var(--font-size-lg);
+    font-weight: 900;
+    color: var(--color-text-main);
+}
+
+.ds-fixture-score .sep {
+    color: var(--color-text-dim);
+    opacity: 0.5;
+}
+
+.ds-fixture-score .is-winner {
+    color: var(--color-primary-400);
+}
+
+.ds-fixture-time {
+    font-size: var(--font-size-xs);
+    font-weight: 800;
+    color: var(--color-text-dim);
+}
+
+.ds-fixture-extra {
+    margin-top: 4px;
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.ds-fixture-extra .agg {
+    color: var(--color-primary-400);
+}
+
+.ds-fixture-extra .winner {
+    color: var(--color-text-main);
+}
+
+@media (max-width: 640px) {
+    .ds-fixture-team-name {
+        display: none;
+    }
+}

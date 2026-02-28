@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { Card, Stack, Badge, Grid, Button, FixtureRow } from '../../../design-system';
 import InlineFixtureDetails from '../InlineFixtureDetails';
-import { Card, Stack, Badge, Grid, Button } from '../../../design-system';
 
 const FixturesList = ({
     fixturesData,
@@ -60,70 +60,6 @@ const FixturesList = ({
         return groups.sort((a, b) => new Date(a.fixtures[0].date) - new Date(b.fixtures[0].date));
     }, [filteredFixtures]);
 
-    const FixtureRow = ({ f, isTiePart = false, isLastLeg = false, aggregate = null, winner = null }) => (
-        <div
-            onClick={() => handleFixtureToggle(f.fixture_id)}
-            style={{
-                padding: 'var(--spacing-xs)',
-                cursor: 'pointer',
-                background: expandedFixtureId === f.fixture_id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                borderBottom: '1px solid var(--color-border)',
-                transition: 'var(--transition-fast)',
-                position: 'relative'
-            }}
-            className="fixture-row-hover"
-        >
-            <Grid columns="1fr 120px 1fr" gap="var(--spacing-sm)" align="center">
-                {/* Home */}
-                <Stack direction="row" gap="var(--spacing-xs)" align="center" justify="flex-end">
-                    <span style={{ fontWeight: 'bold', fontSize: 'var(--font-size-sm)', textAlign: 'right' }}>{f.home_team_name}</span>
-                    <img src={f.home_team_logo} alt="" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-                </Stack>
-
-                {/* Score */}
-                <Stack align="center" gap="4px">
-                    {f.status_short === 'NS' ? (
-                        <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: '900', color: 'var(--color-text-dim)' }}>
-                            {new Date(f.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                    ) : (
-                        <div style={{ display: 'flex', gap: '8px', fontSize: 'var(--font-size-lg)', fontWeight: '900', fontFamily: 'monospace' }}>
-                            <span>{f.goals_home ?? '-'}</span>
-                            <span style={{ opacity: 0.3 }}>:</span>
-                            <span>{f.goals_away ?? '-'}</span>
-                        </div>
-                    )}
-                    <Badge variant={f.status_short === 'FT' ? 'neutral' : f.status_short === 'LIVE' ? 'danger' : 'primary'} size="sm">
-                        {f.status_short}
-                    </Badge>
-                </Stack>
-
-                {/* Away */}
-                <Stack direction="row" gap="var(--spacing-xs)" align="center">
-                    <img src={f.away_team_logo} alt="" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-                    <span style={{ fontWeight: 'bold', fontSize: 'var(--font-size-sm)' }}>{f.away_team_name}</span>
-                </Stack>
-            </Grid>
-
-            {isLastLeg && aggregate && (
-                <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', textAlign: 'right' }}>
-                    <div style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--color-primary-400)' }}>AGG: {aggregate}</div>
-                    {winner && <div style={{ fontSize: '9px', fontWeight: 'bold' }}>🏆 {winner}</div>}
-                </div>
-            )}
-
-            {expandedFixtureId === f.fixture_id && (
-                <div style={{ marginTop: 'var(--spacing-xs)', animation: 'fadeIn 0.3s' }} onClick={e => e.stopPropagation()}>
-                    <InlineFixtureDetails
-                        fixtureId={f.fixture_id}
-                        homeTeamId={f.home_team_id}
-                        awayTeamId={f.away_team_id}
-                    />
-                </div>
-            )}
-        </div>
-    );
-
     const currentRound = useMemo(() => {
         const all = fixturesData.fixtures || [];
         const firstUnplayed = all.find(f => f.status_short === 'NS' || f.status_short === 'TBD');
@@ -132,60 +68,94 @@ const FixturesList = ({
 
     return (
         <Stack gap="var(--spacing-lg)" className="animate-fade-in">
-            <Card title="Calendar Progress" subtitle="Chronological matchday selection">
+            <div className="ds-md-selector-wrap">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--color-primary-400)', letterSpacing: '0.1em' }}>
+                        Operational Phase Selection
+                    </span>
+                    <Badge variant="neutral" size="xs">{selectedRound}</Badge>
+                </div>
                 <div
                     style={{
                         display: 'flex',
-                        gap: '8px',
+                        gap: '6px',
                         overflowX: 'auto',
-                        paddingBottom: 'var(--spacing-xs)',
-                        msOverflowStyle: 'none',
+                        padding: 'var(--spacing-2xs) 0',
                         scrollbarWidth: 'none',
-                        maskImage: 'linear-gradient(to right, black 80%, transparent 100%)'
+                        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent 100%)',
+                        WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent 100%)'
                     }}
+                    className="hide-scrollbar"
                 >
                     {(fixturesData.rounds || []).map(round => {
                         const isCurrent = round === currentRound;
                         const isSelected = round === selectedRound;
-                        // Abbreviate round name for density
-                        const shortLabel = round.replace('Regular Season - ', 'MD ').replace('Group ', 'GP ');
+                        const shortLabel = round.replace('Regular Season - ', 'MD ').replace('Group ', 'GP ').replace('Round of ', 'R');
 
                         return (
-                            <Button
+                            <div
                                 key={round}
-                                size="xs"
-                                variant={isSelected ? 'primary' : isCurrent ? 'secondary' : 'ghost'}
                                 onClick={() => setSelectedRound(round)}
-                                style={{ flexShrink: 0, fontWeight: 'bold' }}
-                                title={round} // Full label on hover
+                                style={{
+                                    flexShrink: 0,
+                                    padding: '6px 16px',
+                                    borderRadius: 'var(--radius-full)',
+                                    fontSize: '11px',
+                                    fontWeight: '800',
+                                    cursor: 'pointer',
+                                    background: isSelected ? 'var(--color-primary-600)' : isCurrent ? 'var(--glass-bg)' : 'transparent',
+                                    color: isSelected ? 'white' : isCurrent ? 'var(--color-primary-400)' : 'var(--color-text-dim)',
+                                    border: `1px solid ${isSelected ? 'var(--color-primary-400)' : isCurrent ? 'var(--color-primary-900)' : 'transparent'}`,
+                                    transition: 'var(--transition-fast)',
+                                    whiteSpace: 'nowrap'
+                                }}
+                                title={round}
                             >
                                 {shortLabel}
-                            </Button>
+                            </div>
                         );
                     })}
                 </div>
-            </Card>
+            </div>
 
-            <Card>
+            <Card padding="0">
                 {groupedFixtures.length === 0 ? (
-                    <Stack align="center" gap="var(--spacing-sm)" style={{ padding: 'var(--spacing-12)' }}>
+                    <Stack align="center" gap="var(--spacing-sm)" style={{ padding: 'var(--spacing-2xl)' }}>
                         <span style={{ fontSize: '48px', opacity: 0.2 }}>📅</span>
-                        <p style={{ color: 'var(--color-text-dim)', textTransform: 'uppercase', fontWeight: 'bold' }}>No fixtures scheduled</p>
+                        <p style={{ color: 'var(--color-text-dim)', textTransform: 'uppercase', fontWeight: 'bold' }}>Schedule Empty</p>
                     </Stack>
                 ) : (
                     <Stack gap="0">
                         {groupedFixtures.map((group, idx) => (
-                            <div key={idx} style={group.type === 'TIE' ? { background: 'rgba(0,0,0,0.1)', borderRadius: 'var(--radius-md)', padding: '8px', marginBottom: '8px' } : {}}>
-                                {group.fixtures.map((f, fIdx) => (
-                                    <FixtureRow
-                                        key={f.fixture_id}
-                                        f={f}
-                                        isTiePart={group.type === 'TIE'}
-                                        isLastLeg={group.type === 'TIE' && fIdx === 1}
-                                        aggregate={group.aggregate}
-                                        winner={group.winner}
-                                    />
-                                ))}
+                            <div key={idx} className={group.type === 'TIE' ? 'ds-fixture-tie-group' : ''}>
+                                {group.fixtures.map((f, fIdx) => {
+                                    const isExpanded = expandedFixtureId === f.fixture_id;
+                                    return (
+                                        <React.Fragment key={f.fixture_id}>
+                                            <FixtureRow
+                                                homeTeam={{ name: f.home_team_name, logo: f.home_team_logo }}
+                                                awayTeam={{ name: f.away_team_name, logo: f.away_team_logo }}
+                                                scoreHome={f.goals_home}
+                                                scoreAway={f.goals_away}
+                                                status={f.status_short}
+                                                date={f.date}
+                                                active={isExpanded}
+                                                aggregate={group.type === 'TIE' && fIdx === 1 ? group.aggregate : null}
+                                                winner={group.type === 'TIE' && fIdx === 1 ? group.winner : null}
+                                                onClick={() => handleFixtureToggle(f.fixture_id)}
+                                            />
+                                            {isExpanded && (
+                                                <div className="ds-fixture-expansion-panel animate-fade-in" onClick={e => e.stopPropagation()}>
+                                                    <InlineFixtureDetails
+                                                        fixtureId={f.fixture_id}
+                                                        homeTeamId={f.home_team_id}
+                                                        awayTeamId={f.away_team_id}
+                                                    />
+                                                </div>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
                             </div>
                         ))}
                     </Stack>

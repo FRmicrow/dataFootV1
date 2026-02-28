@@ -11,7 +11,7 @@ const V3LeaguesList = () => {
     const [structuredData, setStructuredData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('NATIONAL');
-    const [expandedCountries, setExpandedCountries] = useState({});
+    const [expandedCountries, setExpandedCountries] = useState(null); // Changed initial state to null
     const navigate = useNavigate();
 
     const FEATURED_IDS = [2, 3, 39, 140, 78, 135, 61];
@@ -21,6 +21,9 @@ const V3LeaguesList = () => {
             try {
                 const data = await api.getStructuredLeagues();
                 setStructuredData(data);
+                if (data && data.national) {
+                    setExpandedCountries(data.national.map(c => c.name));
+                }
             } catch (error) {
                 console.error("Failed to load structured leagues", error);
             } finally {
@@ -31,7 +34,12 @@ const V3LeaguesList = () => {
     }, []);
 
     const toggleCountry = (countryName) => {
-        setExpandedCountries(prev => ({ ...prev, [countryName]: !prev[countryName] }));
+        setExpandedCountries(prev => {
+            const current = prev || [];
+            return current.includes(countryName)
+                ? current.filter(name => name !== countryName)
+                : [...current, countryName];
+        });
     };
 
     const handleCardClick = (league) => {
@@ -98,6 +106,9 @@ const V3LeaguesList = () => {
                                 rank={league.rank}
                                 seasonsCount={league.seasons_count}
                                 isCup={league.is_cup}
+                                countryName={league.country_name}
+                                countryFlag={league.country_flag}
+                                featured
                                 onClick={() => handleCardClick(league)}
                             />
                         ))}
@@ -130,6 +141,7 @@ const V3LeaguesList = () => {
                                             rank={league.rank}
                                             seasonsCount={league.seasons_count}
                                             isCup={league.is_cup}
+                                            countryFlag={league.country_flag}
                                             onClick={() => handleCardClick(league)}
                                         />
                                     ))}
@@ -159,9 +171,7 @@ const V3LeaguesList = () => {
                 ) : (
                     <Stack gap="var(--spacing-md)">
                         {structuredData.national.map(country => {
-                            const topLeagues = country.leagues.slice(0, 1); // Primary league shown by default
-                            const otherLeagues = country.leagues.slice(1);
-                            const isExpanded = expandedCountries[country.name];
+                            const isExpanded = expandedCountries?.includes(country.name);
 
                             return (
                                 <div key={country.name} className={`v3-country-accordion ${isExpanded ? 'active' : ''}`}>
@@ -192,6 +202,7 @@ const V3LeaguesList = () => {
                                                         rank={league.rank}
                                                         seasonsCount={league.seasons_count}
                                                         isCup={league.is_cup}
+                                                        countryFlag={country.flag}
                                                         onClick={() => handleCardClick(league)}
                                                     />
                                                 ))}

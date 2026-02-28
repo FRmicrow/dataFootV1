@@ -1,30 +1,38 @@
-.ds-match-events-timeline {
+.ds-match-events-list {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
-    padding: var(--spacing-sm) 0;
+    padding: var(--spacing-md);
 }
 
-.ds-ev-row {
+.ds-ev-item {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-xs);
-    border-radius: var(--radius-sm);
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
     transition: var(--transition-fast);
 }
 
-.ds-ev-row:hover {
+.ds-ev-item:hover {
     background: var(--glass-bg);
+    transform: translateX(4px);
 }
 
-.ds-ev-row.home {
-    border-left: 3px solid var(--color-primary-500);
+.ds-ev-item.away:hover {
+    transform: translateX(-4px);
 }
 
-.ds-ev-row.away {
-    border-left: 3px solid var(--color-accent-500);
+.ds-ev-item.home {
+    border-left-color: var(--color-primary-500);
+}
+
+.ds-ev-item.away {
+    border-right-color: var(--color-accent-500);
     flex-direction: row-reverse;
     text-align: right;
 }
@@ -32,46 +40,45 @@
 .ds-ev-time {
     font-size: 11px;
     font-weight: 900;
-    color: var(--color-text-dim);
-    min-width: 40px;
+    color: var(--color-primary-400);
+    min-width: 32px;
 }
 
-.ds-ev-icon-wrap {
-    width: 28px;
-    height: 28px;
+.ds-ev-icon {
+    font-size: 18px;
+    width: 24px;
     display: flex;
-    align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-full);
-    font-size: 14px;
+    opacity: 0.9;
 }
 
-.ds-ev-content {
+.ds-ev-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .ds-ev-player {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
+    font-weight: 800;
+    font-size: var(--font-size-base);
     color: var(--color-text-main);
+}
+
+.ds-ev-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.away .ds-ev-meta {
+    flex-direction: row-reverse;
 }
 
 .ds-ev-detail {
     font-size: 10px;
     color: var(--color-text-dim);
     text-transform: uppercase;
-}
-
-.ds-events-loading,
-.ds-events-empty,
-.ds-events-error {
-    padding: var(--spacing-xl);
-    text-align: center;
-    color: var(--color-text-dim);
-    font-size: var(--font-size-xs);
-}
-
-.ds-events-error {
-    color: var(--color-danger-500);
+    font-weight: 600;
+    letter-spacing: 0.05em;
 }

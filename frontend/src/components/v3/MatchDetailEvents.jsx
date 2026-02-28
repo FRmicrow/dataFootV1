@@ -46,32 +46,25 @@ const MatchDetailEvents = ({ fixtureId }) => {
     if (events.length === 0) return <div className="ds-events-empty">No strategic events recorded.</div>;
 
     return (
-        <div className="ds-match-events-timeline animate-fade-in">
+        <div className="ds-match-events-list animate-fade-in">
             {events.map((ev, idx) => {
                 const isHome = ev.is_home_team === 1;
-                return (
-                    <div key={idx} className={`ds-ev-row ${isHome ? 'home' : 'away'}`}>
-                        {/* Time Column */}
-                        <div className="ds-ev-time">
-                            {ev.time_elapsed}{ev.extra_minute ? `+${ev.extra_minute}` : ''}'
-                        </div>
+                const timeStr = `${ev.time_elapsed}${ev.extra_minute ? `+${ev.extra_minute}` : ''}'`;
 
-                        {/* icon */}
-                        <div className="ds-ev-icon-wrap">
+                return (
+                    <div key={idx} className={`ds-ev-item ${isHome ? 'home' : 'away'}`}>
+                        <div className="ds-ev-time">{timeStr}</div>
+                        <div className="ds-ev-icon">
                             {renderEventIcon(ev.type, ev.detail)}
                         </div>
-
-                        {/* Content */}
-                        <div className="ds-ev-content">
-                            <Stack gap="2px">
-                                <span className="ds-ev-player">{ev.player_name}</span>
-                                <Stack direction="row" gap="4px" align="center">
-                                    <span className="ds-ev-detail">{ev.detail}</span>
-                                    {ev.assist_name && (
-                                        <Badge variant="neutral" size="xs">Ass: {ev.assist_name}</Badge>
-                                    )}
-                                </Stack>
-                            </Stack>
+                        <div className="ds-ev-info">
+                            <span className="ds-ev-player">{ev.player_name}</span>
+                            <div className="ds-ev-meta">
+                                <span className="ds-ev-detail">{ev.detail}</span>
+                                {ev.assist_name && (
+                                    <Badge variant="neutral" size="xs">Ass: {ev.assist_name}</Badge>
+                                )}
+                            </div>
                         </div>
                     </div>
                 );
