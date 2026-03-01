@@ -27,7 +27,21 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
 
   to {
@@ -49,16 +63,24 @@
   justify-content: flex-start !important;
 }
 
-.mt-sm {
+.mt-xs {
   margin-top: var(--spacing-xs);
 }
 
-.mt-md {
+.mt-sm {
   margin-top: var(--spacing-sm);
 }
 
-.mt-lg {
+.mt-md {
   margin-top: var(--spacing-md);
+}
+
+.mt-lg {
+  margin-top: var(--spacing-lg);
+}
+
+.mt-xl {
+  margin-top: var(--spacing-xl);
 }
 
 /* Global helper for text-clamping */
@@ -81,8 +103,9 @@ select {
   background: rgba(15, 23, 42, 0.4);
   border: 1px solid var(--color-border);
   color: var(--color-text-main);
-  padding: var(--spacing-2) var(--spacing-3);
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
+
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   transition: var(--transition-fast);
@@ -102,6 +125,7 @@ select:focus {
   color: white !important;
   border-radius: var(--radius-sm) !important;
 }
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

@@ -11,7 +11,7 @@ import os
 import sys
 import joblib
 from datetime import datetime
-from sklearn.ensemble import RandomForestClassifier
+from catboost import CatBoostClassifier, Pool
 from sklearn.metrics import log_loss, accuracy_score
 from time_travel import TemporalFeatureFactory
 
@@ -34,7 +34,7 @@ def get_horizon_cutoff(horizon_type: str, season_year: int = None) -> str:
 def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
                 cutoff_date: str = None, season_year: int = None) -> str:
     """
-    Trains a model for a specific league and horizon.
+    Trains a model for a specific league and horizon using CatBoost.
     Returns the model file path, or None on failure.
     """
     label = f"League {league_id}" if league_id else "Global"
@@ -87,6 +87,7 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
                 X_list.append([vector[col] for col in factory.feature_columns])
                 
                 gh, ga = int(row['goals_home']), int(row['goals_away'])
+                # outcome label: 0=Draw, 1=Home, 2=Away (matching train_1x2.py)
                 outcome = 1 if gh > ga else (2 if ga > gh else 0)
                 y_list.append(outcome)
             except Exception as e:
@@ -95,7 +96,6 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
             
             if (idx + 1) % 500 == 0:
                 print(f"      {len(X_list)} features generated ({skipped} skipped)...")
-                print(f"HEARTBEAT: {idx+1}")
                 sys.stdout.flush()
         
         if len(X_list) < 30:
@@ -111,13 +111,25 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
         X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
         y_train, y_test = y[:split_idx], y[split_idx:]
         
-        # 4. Train
-        print(f"   🏗️ Training RandomForest ({len(X_train)} train / {len(X_test)} test)...")
-        model = RandomForestClassifier(
-            n_estimators=150, max_depth=12, min_samples_leaf=5,
-            random_state=42, n_jobs=-1
+        # 4. Train CatBoost
+        print(f"   🏗️ Training CatBoost ({len(X_train)} train / {len(X_test)} test)...")
+        # For small datasets common in league models, we use more conservative params
+        model = CatBoostClassifier(
+            iterations=500,
+            learning_rate=0.03,
+            depth=6,
+            l2_leaf_reg=3,
+            verbose=False,
+            random_seed=42,
+            loss_function='MultiClass'
         )
-        model.fit(X_train, y_train)
+        
+        model.fit(
+            X_train, y_train,
+            eval_set=(X_test, y_test),
+            early_stopping_rounds=50,
+            use_best_model=True
+        )
         
         # 5. Evaluate
         preds = model.predict(X_test)
@@ -128,7 +140,9 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
         
         # Brier Score
         y_one_hot = np.zeros((len(y_test), 3))
-        y_one_hot[np.arange(len(y_test)), y_test] = 1
+        # Handle cases where some classes might be missing in small test sets
+        for i, val in enumerate(y_test):
+            y_one_hot[i, int(val)] = 1
         brier = float(np.mean(np.sum((probs - y_one_hot)**2, axis=1)))
         
         print(f"   ✅ Training Complete.")
@@ -143,7 +157,7 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
         # Save importance
         importance = pd.DataFrame({
             'feature': factory.feature_columns,
-            'importance': model.feature_importances_
+            'importance': model.get_feature_importance()
         }).sort_values('importance', ascending=False)
         
         importance_path = model_path.replace('.joblib', '_importance.json')
@@ -151,7 +165,7 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
             json.dump(importance.to_dict('records'), f)
         
         # 7. Register in DB
-        version_tag = f"v{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        version_tag = f"catboost_v{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         # Deactivate previous models for same scope
         conn.execute("""

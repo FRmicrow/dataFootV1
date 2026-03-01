@@ -86,5 +86,7 @@ export default {
     run,
     get,
     all,
-    query
+    query,
+    get db() { return db; }
 };
+

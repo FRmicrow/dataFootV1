@@ -164,15 +164,18 @@ const PlayerProfilePageV3 = () => {
     return (
         <div className="v3-player-page animate-fade-in">
             <ProfileHeader
-                title={player.name}
-                image={player.photo_url}
+                title={player?.name || 'Unknown Player'}
+                image={player?.photo_url || ''}
                 accentColor={currentContext?.team?.accent_color || 'var(--color-primary-500)'}
+                secondaryColor={currentContext?.team?.secondary_color}
+                tertiaryColor={currentContext?.team?.tertiary_color}
                 subtitles={[
-                    player.nationality,
-                    `${player.age} yrs`,
-                    player.height,
-                    player.preferred_foot ? `Preferred: ${player.preferred_foot}` : ''
+                    player?.nationality,
+                    player?.age ? `${player.age} yrs` : '',
+                    player?.height,
+                    player?.preferred_foot ? `Preferred: ${player.preferred_foot}` : ''
                 ].filter(Boolean)}
+
                 badges={[
                     {
                         label: currentContext?.team?.name || 'Free Agent',

@@ -14,6 +14,8 @@
     display: flex;
     flex-direction: column;
     padding: var(--spacing-lg);
+    z-index: var(--z-index-sticky);
+    transition: transform var(--transition-base);
 }
 
 .v3-sidebar-header {
@@ -60,38 +62,46 @@
     transition: var(--transition-fast);
 }
 
-.v3-nav-item:hover,
-.v3-nav-item.active {
-    background: var(--color-primary-bg);
+.v3-nav-item:hover {
+    background: var(--glass-bg);
     color: var(--color-text-main);
 }
 
 .v3-nav-item.active {
-    background: rgba(139, 92, 246, 0.2);
+    background: var(--color-primary-bg);
+    color: var(--color-text-main);
     border-left: 3px solid var(--color-primary-500);
 }
 
-.icon {
-    font-size: var(--font-size-lg);
-}
-
-.v3-sidebar-footer {
-    border-top: 1px solid var(--color-border);
-    padding-top: var(--spacing-md);
-}
-
-.v3-exit-link {
-    color: var(--color-text-dim);
-    text-decoration: none;
-    font-size: var(--font-size-sm);
-    display: flex;
+/* Mobile header & toggle */
+.v3-mobile-header {
+    display: none;
+    height: 60px;
+    background: var(--color-bg-sidebar);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 var(--spacing-md);
     align-items: center;
-    gap: var(--spacing-2xs);
-    transition: var(--transition-fast);
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-index-navbar);
 }
 
-.v3-exit-link:hover {
-    color: var(--color-danger-500);
+.v3-menu-toggle {
+    background: none;
+    border: none;
+    color: var(--color-text-main);
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.v3-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: calc(var(--z-index-sticky) - 1);
 }
 
 /* Main Content Wrapper */
@@ -101,11 +111,34 @@
     background: var(--color-bg-main);
 }
 
-/* Remove padding from pages that had it hardcoded if wrapped in layout */
+/* Responsive */
+@media (max-width: 992px) {
+    .v3-layout {
+        flex-direction: column;
+    }
+
+    .v3-mobile-header {
+        display: flex;
+    }
+
+    .v3-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .v3-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .v3-sidebar-overlay {
+        display: block;
+    }
+}
+
 .v3-import-page {
-    height: 100%;
-    /* Fill the container */
-    padding: 2rem;
-    /* Restore padding inside the layout context */
-    /* background is handled by layout or page itself */
+    padding: var(--spacing-lg);
 }

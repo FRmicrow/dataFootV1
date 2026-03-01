@@ -1,4 +1,4 @@
-import db from '../../config/database.js';
+import LeagueRepository from '../../repositories/v3/LeagueRepository.js';
 
 /**
  * US_070: High-Density League API & Ranking Aggregator
@@ -20,31 +20,8 @@ export const getStructuredLeagues = async (req, res) => {
         }
 
         // Fetch all leagues that have at least one imported season
-        // We join with countries to get ranks and continents
-        const sql = `
-            SELECT 
-                l.league_id, 
-                l.api_id, 
-                l.name as league_name, 
-                l.type as league_type, 
-                l.logo_url, 
-                l.importance_rank as league_rank,
-                c.name as country_name, 
-                c.continent, 
-                c.importance_rank as country_rank, 
-                c.flag_url,
-                (SELECT COUNT(*) FROM V3_League_Seasons ls WHERE ls.league_id = l.league_id AND ls.imported_players = 1) as seasons_count
-            FROM V3_Leagues l
-            JOIN V3_Countries c ON l.country_id = c.country_id
-            WHERE EXISTS (
-                SELECT 1 FROM V3_League_Seasons ls 
-                WHERE ls.league_id = l.league_id 
-                AND ls.imported_players = 1
-            )
-            ORDER BY c.importance_rank ASC, l.importance_rank ASC, l.name ASC
-        `;
+        const rows = LeagueRepository.getStructuredLeaguesData();
 
-        const rows = db.all(sql);
 
         const structured = {
             international: {

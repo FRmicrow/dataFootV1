@@ -1,10 +1,10 @@
 import React from 'react';
 import './Table.css';
 
-const Table = ({ columns, data, loading = false, rowKey = 'id', onRowClick, className = '' }) => {
+const Table = ({ columns, data, loading = false, rowKey = 'id', onRowClick, className = '', interactive = false }) => {
     return (
         <div className={`ds-table-container ${className}`}>
-            <table className="ds-table">
+            <table className={`ds-table ${interactive ? 'ds-table--interactive' : ''}`}>
                 <thead>
                     <tr>
                         {columns.map((col) => (

@@ -32,6 +32,7 @@
     font-weight: var(--font-weight-black);
     color: var(--color-text-main);
     margin: 0;
+    text-shadow: 0 0 20px rgba(139, 92, 246, 0.1);
 }
 
 .ds-metric-trend {
@@ -43,12 +44,12 @@
 
 .ds-metric-trend--up {
     color: var(--color-success-500);
-    background: rgba(16, 185, 129, 0.1);
+    background: var(--color-success-bg);
 }
 
 .ds-metric-trend--down {
     color: var(--color-danger-500);
-    background: rgba(244, 63, 94, 0.1);
+    background: var(--color-danger-bg);
 }
 
 .ds-metric-footer {
@@ -83,8 +84,9 @@
 
 /* Featured variant */
 .ds-metric-card--featured {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
-    border-color: rgba(139, 92, 246, 0.3);
+    background: var(--color-primary-bg);
+    border-color: var(--color-primary-glow);
+    box-shadow: var(--glow-primary);
 }
 
 .ds-metric-card--featured .ds-metric-value {

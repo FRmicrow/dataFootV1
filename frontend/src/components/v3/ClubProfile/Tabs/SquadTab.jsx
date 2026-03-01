@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Table, Badge, Stack, Button } from '../../../../design-system';
+import { getShortPosition } from '../../../../utils/positionUtils';
 
 const SquadTab = ({ roster, year }) => {
     const navigate = useNavigate();
@@ -10,7 +11,8 @@ const SquadTab = ({ roster, year }) => {
         if (!roster) return {};
         const base = { 'ALL': 0, 'Goalkeeper': 0, 'Defender': 0, 'Midfielder': 0, 'Attacker': 0 };
         return roster.reduce((acc, p) => {
-            acc[p.position] = (acc[p.position] || 0) + 1;
+            const pos = p.position || 'Unknown';
+            acc[pos] = (acc[pos] || 0) + 1;
             acc['ALL'] = (acc['ALL'] || 0) + 1;
             return acc;
         }, base);
@@ -35,11 +37,15 @@ const SquadTab = ({ roster, year }) => {
             )
         },
         {
-            title: 'Role & Age',
+            title: 'Pos',
             key: 'info',
+            width: '80px',
+            align: 'center',
             render: (_, p) => (
-                <Stack direction="row" align="center" gap="var(--spacing-sm)">
-                    <Badge variant="neutral" size="sm">{p.position}</Badge>
+                <Stack direction="row" align="center" justify="center" gap="var(--spacing-sm)">
+                    <Badge variant="primary" size="sm" style={{ minWidth: '24px', textAlign: 'center' }}>
+                        {getShortPosition(p.position)}
+                    </Badge>
                     <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{p.age}y</span>
                 </Stack>
             )

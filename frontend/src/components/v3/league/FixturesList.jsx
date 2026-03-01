@@ -9,7 +9,10 @@ const FixturesList = ({
 }) => {
     const [expandedFixtureId, setExpandedFixtureId] = useState(null);
 
-    const filteredFixtures = (fixturesData.fixtures || []).filter(f => f.round === selectedRound);
+    const filteredFixtures = useMemo(() => {
+        if (!selectedRound || selectedRound === 'ALL') return fixturesData.fixtures || [];
+        return (fixturesData.fixtures || []).filter(f => f.round === selectedRound);
+    }, [fixturesData.fixtures, selectedRound]);
 
     const handleFixtureToggle = (fixtureId) => {
         setExpandedFixtureId(expandedFixtureId === fixtureId ? null : fixtureId);
@@ -87,6 +90,24 @@ const FixturesList = ({
                     }}
                     className="hide-scrollbar"
                 >
+                    <div
+                        onClick={() => setSelectedRound('ALL')}
+                        style={{
+                            flexShrink: 0,
+                            padding: '6px 16px',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '11px',
+                            fontWeight: '800',
+                            cursor: 'pointer',
+                            background: selectedRound === 'ALL' ? 'var(--color-primary-600)' : 'var(--glass-bg)',
+                            color: selectedRound === 'ALL' ? 'white' : 'var(--color-primary-400)',
+                            border: `1px solid ${selectedRound === 'ALL' ? 'var(--color-primary-400)' : 'var(--color-primary-900)'}`,
+                            transition: 'var(--transition-fast)',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        ALL ROUNDS
+                    </div>
                     {(fixturesData.rounds || []).map(round => {
                         const isCurrent = round === currentRound;
                         const isSelected = round === selectedRound;

@@ -45,15 +45,16 @@ const V3Dashboard = () => {
     return (
         <div className="v3-dashboard-content animate-fade-in">
             {/* 1. Intelligence Header */}
-            <header className="v3-header" style={{ marginBottom: 'var(--spacing-xl)' }}>
+            <header className="v3-header mb-xl">
                 <Stack direction="row" justify="space-between" align="center">
                     <div className="header-meta">
-                        <Badge variant="primary" style={{ marginBottom: '4px' }}>OPERATIONAL COMMAND</Badge>
+                        <Badge variant="primary" className="mb-xs">OPERATIONAL COMMAND</Badge>
                         <h1 style={{ fontSize: 'var(--font-size-4xl)', fontWeight: 'var(--font-weight-black)', letterSpacing: '-0.02em' }}>Intelligence Hub</h1>
                         <p style={{ color: 'var(--color-text-muted)' }}>Real-time surveillance of the professional scouting ecosystem</p>
                     </div>
 
                     <Stack direction="row" gap="var(--spacing-lg)" style={{ minWidth: '400px' }}>
+
                         <Progress
                             label="Data Coverage"
                             value={health_summary.coverage_percent}

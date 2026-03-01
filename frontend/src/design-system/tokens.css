@@ -165,6 +165,14 @@
     --focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.5);
     --focus-offset: 2px;
 
+    /* --- Premium Effects & Glows --- */
+    --color-primary-glow: rgba(139, 92, 246, 0.3);
+    --glow-primary: 0 0 15px var(--color-primary-glow);
+    --glow-primary-strong: 0 0 25px rgba(139, 92, 246, 0.5);
+
+    --shadow-premium: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+
+
     /* --- Animation --- */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -270,8 +278,23 @@ body.ds-debug-active [class]:not(.ds-navbar *):not(body):not(html):hover::after 
     transform: scale(1);
     z-index: 10000;
 }
-.mb-xs { margin-bottom: var(--spacing-xs); }
-.mb-sm { margin-bottom: var(--spacing-sm); }
-.mb-md { margin-bottom: var(--spacing-md); }
-.mb-lg { margin-bottom: var(--spacing-lg); }
-.mb-xl { margin-bottom: var(--spacing-xl); }
+
+.mb-xs {
+    margin-bottom: var(--spacing-xs);
+}
+
+.mb-sm {
+    margin-bottom: var(--spacing-sm);
+}
+
+.mb-md {
+    margin-bottom: var(--spacing-md);
+}
+
+.mb-lg {
+    margin-bottom: var(--spacing-lg);
+}
+
+.mb-xl {
+    margin-bottom: var(--spacing-xl);
+}

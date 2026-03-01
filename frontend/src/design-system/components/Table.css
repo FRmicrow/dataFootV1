@@ -6,6 +6,12 @@
     border: 1px solid var(--color-border);
 }
 
+.ds-table-container.plain {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
 .ds-table {
     width: 100%;
     border-collapse: collapse;
@@ -27,7 +33,7 @@
 }
 
 .ds-table td {
-    padding: var(--spacing-2xs) var(--spacing-xs);
+    padding: var(--spacing-md) var(--spacing-xs);
     border-bottom: 1px solid var(--color-border);
     transition: var(--transition-fast);
 }

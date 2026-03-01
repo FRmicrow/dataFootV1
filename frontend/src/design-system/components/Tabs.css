@@ -36,7 +36,7 @@
 
 .ds-tabs-trigger:hover:not(.disabled) {
     color: var(--color-text-main);
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--glass-bg);
 }
 
 .ds-tabs-trigger.active {

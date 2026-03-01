@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, Table, Badge, Stack, Button, Grid } from '../../../design-system';
 
 const StandingsTable = ({
-    standings,
+    standings = [],
     rangeStart,
     setRangeStart,
     rangeEnd,
@@ -12,7 +12,7 @@ const StandingsTable = ({
     isDynamicMode,
     loading
 }) => {
-    const groupMap = standings.reduce((acc, curr) => {
+    const groupMap = (standings || []).reduce((acc, curr) => {
         const group = curr.group_name || 'General Standings';
         if (!acc[group]) acc[group] = [];
         acc[group].push(curr);
@@ -164,7 +164,7 @@ const StandingsTable = ({
                     )}
                 >
                     <div style={{ overflowX: 'auto' }} className="scrollbar-custom">
-                        <Table columns={columns} data={teams} interactive />
+                        <Table columns={columns} data={teams} className="plain" interactive />
                     </div>
                 </Card>
             ))}
