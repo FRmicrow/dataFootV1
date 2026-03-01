@@ -9,7 +9,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - statfoot-db-vol:/app/data
+      - ./backend/data:/app/data
       - ./backend:/app
       - /app/node_modules
     env_file:
@@ -44,8 +44,9 @@ services:
     ports:
       - "8008:8008"
     volumes:
-      - statfoot-db-vol:/app/data
+      - ./backend/data:/app/data
       - statfoot-ml-models-vol:/app/models
+      - ./ml-service:/app
     environment:
       - DATABASE_PATH=/app/data/database.sqlite
       - MODELS_PATH=/app/models

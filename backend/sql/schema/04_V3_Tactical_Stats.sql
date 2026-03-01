@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS V3_Player_Season_Stats (
 );
 
 -- 4. INDICES FOR PERFORMANCE
-CREATE INDEX idx_v3_fixture_stats_fixture ON V3_Fixture_Stats(fixture_id);
-CREATE INDEX idx_v3_fixture_player_stats_fixture ON V3_Fixture_Player_Stats(fixture_id);
-CREATE INDEX idx_v3_fixture_player_stats_player ON V3_Fixture_Player_Stats(player_id);
-CREATE INDEX idx_v3_player_season_stats_composite ON V3_Player_Season_Stats(league_id, season_year);
+CREATE INDEX IF NOT EXISTS idx_v3_fixture_stats_fixture ON V3_Fixture_Stats(fixture_id);
+CREATE INDEX IF NOT EXISTS idx_v3_fixture_player_stats_fixture ON V3_Fixture_Player_Stats(fixture_id);
+CREATE INDEX IF NOT EXISTS idx_v3_fixture_player_stats_player ON V3_Fixture_Player_Stats(player_id);
+CREATE INDEX IF NOT EXISTS idx_v3_player_season_stats_composite ON V3_Player_Season_Stats(league_id, season_year);

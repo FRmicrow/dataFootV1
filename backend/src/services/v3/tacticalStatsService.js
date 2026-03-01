@@ -73,7 +73,7 @@ export const syncLeagueTacticalStatsService = async (
             AND (fs.fixture_id IS NULL OR fps.fixture_id IS NULL)
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, [leagueId, seasonYear, limit]);
+        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     } else if (!skipFS) {
         const sql = `
             SELECT f.fixture_id, f.api_id, 1 as needs_fs, 0 as needs_ps
@@ -84,7 +84,7 @@ export const syncLeagueTacticalStatsService = async (
             AND fs.fixture_id IS NULL
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, [leagueId, seasonYear, limit]);
+        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     } else if (!skipPS) {
         const sql = `
             SELECT f.fixture_id, f.api_id, 0 as needs_fs, 1 as needs_ps
@@ -95,7 +95,7 @@ export const syncLeagueTacticalStatsService = async (
             AND fps.fixture_id IS NULL
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, [leagueId, seasonYear, limit]);
+        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     }
 
     if (targetFixtures.length === 0) {
@@ -368,7 +368,7 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
             SELECT DISTINCT player_id, team_id
             FROM V3_Fixture_Player_Stats
             WHERE fixture_id IN (SELECT fixture_id FROM V3_Fixtures WHERE league_id = ? AND season_year = ?)
-        `, [leagueId, seasonYear]);
+        `, cleanParams([leagueId, seasonYear]));
 
         if (players.length === 0) return;
 
@@ -392,7 +392,7 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
                 FROM V3_Fixture_Player_Stats
                 WHERE player_id = ? AND team_id = ? 
                 AND fixture_id IN (SELECT fixture_id FROM V3_Fixtures WHERE league_id = ? AND season_year = ?)
-            `, [p.player_id, p.team_id, leagueId, seasonYear]);
+            `, cleanParams([p.player_id, p.team_id, leagueId, seasonYear]));
 
             if (!sums || !sums.total_minutes) continue;
 
@@ -424,13 +424,13 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
                     duels_won_per_90=excluded.duels_won_per_90,
                     dribbles_success_per_90=excluded.dribbles_success_per_90,
                     updated_at=CURRENT_TIMESTAMP
-            `, [
+            `, cleanParams([
                 p.player_id, p.team_id, leagueId, seasonYear,
                 sums.appearances, sums.total_minutes, sums.goals, sums.conceded, sums.assists,
                 sums.goals * factor, sums.assists * factor, sums.shots * factor, sums.shots_on * factor,
                 sums.passes * factor, sums.key_passes * factor, sums.tackles * factor, sums.interceptions * factor,
                 sums.duels_won * factor, sums.dribbles_success * factor
-            ]);
+            ]));
         }
         db.run('COMMIT');
     } catch (err) {

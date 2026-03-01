@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 /**
  * Market Volatility Service (US_142)
@@ -11,9 +12,9 @@ export class MarketVolatilityService {
     static async captureSnapshot(fixtureId) {
         console.log(`📸 [US_142] Capturing odds snapshot for fixture ${fixtureId}...`);
 
-        const lastSnapshot = db.get("SELECT * FROM V3_Odds_History WHERE fixture_id = ? ORDER BY capture_timestamp DESC LIMIT 1", [fixtureId]);
+        const lastSnapshot = db.get("SELECT * FROM V3_Odds_History WHERE fixture_id = ? ORDER BY capture_timestamp DESC LIMIT 1", cleanParams([fixtureId]));
 
-        const currentOdds = db.all("SELECT * FROM V3_Odds WHERE fixture_id = ?", [fixtureId]);
+        const currentOdds = db.all("SELECT * FROM V3_Odds WHERE fixture_id = ?", cleanParams([fixtureId]));
 
         if (currentOdds.length === 0) {
             console.warn(`   ⚠️ No current odds found in V3_Odds for fixture ${fixtureId}. Skipping snapshot.`);
@@ -41,7 +42,7 @@ export class MarketVolatilityService {
         `;
 
         for (const row of currentOdds) {
-            db.run(sql, [
+            db.run(sql, cleanParams([
                 row.fixture_id,
                 row.bookmaker_id,
                 row.market_id,
@@ -49,7 +50,7 @@ export class MarketVolatilityService {
                 row.value_draw,
                 row.value_away_under,
                 row.handicap_value
-            ]);
+            ]));
         }
 
         console.log(`   ✅ Snapshot captured for ${currentOdds.length} markets.`);
@@ -64,7 +65,7 @@ export class MarketVolatilityService {
         const historyRows = db.all(`
             SELECT DISTINCT bookmaker_id FROM V3_Odds_History 
             WHERE fixture_id = ? AND market_id = ?
-        `, [fixtureId, marketId]);
+        `, cleanParams([fixtureId, marketId]));
 
         if (historyRows.length === 0) return null;
 
@@ -75,7 +76,7 @@ export class MarketVolatilityService {
             SELECT * FROM V3_Odds_History 
             WHERE fixture_id = ? AND market_id = ? AND bookmaker_id = ?
             ORDER BY capture_timestamp ASC
-        `, [fixtureId, marketId, bestId]);
+        `, cleanParams([fixtureId, marketId, bestId]));
 
         if (history.length < 2) return null;
 

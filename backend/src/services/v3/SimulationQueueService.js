@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,7 +47,7 @@ class SimulationQueueService {
                             error_log = 'Process heartbeat timeout. Possible crash or OOM.',
                             stage = 'CRASHED'
                         WHERE id = ?
-                    `, [job.id]);
+                    `, cleanParams([job.id]));
                 });
             } catch (err) {
                 console.error('❌ Watchdog Error:', err.message);
@@ -66,7 +67,7 @@ class SimulationQueueService {
 
             runningJobs.forEach(job => {
                 console.warn(`   ⚠️ Orphaned job detected: Sim ${job.id}. Marking as FAILED.`);
-                db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = 'Server restarted. Job interrupted.' WHERE id = ?", [job.id]);
+                db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = 'Server restarted. Job interrupted.' WHERE id = ?", cleanParams([job.id]));
             });
         } catch (err) {
             console.warn('   ⚠️ Could not recover orphaned jobs (DB might not be ready yet):', err.message);
@@ -85,7 +86,7 @@ class SimulationQueueService {
         if (!allowedModes.includes(mode)) throw new Error(`Invalid simulation mode: ${mode}`);
         if (!allowedHorizons.includes(horizon)) throw new Error(`Invalid horizon type: ${horizon}`);
 
-        const existing = db.get("SELECT id FROM V3_Forge_Simulations WHERE league_id = ? AND season_year = ? AND horizon_type = ? AND status = 'RUNNING'", [leagueId, seasonYear, horizon]);
+        const existing = db.get("SELECT id FROM V3_Forge_Simulations WHERE league_id = ? AND season_year = ? AND horizon_type = ? AND status = 'RUNNING'", cleanParams([leagueId, seasonYear, horizon]));
         if (existing) {
             throw new Error(`Simulation already active for League ${leagueId} Season ${seasonYear} [${horizon}] (ID: ${existing.id})`);
         }
@@ -96,7 +97,7 @@ class SimulationQueueService {
         const insertStmt = db.run(`
             INSERT INTO V3_Forge_Simulations (league_id, season_year, status, horizon_type, stage, last_heartbeat, is_audit, calibration_tag)
             VALUES (?, ?, 'RUNNING', ?, 'INIT', datetime('now'), ?, ?)
-        `, [leagueId, seasonYear, horizon, isAudit, calibrationTag]);
+        `, cleanParams([leagueId, seasonYear, horizon, isAudit, calibrationTag]));
 
         const simId = insertStmt.lastInsertRowid;
 
@@ -116,13 +117,13 @@ class SimulationQueueService {
 
             // Heartbeat/Sync detection (US_213)
             if (line.includes('HEARTBEAT:')) {
-                db.run("UPDATE V3_Forge_Simulations SET last_heartbeat = datetime('now') WHERE id = ?", [simId]);
+                db.run("UPDATE V3_Forge_Simulations SET last_heartbeat = datetime('now') WHERE id = ?", cleanParams([simId]));
             }
 
             // Progress/Stage detection (US_214)
             if (line.includes('STAGE:')) {
                 const stage = line.split('STAGE:')[1].trim();
-                db.run("UPDATE V3_Forge_Simulations SET stage = ? WHERE id = ?", [stage, simId]);
+                db.run("UPDATE V3_Forge_Simulations SET stage = ? WHERE id = ?", cleanParams([stage, simId]));
             }
 
             if (line.includes('PROGRESS:')) {
@@ -130,7 +131,7 @@ class SimulationQueueService {
                 if (match) {
                     const progress = parseInt(match[1]);
                     db.run("UPDATE V3_Forge_Simulations SET completed_months = ?, status = 'RUNNING' WHERE id = ?",
-                        [progress, simId]);
+                        cleanParams([progress, simId]));
                 }
             }
             console.log(`[FORGE-OUT][ID:${simId}]: ${line}`);
@@ -141,7 +142,7 @@ class SimulationQueueService {
             if (line.toLowerCase().includes('error')) {
                 console.error(`[FORGE-ERR][ID:${simId}]: ${line}`);
                 // Capture error log (US_214)
-                db.run("UPDATE V3_Forge_Simulations SET error_log = ? WHERE id = ?", [line, simId]);
+                db.run("UPDATE V3_Forge_Simulations SET error_log = ? WHERE id = ?", cleanParams([line, simId]));
             }
         });
 
@@ -150,7 +151,7 @@ class SimulationQueueService {
             this.activeProcesses.delete(`${leagueId}-${seasonYear}`);
 
             if (code !== 0) {
-                db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', stage = 'ERROR' WHERE id = ?", [simId]);
+                db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', stage = 'ERROR' WHERE id = ?", cleanParams([simId]));
             }
         });
 
@@ -175,7 +176,7 @@ class SimulationQueueService {
 
         sql += ` ORDER BY id DESC LIMIT 1 `;
 
-        const job = db.get(sql, params);
+        const job = db.get(sql, cleanParams(params));
         if (job && job.summary_metrics_json) {
             try {
                 job.metrics = JSON.parse(job.summary_metrics_json);
@@ -193,7 +194,7 @@ class SimulationQueueService {
             WHERE league_id = ?
             ORDER BY id DESC
         `;
-        const rows = db.all(sql, [leagueId]);
+        const rows = db.all(sql, cleanParams([leagueId]));
         return rows.map(job => {
             if (job.summary_metrics_json) {
                 try { job.metrics = JSON.parse(job.summary_metrics_json); } catch (e) { job.metrics = {}; }

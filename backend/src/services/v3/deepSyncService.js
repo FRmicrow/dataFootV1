@@ -1,5 +1,6 @@
 
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 import { runImportJob } from './leagueImportService.js';
 import { syncLeagueEventsService } from './fixtureService.js';
 import { syncLeagueTacticalStatsService } from './tacticalStatsService.js';

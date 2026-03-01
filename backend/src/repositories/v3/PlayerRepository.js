@@ -1,5 +1,6 @@
 import BaseRepository from './BaseRepository.js';
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 class PlayerRepository extends BaseRepository {
     constructor() {
@@ -18,7 +19,7 @@ class PlayerRepository extends BaseRepository {
             JOIN V3_Leagues l ON ps.league_id = l.league_id
             WHERE ps.player_id = ?
             ORDER BY ps.season_year DESC
-        `, [playerId]);
+        `, cleanParams([playerId]));
     }
 
     getPlayerTrophies(playerId) {
@@ -28,7 +29,7 @@ class PlayerRepository extends BaseRepository {
             LEFT JOIN V3_Countries c ON t.country = c.name
             WHERE t.player_id = ?
             ORDER BY t.season DESC
-        `, [playerId]);
+        `, cleanParams([playerId]));
     }
 
     getCareerTotals(playerId) {
@@ -45,7 +46,7 @@ class PlayerRepository extends BaseRepository {
             JOIN V3_Teams t ON ps.team_id = t.team_id
             WHERE ps.player_id = ?
             GROUP BY ps.team_id
-        `, [playerId]);
+        `, cleanParams([playerId]));
     }
 
     getCurrentContext(playerId) {
@@ -60,7 +61,7 @@ class PlayerRepository extends BaseRepository {
             WHERE ps.player_id = ?
             ORDER BY ps.season_year DESC, ps.created_at DESC
             LIMIT 1
-        `, [playerId]);
+        `, cleanParams([playerId]));
 
         if (!latest) return null;
 

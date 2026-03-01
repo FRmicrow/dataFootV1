@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS V3_Leagues (
     type TEXT, -- League, Cup
     logo_url TEXT,
     country_id INTEGER,
+    importance_rank INTEGER DEFAULT 999,
     is_discovered BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (country_id) REFERENCES V3_Countries(country_id)
@@ -179,9 +180,9 @@ CREATE TABLE IF NOT EXISTS V3_Player_Stats (
     UNIQUE(player_id, team_id, league_id, season_year)
 );
 
-CREATE INDEX idx_v3_player_stats_season ON V3_Player_Stats(season_year);
-CREATE INDEX idx_v3_player_stats_league ON V3_Player_Stats(league_id);
-CREATE INDEX idx_v3_player_stats_team ON V3_Player_Stats(team_id);
+CREATE INDEX IF NOT EXISTS idx_v3_player_stats_season ON V3_Player_Stats(season_year);
+CREATE INDEX IF NOT EXISTS idx_v3_player_stats_league ON V3_Player_Stats(league_id);
+CREATE INDEX IF NOT EXISTS idx_v3_player_stats_team ON V3_Player_Stats(team_id);
 
 -- 4. STANDINGS & FIXTURES (US-V3-POC-006)
 CREATE TABLE IF NOT EXISTS V3_Standings (
@@ -248,9 +249,9 @@ CREATE TABLE IF NOT EXISTS V3_Fixtures (
     FOREIGN KEY (away_team_id) REFERENCES V3_Teams(team_id)
 );
 
-CREATE INDEX idx_v3_fixtures_league_season ON V3_Fixtures(league_id, season_year);
-CREATE INDEX idx_v3_fixtures_date ON V3_Fixtures(date);
-CREATE INDEX idx_v3_standings_league_season ON V3_Standings(league_id, season_year);
+CREATE INDEX IF NOT EXISTS idx_v3_fixtures_league_season ON V3_Fixtures(league_id, season_year);
+CREATE INDEX IF NOT EXISTS idx_v3_fixtures_date ON V3_Fixtures(date);
+CREATE INDEX IF NOT EXISTS idx_v3_standings_league_season ON V3_Standings(league_id, season_year);
 
 -- 5. MATCH EVENTS (US_33_V3_DB_Fixture_Events_Schema)
 CREATE TABLE IF NOT EXISTS V3_Fixture_Events (
@@ -271,9 +272,9 @@ CREATE TABLE IF NOT EXISTS V3_Fixture_Events (
     FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_v3_fixture_events_fixture ON V3_Fixture_Events(fixture_id);
+CREATE INDEX IF NOT EXISTS idx_v3_fixture_events_fixture ON V3_Fixture_Events(fixture_id);
 -- Optimization for filtering/counting specific event types (Catch-up logic)
-CREATE INDEX idx_v3_fixture_events_fixture_type ON V3_Fixture_Events(fixture_id, type);
+CREATE INDEX IF NOT EXISTS idx_v3_fixture_events_fixture_type ON V3_Fixture_Events(fixture_id, type);
 
 -- 6. CLEANUP & AUDIT (US_35_V3_DB_Cleanup_Schema_Optimization)
 CREATE TABLE IF NOT EXISTS V3_Cleanup_History (
@@ -286,6 +287,6 @@ CREATE TABLE IF NOT EXISTS V3_Cleanup_History (
     deleted_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_v3_cleanup_group ON V3_Cleanup_History(group_id);
-CREATE INDEX idx_v3_leagues_name_country ON V3_Leagues(name, country_id);
-CREATE INDEX idx_v3_trophies_player_id ON V3_Trophies(player_id);
+CREATE INDEX IF NOT EXISTS idx_v3_cleanup_group ON V3_Cleanup_History(group_id);
+CREATE INDEX IF NOT EXISTS idx_v3_leagues_name_country ON V3_Leagues(name, country_id);
+CREATE INDEX IF NOT EXISTS idx_v3_trophies_player_id ON V3_Trophies(player_id);

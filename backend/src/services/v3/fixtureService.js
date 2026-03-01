@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import axios from 'axios';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 import * as ImportControl from './importControlService.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import ImportStatusService from './importStatusService.js';

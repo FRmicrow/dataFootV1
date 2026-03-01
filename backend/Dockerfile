@@ -1,22 +1,18 @@
 # --- Stage 1: Build ---
-FROM node:20-alpine AS build
+FROM node:20-bookworm-slim AS build
 
-# Install native build dependencies for better-sqlite3 and canvas (Alpine versions)
-RUN apk add --no-cache \
+# Install native build dependencies for better-sqlite3 and canvas (Debian versions)
+RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
-    sqlite-dev \
-    build-base \
-    cairo-dev \
-    pango-dev \
-    jpeg-dev \
-    giflib-dev \
-    librsvg-dev \
-    pixman-dev \
-    libpng-dev \
-    freetype-dev \
-    harfbuzz-dev
+    pkg-config \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

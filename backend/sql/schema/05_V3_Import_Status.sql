@@ -51,8 +51,8 @@ CREATE TABLE IF NOT EXISTS V3_Import_Status (
 );
 
 -- Optimization: Fast lookup for Matrix UI and Batch Logic
-CREATE INDEX idx_import_status_lookup ON V3_Import_Status(league_id, season_year);
-CREATE INDEX idx_import_status_pillar_state ON V3_Import_Status(pillar, status);
+CREATE INDEX IF NOT EXISTS idx_import_status_lookup ON V3_Import_Status(league_id, season_year);
+CREATE INDEX IF NOT EXISTS idx_import_status_pillar_state ON V3_Import_Status(pillar, status);
 
 -- Trigger to update 'updated_at' on changes
 CREATE TRIGGER IF NOT EXISTS trg_v3_import_status_update

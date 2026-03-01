@@ -1,5 +1,6 @@
 
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 import { ResolutionService } from './ResolutionService.js';
 import { runImportJob } from './leagueImportService.js';
 import { syncLeagueEventsService } from './fixtureService.js';
@@ -29,13 +30,13 @@ export class HealthPrescriptionService {
             const metaStr = JSON.stringify(p.metadata);
             const exists = db.get(
                 "SELECT id FROM V3_Health_Prescriptions WHERE type = ? AND target_entity_type = ? AND target_entity_id = ? AND status = 'PENDING' AND metadata = ?",
-                [p.type, p.target_entity_type, p.target_entity_id, metaStr]
+                cleanParams([p.type, p.target_entity_type, p.target_entity_id, metaStr])
             );
 
             if (!exists) {
                 db.run(
                     "INSERT INTO V3_Health_Prescriptions (type, priority, target_entity_type, target_entity_id, description, metadata) VALUES (?, ?, ?, ?, ?, ?)",
-                    [p.type, p.priority || 'MEDIUM', p.target_entity_type, p.target_entity_id, p.description, metaStr]
+                    cleanParams([p.type, p.priority || 'MEDIUM', p.target_entity_type, p.target_entity_id, p.description, metaStr])
                 );
                 count++;
             }
@@ -62,7 +63,7 @@ export class HealthPrescriptionService {
 
         for (const gap of gaps) {
             for (let year = gap.year_min + 1; year < gap.year_max; year++) {
-                const hasStat = db.get("SELECT 1 FROM V3_Player_Stats WHERE player_id = ? AND league_id = ? AND season_year = ?", [gap.player_id, gap.league_id, year]);
+                const hasStat = db.get("SELECT 1 FROM V3_Player_Stats WHERE player_id = ? AND league_id = ? AND season_year = ?", cleanParams([gap.player_id, gap.league_id, year]));
                 if (!hasStat) {
                     results.push({
                         type: 'MISSING_DATA',
@@ -118,7 +119,7 @@ export class HealthPrescriptionService {
      * Executes the recovery action for a prescription.
      */
     static async execute(prescriptionId, sendLog) {
-        const prescription = db.get("SELECT * FROM V3_Health_Prescriptions WHERE id = ?", [prescriptionId]);
+        const prescription = db.get("SELECT * FROM V3_Health_Prescriptions WHERE id = ?", cleanParams([prescriptionId]));
         if (!prescription) throw new Error("Prescription not found");
         if (prescription.status === 'RESOLVED') throw new Error("Prescription already resolved");
 
@@ -150,7 +151,7 @@ export class HealthPrescriptionService {
             }
 
             // Mark as RESOLVED
-            db.run("UPDATE V3_Health_Prescriptions SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP WHERE id = ?", [prescriptionId]);
+            db.run("UPDATE V3_Health_Prescriptions SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP WHERE id = ?", cleanParams([prescriptionId]));
 
             sendLog(`✅ Prescription #${prescriptionId} marked as RESOLVED.`, 'success');
             return result;
