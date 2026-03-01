@@ -1,6 +1,8 @@
 import db from '../../config/database.js';
+import footballApi from '../../services/footballApi.js';
 import { performDiscoveryScan } from '../../services/v3/auditService.js';
 import { runDeepSyncLeague } from '../../services/v3/deepSyncService.js';
+import { runImportJob } from '../../services/v3/leagueImportService.js';
 import * as ImportControl from '../../services/v3/importControlService.js';
 import ImportStatusService from '../../services/v3/importStatusService.js';
 import { IMPORT_STATUS, STATUS_LABELS, PILLARS } from '../../services/v3/importStatusConstants.js';
@@ -110,20 +112,28 @@ export const triggerBatchDeepSync = async (req, res) => {
 
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no'
+        'X-Accel-Buffering': 'no',
+        'Transfer-Encoding': 'chunked'
     });
 
     // Prime the stream for picky browsers/proxies (2KB of padding)
     res.write(':[initial-ping]\n' + ': ' + ' '.repeat(2048) + '\n\n');
-    if (res.flushHeaders) res.flushHeaders();
+    if (res.flush) res.flush();
+    else if (res.flushHeaders) res.flushHeaders();
 
     const sendLog = (message, type = 'info') => {
-        try { res.write(`data: ${JSON.stringify({ message, type })}\n\n`); } catch (e) { }
+        try {
+            res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
+            if (res.flush) res.flush();
+        } catch (e) { }
     };
     sendLog.emit = (data) => {
-        try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch (e) { }
+        try {
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+            if (res.flush) res.flush();
+        } catch (e) { }
     };
 
     req.on('close', () => {
@@ -210,9 +220,138 @@ export const getImportStateEndpoint = (req, res) => {
     res.json(ImportControl.getImportState());
 };
 
+/**
+ * US-202: Trigger Deep Sync for a single league
+ */
+export const triggerDeepSync = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'League ID is required.' });
+
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+        'Transfer-Encoding': 'chunked'
+    });
+
+    res.write(':[initial-ping]\n' + ': ' + ' '.repeat(2048) + '\n\n');
+    if (res.flush) res.flush();
+    else if (res.flushHeaders) res.flushHeaders();
+
+    const sendLog = (message, type = 'info') => {
+        try {
+            res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
+            if (res.flush) res.flush();
+        } catch (e) { }
+    };
+    sendLog.emit = (data) => {
+        try {
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+            if (res.flush) res.flush();
+        } catch (e) { }
+    };
+
+    try {
+        ImportControl.resetImportState();
+        await runDeepSyncLeague(id, sendLog);
+        res.end();
+    } catch (error) {
+        sendLog(`❌ Sync failed: ${error.message}`, 'error');
+        res.end();
+    }
+};
+
 // Placeholder for removed endpoint
-export const triggerDeepSync = (req, res) => res.status(410).json({ error: 'Deprecated' });
 export const triggerAuditScan = async (req, res) => {
     const result = await performDiscoveryScan();
     res.json(result);
+};
+
+/**
+ * US-206: Discover countries from API
+ */
+export const getDiscoveryCountries = async (req, res) => {
+    try {
+        const response = await footballApi.getCountries();
+        res.json(response.response || []);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * US-206: Discover leagues from API by country, filtering existing ones
+ */
+export const getDiscoveryLeagues = async (req, res) => {
+    try {
+        const { country } = req.query;
+        if (!country) return res.status(400).json({ error: 'Country is required.' });
+
+        const response = await footballApi.getLeagues({ country });
+        const apiLeagues = response.response || [];
+
+        // Filter out leagues that already exist in our DB
+        const existingApiIds = db.all("SELECT api_id FROM V3_Leagues").map(l => l.api_id);
+        const filtered = apiLeagues.filter(l => !existingApiIds.includes(l.league.id));
+
+        res.json(filtered);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * US-206: Trigger Core Import for a newly discovered league
+ */
+export const triggerDiscoveryImport = async (req, res) => {
+    const { leagueId, seasonYear } = req.body;
+    if (!leagueId || !seasonYear) {
+        return res.status(400).json({ error: 'leagueId and seasonYear are required.' });
+    }
+
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+        'Transfer-Encoding': 'chunked'
+    });
+
+    res.write(':[initial-ping]\n' + ': ' + ' '.repeat(2048) + '\n\n');
+    if (res.flush) res.flush();
+    else if (res.flushHeaders) res.flushHeaders();
+
+    const sendLog = (message, type = 'info') => {
+        try {
+            res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
+            if (res.flush) res.flush();
+        } catch (e) { }
+    };
+    sendLog.emit = (data) => {
+        try {
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+            if (res.flush) res.flush();
+        } catch (e) { }
+    };
+
+    try {
+        ImportControl.resetImportState();
+        sendLog(`🚀 Initializing Discovery Core Import for League ${leagueId}/${seasonYear}...`, 'info');
+
+        // This only fetches Core data by default (Teams, Season, Standings, Fixtures)
+        await runImportJob(leagueId, seasonYear, sendLog, { forceApiId: true });
+
+        // Mark as complete for core
+        const localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [leagueId]);
+        if (localLeague) {
+            ImportStatusService.setStatus(localLeague.league_id, seasonYear, 'core', IMPORT_STATUS.COMPLETE);
+        }
+
+        sendLog(`✅ Core Discovery Import Complete.`, 'complete');
+        res.end();
+    } catch (error) {
+        sendLog(`❌ Discovery Import failed: ${error.message}`, 'error');
+        res.end();
+    }
 };

@@ -1,11 +1,18 @@
 /**
  * SQL parameter sanitization utility.
- * Converts undefined and null values to null for safe use in parameterized queries.
+ * Converts undefined and null values to null, and ensures objects/arrays are stringified for SQLite3.
  * 
  * @param {Array} params - Array of query parameters
- * @returns {Array} Sanitized parameters with undefined/null normalized to null
- * 
- * @example
- * db.all("SELECT * FROM players WHERE name = ? AND age = ?", cleanParams([name, age]));
+ * @returns {Array} Sanitized parameters
  */
-export const cleanParams = (params) => params.map(p => (p === undefined || p === null) ? null : p);
+export const cleanParams = (params) => params.map(p => {
+    if (p === undefined || p === null) return null;
+    if (typeof p === 'object') {
+        try {
+            return JSON.stringify(p);
+        } catch (e) {
+            return String(p);
+        }
+    }
+    return p;
+});

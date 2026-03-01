@@ -18,7 +18,10 @@ import {
     stopImport,
     pauseImport,
     resumeImport,
-    getImportStateEndpoint
+    getImportStateEndpoint,
+    getDiscoveryCountries,
+    getDiscoveryLeagues,
+    triggerDiscoveryImport
 } from '../../controllers/v3/importMatrixController.js';
 import {
     triggerFixtureStatsSync,
@@ -45,5 +48,10 @@ router.post('/import/stop', stopImport);
 router.post('/import/pause', pauseImport);
 router.post('/import/resume', resumeImport);
 router.get('/import/state', getImportStateEndpoint);
+
+// Discovery Flow
+router.get('/import/discovery/countries', getDiscoveryCountries);
+router.get('/import/discovery/leagues', getDiscoveryLeagues);
+router.post('/import/discovery/import', triggerDiscoveryImport);
 
 export default router;

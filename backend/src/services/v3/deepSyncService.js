@@ -24,14 +24,14 @@ import {
  */
 export const runDeepSyncLeague = async (leagueId, sendLog) => {
     const leagueStart = Date.now();
-    const leagueInfo = db.get("SELECT name, api_id FROM V3_Leagues WHERE league_id = ?", [leagueId]);
+    const leagueInfo = db.get("SELECT name, api_id FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
     const leagueName = leagueInfo ? leagueInfo.name : `ID ${leagueId}`;
 
     sendLog(`🚀 Deep Sync: ${leagueName} (ID: ${leagueId})`, 'info');
 
     const seasons = db.all(
         "SELECT * FROM V3_League_Seasons WHERE league_id = ? ORDER BY season_year DESC",
-        [leagueId]
+        cleanParams([leagueId])
     );
 
     if (seasons.length === 0) {
@@ -71,7 +71,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
 
         const fc = db.get(
             "SELECT COUNT(*) as total, SUM(CASE WHEN status_short IN ('FT','AET','PEN') THEN 1 ELSE 0 END) as finished FROM V3_Fixtures WHERE league_id = ? AND season_year = ?",
-            [leagueId, season_year]
+            cleanParams([leagueId, season_year])
         );
 
         sendLog(``, 'info');
@@ -160,7 +160,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
                 }
                 sendLog(`   [Tactical] FS+PS ✅ — Done in ${elapsed}s`, 'success');
             } else {
-                sendLog(`   [Tactical] Skip (Inference) ⏩`, 'warning');
+                sendLog(`   [Tactical] Skip — Cascade "No Data" ⏩`, 'warning');
             }
         } catch (err) {
             if (err.message === 'IMPORT_ABORTED') throw err;
@@ -187,7 +187,7 @@ export async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
         SELECT f.api_id, f.fixture_id FROM V3_Fixtures f
         LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Lineups) fl ON f.fixture_id = fl.fixture_id
         WHERE f.league_id = ? AND f.season_year = ? AND f.status_short IN ('FT','AET','PEN') AND fl.fixture_id IS NULL
-    `, [leagueId, seasonYear]);
+    `, cleanParams([leagueId, seasonYear]));
 
     if (targets.length === 0) return { success: 0, failed: 0 };
 
@@ -199,7 +199,7 @@ export async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
             if (response.response?.length) {
                 for (const l of response.response) {
                     db.run("INSERT INTO V3_Fixture_Lineups (fixture_id, team_id, formation) VALUES (?,?,?)",
-                        [targets[i].fixture_id, l.team.id, l.formation]);
+                        cleanParams([targets[i].fixture_id, l.team.id, l.formation]));
                 }
                 success++;
             } else {
