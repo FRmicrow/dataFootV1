@@ -95,7 +95,6 @@ const Step2_Config = () => {
                 </div>
             </div>
 
-            {/* Animation Speed */}
             <div className="form-group-v2">
                 <label className="form-label-v2">Animation Speed</label>
                 <div className="slider-container-v2">

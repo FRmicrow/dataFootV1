@@ -32,7 +32,6 @@ export const StudioProvider = ({ children }) => {
             players: []      // Array of IDs for manual
         },
 
-        // Options
         cumulative: true
     });
 

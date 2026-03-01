@@ -21,7 +21,8 @@ import {
     getImportStateEndpoint,
     getDiscoveryCountries,
     getDiscoveryLeagues,
-    triggerDiscoveryImport
+    triggerDiscoveryImport,
+    triggerDiscoveryBatchImport
 } from '../../controllers/v3/importMatrixController.js';
 import {
     triggerFixtureStatsSync,
@@ -53,5 +54,6 @@ router.get('/import/state', getImportStateEndpoint);
 router.get('/import/discovery/countries', getDiscoveryCountries);
 router.get('/import/discovery/leagues', getDiscoveryLeagues);
 router.post('/import/discovery/import', triggerDiscoveryImport);
+router.post('/import/discovery/batch', triggerDiscoveryBatchImport);
 
 export default router;

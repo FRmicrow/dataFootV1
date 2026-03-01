@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 
-const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame, onComplete, speed = 1, className = "", title = "Chart Evolution", barCount = 10 }, ref) => {
+const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame, onComplete, speed = 1, className = "", title = "Chart Evolution", barCount = 10, manualTime = null }, ref) => {
     const internalCanvasRef = useRef(null);
     const canvasRef = ref || internalCanvasRef;
     const animationRef = useRef(null);
@@ -83,9 +83,11 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
             const deltaTime = timestamp - lastTimestamp;
             lastTimestamp = timestamp;
 
-            if (isPlaying) {
+            if (isPlaying && manualTime === null) {
                 const duration = 2000 / speed;
                 timeRef.current += (deltaTime / duration);
+            } else if (manualTime !== null) {
+                timeRef.current = manualTime;
             }
 
             if (timeRef.current >= getTime(data[data.length - 1])) {
@@ -272,7 +274,7 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
             });
         };
 
-        if (isPlaying) animationRef.current = requestAnimationFrame(draw);
+        if (isPlaying && manualTime === null) animationRef.current = requestAnimationFrame(draw);
         else renderFrame(timeRef.current);
 
         return () => cancelAnimationFrame(animationRef.current);

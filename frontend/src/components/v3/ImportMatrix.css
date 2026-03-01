@@ -98,6 +98,96 @@
     cursor: not-allowed;
 }
 
+.btn-discover-add {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-discover-add:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.2);
+}
+
+.btn-discover-add:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Discovery Batch Staging Area */
+.discovery-batch-list {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 6px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-blue-500);
+    margin-right: 12px;
+    animation: fadeIn var(--transition-base);
+}
+
+.discovery-batch-items {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    max-width: 400px;
+}
+
+.discovery-batch-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-slate-800);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    border: 1px solid var(--color-border);
+}
+
+.mini-flag {
+    width: 14px;
+    height: 10px;
+    object-fit: cover;
+    border-radius: 1px;
+}
+
+.btn-remove-tag {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0 0 0 4px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.btn-remove-tag:hover {
+    color: #ef4444;
+}
+
+.btn-process-discovery {
+    background: linear-gradient(to right, #3b82f6, #818cf8);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-process-discovery:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
 .btn-audit {
     background: var(--color-warning-bg);
     color: var(--color-accent-500);

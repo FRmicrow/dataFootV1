@@ -17,6 +17,7 @@ Ce workflow initie une nouvelle fonctionnalité et guide l’agent Product Owner
 6. **Création de la structure** : une fois validé, créez un dossier `/feature/V<version>-<FeatureName>/`. Pour chaque User Story, créez un fichier `.md` nommé selon le modèle `US-<numéro>-<rôle>-<nom-court>.md` (ex. `US-150-front-inscription.md`). Le contenu doit être rédigé par l’agent Product Owner via le workflow `create-user-stories`.
 7. **Rédaction des User Stories** : pour chaque besoin identifié, appelez le workflow `create-user-stories` en fournissant le numéro calculé et le rôle concerné (`front`, `back`, etc.). L’agent doit respecter la structure décrite dans `product-owner.md` et indiquer clairement les critères d’acceptation.
 8. **Finalisation et retour utilisateur** : informez l’utilisateur de la création des fichiers et du chemin du dossier. Invitez-le à relire les User Stories et à proposer d’éventuelles modifications.
+9. Appelez `implement-feature` et commencez l'implémentation
 
 ## Notes
 - Ce workflow fait intervenir la compétence `planning/requirement-gathering` pour clarifier les besoins et le workflow `create-user-stories` pour la rédaction détaillée.
