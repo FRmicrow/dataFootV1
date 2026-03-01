@@ -8,6 +8,7 @@
  */
 
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 import {
     IMPORT_STATUS,
     STATUS_LABELS,
@@ -30,19 +31,19 @@ export function getStatus(leagueId, seasonYear, pillar) {
     let row = db.get(
         `SELECT * FROM V3_Import_Status 
          WHERE league_id = ? AND season_year = ? AND pillar = ?`,
-        [leagueId, seasonYear, pillar]
+        cleanParams([leagueId, seasonYear, pillar])
     );
 
     if (!row) {
         db.run(
             `INSERT INTO V3_Import_Status (league_id, season_year, pillar, status) 
              VALUES (?, ?, ?, ?)`,
-            [leagueId, seasonYear, pillar, IMPORT_STATUS.NONE]
+            cleanParams([leagueId, seasonYear, pillar, IMPORT_STATUS.NONE])
         );
         row = db.get(
             `SELECT * FROM V3_Import_Status 
              WHERE league_id = ? AND season_year = ? AND pillar = ?`,
-            [leagueId, seasonYear, pillar]
+            cleanParams([leagueId, seasonYear, pillar])
         );
     }
 
@@ -67,7 +68,7 @@ export function getDataRange(leagueId, pillar) {
         `SELECT MIN(data_range_start) as start, MAX(data_range_end) as end
          FROM V3_Import_Status
          WHERE league_id = ? AND pillar = ? AND status IN (?, ?)`,
-        [leagueId, pillar, IMPORT_STATUS.COMPLETE, IMPORT_STATUS.LOCKED]
+        cleanParams([leagueId, pillar, IMPORT_STATUS.COMPLETE, IMPORT_STATUS.LOCKED])
     );
     return { start: row?.start || null, end: row?.end || null };
 }
@@ -83,7 +84,7 @@ export function getLeagueMatrix(leagueId = null) {
 
     if (leagueId) {
         sql += ` WHERE league_id = ?`;
-        params.push(leagueId);
+        params.push(...cleanParams([leagueId]));
     }
     sql += ` ORDER BY league_id, season_year DESC, pillar`;
 
@@ -98,7 +99,7 @@ export function getSeasonStatuses(leagueId, seasonYear) {
     return db.all(
         `SELECT * FROM V3_Import_Status 
          WHERE league_id = ? AND season_year = ?`,
-        [leagueId, seasonYear]
+        cleanParams([leagueId, seasonYear])
     );
 }
 
@@ -118,7 +119,7 @@ export function getSeasonStatuses(leagueId, seasonYear) {
 export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
     const existing = db.get(
         `SELECT id FROM V3_Import_Status WHERE league_id = ? AND season_year = ? AND pillar = ?`,
-        [leagueId, seasonYear, pillar]
+        cleanParams([leagueId, seasonYear, pillar])
     );
 
     const now = new Date().toISOString();
@@ -137,7 +138,7 @@ export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
                 data_range_end = COALESCE(?, data_range_end),
                 updated_at = ?
              WHERE id = ?`,
-            [
+            cleanParams([
                 status,
                 now,
                 isSuccess ? 1 : 0, now,
@@ -148,7 +149,7 @@ export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
                 metadata.data_range_end ?? null,
                 now,
                 existing.id
-            ]
+            ])
         );
     } else {
         db.run(
@@ -156,7 +157,7 @@ export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
              (league_id, season_year, pillar, status, last_checked_at, last_success_at, failure_reason,
               total_items_expected, total_items_imported, data_range_start, data_range_end)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
+            cleanParams([
                 leagueId, seasonYear, pillar, status, now,
                 isSuccess ? now : null,
                 metadata.failure_reason || null,
@@ -164,7 +165,7 @@ export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
                 metadata.total_items_imported ?? null,
                 metadata.data_range_start ?? null,
                 metadata.data_range_end ?? null
-            ]
+            ])
         );
     }
 
@@ -195,7 +196,7 @@ export function incrementFailure(leagueId, seasonYear, pillar, threshold = CONSE
             last_checked_at = ?,
             updated_at = ?
          WHERE league_id = ? AND season_year = ? AND pillar = ?`,
-        [newCount, new Date().toISOString(), new Date().toISOString(), leagueId, seasonYear, pillar]
+        cleanParams([newCount, new Date().toISOString(), new Date().toISOString(), leagueId, seasonYear, pillar])
     );
 
     if (newCount >= threshold) {
@@ -218,7 +219,7 @@ export function resetFailures(leagueId, seasonYear, pillar) {
             consecutive_failures = 0,
             updated_at = ?
          WHERE league_id = ? AND season_year = ? AND pillar = ?`,
-        [new Date().toISOString(), leagueId, seasonYear, pillar]
+        cleanParams([new Date().toISOString(), leagueId, seasonYear, pillar])
     );
 }
 
@@ -230,7 +231,7 @@ export function checkAutoLock(leagueId, seasonYear) {
     const statuses = db.all(
         `SELECT pillar, status FROM V3_Import_Status 
          WHERE league_id = ? AND season_year = ?`,
-        [leagueId, seasonYear]
+        cleanParams([leagueId, seasonYear])
     );
 
     // Need all 6 pillars present
@@ -253,7 +254,7 @@ export function checkAutoLock(leagueId, seasonYear) {
             `UPDATE V3_Import_Status SET 
                 status = ?, updated_at = ?
              WHERE league_id = ? AND season_year = ? AND pillar = ?`,
-            [IMPORT_STATUS.LOCKED, new Date().toISOString(), leagueId, seasonYear, s.pillar]
+            cleanParams([IMPORT_STATUS.LOCKED, new Date().toISOString(), leagueId, seasonYear, s.pillar])
         );
         syncLegacyFlags(leagueId, seasonYear, s.pillar, IMPORT_STATUS.LOCKED);
     }
@@ -282,7 +283,7 @@ export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAl
             db.run(
                 `UPDATE V3_Import_Status SET status = ?, updated_at = ?
                  WHERE league_id = ? AND season_year = ? AND status = ?`,
-                [IMPORT_STATUS.COMPLETE, now, leagueId, seasonYear, IMPORT_STATUS.LOCKED]
+                cleanParams([IMPORT_STATUS.COMPLETE, now, leagueId, seasonYear, IMPORT_STATUS.LOCKED])
             );
         }
 
@@ -292,7 +293,7 @@ export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAl
                 `UPDATE V3_Import_Status SET 
                     status = ?, consecutive_failures = 0, failure_reason = NULL, updated_at = ?
                  WHERE league_id = ? AND season_year = ? AND pillar = ?`,
-                [IMPORT_STATUS.NONE, now, leagueId, seasonYear, p]
+                cleanParams([IMPORT_STATUS.NONE, now, leagueId, seasonYear, p])
             );
             syncLegacyFlags(leagueId, seasonYear, p, IMPORT_STATUS.NONE);
         }
@@ -309,7 +310,7 @@ export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAl
         db.run(
             `UPDATE V3_Import_Status SET status = ?, updated_at = ?
              WHERE league_id = ? AND season_year = ? AND status = ?`,
-            [IMPORT_STATUS.COMPLETE, now, leagueId, seasonYear, IMPORT_STATUS.LOCKED]
+            cleanParams([IMPORT_STATUS.COMPLETE, now, leagueId, seasonYear, IMPORT_STATUS.LOCKED])
         );
         // Sync legacy for all previously locked pillar
         allStatuses.filter(s => s.status === IMPORT_STATUS.LOCKED).forEach(s => {
@@ -322,7 +323,7 @@ export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAl
         `UPDATE V3_Import_Status SET 
             status = ?, consecutive_failures = 0, failure_reason = NULL, updated_at = ?
          WHERE league_id = ? AND season_year = ? AND pillar = ?`,
-        [IMPORT_STATUS.NONE, now, leagueId, seasonYear, pillar]
+        cleanParams([IMPORT_STATUS.NONE, now, leagueId, seasonYear, pillar])
     );
     syncLegacyFlags(leagueId, seasonYear, pillar, IMPORT_STATUS.NONE);
 
@@ -362,12 +363,12 @@ function syncLegacyFlags(leagueId, seasonYear, pillar, status) {
     if (isImported) {
         db.run(
             `UPDATE V3_League_Seasons SET ${updates}, ${mapping.sync} = ? WHERE league_id = ? AND season_year = ?`,
-            [...params, now, leagueId, seasonYear]
+            cleanParams([...params, now, leagueId, seasonYear])
         );
     } else {
         db.run(
             `UPDATE V3_League_Seasons SET ${updates} WHERE league_id = ? AND season_year = ?`,
-            [...params, leagueId, seasonYear]
+            cleanParams([...params, leagueId, seasonYear])
         );
     }
 }

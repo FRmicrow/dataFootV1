@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 import crypto from 'crypto';
 
 /**
@@ -13,18 +14,18 @@ const archiveAndDelete = (groupId, tableName, idColumn, ids, reason = 'Integrity
     const placeholders = ids.map(() => '?').join(',');
 
     // 1. Fetch records to archive
-    const records = db.all(`SELECT * FROM ${tableName} WHERE ${idColumn} IN (${placeholders})`, ids);
+    const records = db.all(`SELECT * FROM ${tableName} WHERE ${idColumn} IN (${placeholders})`, cleanParams(ids));
 
     // 2. Archive
     for (const record of records) {
         db.run(
             `INSERT INTO V3_Cleanup_History (group_id, table_name, original_pk_id, raw_data, reason) VALUES (?, ?, ?, ?, ?)`,
-            [groupId, tableName, record[idColumn], JSON.stringify(record), reason]
+            cleanParams([groupId, tableName, record[idColumn], JSON.stringify(record), reason])
         );
     }
 
     // 3. Delete
-    db.run(`DELETE FROM ${tableName} WHERE ${idColumn} IN (${placeholders})`, ids);
+    db.run(`DELETE FROM ${tableName} WHERE ${idColumn} IN (${placeholders})`, cleanParams(ids));
 
     return ids.length;
 };
@@ -142,11 +143,11 @@ export const applyFix = async (issueId) => {
                 FROM V3_Leagues l 
                 JOIN V3_Countries c ON l.country_id = c.country_id 
                 WHERE l.name = ?
-            `, [col.name]);
+            `, cleanParams([col.name]));
 
             for (const l of leagues) {
                 db.run(`UPDATE V3_Leagues SET name = ? WHERE league_id = ?`,
-                    [`${col.name} (${l.country_name})`, l.league_id]
+                    cleanParams([`${col.name} (${l.country_name})`, l.league_id])
                 );
                 changes++;
             }
@@ -165,7 +166,7 @@ export const applyFix = async (issueId) => {
                 SELECT stat_id FROM V3_Player_Stats 
                 WHERE player_id = ? AND team_id = ? AND league_id = ? AND season_year = ?
                 ORDER BY stat_id DESC
-            `, [group.player_id, group.team_id, group.league_id, group.season_year]);
+            `, cleanParams([group.player_id, group.team_id, group.league_id, group.season_year]));
 
             // const keepId = rows[0].stat_id;
             const removeIds = rows.slice(1).map(r => r.stat_id);
@@ -234,7 +235,7 @@ export const revertGroup = async (groupId) => {
         const values = Object.values(data);
 
         // Using INSERT OR IGNORE to avoid primary key collisions
-        db.run(`INSERT OR IGNORE INTO ${record.table_name} (${columns}) VALUES (${placeholders})`, values);
+        db.run(`INSERT OR IGNORE INTO ${record.table_name} (${columns}) VALUES (${placeholders})`, cleanParams(values));
         restored++;
     }
 
@@ -312,7 +313,7 @@ export const getLeagueNames = async () => {
 };
 
 export const checkLeagueHealth = async (leagueName) => {
-    const ids = db.all(`SELECT league_id FROM V3_Leagues WHERE name = ?`, [leagueName])
+    const ids = db.all(`SELECT league_id FROM V3_Leagues WHERE name = ?`, cleanParams([leagueName]))
         .map(r => r.league_id);
 
     if (ids.length === 0) return { status: 'CLEAN', issues: [] };
@@ -336,7 +337,7 @@ export const checkLeagueHealth = async (leagueName) => {
             HAVING COUNT(*) > 1
         )
         ORDER BY s.player_id, s.season_year
-    `, [...ids, ...ids]);
+    `, cleanParams([...ids, ...ids]));
 
     const issues = [];
     const groups = {};

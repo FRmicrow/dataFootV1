@@ -1,5 +1,6 @@
 import BaseRepository from './BaseRepository.js';
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 class ClubRepository extends BaseRepository {
     constructor() {
@@ -12,7 +13,7 @@ class ClubRepository extends BaseRepository {
             FROM V3_Teams t
             LEFT JOIN V3_Venues v ON t.venue_id = v.venue_id
             WHERE t.team_id = ?
-        `, [id]);
+        `, cleanParams([id]));
     }
 
     getClubMatches(teamId, options = {}) {
@@ -87,7 +88,7 @@ class ClubRepository extends BaseRepository {
                 params.push(teamId);
             }
 
-            const row = this.db.get(sql, params);
+            const row = this.db.get(sql, cleanParams(params));
 
             // Post-process some values
             if (row) {
@@ -131,7 +132,7 @@ class ClubRepository extends BaseRepository {
             if (venue === 'home') { goalsSql += ` AND home_team_id = ?`; goalsParams.push(teamId); }
             if (venue === 'away') { goalsSql += ` AND away_team_id = ?`; goalsParams.push(teamId); }
 
-            const g = this.db.get(goalsSql, goalsParams);
+            const g = this.db.get(goalsSql, cleanParams(goalsParams));
 
             s.goals_scored_per_match = s.matches > 0 ? parseFloat((g.scored / s.matches).toFixed(2)) : 0;
             s.goals_conceded_per_match = s.matches > 0 ? parseFloat((g.conceded / s.matches).toFixed(2)) : 0;
@@ -177,7 +178,7 @@ class ClubRepository extends BaseRepository {
             LEFT JOIN V3_Standings st ON (ps.league_id = st.league_id AND ps.season_year = st.season_year AND ps.team_id = st.team_id)
             WHERE ps.team_id = ?
             ORDER BY ls.season_year DESC, l.importance_rank ASC
-        `, [teamId]);
+        `, cleanParams([teamId]));
     }
 
     getClubSummary(teamId, year = null, leagueId = null) {
@@ -202,7 +203,7 @@ class ClubRepository extends BaseRepository {
             params.push(leagueId);
         }
 
-        return this.db.get(sql, params);
+        return this.db.get(sql, cleanParams(params));
     }
 
     getClubRoster(teamId, year, leagueId = null) {
@@ -229,7 +230,7 @@ class ClubRepository extends BaseRepository {
         }
 
         sql += ` GROUP BY p.player_id ORDER BY appearances DESC, p.name ASC`;
-        return this.db.all(sql, params);
+        return this.db.all(sql, cleanParams(params));
     }
 }
 
