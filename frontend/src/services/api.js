@@ -158,4 +158,8 @@ export default {
     // --- Forge Laboratory (PO Vision) ---
     startBreeding: (leagueId) => api.post('/forge/breed', { leagueId }),
     getBreedingStatus: (leagueId) => api.get(`/forge/breed-status?leagueId=${leagueId}`),
+    // --- Discovery ---
+    getDiscoveryCountries: () => api.get('/import/discovery/countries'),
+    getDiscoveryLeagues: (country) => api.get(`/import/discovery/leagues?country=${country}`),
+    triggerDiscoveryImport: (data) => api.post('/import/discovery/import', data),
 };

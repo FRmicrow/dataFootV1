@@ -133,7 +133,7 @@ export const syncLeagueTacticalStatsService = async (
             JOIN V3_Teams h ON f.home_team_id = h.team_id
             JOIN V3_Teams a ON f.away_team_id = a.team_id
             WHERE f.fixture_id = ?
-        `, [fixture.fixture_id]);
+        `, cleanParams([fixture.fixture_id]));
 
         const matchup = fixtureInfo ? `${fixtureInfo.home} vs ${fixtureInfo.away}` : `Fixture ${fixture.fixture_id}`;
 
@@ -228,8 +228,7 @@ export const syncLeagueTacticalStatsService = async (
             ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
             // Backward compat
             db.run(
-                "UPDATE V3_League_Seasons SET imported_fixture_stats = 1, last_sync_fixture_stats = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
-                [leagueId, seasonYear]
+                cleanParams([leagueId, seasonYear])
             );
         } else if (fsFailed > 0) {
             ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.PARTIAL);
@@ -241,7 +240,7 @@ export const syncLeagueTacticalStatsService = async (
             ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
             db.run(
                 "UPDATE V3_League_Seasons SET imported_player_stats = 1, last_sync_player_stats = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
-                [leagueId, seasonYear]
+                cleanParams([leagueId, seasonYear])
             );
             // Trigger normalization
             log('🔄 Triggering seasonal player normalization (Per-90 metrics)...');
@@ -297,7 +296,7 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
     try {
         for (const teamContainer of res.response) {
             const teamApiId = teamContainer.team.id;
-            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", [teamApiId])?.team_id;
+            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([teamApiId]))?.team_id;
 
             if (!localTeamId) {
                 console.warn(`      Team API ID ${teamApiId} not found locally.`);
@@ -344,7 +343,7 @@ export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
     try {
         for (const teamContainer of res.response) {
             const teamApiId = teamContainer.team.id;
-            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", [teamApiId])?.team_id;
+            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([teamApiId]))?.team_id;
 
             if (!localTeamId) continue;
 

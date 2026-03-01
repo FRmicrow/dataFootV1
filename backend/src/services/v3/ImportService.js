@@ -422,14 +422,14 @@ export const ImportRepository = {
         const existing = db.get(`SELECT fixture_player_stats_id FROM V3_Fixture_Player_Stats WHERE fixture_id=? AND player_id=?`,
             cleanParams([s.fixture_id, localPlayer.player_id]));
 
-        const params = [
+        const params = cleanParams([
             s.fixture_id, s.team_id, localPlayer.player_id, s.is_start_xi, s.minutes_played, s.position, s.rating,
             s.goals_total, s.goals_conceded, s.goals_assists, s.goals_saves,
             s.shots_total, s.shots_on, s.passes_total, s.passes_key, s.passes_accuracy,
             s.tackles_total, s.tackles_blocks, s.tackles_interceptions, s.duels_total, s.duels_won,
             s.dribbles_attempts, s.dribbles_success, s.fouls_drawn, s.fouls_committed,
             s.cards_yellow, s.cards_red, s.penalty_won, s.penalty_commited, s.penalty_scored, s.penalty_missed, s.penalty_saved
-        ];
+        ]);
 
         if (existing) {
             db.run(`UPDATE V3_Fixture_Player_Stats SET 

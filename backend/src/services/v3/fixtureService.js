@@ -54,7 +54,7 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
             AND fe.fixture_id IS NULL
             LIMIT ?
         `;
-        const targetFixtures = db.all(sql, [leagueId, seasonYear, limit]);
+        const targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
 
         if (targetFixtures.length === 0) {
             log('   ✅ No missing events found for this league/season.', 'success');
@@ -92,8 +92,7 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
         }
         if (success > 0) {
             db.run(
-                "UPDATE V3_League_Seasons SET imported_events = 1, last_sync_events = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
-                [leagueId, seasonYear]
+                cleanParams([leagueId, seasonYear])
             );
         }
 
@@ -111,7 +110,7 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
 export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
     // If we only have local ID, we need to look up API ID. 
     if (!apiFixtureId) {
-        const row = db.get('SELECT api_id FROM V3_Fixtures WHERE fixture_id = ?', [localFixtureId]);
+        const row = db.get('SELECT api_id FROM V3_Fixtures WHERE fixture_id = ?', cleanParams([localFixtureId]));
         if (!row) throw new Error(`Fixture ${localFixtureId} not found locally`);
         apiFixtureId = row.api_id;
     }
@@ -136,7 +135,7 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
         db.run('BEGIN TRANSACTION');
 
         // Clear existing events for this fixture just in case (e.g. re-sync)
-        db.run('DELETE FROM V3_Fixture_Events WHERE fixture_id = ?', [localFixtureId]);
+        db.run('DELETE FROM V3_Fixture_Events WHERE fixture_id = ?', cleanParams([localFixtureId]));
 
         const insertSql = `
             INSERT INTO V3_Fixture_Events 
@@ -146,9 +145,9 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
 
         for (const ev of events) {
             // Must resolve TEAM ID to local ID, otherwise we store API ID which mismatches V3_Fixtures
-            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", [ev.team.id])?.team_id || ev.team.id; // Fallback to raw if not found, but should find
+            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([ev.team.id]))?.team_id || ev.team.id; // Fallback to raw if not found, but should find
 
-            db.run(insertSql, [
+            db.run(insertSql, cleanParams([
                 localFixtureId,
                 ev.time.elapsed,
                 ev.time.extra, // API field is usually 'extra', mapped to DB 'extra_minute'
@@ -160,7 +159,7 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
                 ev.type,
                 ev.detail,
                 ev.comments
-            ]);
+            ]));
         }
 
         db.run('COMMIT');

@@ -42,6 +42,60 @@
 .matrix-actions {
     display: flex;
     gap: 12px;
+    align-items: center;
+}
+
+/* Discovery Group Styles */
+.discovery-group {
+    display: flex;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.4);
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    margin-right: 12px;
+}
+
+.discover-select {
+    background: var(--color-slate-900);
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    font-size: 12px;
+    outline: none;
+    min-width: 140px;
+}
+
+.discover-select:focus {
+    border-color: var(--color-blue-500);
+}
+
+.discover-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-discover-import {
+    background: var(--color-blue-600);
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-discover-import:hover:not(:disabled) {
+    background: var(--color-blue-500);
+    transform: translateY(-1px);
+}
+
+.btn-discover-import:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-audit {

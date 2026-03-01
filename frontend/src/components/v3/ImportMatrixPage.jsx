@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useImport } from '../../context/ImportContext.jsx';
@@ -31,11 +30,44 @@ const ImportMatrixPage = () => {
     const [isAuditing, setIsAuditing] = useState(false);
     const [selectedLeagues, setSelectedLeagues] = useState([]);
 
+    // US-203: Discovery State
+    const [countries, setCountries] = useState([]);
+    const [selectedCountry, setSelectedCountry] = useState('');
+    const [availableLeagues, setAvailableLeagues] = useState([]);
+    const [selectedDiscoveryLeague, setSelectedDiscoveryLeague] = useState('');
+    const [isDiscovering, setIsDiscovering] = useState(false);
+
     const { startImport, isImporting } = useImport();
 
     useEffect(() => {
         fetchMatrix();
+        fetchCountries();
     }, []);
+
+    const fetchCountries = async () => {
+        try {
+            const res = await api.getDiscoveryCountries();
+            const data = res.data || res; // Handle both direct array and {data: []} just in case
+            setCountries(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('Failed to fetch countries:', err);
+        }
+    };
+
+    const handleCountryChange = async (countryName) => {
+        setSelectedCountry(countryName);
+        setSelectedDiscoveryLeague('');
+        setAvailableLeagues([]);
+        if (!countryName) return;
+
+        try {
+            const res = await api.getDiscoveryLeagues(countryName);
+            const data = res.data || res;
+            setAvailableLeagues(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('Failed to fetch leagues for country:', err);
+        }
+    };
 
     const fetchMatrix = async () => {
         setLoading(true);
@@ -63,6 +95,30 @@ const ImportMatrixPage = () => {
             alert('Audit failed: ' + err.message);
         } finally {
             setIsAuditing(false);
+        }
+    };
+
+    const handleDiscoveryImport = async () => {
+        if (!selectedDiscoveryLeague) return;
+        const league = availableLeagues.find(l => l.league.id === parseInt(selectedDiscoveryLeague));
+        if (!league) return;
+
+        const currentYear = new Date().getFullYear();
+        if (!window.confirm(`Import Core data for ${league.league.name} (${currentYear})?`)) return;
+
+        setIsDiscovering(true);
+        try {
+            await startImport('/import/discovery/import', 'POST', {
+                leagueId: league.league.id,
+                seasonYear: currentYear
+            });
+            // After import starts, clear selection
+            setSelectedDiscoveryLeague('');
+            setTimeout(fetchMatrix, 2000); // Refresh matrix after a bit
+        } catch (err) {
+            alert('Discovery import failed: ' + err.message);
+        } finally {
+            setIsDiscovering(false);
         }
     };
 
@@ -139,6 +195,35 @@ const ImportMatrixPage = () => {
                     <p>Unified data ingestion hub for all competitions and seasons.</p>
                 </div>
                 <div className="matrix-actions">
+                    <div className="discovery-group">
+                        <select
+                            className="discover-select"
+                            value={selectedCountry}
+                            onChange={(e) => handleCountryChange(e.target.value)}
+                        >
+                            <option value="">-- Select Country --</option>
+                            {countries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                        </select>
+                        <select
+                            className="discover-select"
+                            value={selectedDiscoveryLeague}
+                            onChange={(e) => setSelectedDiscoveryLeague(e.target.value)}
+                            disabled={!selectedCountry || availableLeagues.length === 0}
+                        >
+                            <option value="">-- Select New League --</option>
+                            {availableLeagues.map(l => (
+                                <option key={l.league.id} value={l.league.id}>{l.league.name}</option>
+                            ))}
+                        </select>
+                        <button
+                            className="btn-discover-import"
+                            onClick={handleDiscoveryImport}
+                            disabled={!selectedDiscoveryLeague || isImporting || isDiscovering}
+                        >
+                            {isDiscovering ? '⏳ Importing...' : '📥 Import'}
+                        </button>
+                    </div>
+
                     <button className="btn-audit" onClick={handleAudit} disabled={isAuditing}>
                         {isAuditing ? '🔍 Auditing...' : '🛠️ Discovery Scan'}
                     </button>
