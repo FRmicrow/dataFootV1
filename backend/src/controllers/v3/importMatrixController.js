@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 import { performDiscoveryScan } from '../../services/v3/auditService.js';
 import { runDeepSyncLeague } from '../../services/v3/deepSyncService.js';
 import * as ImportControl from '../../services/v3/importControlService.js';
@@ -140,7 +141,7 @@ export const triggerBatchDeepSync = async (req, res) => {
 
         for (let i = 0; i < leagueIds.length; i++) {
             const leagueId = leagueIds[i];
-            const league = db.get("SELECT name FROM V3_Leagues WHERE league_id = ?", [leagueId]);
+            const league = db.get("SELECT name FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
             const leagueName = league ? league.name : `ID ${leagueId}`;
 
             sendLog(``, 'info');

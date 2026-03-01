@@ -73,7 +73,7 @@ export const syncLeagueTacticalStatsService = async (
             AND (fs.fixture_id IS NULL OR fps.fixture_id IS NULL)
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, [leagueId, seasonYear, limit]);
+        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     } else if (!skipFS) {
         const sql = `
             SELECT f.fixture_id, f.api_id, 1 as needs_fs, 0 as needs_ps
@@ -84,7 +84,7 @@ export const syncLeagueTacticalStatsService = async (
             AND fs.fixture_id IS NULL
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, [leagueId, seasonYear, limit]);
+        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     } else if (!skipPS) {
         const sql = `
             SELECT f.fixture_id, f.api_id, 0 as needs_fs, 1 as needs_ps
@@ -95,7 +95,7 @@ export const syncLeagueTacticalStatsService = async (
             AND fps.fixture_id IS NULL
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, [leagueId, seasonYear, limit]);
+        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     }
 
     if (targetFixtures.length === 0) {
@@ -133,7 +133,7 @@ export const syncLeagueTacticalStatsService = async (
             JOIN V3_Teams h ON f.home_team_id = h.team_id
             JOIN V3_Teams a ON f.away_team_id = a.team_id
             WHERE f.fixture_id = ?
-        `, [fixture.fixture_id]);
+        `, cleanParams([fixture.fixture_id]));
 
         const matchup = fixtureInfo ? `${fixtureInfo.home} vs ${fixtureInfo.away}` : `Fixture ${fixture.fixture_id}`;
 
@@ -229,7 +229,7 @@ export const syncLeagueTacticalStatsService = async (
             // Backward compat
             db.run(
                 "UPDATE V3_League_Seasons SET imported_fixture_stats = 1, last_sync_fixture_stats = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
-                [leagueId, seasonYear]
+                cleanParams([leagueId, seasonYear])
             );
         } else if (fsFailed > 0) {
             ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.PARTIAL);
@@ -241,7 +241,7 @@ export const syncLeagueTacticalStatsService = async (
             ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
             db.run(
                 "UPDATE V3_League_Seasons SET imported_player_stats = 1, last_sync_player_stats = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
-                [leagueId, seasonYear]
+                cleanParams([leagueId, seasonYear])
             );
             // Trigger normalization
             log('🔄 Triggering seasonal player normalization (Per-90 metrics)...');
@@ -297,7 +297,7 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
     try {
         for (const teamContainer of res.response) {
             const teamApiId = teamContainer.team.id;
-            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", [teamApiId])?.team_id;
+            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([teamApiId]))?.team_id;
 
             if (!localTeamId) {
                 console.warn(`      Team API ID ${teamApiId} not found locally.`);
@@ -344,7 +344,7 @@ export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
     try {
         for (const teamContainer of res.response) {
             const teamApiId = teamContainer.team.id;
-            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", [teamApiId])?.team_id;
+            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([teamApiId]))?.team_id;
 
             if (!localTeamId) continue;
 
@@ -369,7 +369,7 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
             SELECT DISTINCT player_id, team_id
             FROM V3_Fixture_Player_Stats
             WHERE fixture_id IN (SELECT fixture_id FROM V3_Fixtures WHERE league_id = ? AND season_year = ?)
-        `, [leagueId, seasonYear]);
+        `, cleanParams([leagueId, seasonYear]));
 
         if (players.length === 0) return;
 
@@ -393,7 +393,7 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
                 FROM V3_Fixture_Player_Stats
                 WHERE player_id = ? AND team_id = ? 
                 AND fixture_id IN (SELECT fixture_id FROM V3_Fixtures WHERE league_id = ? AND season_year = ?)
-            `, [p.player_id, p.team_id, leagueId, seasonYear]);
+            `, cleanParams([p.player_id, p.team_id, leagueId, seasonYear]));
 
             if (!sums || !sums.total_minutes) continue;
 
@@ -425,13 +425,13 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
                     duels_won_per_90=excluded.duels_won_per_90,
                     dribbles_success_per_90=excluded.dribbles_success_per_90,
                     updated_at=CURRENT_TIMESTAMP
-            `, [
+            `, cleanParams([
                 p.player_id, p.team_id, leagueId, seasonYear,
                 sums.appearances, sums.total_minutes, sums.goals, sums.conceded, sums.assists,
                 sums.goals * factor, sums.assists * factor, sums.shots * factor, sums.shots_on * factor,
                 sums.passes * factor, sums.key_passes * factor, sums.tackles * factor, sums.interceptions * factor,
                 sums.duels_won * factor, sums.dribbles_success * factor
-            ]);
+            ]));
         }
         db.run('COMMIT');
     } catch (err) {

@@ -1,5 +1,6 @@
 import BaseRepository from './BaseRepository.js';
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 class SearchRepository extends BaseRepository {
     constructor() {
@@ -27,7 +28,7 @@ class SearchRepository extends BaseRepository {
             FROM V3_Players
             WHERE name LIKE ? OR firstname LIKE ? OR lastname LIKE ?
             LIMIT ?
-        `, [searchTerm, searchTerm, searchTerm, limit]);
+        `, cleanParams([searchTerm, searchTerm, searchTerm, limit]));
 
         // Search Teams
         const teams = this.db.all(`
@@ -40,7 +41,7 @@ class SearchRepository extends BaseRepository {
             FROM V3_Teams
             WHERE name LIKE ?
             LIMIT ?
-        `, [searchTerm, limit]);
+        `, cleanParams([searchTerm, limit]));
 
         return [...players, ...teams];
     }

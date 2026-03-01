@@ -250,7 +250,7 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) 
 
 export const syncPlayerCareerService = async (playerId, sendLog) => {
     // 1. Get Player API ID
-    const player = db.get("SELECT api_id, name FROM V3_Players WHERE player_id = ?", [playerId]);
+    const player = db.get("SELECT api_id, name FROM V3_Players WHERE player_id = ?", cleanParams([playerId]));
     if (!player) throw new Error("Player not found in local V3 database.");
 
     sendLog(`🔭 Starting Deep-Career Sync for ${player.name}...`, 'info');
@@ -326,7 +326,7 @@ export const syncPlayerCareerService = async (playerId, sendLog) => {
                     }));
 
                     // Check if league existed before upsert to log discovery
-                    const preLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [stat.league.id]);
+                    const preLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([stat.league.id]));
                     const localLeagueId = DB.upsertLeague(Mappers.league(stat), countryId, countryName);
 
                     if (!preLeague) {
@@ -342,7 +342,7 @@ export const syncPlayerCareerService = async (playerId, sendLog) => {
                         SELECT stat_id, games_appearences, goals_total, goals_assists 
                         FROM V3_Player_Stats 
                         WHERE player_id=? AND team_id=? AND league_id=? AND season_year=?
-                    `, [playerId, localTeamId, localLeagueId, year]);
+                    `, cleanParams([playerId, localTeamId, localLeagueId, year]));
 
                     const mapped = Mappers.stats(stat, playerId, localTeamId, localLeagueId, year);
 
@@ -367,7 +367,7 @@ export const syncPlayerCareerService = async (playerId, sendLog) => {
                         UPDATE V3_League_Seasons 
                         SET sync_status = 'PARTIAL' 
                         WHERE league_season_id = ? AND sync_status = 'NONE'
-                    `, [seasonId]);
+                    `, cleanParams([seasonId]));
                 }
             }
             db.run('COMMIT');

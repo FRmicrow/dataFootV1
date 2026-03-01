@@ -1,3 +1,4 @@
+import { cleanParams } from '../../utils/sqlHelpers.js';
 /**
  * BaseRepository
  * Provides common data access patterns for SQLite.
@@ -16,7 +17,7 @@ class BaseRepository {
         const whereClause = keys.length ? `WHERE ${keys.map(k => `${k} = ?`).join(' AND ')}` : '';
         const params = Object.values(criteria);
 
-        return this.db.get(`SELECT * FROM ${this.tableName} ${whereClause} LIMIT 1`, params);
+        return this.db.get(`SELECT * FROM ${this.tableName} ${whereClause} LIMIT 1`, cleanParams(params));
     }
 
     /**
@@ -31,7 +32,7 @@ class BaseRepository {
         const limit = options.limit ? `LIMIT ${options.limit}` : '';
         const offset = options.offset ? `OFFSET ${options.offset}` : '';
 
-        return this.db.all(`SELECT * FROM ${this.tableName} ${whereClause} ${orderBy} ${limit} ${offset}`, params);
+        return this.db.all(`SELECT * FROM ${this.tableName} ${whereClause} ${orderBy} ${limit} ${offset}`, cleanParams(params));
     }
 
     /**
@@ -44,7 +45,7 @@ class BaseRepository {
 
         const info = this.db.run(
             `INSERT INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`,
-            values
+            cleanParams(values)
         );
         return info;
     }
@@ -63,7 +64,7 @@ class BaseRepository {
 
         return this.db.run(
             `UPDATE ${this.tableName} SET ${setClause} WHERE ${whereClause}`,
-            [...setValues, ...whereValues]
+            cleanParams([...setValues, ...whereValues])
         );
     }
 
@@ -75,7 +76,7 @@ class BaseRepository {
         const whereClause = keys.map(k => `${k} = ?`).join(' AND ');
         const params = Object.values(criteria);
 
-        return this.db.run(`DELETE FROM ${this.tableName} WHERE ${whereClause}`, params);
+        return this.db.run(`DELETE FROM ${this.tableName} WHERE ${whereClause}`, cleanParams(params));
     }
 
     /**
@@ -86,7 +87,7 @@ class BaseRepository {
         const whereClause = keys.length ? `WHERE ${keys.map(k => `${k} = ?`).join(' AND ')}` : '';
         const params = Object.values(criteria);
 
-        const result = this.db.get(`SELECT COUNT(*) as count FROM ${this.tableName} ${whereClause}`, params);
+        const result = this.db.get(`SELECT COUNT(*) as count FROM ${this.tableName} ${whereClause}`, cleanParams(params));
         return result ? result.count : 0;
     }
 }

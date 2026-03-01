@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 import ImportStatusService from './importStatusService.js';
 import { IMPORT_STATUS, STATUS_LABELS, PILLARS } from './importStatusConstants.js';
 
@@ -22,7 +23,7 @@ export const performDiscoveryScan = async () => {
         const totalFixtures = db.get(
             `SELECT COUNT(*) as count FROM V3_Fixtures 
              WHERE league_id = ? AND season_year = ? AND status_short IN ('FT', 'AET', 'PEN')`,
-            [league_id, season_year]
+            cleanParams([league_id, season_year])
         ).count;
 
         // ──────────────────────────
@@ -32,17 +33,17 @@ export const performDiscoveryScan = async () => {
         if (currentCore.status !== IMPORT_STATUS.NO_DATA && currentCore.status !== IMPORT_STATUS.LOCKED) {
             const fixtureCount = db.get(
                 "SELECT COUNT(*) as count FROM V3_Fixtures WHERE league_id = ? AND season_year = ?",
-                [league_id, season_year]
+                cleanParams([league_id, season_year])
             ).count;
 
             const standingCount = db.get(
                 "SELECT COUNT(*) as count FROM V3_Standings WHERE league_id = ? AND season_year = ?",
-                [league_id, season_year]
+                cleanParams([league_id, season_year])
             ).count;
 
             const playerStatsCount = db.get(
                 "SELECT COUNT(*) as count FROM V3_Player_Stats WHERE league_id = ? AND season_year = ?",
-                [league_id, season_year]
+                cleanParams([league_id, season_year])
             ).count;
 
             const hasFixtures = fixtureCount > 0;
@@ -147,7 +148,7 @@ export const performDiscoveryScan = async () => {
                 FROM V3_Player_Stats ps
                 JOIN V3_Players p ON ps.player_id = p.player_id
                 WHERE ps.league_id = ? AND ps.season_year = ?
-            `, [league_id, season_year]);
+            `, cleanParams([league_id, season_year]));
 
             if (trophySync && trophySync.total > 0) {
                 const ratio = trophySync.synced / trophySync.total;
