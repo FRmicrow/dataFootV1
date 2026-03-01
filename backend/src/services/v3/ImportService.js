@@ -171,50 +171,50 @@ export const Mappers = {
     },
     fixturePlayerStats: (fixtureId, teamId, playerApiData) => {
         const p = playerApiData.player;
-        const s = playerApiData.statistics[0]; // API returns array of statistics per team context
+        const s = playerApiData.statistics?.[0] || {};
 
         return {
             fixture_id: fixtureId,
             team_id: teamId,
-            player_id: p.id, // Will be resolved to local ID in repository
+            player_id: p.id,
             is_start_xi: !playerApiData.substitute,
-            minutes_played: s.games.minutes || 0,
-            position: s.games.position,
-            rating: s.games.rating || "0.0",
+            minutes_played: s.games?.minutes || 0,
+            position: s.games?.position || null,
+            rating: s.games?.rating || "0.0",
 
-            goals_total: s.goals.total || 0,
-            goals_conceded: s.goals.conceded || 0,
-            goals_assists: s.goals.assists || 0,
-            goals_saves: s.goals.saves || 0,
+            goals_total: s.goals?.total || 0,
+            goals_conceded: s.goals?.conceded || 0,
+            goals_assists: s.goals?.assists || 0,
+            goals_saves: s.goals?.saves || 0,
 
-            shots_total: s.shots.total || 0,
-            shots_on: s.shots.on || 0,
+            shots_total: s.shots?.total || 0,
+            shots_on: s.shots?.on || 0,
 
-            passes_total: s.passes.total || 0,
-            passes_key: s.passes.key || 0,
-            passes_accuracy: parseInt(s.passes.accuracy || 0),
+            passes_total: s.passes?.total || 0,
+            passes_key: s.passes?.key || 0,
+            passes_accuracy: parseInt(s.passes?.accuracy || 0),
 
-            tackles_total: s.tackles.total || 0,
-            tackles_blocks: s.tackles.blocks || 0,
-            tackles_interceptions: s.tackles.interceptions || 0,
+            tackles_total: s.tackles?.total || 0,
+            tackles_blocks: s.tackles?.blocks || 0,
+            tackles_interceptions: s.tackles?.interceptions || 0,
 
-            duels_total: s.duels.total || 0,
-            duels_won: s.duels.won || 0,
+            duels_total: s.duels?.total || 0,
+            duels_won: s.duels?.won || 0,
 
-            dribbles_attempts: s.dribbles.attempts || 0,
-            dribbles_success: s.dribbles.success || 0,
+            dribbles_attempts: s.dribbles?.attempts || 0,
+            dribbles_success: s.dribbles?.success || 0,
 
-            fouls_drawn: s.fouls.drawn || 0,
-            fouls_committed: s.fouls.committed || 0,
+            fouls_drawn: s.fouls?.drawn || 0,
+            fouls_committed: s.fouls?.committed || 0,
 
-            cards_yellow: s.cards.yellow || 0,
-            cards_red: s.cards.red || 0,
+            cards_yellow: s.cards?.yellow || 0,
+            cards_red: s.cards?.red || 0,
 
-            penalty_won: s.penalty.won || 0,
-            penalty_commited: s.penalty.commited || 0,
-            penalty_scored: s.penalty.scored || 0,
-            penalty_missed: s.penalty.missed || 0,
-            penalty_saved: s.penalty.saved || 0
+            penalty_won: s.penalty?.won || 0,
+            penalty_commited: s.penalty?.commited || 0,
+            penalty_scored: s.penalty?.scored || 0,
+            penalty_missed: s.penalty?.missed || 0,
+            penalty_saved: s.penalty?.saved || 0
         };
     }
 };

@@ -15,7 +15,9 @@ export const cleanParams = (params) => {
     }
     return params.map(p => {
         if (p === undefined || p === null) return null;
-        if (typeof p === 'object') {
+        if (typeof p === 'boolean') return p ? 1 : 0;
+        if (Array.isArray(p)) return JSON.stringify(p);
+        if (typeof p === 'object' && !(p instanceof Buffer)) {
             try {
                 return JSON.stringify(p);
             } catch (e) {

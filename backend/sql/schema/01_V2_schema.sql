@@ -38,9 +38,9 @@ CREATE TABLE V2_competitions (
     FOREIGN KEY (trophy_type_id) REFERENCES V2_trophy_types(trophy_type_id),
     FOREIGN KEY (country_id) REFERENCES V2_countries(country_id)
 );
-CREATE INDEX idx_V2_competition_country ON V2_competitions(country_id);
-CREATE INDEX idx_V2_competition_type ON V2_competitions(trophy_type_id);
-CREATE INDEX idx_V2_competitions_api_id ON V2_competitions(api_id);
+CREATE INDEX IF NOT EXISTS idx_V2_competition_country ON V2_competitions(country_id);
+CREATE INDEX IF NOT EXISTS idx_V2_competition_type ON V2_competitions(trophy_type_id);
+CREATE INDEX IF NOT EXISTS idx_V2_competitions_api_id ON V2_competitions(api_id);
 
 -- ============================================
 -- CLUBS
@@ -62,9 +62,9 @@ CREATE TABLE V2_clubs (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (country_id) REFERENCES V2_countries(country_id)
 );
-CREATE INDEX idx_V2_club_country ON V2_clubs(country_id);
-CREATE INDEX idx_V2_club_name ON V2_clubs(club_name);
-CREATE INDEX idx_V2_clubs_api_id ON V2_clubs(api_id);
+CREATE INDEX IF NOT EXISTS idx_V2_club_country ON V2_clubs(country_id);
+CREATE INDEX IF NOT EXISTS idx_V2_club_name ON V2_clubs(club_name);
+CREATE INDEX IF NOT EXISTS idx_V2_clubs_api_id ON V2_clubs(api_id);
 
 -- ============================================
 -- PLAYERS
@@ -92,9 +92,9 @@ CREATE TABLE V2_players (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (nationality_id) REFERENCES V2_countries(country_id)
 );
-CREATE INDEX idx_V2_player_nationality ON V2_players(nationality_id);
-CREATE INDEX idx_V2_player_name ON V2_players(last_name, first_name);
-CREATE INDEX idx_V2_players_api_id ON V2_players(api_id);
+CREATE INDEX IF NOT EXISTS idx_V2_player_nationality ON V2_players(nationality_id);
+CREATE INDEX IF NOT EXISTS idx_V2_player_name ON V2_players(last_name, first_name);
+CREATE INDEX IF NOT EXISTS idx_V2_players_api_id ON V2_players(api_id);
 
 -- Player Secondary Nationalities (for dual citizenship)
 CREATE TABLE V2_player_nationalities (
@@ -125,9 +125,9 @@ CREATE TABLE V2_player_club_history (
     FOREIGN KEY (player_id) REFERENCES V2_players(player_id) ON DELETE CASCADE,
     FOREIGN KEY (club_id) REFERENCES V2_clubs(club_id)
 );
-CREATE INDEX idx_V2_player_history ON V2_player_club_history(player_id, year_start);
-CREATE INDEX idx_V2_club_history ON V2_player_club_history(club_id, year_start);
-CREATE INDEX idx_V2_season ON V2_player_club_history(season_start, season_end);
+CREATE INDEX IF NOT EXISTS idx_V2_player_history ON V2_player_club_history(player_id, year_start);
+CREATE INDEX IF NOT EXISTS idx_V2_club_history ON V2_player_club_history(club_id, year_start);
+CREATE INDEX IF NOT EXISTS idx_V2_season ON V2_player_club_history(season_start, season_end);
 
 -- ============================================
 -- PLAYER STATISTICS (Season by Season)
@@ -164,12 +164,12 @@ CREATE TABLE V2_player_statistics (
     
     UNIQUE (player_id, club_id, competition_id, season)
 );
-CREATE INDEX idx_V2_player_stats ON V2_player_statistics(player_id, year);
-CREATE INDEX idx_V2_club_stats ON V2_player_statistics(club_id, year);
-CREATE INDEX idx_V2_season_stats ON V2_player_statistics(season);
-CREATE INDEX idx_V2_player_stats_year_club ON V2_player_statistics(year, club_id, player_id);
-CREATE INDEX idx_V2_player_statistics_player_season ON V2_player_statistics(player_id, season);
-CREATE UNIQUE INDEX idx_player_stats_unique ON V2_player_statistics(player_id, club_id, competition_id, season);
+CREATE INDEX IF NOT EXISTS idx_V2_player_stats ON V2_player_statistics(player_id, year);
+CREATE INDEX IF NOT EXISTS idx_V2_club_stats ON V2_player_statistics(club_id, year);
+CREATE INDEX IF NOT EXISTS idx_V2_season_stats ON V2_player_statistics(season);
+CREATE INDEX IF NOT EXISTS idx_V2_player_stats_year_club ON V2_player_statistics(year, club_id, player_id);
+CREATE INDEX IF NOT EXISTS idx_V2_player_statistics_player_season ON V2_player_statistics(player_id, season);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_player_stats_unique ON V2_player_statistics(player_id, club_id, competition_id, season);
 
 -- ============================================
 -- CLUB TROPHIES
@@ -190,9 +190,9 @@ CREATE TABLE V2_club_trophies (
     FOREIGN KEY (competition_id) REFERENCES V2_competitions(competition_id),
     UNIQUE (club_id, competition_id, year)
 );
-CREATE INDEX idx_V2_club_trophies ON V2_club_trophies(club_id, year);
-CREATE INDEX idx_V2_competition_winners ON V2_club_trophies(competition_id, year);
-CREATE INDEX idx_V2_club_trophy_year ON V2_club_trophies(year, club_id);
+CREATE INDEX IF NOT EXISTS idx_V2_club_trophies ON V2_club_trophies(club_id, year);
+CREATE INDEX IF NOT EXISTS idx_V2_competition_winners ON V2_club_trophies(competition_id, year);
+CREATE INDEX IF NOT EXISTS idx_V2_club_trophy_year ON V2_club_trophies(year, club_id);
 
 -- ============================================
 -- V2_PLAYER TROPHIES
@@ -215,10 +215,10 @@ CREATE TABLE V2_player_trophies (
     FOREIGN KEY (club_id) REFERENCES V2_clubs(club_id),
     FOREIGN KEY (competition_id) REFERENCES V2_competitions(competition_id)
 );
-CREATE INDEX idx_V2_player_trophies ON V2_player_trophies(player_id, year);
-CREATE INDEX idx_V2_club_player_trophies ON V2_player_trophies(club_id, player_id, year);
-CREATE INDEX idx_V2_competition_players ON V2_player_trophies(competition_id, year);
-CREATE INDEX idx_V2_player_trophy_year_club ON V2_player_trophies(year, club_id, player_id);
+CREATE INDEX IF NOT EXISTS idx_V2_player_trophies ON V2_player_trophies(player_id, year);
+CREATE INDEX IF NOT EXISTS idx_V2_club_player_trophies ON V2_player_trophies(club_id, player_id, year);
+CREATE INDEX IF NOT EXISTS idx_V2_competition_players ON V2_player_trophies(competition_id, year);
+CREATE INDEX IF NOT EXISTS idx_V2_player_trophy_year_club ON V2_player_trophies(year, club_id, player_id);
 
 -- ============================================
 -- INDIVIDUAL AWARDS (Ballon d'Or, Golden Boot, etc.)
@@ -248,7 +248,7 @@ CREATE TABLE V2_player_individual_awards (
     FOREIGN KEY (award_id) REFERENCES V2_individual_awards(award_id),
     UNIQUE (player_id, award_id, year, rank)
 );
-CREATE INDEX idx_V2_player_awards ON V2_player_individual_awards(player_id, year);
+CREATE INDEX IF NOT EXISTS idx_V2_player_awards ON V2_player_individual_awards(player_id, year);
 
 -- ============================================
 -- VIEWS FOR COMMON QUERIES

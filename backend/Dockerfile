@@ -1,22 +1,18 @@
 # --- Stage 1: Build ---
-FROM node:20-alpine AS build
+FROM node:20-bookworm-slim AS build
 
-# Install native build dependencies for better-sqlite3 and canvas (Alpine versions)
-RUN apk add --no-cache \
+# Install native build dependencies for better-sqlite3 and canvas (Debian versions)
+RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
-    sqlite-dev \
-    build-base \
-    cairo-dev \
-    pango-dev \
-    jpeg-dev \
-    giflib-dev \
-    librsvg-dev \
-    pixman-dev \
-    libpng-dev \
-    freetype-dev \
-    harfbuzz-dev
+    pkg-config \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -28,17 +24,18 @@ RUN npm ci
 COPY . .
 
 # --- Stage 2: Runtime ---
-FROM node:20-alpine
-RUN apk add --no-cache \
-    cairo \
-    pango \
-    libjpeg-turbo \
-    giflib \
-    librsvg \
-    libpng \
-    pixman \
-    freetype \
-    harfbuzz
+FROM node:20-bookworm-slim
+
+# Install runtime libraries
+RUN apt-get update && apt-get install -y \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libjpeg62-turbo \
+    libgif7 \
+    librsvg2-2 \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Use minimal production environment
 ENV NODE_ENV=production
