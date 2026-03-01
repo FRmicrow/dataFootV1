@@ -416,7 +416,7 @@ export const ImportRepository = {
     },
     upsertFixturePlayerStats: (s) => {
         // Resolve player_id from API ID to local ID
-        const localPlayer = db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", [s.player_id]);
+        const localPlayer = db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", cleanParams([s.player_id]));
         if (!localPlayer) return; // Should not happen if players are synced first
 
         const existing = db.get(`SELECT fixture_player_stats_id FROM V3_Fixture_Player_Stats WHERE fixture_id=? AND player_id=?`,

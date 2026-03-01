@@ -1,5 +1,6 @@
 import BaseRepository from './BaseRepository.js';
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 class LeagueSeasonRepository extends BaseRepository {
     constructor() {
@@ -18,7 +19,7 @@ class LeagueSeasonRepository extends BaseRepository {
             JOIN V3_Leagues l ON ls.league_id = l.league_id
             WHERE ls.league_id = ?
             ORDER BY ls.season_year DESC
-        `, [leagueId]);
+        `, cleanParams([leagueId]));
     }
 
     /**
@@ -30,7 +31,7 @@ class LeagueSeasonRepository extends BaseRepository {
             FROM V3_League_Seasons ls
             JOIN V3_Leagues l ON ls.league_id = l.league_id
             WHERE ls.league_id = ? AND ls.season_year = ?
-        `, [leagueId, seasonYear]);
+        `, cleanParams([leagueId, seasonYear]));
     }
 
     /**

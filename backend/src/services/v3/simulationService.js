@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 /**
  * Simulation & Backtesting Service (V8 - Accuracy Only, No Odds)
@@ -19,7 +20,7 @@ export class SimulationService {
                 FROM V3_Fixtures 
                 WHERE league_id = ? AND season_year = ? 
                   AND status_short IN ('FT', 'AET', 'PEN')
-            `, [leagueId, seasonYear]);
+            `, cleanParams([leagueId, seasonYear]));
 
             const totalFixtures = fixtureCount?.count || 0;
 
@@ -38,7 +39,7 @@ export class SimulationService {
                 JOIN V3_Fixtures f ON fs.fixture_id = f.fixture_id
                 WHERE f.league_id = ? AND f.season_year = ?
                   AND f.status_short IN ('FT', 'AET', 'PEN')
-            `, [leagueId, seasonYear]);
+            `, cleanParams([leagueId, seasonYear]));
 
             const totalFeatures = featureCount?.count || 0;
             const featureCoverage = totalFixtures > 0 ? (totalFeatures / totalFixtures) * 100 : 0;
@@ -49,7 +50,7 @@ export class SimulationService {
                 FROM V3_Model_Registry
                 WHERE (league_id = ? OR league_id IS NULL) AND is_active = 1
                 ORDER BY league_id DESC, id DESC LIMIT 1
-            `, [leagueId]);
+            `, cleanParams([leagueId]));
 
             // 4. Readiness Decision
             // We need at least 30 finished fixtures and some feature coverage
@@ -103,7 +104,7 @@ export class SimulationService {
                 LEFT JOIN V3_Teams at ON f.away_team_id = at.api_id
                 WHERE r.simulation_id = ?
                 ORDER BY f.date ASC, f.fixture_id ASC
-            `, [simId]);
+            `, cleanParams([simId]));
 
             // Format for frontend consumption
             return results.map(r => ({
