@@ -11,7 +11,7 @@ import time
 from typing import List, Optional
 from datetime import datetime
 
-app = FastAPI(title="StatFoot V3 ML Service", version="1.2.0-rf-1x2")
+app = FastAPI(title="StatFoot V3 ML Service", version="1.3.0-catboost-1x2")
 
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -117,7 +117,8 @@ def predict(request: PredictionRequest):
         vector = json.loads(row[0])
         X = pd.DataFrame([vector])
         
-        probs = model.predict_proba(X)[0] # [Home, Draw, Away]
+        probs = model.predict_proba(X)[0] 
+        # Label mapping (standardized in training): 0=Draw, 1=Home, 2=Away
         
         duration = time.time() - start_time
         print(f"⏱️ Prediction for fixture {request.fixture_id} took {duration:.4f}s")
@@ -126,10 +127,11 @@ def predict(request: PredictionRequest):
             "success": True,
             "fixture_id": request.fixture_id,
             "probabilities": {
-                "home": round(float(probs[0]), 4),
-                "draw": round(float(probs[1]), 4),
+                "home": round(float(probs[1]), 4),
+                "draw": round(float(probs[0]), 4),
                 "away": round(float(probs[2]), 4)
             },
+
             "top_features": importance[:5],
             "model_version": app.version,
             "latency": round(duration, 4)
@@ -169,11 +171,12 @@ def batch_predict(request: BatchPredictionRequest):
             results.append({
                 "fixture_id": fid,
                 "probabilities": {
-                    "home": round(float(probs[0]), 4),
-                    "draw": round(float(probs[1]), 4),
+                    "home": round(float(probs[1]), 4),
+                    "draw": round(float(probs[0]), 4),
                     "away": round(float(probs[2]), 4)
                 }
             })
+
             
         return {
             "success": True,

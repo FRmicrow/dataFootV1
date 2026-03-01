@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../../services/api';
 import { Card, Table, Badge, Stack, Grid } from '../../../design-system';
+import { getShortPosition } from '../../../utils/positionUtils';
 
 const SquadExplorer = ({ leagueId, season, teams }) => {
     const [teamId, setTeamId] = useState('');
@@ -65,7 +66,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                 </Link>
             )
         },
-        { title: 'Pos', key: 'pos', dataIndex: 'position', align: 'center', width: '60px', render: (v) => <span style={{ opacity: 0.6 }}>{v?.substring(0, 1)}</span> },
+        { title: 'Pos', key: 'pos', dataIndex: 'position', align: 'center', width: '60px', render: (v) => <span style={{ opacity: 0.6 }}>{getShortPosition(v)}</span> },
         { title: 'App', key: 'apps', dataIndex: 'appearances', align: 'center', width: '50px' },
         { title: '90s', key: 'mins', dataIndex: 'minutes', align: 'center', width: '50px', render: (m) => Math.round(m / 90) },
         { title: 'G', key: 'goals', dataIndex: 'goals', align: 'center', width: '40px', render: (v) => <span style={{ color: v > 0 ? 'var(--color-success-500)' : 'inherit', fontWeight: v > 0 ? 'bold' : 'normal' }}>{v}</span> },

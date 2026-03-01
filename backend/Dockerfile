@@ -1,33 +1,64 @@
-# Use Node.js 20 slim image
-FROM node:20-bookworm-slim
+# --- Stage 1: Build ---
+FROM node:20-alpine AS build
 
-# Install dependencies for better-sqlite3 (native build)
-RUN apt-get update && apt-get install -y \
+# Install native build dependencies for better-sqlite3 and canvas (Alpine versions)
+RUN apk add --no-cache \
     python3 \
     make \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    sqlite-dev \
+    build-base \
+    cairo-dev \
+    pango-dev \
+    jpeg-dev \
+    giflib-dev \
+    librsvg-dev \
+    pixman-dev \
+    libpng-dev \
+    freetype-dev \
+    harfbuzz-dev
 
 WORKDIR /app
 
-# Copy package files
+# Install dependencies separately to leverage Docker cache
 COPY package*.json ./
-
-# Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Create data directory for SQLite volume
-RUN mkdir -p /app/data
+# --- Stage 2: Runtime ---
+FROM node:20-alpine
+RUN apk add --no-cache \
+    cairo \
+    pango \
+    libjpeg-turbo \
+    giflib \
+    librsvg \
+    libpng \
+    pixman \
+    freetype \
+    harfbuzz
 
-# Environment defaults
-ENV PORT=3001
+# Use minimal production environment
 ENV NODE_ENV=production
+ENV PORT=3001
 ENV DATABASE_PATH=/app/data/database.sqlite
+
+WORKDIR /app
+
+# Copy artifacts from build stage
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/src ./src
+
+# Create data directory with correct permissions for non-root user
+RUN mkdir -p /app/data && chown -R node:node /app/data
+
+# Use non-root user for security
+USER node
 
 EXPOSE 3001
 
-# Run the backend
-CMD ["npm", "start"]
+# Start the application
+CMD ["node", "--max-old-space-size=4096", "src/server.js"]

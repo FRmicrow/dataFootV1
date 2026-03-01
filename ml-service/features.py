@@ -52,13 +52,29 @@ def compute_advanced_features(conn):
     team_games['points'] = team_games.apply(lambda r: 3 if r.gf > r.ga else (1 if r.gf == r.ga else 0), axis=1)
 
     # Momentum Features
-    for w in [5, 10]:
+    for w in [3, 5, 10, 20]:
+        # Goal Difference Momentum
         team_games[f'momentum_gd_{w}'] = team_games.groupby('team_id')['gd'].transform(
             lambda x: x.shift().rolling(w, min_periods=1).mean()
         )
+        # Points Momentum (form)
         team_games[f'momentum_pts_{w}'] = team_games.groupby('team_id')['points'].transform(
             lambda x: x.shift().rolling(w, min_periods=1).mean()
         )
+        # Win Rate
+        team_games[f'win_rate_{w}'] = team_games.groupby('team_id')['points'].transform(
+            lambda x: x.shift().rolling(w, min_periods=1).apply(lambda s: (s == 3).sum() / len(s) if len(s) > 0 else 0)
+        )
+        # Clean Sheet Rate
+        team_games[f'cs_rate_{w}'] = team_games.groupby('team_id')['ga'].transform(
+            lambda x: x.shift().rolling(w, min_periods=1).apply(lambda s: (s == 0).sum() / len(s) if len(s) > 0 else 0)
+        )
+
+    # Fatigue Feature: Rest Days
+    # Difference in days between current game and previous game
+    team_games['rest_days'] = team_games.groupby('team_id')['date'].diff().dt.days.fillna(14)
+    # Clip to 14 days max to avoid outliers (e.g. season break)
+    team_games['rest_days'] = team_games['rest_days'].clip(0, 14)
 
     # Defensive Resilience (Proxy: average goals against in last 10)
     team_games['def_resilience'] = team_games.groupby('team_id')['ga'].transform(
@@ -74,9 +90,10 @@ def compute_advanced_features(conn):
         lambda x: x.shift().rolling(10, min_periods=1).mean()
     )
     # Forward fill to ensure every row has the latest home/away avg
-    team_games['avg_pts_home'] = team_games.groupby('team_id')['avg_pts_home'].ffill()
-    team_games['avg_pts_away'] = team_games.groupby('team_id')['avg_pts_away'].ffill()
-    team_games['venue_diff'] = team_games['avg_pts_home'] - team_games['avg_pts_away']
+    team_games['avg_pts_home'] = team_games.groupby('team_id').apply(lambda x: x['avg_pts_home'].ffill()).reset_index(level=0, drop=True)
+    team_games['avg_pts_away'] = team_games.groupby('team_id').apply(lambda x: x['avg_pts_away'].ffill()).reset_index(level=0, drop=True)
+    team_games['venue_diff'] = team_games['avg_pts_home'].fillna(1.0) - team_games['avg_pts_away'].fillna(1.0)
+
 
     # Merge back to fixture level
     f_features = team_games[team_games['is_home'] == 1].merge(
@@ -237,12 +254,39 @@ def run_feature_pipeline():
         narrative = narrative_map.get(fid, {"is_derby": 0, "travel_km": 0, "is_high_stakes": 0})
         
         vector = {
+            "mom_gd_h3": row['momentum_gd_3_h'],
             "mom_gd_h5": row['momentum_gd_5_h'],
             "mom_gd_h10": row['momentum_gd_10_h'],
+            "mom_gd_h20": row['momentum_gd_20_h'],
+            
+            "mom_pts_h3": row['momentum_pts_3_h'],
+            "mom_pts_h5": row['momentum_pts_5_h'],
             "mom_pts_h10": row['momentum_pts_10_h'],
+            "mom_pts_h20": row['momentum_pts_20_h'],
+
+            "win_rate_h5": row['win_rate_5_h'],
+            "win_rate_h10": row['win_rate_10_h'],
+            "cs_rate_h5": row['cs_rate_5_h'],
+            "cs_rate_h10": row['cs_rate_10_h'],
+            
+            "mom_gd_a3": row['momentum_gd_3_a'],
             "mom_gd_a5": row['momentum_gd_5_a'],
             "mom_gd_a10": row['momentum_gd_10_a'],
+            "mom_gd_a20": row['momentum_gd_20_a'],
+
+            "mom_pts_a3": row['momentum_pts_3_a'],
+            "mom_pts_a5": row['momentum_pts_5_a'],
             "mom_pts_a10": row['momentum_pts_10_a'],
+            "mom_pts_a20": row['momentum_pts_20_a'],
+
+            "win_rate_a5": row['win_rate_5_a'],
+            "win_rate_a10": row['win_rate_10_a'],
+            "cs_rate_a5": row['cs_rate_5_a'],
+            "cs_rate_a10": row['cs_rate_10_a'],
+
+            "rest_h": row['rest_days_h'],
+            "rest_a": row['rest_days_a'],
+
             "venue_diff_h": row['venue_diff_h'],
             "venue_diff_a": row['venue_diff_a'],
             "lqi_h": lqi_h,
@@ -253,6 +297,7 @@ def run_feature_pipeline():
             "travel_km": narrative['travel_km'],
             "high_stakes": narrative['is_high_stakes']
         }
+
         
         # Clean numeric values
         vector = {k: float(0 if pd.isna(v) or np.isinf(v) else v) for k, v in vector.items()}

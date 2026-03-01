@@ -13,9 +13,11 @@ Ce workflow coordonne la mise en œuvre d’une fonctionnalité du backlog de la
 4. Développez l’API en suivant les compétences `backend/rest-endpoint-design`, `backend/input-validation`, `backend/error-handling` et `backend/authentication-authorization` au besoin.
 5. Implémentez l’interface utilisateur en appliquant `frontend/component-architecture`, `frontend/state-management`, `frontend/form-validation` et `frontend/accessibility-and-ux`.
 6. Intégrez l’API côté front à l’aide de `fullstack/api-integration` et vérifiez la cohérence avec `fullstack/cross-layer-coordination`.
-7. Écrivez et exécutez les tests en suivant `testing/unit-testing-node`, `testing/frontend-testing-react`, `testing/integration-testing` et `testing/e2e-testing-playwright`.
-8. Mettez à jour la documentation avec `documentation/api-documentation` et `documentation/readme-guidelines`.
-9. Soumettez votre travail pour revue en vérifiant la liste de contrôle de `review-checklist.md`.
+7. Rebuild l'application en appliquant `docker/SKILL.md` et s'assurer que l'application compile correctement.
+8. Realisez les test en appliquant `run-tests` et s'assurer de n'avoir aucune regression sur l'intégralité du code.
+9. Écrivez et exécutez les tests en suivant `testing/unit-testing-node`, `testing/frontend-testing-react`, `testing/integration-testing` et `testing/e2e-testing-playwright`.
+10. Mettez à jour la documentation avec `documentation/api-documentation` et `documentation/readme-guidelines`.
+11. Soumettez votre travail pour revue en vérifiant la liste de contrôle de `review-checklist.md`.
 
 ## Notes
 Ce workflow s’étend sur plusieurs rôles et compétences. Adaptez ou sautez certaines étapes selon la nature de la fonctionnalité.

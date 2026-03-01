@@ -4,5 +4,10 @@ joblib
 pandas
 numpy
 scikit-learn
+catboost
+optuna
+matplotlib
+seaborn
 uvicorn
 requests
+

@@ -12,7 +12,7 @@
 }
 
 .ds-fixture-row.is-active {
-    background: rgba(99, 102, 241, 0.08);
+    background: var(--color-primary-bg);
     border-left: 3px solid var(--color-primary-500);
 }
 

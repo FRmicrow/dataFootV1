@@ -116,6 +116,8 @@ const ClubProfilePageV3 = () => {
                 image={club.logo_url}
                 coverImage={club.venue_image}
                 accentColor={club.accent_color}
+                secondaryColor={club.secondary_color}
+                tertiaryColor={club.tertiary_color}
                 subtitles={[club.country, club.venue_name, club.venue_city]}
                 badges={[
                     { label: 'Verified Hub', variant: 'success' },
@@ -161,7 +163,7 @@ const ClubProfilePageV3 = () => {
                 )}
                 {activeTab === 'squad' && <SquadTab roster={data.roster} year={selectedYear} />}
                 {activeTab === 'lineup' && <LineupTab clubId={id} year={selectedYear} competitionId={selectedCompId} roster={data.roster} />}
-                {activeTab === 'matches' && <MatchesTab clubId={id} year={selectedYear} competitionId={selectedCompId} />}
+                {activeTab === 'matches' && <MatchesTab clubId={id} year={selectedYear} competitionId={selectedCompId} clubName={club.name} />}
                 {activeTab === 'stats' && <StatsTab clubId={id} year={selectedYear} competitionId={selectedCompId} />}
             </main>
         </div>

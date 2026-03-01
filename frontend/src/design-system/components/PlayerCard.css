@@ -4,7 +4,8 @@
 
 .ds-player-card:hover {
     transform: translateY(-4px);
-    border-color: var(--color-primary-500);
+    border-color: var(--color-primary-400);
+    box-shadow: var(--shadow-xl);
 }
 
 .ds-player-media {

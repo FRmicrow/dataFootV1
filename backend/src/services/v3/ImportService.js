@@ -1,6 +1,7 @@
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import { CompetitionRanker } from '../../utils/v3/CompetitionRanker.js';
+import ColorService from './ColorService.js';
 
 export const Mappers = {
     country: (api) => ({
@@ -286,15 +287,30 @@ export const ImportRepository = {
         }
     },
     upsertTeam: (data, venueId) => {
-        let team = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([data.api_id]));
+        let team = db.get("SELECT team_id, logo_url, accent_color FROM V3_Teams WHERE api_id = ?", cleanParams([data.api_id]));
+
         if (team) {
+            // Update if logo changed or colors missing
+            const logoChanged = team.logo_url !== data.logo_url;
+            const needsColors = !team.accent_color;
+
             db.run(`UPDATE V3_Teams SET name=?, code=?, logo_url=?, venue_id=?, is_national_team=? WHERE team_id=?`,
                 cleanParams([data.name, data.code, data.logo_url, venueId, data.is_national_team, team.team_id]));
+
+            if (logoChanged || needsColors) {
+                // Fire and forget color extraction to not block import
+                ColorService.processTeamColors(team.team_id, data.logo_url).catch(console.error);
+            }
             return team.team_id;
         } else {
             const info = db.run(`INSERT INTO V3_Teams (api_id, name, code, country, founded, national, is_national_team, logo_url, venue_id) VALUES (?,?,?,?,?,?,?,?,?)`,
                 cleanParams([data.api_id, data.name, data.code, data.country, data.founded, data.national, data.is_national_team, data.logo_url, venueId]));
-            return info.lastInsertRowid;
+
+            const newTeamId = info.lastInsertRowid;
+            // Extract colors for new team
+            ColorService.processTeamColors(newTeamId, data.logo_url).catch(console.error);
+
+            return newTeamId;
         }
     },
     upsertPlayer: (data) => {

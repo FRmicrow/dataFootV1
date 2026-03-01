@@ -23,8 +23,13 @@ class TemporalFeatureFactory:
         self.db_path = db_path
         # Standardized Sequence Order for XGBoost / Random Forest
         self.feature_columns = [
-            "mom_gd_h5", "mom_pts_h5", "mom_gd_h10", "mom_pts_h10",
-            "mom_gd_a5", "mom_pts_a5", "mom_gd_a10", "mom_pts_a10",
+            "mom_gd_h3", "mom_gd_h5", "mom_gd_h10", "mom_gd_h20",
+            "mom_pts_h3", "mom_pts_h5", "mom_pts_h10", "mom_pts_h20",
+            "win_rate_h5", "win_rate_h10", "cs_rate_h5", "cs_rate_h10",
+            "mom_gd_a3", "mom_gd_a5", "mom_gd_a10", "mom_gd_a20",
+            "mom_pts_a3", "mom_pts_a5", "mom_pts_a10", "mom_pts_a20",
+            "win_rate_a5", "win_rate_a10", "cs_rate_a5", "cs_rate_a10",
+            "rest_h", "rest_a",
             "h2h_h_wins", "h2h_draws", "h2h_a_wins",
             "lqi_h", "lqi_a",
             "elo_h", "elo_a",
@@ -75,20 +80,46 @@ class TemporalFeatureFactory:
             # 2. Build the vector
             vector = {}
             
-            # A. Rolling Momentum (Last 5 and 10)
+            # A. Rolling Momentum (3, 5, 10, 20)
             home_mom = self._get_team_momentum(conn, h_id, morning_of)
             away_mom = self._get_team_momentum(conn, a_id, morning_of)
             
             vector.update({
+                "mom_gd_h3": home_mom['gd_3'],
                 "mom_gd_h5": home_mom['gd_5'],
-                "mom_pts_h5": home_mom['pts_5'],
                 "mom_gd_h10": home_mom['gd_10'],
+                "mom_gd_h20": home_mom['gd_20'],
+                
+                "mom_pts_h3": home_mom['pts_3'],
+                "mom_pts_h5": home_mom['pts_5'],
                 "mom_pts_h10": home_mom['pts_10'],
+                "mom_pts_h20": home_mom['pts_20'],
+
+                "win_rate_h5": home_mom['win_5'],
+                "win_rate_h10": home_mom['win_10'],
+                "cs_rate_h5": home_mom['cs_5'],
+                "cs_rate_h10": home_mom['cs_10'],
+                
+                "mom_gd_a3": away_mom['gd_3'],
                 "mom_gd_a5": away_mom['gd_5'],
-                "mom_pts_a5": away_mom['pts_5'],
                 "mom_gd_a10": away_mom['gd_10'],
+                "mom_gd_a20": away_mom['gd_20'],
+
+                "mom_pts_a3": away_mom['pts_3'],
+                "mom_pts_a5": away_mom['pts_5'],
                 "mom_pts_a10": away_mom['pts_10'],
+                "mom_pts_a20": away_mom['pts_20'],
+
+                "win_rate_a5": away_mom['win_5'],
+                "win_rate_a10": away_mom['win_10'],
+                "cs_rate_a5": away_mom['cs_5'],
+                "cs_rate_a10": away_mom['cs_10'],
             })
+
+            # Fatigue
+            vector["rest_h"] = self._get_rest_days(conn, h_id, morning_of)
+            vector["rest_a"] = self._get_rest_days(conn, a_id, morning_of)
+
             
             # B. Venue-Specific Resilience and Differentials
             vector["def_res_h"] = home_mom['ga_10']
@@ -142,7 +173,7 @@ class TemporalFeatureFactory:
                 conn.close()
 
     def _get_team_momentum(self, conn, team_id: int, match_date: str) -> Dict[str, float]:
-        """Calculates GD and PTS for last 5 and 10 matches strictly BEFORE match_date."""
+        """Calculates GD, PTS, Win Rate, and CS Rate for 3, 5, 10, 20 matches strictly BEFORE match_date."""
         query = """
             SELECT goals_home, goals_away, home_team_id, away_team_id
             FROM V3_Fixtures
@@ -150,12 +181,21 @@ class TemporalFeatureFactory:
               AND date < ?
               AND status_short IN ('FT', 'AET', 'PEN')
             ORDER BY date DESC
-            LIMIT 10
+            LIMIT 20
         """
         df = pd.read_sql_query(query, conn, params=(team_id, team_id, match_date))
         
+        results = {}
+        # Pre-fill with zeros
+        for w in [3, 5, 10, 20]:
+            results[f'gd_{w}'] = 0.0
+            results[f'pts_{w}'] = 0.0
+            results[f'win_{w}'] = 0.0
+            results[f'cs_{w}'] = 0.0
+        results['ga_10'] = 0.0
+
         if df.empty:
-            return {'gd_5': 0.0, 'pts_5': 0.0, 'gd_10': 0.0, 'pts_10': 0.0, 'ga_10': 0.0}
+            return results
             
         def process_row(row):
             is_home = row['home_team_id'] == team_id
@@ -163,20 +203,38 @@ class TemporalFeatureFactory:
             ga = row['goals_away'] if is_home else row['goals_home']
             gd = gf - ga
             pts = 3 if gd > 0 else (1 if gd == 0 else 0)
-            return pd.Series({'gd': gd, 'pts': pts, 'ga': ga})
+            is_win = 1 if pts == 3 else 0
+            is_cs = 1 if ga == 0 else 0
+            return pd.Series({'gd': gd, 'pts': pts, 'ga': ga, 'win': is_win, 'cs': is_cs})
             
         stats = df.apply(process_row, axis=1)
         
-        last_5 = stats.head(5)
-        last_10 = stats.head(10)
+        for w in [3, 5, 10, 20]:
+            slice_df = stats.head(w)
+            if len(slice_df) > 0:
+                results[f'gd_{w}'] = float(slice_df['gd'].mean())
+                results[f'pts_{w}'] = float(slice_df['pts'].mean())
+                results[f'win_{w}'] = float(slice_df['win'].mean())
+                results[f'cs_{w}'] = float(slice_df['cs'].mean())
         
-        return {
-            'gd_5': last_5['gd'].mean() if len(last_5) > 0 else 0.0,
-            'pts_5': last_5['pts'].mean() if len(last_5) > 0 else 0.0,
-            'gd_10': last_10['gd'].mean() if len(last_10) > 0 else 0.0,
-            'pts_10': last_10['pts'].mean() if len(last_10) > 0 else 0.0,
-            'ga_10': last_10['ga'].mean() if len(last_10) > 0 else 0.0
-        }
+        results['ga_10'] = float(stats.head(10)['ga'].mean()) if len(stats) >= 1 else 0.0
+        
+        return results
+
+    def _get_rest_days(self, conn, team_id: int, match_date: str) -> float:
+        """Calculates days since last match."""
+        query = "SELECT date FROM V3_Fixtures WHERE (home_team_id = ? OR away_team_id = ?) AND date < ? AND status_short IN ('FT', 'AET', 'PEN') ORDER BY date DESC LIMIT 1"
+        cur = conn.cursor()
+        cur.execute(query, (team_id, team_id, match_date))
+        row = cur.fetchone()
+        if not row:
+            return 14.0 # Default for first game of season
+        
+        last_date = pd.to_datetime(row[0])
+        curr_date = pd.to_datetime(match_date)
+        diff = (curr_date - last_date).days
+        return float(min(max(diff, 0), 14))
+
 
     def _get_venue_stats(self, conn, team_id: int, match_date: str) -> Dict[str, float]:
         """Calculates avg points at home vs away for a team before match_date."""

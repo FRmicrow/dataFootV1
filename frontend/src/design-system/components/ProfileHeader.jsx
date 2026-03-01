@@ -24,6 +24,8 @@ const ProfileHeader = ({
     image,
     coverImage,
     accentColor,
+    secondaryColor,
+    tertiaryColor,
     leagueId,
     badges = [],
     actions,
@@ -39,7 +41,9 @@ const ProfileHeader = ({
             className="ds-profile-header"
             style={{
                 '--header-accent': finalAccentColor,
-                '--header-accent-alpha': `${finalAccentColor}33`
+                '--header-accent-alpha': `${finalAccentColor}33`,
+                '--header-secondary': secondaryColor || finalAccentColor,
+                '--header-tertiary': tertiaryColor || secondaryColor || finalAccentColor
             }}
         >
             <div className="ds-profile-header-content">

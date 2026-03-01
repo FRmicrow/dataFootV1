@@ -3,7 +3,7 @@ import api from '../../../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { Card, Table, Badge, Stack, Button, Grid } from '../../../../design-system';
 
-const MatchesTab = ({ clubId, year, competitionId }) => {
+const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
     const navigate = useNavigate();
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ const MatchesTab = ({ clubId, year, competitionId }) => {
 
         return {
             finished: sorted.filter(m => finishedStatuses.includes(m.status)),
-            scheduled: sorted.filter(m => !finishedStatuses.includes(m.status)).reverse().slice(0, 5),
+            scheduled: sorted.filter(m => !finishedStatuses.includes(m.status)).reverse(),
             competitionList: comps
         };
     }, [matches, clubId, winsOnly, defeatOnly, selectedCompName]);
@@ -93,7 +93,7 @@ const MatchesTab = ({ clubId, year, competitionId }) => {
                             </Stack>
                             <Stack direction="row" align="center" justify="space-between">
                                 <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1, justifyContent: 'flex-end' }}>
-                                    <span style={{ fontWeight: isHome ? 'bold' : 'normal', color: isHome ? 'white' : 'var(--color-text-muted)' }}>{isHome ? 'This Club' : (m.home_name || m.home?.name)}</span>
+                                    <span style={{ fontWeight: isHome ? 'bold' : 'normal', color: isHome ? 'white' : 'var(--color-text-muted)' }}>{isHome ? clubName : (m.home_name || m.home?.name)}</span>
                                     <img src={m.home_logo || m.home?.logo} alt="" style={{ width: '24px' }} />
                                 </Stack>
 
@@ -111,7 +111,7 @@ const MatchesTab = ({ clubId, year, competitionId }) => {
 
                                 <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1 }}>
                                     <img src={m.away_logo || m.away?.logo} alt="" style={{ width: '24px' }} />
-                                    <span style={{ fontWeight: !isHome ? 'bold' : 'normal', color: !isHome ? 'white' : 'var(--color-text-muted)' }}>{!isHome ? 'This Club' : (m.away_name || m.away?.name)}</span>
+                                    <span style={{ fontWeight: !isHome ? 'bold' : 'normal', color: !isHome ? 'white' : 'var(--color-text-muted)' }}>{!isHome ? clubName : (m.away_name || m.away?.name)}</span>
                                 </Stack>
                             </Stack>
                         </Stack>
