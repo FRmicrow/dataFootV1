@@ -1,6 +1,9 @@
 import db from '../../config/database.js';
 import axios from 'axios';
 import * as ImportControl from './importControlService.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
+import ImportStatusService from './importStatusService.js';
+import { IMPORT_STATUS } from './importStatusConstants.js';
 
 const API_KEY = process.env.API_FOOTBALL_KEY;
 const API_BASE_URL = 'https://v3.football.api-sports.io';
@@ -91,9 +94,7 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
             await delay(700);
         }
         if (success > 0) {
-            db.run(
-                cleanParams([leagueId, seasonYear])
-            );
+            ImportStatusService.setStatus(leagueId, seasonYear, 'events', failed === 0 ? IMPORT_STATUS.COMPLETE : IMPORT_STATUS.PARTIAL);
         }
 
         return { total: targetFixtures.length, success, failed };

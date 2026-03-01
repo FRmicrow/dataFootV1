@@ -30,12 +30,13 @@ const ImportMatrixPage = () => {
     const [isAuditing, setIsAuditing] = useState(false);
     const [selectedLeagues, setSelectedLeagues] = useState([]);
 
-    // US-203: Discovery State
+    // US-203 & US-207: Discovery State
     const [countries, setCountries] = useState([]);
     const [selectedCountry, setSelectedCountry] = useState('');
     const [availableLeagues, setAvailableLeagues] = useState([]);
     const [selectedDiscoveryLeague, setSelectedDiscoveryLeague] = useState('');
     const [isDiscovering, setIsDiscovering] = useState(false);
+    const [discoveryBatch, setDiscoveryBatch] = useState([]);
 
     const { startImport, isImporting } = useImport();
 
@@ -47,7 +48,7 @@ const ImportMatrixPage = () => {
     const fetchCountries = async () => {
         try {
             const res = await api.getDiscoveryCountries();
-            const data = res.data || res; // Handle both direct array and {data: []} just in case
+            const data = res.data || res;
             setCountries(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Failed to fetch countries:', err);
@@ -103,20 +104,61 @@ const ImportMatrixPage = () => {
         const league = availableLeagues.find(l => l.league.id === parseInt(selectedDiscoveryLeague));
         if (!league) return;
 
-        const currentYear = new Date().getFullYear();
-        if (!window.confirm(`Import Core data for ${league.league.name} (${currentYear})?`)) return;
+        const currentSeason = league.seasons.find(s => s.current)?.year || new Date().getFullYear();
+        if (!window.confirm(`Import Core data for ${league.league.name} (${currentSeason})?`)) return;
 
         setIsDiscovering(true);
         try {
             await startImport('/import/discovery/import', 'POST', {
                 leagueId: league.league.id,
-                seasonYear: currentYear
+                seasonYear: currentSeason
             });
-            // After import starts, clear selection
             setSelectedDiscoveryLeague('');
-            setTimeout(fetchMatrix, 2000); // Refresh matrix after a bit
+            setTimeout(fetchMatrix, 2000);
         } catch (err) {
             alert('Discovery import failed: ' + err.message);
+        } finally {
+            setIsDiscovering(false);
+        }
+    };
+
+    const addToDiscoveryBatch = () => {
+        if (!selectedDiscoveryLeague) return;
+        const league = availableLeagues.find(l => l.league.id === parseInt(selectedDiscoveryLeague));
+        if (!league) return;
+
+        const currentSeason = league.seasons.find(s => s.current)?.year || new Date().getFullYear();
+        if (discoveryBatch.some(item => item.leagueId === league.league.id)) return;
+
+        setDiscoveryBatch([...discoveryBatch, {
+            leagueId: league.league.id,
+            name: league.league.name,
+            seasonYear: currentSeason,
+            flag: league.country.flag
+        }]);
+        setSelectedDiscoveryLeague('');
+    };
+
+    const removeFromDiscoveryBatch = (leagueId) => {
+        setDiscoveryBatch(discoveryBatch.filter(item => item.leagueId !== leagueId));
+    };
+
+    const runDiscoveryBatch = async () => {
+        if (discoveryBatch.length === 0) return;
+        if (!window.confirm(`Start importing ${discoveryBatch.length} discovery leagues?`)) return;
+
+        setIsDiscovering(true);
+        try {
+            await startImport('/import/discovery/batch', 'POST', {
+                selection: discoveryBatch.map(item => ({
+                    leagueId: item.leagueId,
+                    seasonYear: item.seasonYear
+                }))
+            });
+            setDiscoveryBatch([]);
+            setTimeout(fetchMatrix, 2000);
+        } catch (err) {
+            alert('Discovery batch failed: ' + err.message);
         } finally {
             setIsDiscovering(false);
         }
@@ -222,7 +264,31 @@ const ImportMatrixPage = () => {
                         >
                             {isDiscovering ? '⏳ Importing...' : '📥 Import'}
                         </button>
+                        <button
+                            className="btn-discover-add"
+                            onClick={addToDiscoveryBatch}
+                            disabled={!selectedDiscoveryLeague}
+                        >
+                            ➕ Add
+                        </button>
                     </div>
+
+                    {discoveryBatch.length > 0 && (
+                        <div className="discovery-batch-list">
+                            <div className="discovery-batch-items">
+                                {discoveryBatch.map(item => (
+                                    <div key={item.leagueId} className="discovery-batch-tag">
+                                        <img src={item.flag} alt="" className="mini-flag" />
+                                        <span>{item.name} ({item.seasonYear})</span>
+                                        <button className="btn-remove-tag" onClick={() => removeFromDiscoveryBatch(item.leagueId)}>×</button>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className="btn-process-discovery" onClick={runDiscoveryBatch} disabled={isImporting}>
+                                {isDiscovering ? '⏳ Importing...' : `🚀 Import Batch (${discoveryBatch.length})`}
+                            </button>
+                        </div>
+                    )}
 
                     <button className="btn-audit" onClick={handleAudit} disabled={isAuditing}>
                         {isAuditing ? '🔍 Auditing...' : '🛠️ Discovery Scan'}

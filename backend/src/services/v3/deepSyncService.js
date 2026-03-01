@@ -6,6 +6,8 @@ import { syncLeagueTacticalStatsService } from './tacticalStatsService.js';
 import footballApi from '../footballApi.js';
 import ImportStatusService from './importStatusService.js';
 import * as ImportControl from './importControlService.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
+import { Mappers, ImportRepository as DB } from './ImportService.js';
 import {
     IMPORT_STATUS,
     STATUS_LABELS,
@@ -28,6 +30,32 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
     const leagueName = leagueInfo ? leagueInfo.name : `ID ${leagueId}`;
 
     sendLog(`🚀 Deep Sync: ${leagueName} (ID: ${leagueId})`, 'info');
+
+    // US-208: Initialize all available seasons from API before starting the loop
+    // This restores the "Full Career" behavior for discovered leagues.
+    try {
+        if (leagueInfo?.api_id) {
+            sendLog(`📡 Fetching available seasons from API for League ${leagueInfo.api_id}...`, 'info');
+            const leagueRes = await footballApi.getLeagues({ id: leagueInfo.api_id });
+            if (leagueRes.response?.[0]?.seasons) {
+                const apiSeasons = leagueRes.response[0].seasons;
+                let initializedCount = 0;
+                for (const s of apiSeasons) {
+                    const existing = db.get("SELECT 1 FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([leagueId, s.year]));
+                    if (!existing) {
+                        // Use DB.upsertLeagueSeason which handles the basic insertion with PARTIAL_DISCOVERY status
+                        DB.upsertLeagueSeason(Mappers.leagueSeason(leagueId, s.year));
+                        initializedCount++;
+                    }
+                }
+                if (initializedCount > 0) {
+                    sendLog(`✨ Initialized ${initializedCount} new seasons for ${leagueName}.`, 'success');
+                }
+            }
+        }
+    } catch (err) {
+        sendLog(`⚠️ Failed to initialize seasons from API: ${err.message}`, 'warning');
+    }
 
     const seasons = db.all(
         "SELECT * FROM V3_League_Seasons WHERE league_id = ? ORDER BY season_year DESC",

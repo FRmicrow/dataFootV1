@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync } from 'fs';
+import { cleanParams } from '../utils/sqlHelpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -45,7 +46,8 @@ async function initDatabase() {
  */
 function run(sql, params = []) {
     if (!db) throw new Error('Database not initialized');
-    const info = db.prepare(sql).run(params);
+    const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+    const info = db.prepare(sql).run(sanitized);
     return { lastInsertRowid: info.lastInsertRowid, changes: info.changes };
 }
 
@@ -54,7 +56,8 @@ function run(sql, params = []) {
  */
 function get(sql, params = []) {
     if (!db) throw new Error('Database not initialized');
-    return db.prepare(sql).get(params);
+    const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+    return db.prepare(sql).get(sanitized);
 }
 
 /**
@@ -62,7 +65,8 @@ function get(sql, params = []) {
  */
 function all(sql, params = []) {
     if (!db) throw new Error('Database not initialized');
-    return db.prepare(sql).all(params);
+    const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+    return db.prepare(sql).all(sanitized);
 }
 
 /**

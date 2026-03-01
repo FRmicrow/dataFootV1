@@ -22,25 +22,28 @@ WORKDIR /app
 
 # Install dependencies separately to leverage Docker cache
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY . .
 
 # --- Stage 2: Runtime ---
 FROM node:20-alpine
+
+# Install runtime dependencies for canvas/sqlite (minimized)
 RUN apk add --no-cache \
     cairo \
     pango \
-    libjpeg-turbo \
+    jpeg \
     giflib \
     librsvg \
-    libpng \
     pixman \
+    libpng \
     freetype \
-    harfbuzz
+    harfbuzz \
+    sqlite-libs \
+    libc6-compat
 
-# Use minimal production environment
 ENV NODE_ENV=production
 ENV PORT=3001
 ENV DATABASE_PATH=/app/data/database.sqlite
@@ -52,10 +55,11 @@ COPY --from=build /app/package*.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/src ./src
 
-# Create data directory with correct permissions for non-root user
-RUN mkdir -p /app/data && chown -R node:node /app/data
+# Create directories and set permissions
+RUN mkdir -p /app/data && \
+    chown -R node:node /app/data
 
-# Use non-root user for security
+# Use non-root user
 USER node
 
 EXPOSE 3001

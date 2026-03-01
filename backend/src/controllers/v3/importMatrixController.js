@@ -6,6 +6,7 @@ import { runImportJob } from '../../services/v3/leagueImportService.js';
 import * as ImportControl from '../../services/v3/importControlService.js';
 import ImportStatusService from '../../services/v3/importStatusService.js';
 import { IMPORT_STATUS, STATUS_LABELS, PILLARS } from '../../services/v3/importStatusConstants.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 
 /**
  * US_266: Matrix API — Status-Aware Endpoint
@@ -150,7 +151,7 @@ export const triggerBatchDeepSync = async (req, res) => {
 
         for (let i = 0; i < leagueIds.length; i++) {
             const leagueId = leagueIds[i];
-            const league = db.get("SELECT name FROM V3_Leagues WHERE league_id = ?", [leagueId]);
+            const league = db.get("SELECT name FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
             const leagueName = league ? league.name : `ID ${leagueId}`;
 
             sendLog(``, 'info');
@@ -340,7 +341,10 @@ export const triggerDiscoveryImport = async (req, res) => {
         sendLog(`🚀 Initializing Discovery Core Import for League ${leagueId}/${seasonYear}...`, 'info');
 
         // This only fetches Core data by default (Teams, Season, Standings, Fixtures)
-        await runImportJob(leagueId, seasonYear, sendLog, { forceApiId: true });
+        const sanitizedSeason = parseInt(seasonYear);
+        if (!sanitizedSeason) throw new Error("Invalid seasonYear provided.");
+
+        await runImportJob(leagueId, sanitizedSeason, sendLog, { forceApiId: true });
 
         // Mark as complete for core
         const localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [leagueId]);
@@ -352,6 +356,77 @@ export const triggerDiscoveryImport = async (req, res) => {
         res.end();
     } catch (error) {
         sendLog(`❌ Discovery Import failed: ${error.message}`, 'error');
+        res.end();
+    }
+};
+
+/**
+ * US-207: Batch Import for newly discovered leagues
+ */
+export const triggerDiscoveryBatchImport = async (req, res) => {
+    const { selection } = req.body; // Expects [{ leagueId, seasonYear }]
+    if (!selection || !Array.isArray(selection) || selection.length === 0) {
+        return res.status(400).json({ error: 'Selection array is required.' });
+    }
+
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+        'Transfer-Encoding': 'chunked'
+    });
+
+    res.write(':[initial-ping]\n' + ': ' + ' '.repeat(2048) + '\n\n');
+    if (res.flush) res.flush();
+    else if (res.flushHeaders) res.flushHeaders();
+
+    const sendLog = (message, type = 'info') => {
+        try {
+            res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
+            if (res.flush) res.flush();
+        } catch (e) { }
+    };
+    sendLog.emit = (data) => {
+        try {
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+            if (res.flush) res.flush();
+        } catch (e) { }
+    };
+
+    try {
+        ImportControl.resetImportState();
+        sendLog(`🚀 Initializing Discovery Batch Import for ${selection.length} leagues...`, 'info');
+
+        const startTime = Date.now();
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const item of selection) {
+            await ImportControl.checkAbortOrPause(sendLog);
+            const { leagueId, seasonYear } = item;
+
+            try {
+                sendLog(`\n[${successCount + failCount + 1}/${selection.length}] Processing League ID ${leagueId} (${seasonYear})...`, 'info');
+                await runImportJob(leagueId, parseInt(seasonYear), sendLog, { forceApiId: true });
+
+                const localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([leagueId]));
+                if (localLeague) {
+                    ImportStatusService.setStatus(localLeague.league_id, seasonYear, 'core', IMPORT_STATUS.COMPLETE);
+                }
+                successCount++;
+            } catch (err) {
+                failCount++;
+                sendLog(`❌ Failed League ${leagueId}: ${err.message}`, 'error');
+            }
+        }
+
+        const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        sendLog(`\n✅ Discovery Batch Complete: ${successCount} success, ${failCount} failed.`, 'complete');
+        sendLog(`⏱️ Total time: ${totalElapsed}s`, 'info');
+        res.end();
+    } catch (error) {
+        sendLog(`❌ Critical Batch Failure: ${error.message}`, 'error');
         res.end();
     }
 };

@@ -43,13 +43,13 @@ const Step1_Data = () => {
                     fetch('/api/studio/meta/nationalities')
                 ]);
 
-                const stats = await statsRes.json();
-                const leagues = await leaguesRes.json();
-                const nats = await natsRes.json();
+                const stats = statsRes.ok ? await statsRes.json() : [];
+                const leagues = leaguesRes.ok ? await leaguesRes.json() : [];
+                const nats = natsRes.ok ? await natsRes.json() : [];
 
-                setStatsMeta(stats);
-                setLeaguesMeta(leagues);
-                setNationalities(nats);
+                setStatsMeta(Array.isArray(stats) ? stats : []);
+                setLeaguesMeta(Array.isArray(leagues) ? leagues : []);
+                setNationalities(Array.isArray(nats) ? nats : []);
                 setIsLoadingMeta(false);
             } catch (err) {
                 console.error("Failed to load metadata", err);
@@ -140,6 +140,14 @@ const Step1_Data = () => {
         setTeamSearchResults([]);
     };
 
+    const handleModeChange = (newMode) => {
+        setMode(newMode);
+        // Reset mass generation when switching modes if needed
+        if (newMode === 'specific' || newMode === 'club') {
+            setFilters(prev => ({ ...prev, isMassGeneration: false }));
+        }
+    };
+
     const removePlayer = (pid) => setSelectedPlayers(selectedPlayers.filter(p => p.player_id !== pid));
     const removeLeague = (id) => setSelectedLeagues(selectedLeagues.filter(l => l.id !== id));
     const removeCountry = (c) => setSelectedCountries(selectedCountries.filter(x => x !== c));
@@ -196,6 +204,7 @@ const Step1_Data = () => {
                 finalizeStep1(data, { contextLabel }, mode);
                 return;
             }
+
 
             // Standard Flow
             let payloadFilters = {
@@ -263,15 +272,16 @@ const Step1_Data = () => {
                     { id: 'standings', label: 'League Standings', icon: '📈' },
                 ]}
                 activeId={mode}
-                onChange={setMode}
+                onChange={handleModeChange}
                 variant="pills"
                 className="mb-lg"
             />
 
+
             {/* 2. Source Input Area */}
             <div className="form-group-v2">
                 <label className="form-label-v2">
-                    {mode === 'specific' ? 'Selected Players' : mode === 'league' ? 'Selected League' : mode === 'country' ? 'Selected Nationality' : mode === 'club' ? 'Selected Club' : 'Selected League'}
+                    {mode === 'specific' ? 'Selected Players' : (mode === 'league' || mode === 'standings') ? 'Selected League' : mode === 'country' ? 'Selected Nationality' : mode === 'club' ? 'Selected Club' : 'Selected League'}
                 </label>
 
                 <div style={{ position: 'relative' }}>
@@ -331,12 +341,12 @@ const Step1_Data = () => {
                         </div>
                     )}
 
-                    {(mode === 'league' || mode === 'standings') && leagueSearchQuery.length > 0 && (
+                    {(mode === 'league' || mode === 'standings' || mode === 'player_stat_standing') && leagueSearchQuery.length > 0 && (
                         <div className="search-results-v2">
                             {leaguesMeta.flatMap(group =>
                                 group.leagues
                                     .filter(l => l.name.toLowerCase().includes(leagueSearchQuery.toLowerCase()))
-                                    .filter(l => mode === 'standings' ? l.type === 'League' : true)
+                                    .filter(l => (mode === 'standings') ? l.type === 'League' : true)
                                     .map(l => ({ ...l, country: group.country }))
                             ).slice(0, 15).map(l => (
                                 <div key={l.id} className="result-item-v2" onClick={() => addLeague(l)}>
@@ -421,13 +431,12 @@ const Step1_Data = () => {
                 </div>
             )}
 
-            {/* 4. Temporal Range */}
             <div className="form-group-v2">
                 <label className="form-label-v2">
-                    {mode === 'standings' ? 'Season Filter' : `Date Range (${filters.years[0]} - ${filters.years[1]})`}
+                    {(mode === 'standings') ? 'Season Filter' : `Date Range (${filters.years[0]} - ${filters.years[1]})`}
                 </label>
                 <div className="range-grid-v2">
-                    {mode === 'standings' ? (
+                    {(mode === 'standings') ? (
                         <select
                             value={filters.years[1]}
                             onChange={(e) => handleYearChange(e, 1)}

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import * as d3 from 'd3';
 
-const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onComplete, speed = 1, className = "", title = "Chart Evolution", barCount = 10, isBump = false, leagueLogo = null }, ref) => {
+const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onComplete, speed = 1, className = "", title = "Chart Evolution", barCount = 10, isBump = false, leagueLogo = null, manualTime = null }, ref) => {
     const canvasRef = useRef(null);
     useImperativeHandle(ref, () => canvasRef.current);
 
@@ -229,7 +229,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
             const deltaTime = timestamp - lastTimestamp;
             lastTimestamp = timestamp;
 
-            if (isPlaying) {
+            if (isPlaying && manualTime === null) {
                 if (timeRef.current < maxTime) {
                     const duration = 2000 / speed;
                     timeRef.current += (deltaTime / duration);
@@ -247,6 +247,18 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
                             zoomOutProgress.current = 1;
                             if (onComplete) onComplete();
                         }
+                    }
+                }
+            } else if (manualTime !== null) {
+                timeRef.current = manualTime;
+                // Handle zoom logic if manualTime is beyond maxTime
+                if (manualTime > maxTime) {
+                    const extra = manualTime - maxTime;
+                    if (extra < 2) { // 2s wait
+                        waitProgress.current = extra * 1000;
+                    } else {
+                        waitProgress.current = 2000;
+                        zoomOutProgress.current = (extra - 2) / 2; // 2s zoom
                     }
                 }
             }
@@ -716,10 +728,10 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
             // Optional: Draw a "Zoomed Out" indicator or effect? No, simple transition is best.
         };
 
-        if (isPlaying) {
+        if (isPlaying && manualTime === null) {
             animationRef.current = requestAnimationFrame(draw);
         } else {
-            draw(performance.now());
+            renderFrame(timeRef.current);
         }
 
         return () => cancelAnimationFrame(animationRef.current);
