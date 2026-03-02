@@ -12,9 +12,9 @@ const LeagueOverview = ({
     topRated
 }) => {
     return (
-        <Stack gap="var(--spacing-lg)" className="animate-fade-in">
+        <Stack gap="var(--spacing-lg)" className="animate-fade-in scrollbar-custom" style={{ overflowY: 'auto', flex: 1, height: '100%', minHeight: 0 }}>
             {/* Top Grid: Explorer & Leaders */}
-            <Grid columns="3fr 1fr" gap="var(--spacing-lg)">
+            <Grid columns="3fr 1fr" gap="var(--spacing-lg)" style={{ flex: 1, height: '100%', minHeight: 0 }}>
                 {/* Left: Squad Explorer */}
                 <SquadExplorer
                     leagueId={leagueId}

@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import {
     Card, Stack, Grid, Badge, Button,
-    Tabs, ProfileHeader, ControlBar
+    Tabs, ProfileHeader, ControlBar, Select, TableSkeleton, Skeleton
 } from '../../design-system';
 
 
@@ -78,9 +78,15 @@ const ClubProfilePageV3 = () => {
     }, [selectedYear, competitionsForYear]);
 
     if (loading && !data) return (
-        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="ds-button-spinner" style={{ marginBottom: '12px' }}></div>
-            <p style={{ color: 'var(--color-text-dim)' }}>Gathering club intelligence...</p>
+        <div className="ds-club-page">
+            <Skeleton height="300px" style={{ marginBottom: 'var(--spacing-lg)' }} />
+            <ControlBar
+                left={<Skeleton width="400px" height="40px" />}
+                right={<Skeleton width="200px" height="40px" />}
+            />
+            <main className="ds-club-content">
+                <TableSkeleton rows={10} />
+            </main>
         </div>
     );
 
@@ -142,16 +148,19 @@ const ClubProfilePageV3 = () => {
                     <Stack direction="row" gap="var(--spacing-md)">
                         <div className="ds-filter-box">
                             <label>Season</label>
-                            <select value={selectedYear || ''} onChange={(e) => setSelectedYear(parseInt(e.target.value))}>
-                                {availableYears.map(y => <option key={y} value={y}>{y}/{parseInt(y) + 1}</option>)}
-                            </select>
+                            <Select
+                                options={availableYears.map(y => ({ value: y, label: `${y}/${parseInt(y) + 1}` }))}
+                                value={{ value: selectedYear, label: `${selectedYear}/${parseInt(selectedYear) + 1}` }}
+                                onChange={(opt) => setSelectedYear(opt.value)}
+                            />
                         </div>
                         <div className="ds-filter-box">
                             <label>Module</label>
-                            <select value={selectedCompId} onChange={(e) => setSelectedCompId(e.target.value)}>
-                                <option value="all">Global</option>
-                                {competitionsForYear.map(c => <option key={c.league_id} value={c.league_id}>{c.league_name}</option>)}
-                            </select>
+                            <Select
+                                options={[{ value: 'all', label: 'Global' }, ...competitionsForYear.map(c => ({ value: c.league_id, label: c.league_name }))]}
+                                value={selectedCompId === 'all' ? { value: 'all', label: 'Global' } : { value: selectedCompId, label: competitionsForYear.find(c => c.league_id == selectedCompId)?.league_name }}
+                                onChange={(opt) => setSelectedCompId(opt.value)}
+                            />
                         </div>
                     </Stack>
                 }

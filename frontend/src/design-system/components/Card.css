@@ -4,8 +4,14 @@
     border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
-    transition: var(--transition-base);
+    transition: all var(--transition-base);
     overflow: hidden;
+    position: relative;
+}
+
+.ds-card:hover {
+    border-color: var(--color-border-hover);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
 }
 
 .ds-card--ghost {
@@ -15,9 +21,9 @@
 
 .ds-card--interactive:hover {
     background: var(--color-bg-card-hover);
-    border-color: var(--color-border-hover);
+    border-color: var(--color-primary-500);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-xl), 0 0 15px var(--color-primary-glow);
 }
 
 .ds-card--interactive::after {
@@ -76,8 +82,8 @@
 }
 
 .ds-card-body>.ds-table-container {
-    max-height: 400px;
-    /* Prevent infinite tables */
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 

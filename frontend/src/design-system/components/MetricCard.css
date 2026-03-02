@@ -85,8 +85,8 @@
 /* Featured variant */
 .ds-metric-card--featured {
     background: var(--color-primary-bg);
-    border-color: var(--color-primary-glow);
-    box-shadow: var(--glow-primary);
+    border-color: var(--color-primary-400);
+    box-shadow: var(--glow-primary-strong);
 }
 
 .ds-metric-card--featured .ds-metric-value {

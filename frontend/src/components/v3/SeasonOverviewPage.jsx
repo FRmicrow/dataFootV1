@@ -10,6 +10,7 @@ import {
 import LeagueOverview from './league/LeagueOverview';
 import StandingsTable from './league/StandingsTable';
 import FixturesList from './league/FixturesList';
+import SquadExplorer from './league/SquadExplorer';
 import SquadList from './league/SquadList';
 
 const SeasonOverviewPage = () => {
@@ -106,6 +107,7 @@ const SeasonOverviewPage = () => {
         fetchSquad();
     }, [selectedTeamId, id, year, activeTab]);
 
+
     const handleSeasonChange = (e) => {
         const newYear = e.target.value;
         navigate(`/league/${id}/season/${newYear}`);
@@ -164,7 +166,8 @@ const SeasonOverviewPage = () => {
             padding: '0 var(--spacing-sm)',
             maxWidth: '1400px',
             margin: '0 auto',
-            height: 'calc(100vh - 64px)',
+            height: '100vh',
+            maxHeight: '100vh',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
@@ -205,41 +208,44 @@ const SeasonOverviewPage = () => {
                 }
             />
 
-            <main className="season-tab-content" style={{ flex: 1, overflowY: 'auto', paddingBottom: 'var(--spacing-xl)', minHeight: 0 }}>
+            <main className="season-tab-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                 {activeTab === 'overview' && (
-                    <div className="animate-slide-up">
-                        <LeagueOverview
-                            leagueId={id} season={year}
-                            standings={standings} topScorers={topScorers}
-                            topAssists={topAssists} topRated={topRated}
-                        />
-                    </div>
+                    <LeagueOverview
+                        leagueId={id}
+                        season={year}
+                        standings={standings}
+                        topScorers={topScorers}
+                        topAssists={topAssists}
+                        topRated={topRated}
+                    />
                 )}
                 {activeTab === 'standings' && (
-                    <div className="animate-slide-up scrollbar-custom">
-                        <StandingsTable
-                            standings={standings} rangeStart={rangeStart} setRangeStart={setRangeStart}
-                            rangeEnd={rangeEnd} setRangeEnd={setRangeEnd}
-                            handleRangeUpdate={handleRangeUpdate} isDynamicMode={isDynamicMode} loading={loading}
-                        />
-                    </div>
+                    <StandingsTable
+                        standings={standings}
+                        rangeStart={rangeStart}
+                        setRangeStart={setRangeStart}
+                        rangeEnd={rangeEnd}
+                        setRangeEnd={setRangeEnd}
+                        handleRangeUpdate={handleRangeUpdate}
+                        isDynamicMode={isDynamicMode}
+                        loading={loading}
+                    />
                 )}
                 {activeTab === 'fixtures' && (
-                    <div className="animate-slide-up scrollbar-custom">
-                        <FixturesList
-                            fixturesData={fixturesData} selectedRound={selectedRound}
-                            setSelectedRound={setSelectedRound}
-                        />
-                    </div>
+                    <FixturesList
+                        fixturesData={fixturesData}
+                        selectedRound={selectedRound}
+                        setSelectedRound={setSelectedRound}
+                    />
                 )}
                 {activeTab === 'squads' && (
-                    <div className="animate-slide-up">
-                        <SquadList
-                            teams={standings} selectedTeamId={selectedTeamId}
-                            setSelectedTeamId={setSelectedTeamId} squadLoading={squadLoading}
-                            teamSquad={teamSquad}
-                        />
-                    </div>
+                    <SquadList
+                        teams={standings}
+                        selectedTeamId={selectedTeamId}
+                        setSelectedTeamId={setSelectedTeamId}
+                        squadLoading={squadLoading}
+                        teamSquad={teamSquad}
+                    />
                 )}
             </main>
         </div>

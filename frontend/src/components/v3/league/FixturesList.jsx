@@ -70,7 +70,7 @@ const FixturesList = ({
     }, [fixturesData]);
 
     return (
-        <Stack gap="var(--spacing-lg)" className="animate-fade-in">
+        <Stack gap="var(--spacing-lg)" className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <div className="ds-md-selector-wrap">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' }}>
                     <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--color-primary-400)', letterSpacing: '0.1em' }}>
@@ -139,14 +139,14 @@ const FixturesList = ({
                 </div>
             </div>
 
-            <Card padding="0">
+            <Card padding="0" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                 {groupedFixtures.length === 0 ? (
                     <Stack align="center" gap="var(--spacing-sm)" style={{ padding: 'var(--spacing-2xl)' }}>
                         <div style={{ fontSize: '11px', fontWeight: 'black', color: 'var(--color-text-dim)', letterSpacing: '0.2em' }}>NO DATA RECORDED</div>
                         <p style={{ color: 'var(--color-text-dim)', textTransform: 'uppercase', fontWeight: 'bold' }}>Schedule Empty</p>
                     </Stack>
                 ) : (
-                    <Stack gap="0">
+                    <Stack gap="0" style={{ flex: 1, overflowY: 'auto' }} className="scrollbar-custom">
                         {groupedFixtures.map((group, idx) => (
                             <div key={idx} className={group.type === 'TIE' ? 'ds-fixture-tie-group' : ''}>
                                 {group.fixtures.map((f, fIdx) => {

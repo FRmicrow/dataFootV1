@@ -1,9 +1,14 @@
 .ds-table-container {
     width: 100%;
-    overflow-x: auto;
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
     background: var(--color-bg-card);
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .ds-table-container.plain {
@@ -14,6 +19,7 @@
 
 .ds-table {
     width: 100%;
+    min-width: 100%;
     border-collapse: collapse;
     font-family: var(--font-family);
     font-size: var(--font-size-sm);
@@ -21,8 +27,8 @@
 }
 
 .ds-table th {
-    padding: var(--spacing-3xs) var(--spacing-xs);
-    background: rgba(0, 0, 0, 0.2);
+    padding: var(--spacing-2xs) var(--spacing-xs);
+    background: rgba(0, 0, 0, 0.4);
     color: var(--color-text-dim);
     font-weight: var(--font-weight-bold);
     font-size: 9px;
@@ -30,10 +36,18 @@
     letter-spacing: 0.1em;
     border-bottom: 1px solid var(--color-border);
     text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+}
+
+:root {
+    --ds-table-cell-padding-y: 10px;
 }
 
 .ds-table td {
-    padding: var(--spacing-md) var(--spacing-xs);
+    padding: var(--ds-table-cell-padding-y) var(--spacing-xs);
     border-bottom: 1px solid var(--color-border);
     transition: var(--transition-fast);
 }
