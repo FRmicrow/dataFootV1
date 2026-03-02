@@ -6,12 +6,15 @@
 ## Contexte
 La discipline est un facteur de risque et une opportunité de bet. On prédit `lambda_total_cards`.
 
+> [!IMPORTANT]
+> **Indépendance Totale** : Analyse disciplinaire parallèle. Zéro impact sur les fonctionnalités de gestion de match ou d'affichage de cartons existantes.
+
 ## Tâches
-- [ ] Préparer le dataset (target = 'CARDS_TOTAL').
-- [ ] Implémenter une `Negative Binomial Regression` (pour gérer la variance élevée des cartons).
-- [ ] Intégrer des features de contexte (Derby flag, High Stakes).
-- [ ] Évaluer via MAE et calibration des probabilités Over X.5.
-- [ ] Stocker les résultats dans `V3_Submodel_Outputs`.
+- [ ] Préparer le dataset (target = 'CARDS_TOTAL'). (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Implémenter une `Negative Binomial Regression`. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Intégrer des features de contexte (Derby flag, High Stakes). (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Évaluer via MAE et calibration des probabilités Over X.5. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Stocker les résultats dans `V3_Submodel_Outputs`. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
 
 ## Expertise Requise
 - **Agents & Rules :**
