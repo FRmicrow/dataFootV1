@@ -24,21 +24,21 @@ RUN npm install
 COPY . .
 
 # --- Stage 2: Runtime ---
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 
-# Install runtime dependencies for canvas/sqlite (minimized)
-RUN apk add --no-cache \
-    cairo \
-    pango \
-    jpeg \
-    giflib \
-    librsvg \
-    pixman \
-    libpng \
-    freetype \
-    harfbuzz \
-    sqlite-libs \
-    libc6-compat
+# Install runtime dependencies for better-sqlite3 and canvas (Debian versions)
+RUN apt-get update && apt-get install -y \
+    libcairo2 \
+    libpango-1.0-0 \
+    libjpeg62-turbo \
+    libgif7 \
+    librsvg2-2 \
+    libpixman-1-0 \
+    libpng16-16 \
+    libfreetype6 \
+    libharfbuzz0b \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 ENV PORT=3001
