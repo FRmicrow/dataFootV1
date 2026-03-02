@@ -7,7 +7,6 @@ import { syncLeagueTacticalStatsService } from './tacticalStatsService.js';
 import footballApi from '../footballApi.js';
 import ImportStatusService from './importStatusService.js';
 import * as ImportControl from './importControlService.js';
-import { cleanParams } from '../../utils/sqlHelpers.js';
 import { Mappers, ImportRepository as DB } from './ImportService.js';
 import {
     IMPORT_STATUS,
