@@ -21,5 +21,5 @@ DROP TABLE IF EXISTS V2_competitions;
 DROP TABLE IF EXISTS V2_trophy_types;
 DROP TABLE IF EXISTS V2_countries;
 
--- Vacuum to reclaim space
-VACUUM;
+-- VACUUM removed because it cannot be executed within a transaction by MigrationService
+

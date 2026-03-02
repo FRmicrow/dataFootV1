@@ -6,12 +6,15 @@
 ## Contexte
 Les corners sont un marché à forte valeur. Ce modèle prédit l'espérance mathématique (`lambda_total`) du nombre de corners.
 
+> [!IMPORTANT]
+> **Indépendance Totale** : Système de prédiction parallèle. Les données produites sont stockées indépendamment.
+
 ## Tâches
-- [ ] Préparer le dataset (target = 'CORNERS_TOTAL').
-- [ ] Implémenter une `Poisson Regression` ou `Negative Binomial` (mieux si sur-dispersion).
-- [ ] Évaluer via MAE (Mean Absolute Error) et Poisson Deviance.
-- [ ] Enregistrer dans `V3_Model_Registry`.
-- [ ] Générer des probabilités pour les lignes de betting standard (Over 8.5, 9.5, 10.5) et stocker dans `V3_Submodel_Outputs`.
+- [ ] Préparer le dataset (target = 'CORNERS_TOTAL'). (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Implémenter une `Poisson Regression`. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Évaluer via MAE (Mean Absolute Error) et Poisson Deviance. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Enregistrer dans `V3_Model_Registry`. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Générer des probabilités pour les lignes de betting standard. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
 
 ## Expertise Requise
 - **Agents & Rules :**
@@ -19,6 +22,10 @@ Les corners sont un marché à forte valeur. Ce modèle prédit l'espérance mat
     - `qa-engineer.md` : Pour la validation de la déviance et de l'erreur absolue (MAE).
 - **Skills :**
     - `machine-learning` : Régression de comptage, statistiques sportives.
+- **Workflows & Validation :**
+    - `run-tests.md` : **Obligatoire après chaque tâche** pour vérifier le modèle Corners.
+    - **Analyse des Logs Docker** : Vérifier que `lambda_total` reste réaliste.
+    - **Validation 100%** : Comparer les probabilités Over/Under avec les cotes moyennes du marché.
 
 ## Critères d'Acceptation
 - L'erreur moyenne (MAE) est inférieure à la baseline historique.

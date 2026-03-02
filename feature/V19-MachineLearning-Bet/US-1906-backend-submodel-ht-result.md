@@ -6,12 +6,15 @@
 ## Contexte
 Le résultat à la mi-temps est un signal fort pour le résultat final. Ce modèle prédit `P(HomeHTWin)`, `P(HTDraw)`, `P(AwayHTWin)`.
 
+> [!IMPORTANT]
+> **Indépendance Totale** : Les modèles et leurs outputs sont confinés aux tables `V3_Model_Registry` et `V3_Submodel_Outputs`. Isolation complète garantie.
+
 ## Tâches
-- [ ] Préparer le dataset d'entraînement via `V3_ML_Feature_Store_V2` (target = 'HT_RESULT').
-- [ ] Implémenter une `Multinomial Logistic Regression` (ou XGBoost avec calibration).
-- [ ] Réaliser un découpage `walk-forward` pour l'évaluation (pas de random split).
-- [ ] Enregistrer le modèle dans `V3_Model_Registry` avec ses métriques (Log Loss, Brier Score).
-- [ ] Générer et stocker les prédictions dans `V3_Submodel_Outputs`.
+- [ ] Préparer le dataset d'entraînement via `V3_ML_Feature_Store_V2`. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Implémenter une `Multinomial Logistic Regression`. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Réaliser un découpage `walk-forward` pour l'évaluation. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Enregistrer le modèle dans `V3_Model_Registry`. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
+- [ ] Générer et stocker les prédictions dans `V3_Submodel_Outputs`. (Agent: `Machine Learning Engineer`, Skill: `machine-learning`, Workflow: `run-tests`, Analysis: `Docker Logs`)
 
 ## Expertise Requise
 - **Agents & Rules :**
@@ -19,6 +22,10 @@ Le résultat à la mi-temps est un signal fort pour le résultat final. Ce modè
     - `qa-engineer.md` : Pour la validation de la log loss par rapport à la baseline.
 - **Skills :**
     - `machine-learning` : Classification multiclasse, calibration de probabilités.
+- **Workflows & Validation :**
+    - `run-tests.md` : **Obligatoire après chaque tâche** pour vérifier les performances du modèle HT.
+    - **Analyse des Logs Docker** : Surveiller les métriques d'entraînement.
+    - **Validation 100%** : S'assurer que les probabilités sont bien calibrées.
 
 ## Critères d'Acceptation
 - Le modèle affiche une Log Loss inférieure à la baseline de probabilités constantes.

@@ -375,6 +375,23 @@ def get_league_models(league_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/predict/fixture/{fixture_id}")
+def predict_fixture_all(fixture_id: int):
+    """
+    US-1912 Orchestrator API:
+    Synchronously runs all Phase 3 ML Submodels (FT, HT, Corners, Cards) 
+    for a given fixture, aggregates their probabilities, and saves them to DB.
+    """
+    try:
+        from src.orchestrator.predictor import generate_master_prediction
+        result = generate_master_prediction(fixture_id)
+        if not result["success"]:
+            raise HTTPException(status_code=500, detail="All submodels failed to generate predictions.")
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8008)

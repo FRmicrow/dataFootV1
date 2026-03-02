@@ -289,4 +289,4 @@ CREATE TABLE IF NOT EXISTS V3_Cleanup_History (
 
 CREATE INDEX IF NOT EXISTS idx_v3_cleanup_group ON V3_Cleanup_History(group_id);
 CREATE INDEX IF NOT EXISTS idx_v3_leagues_name_country ON V3_Leagues(name, country_id);
-CREATE INDEX IF NOT EXISTS idx_v3_trophies_player_id ON V3_Trophies(player_id);
+-- Index on V3_Trophies is handled in a later migration (20260228_05_FixTrophyNaming.js)

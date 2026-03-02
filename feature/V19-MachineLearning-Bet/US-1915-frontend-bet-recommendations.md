@@ -6,6 +6,9 @@
 ## Contexte
 C'est la page finale utilisée pour la prise de décision. Elle doit être claire, fiable et riche en informations.
 
+> [!IMPORTANT]
+> **Indépendance Totale** : La vue de recommandations est une **page autonome**. Elle n'intègre aucune donnée ML dans les pages de clubs ou de joueurs existantes pour le moment, respectant ainsi l'isolation stricte.
+
 ## Tâches
 - [ ] Lister les matchs à venir avec les recommandations (Selection, Odds, Edge, Stake).
 - [ ] Afficher le `Confidence Score` pondéré par la qualité du modèle et la complétude des données.
@@ -18,6 +21,11 @@ C'est la page finale utilisée pour la prise de décision. Elle doit être clair
     - `security-expert.md` : Pour garantir que seules les données autorisées sont affichées.
 - **Skills :**
     - `machine-learning` : Interprétabilité des modèles (SHAP values).
+- **Workflows & Validation :**
+    - `run-tests.md` : **Obligatoire après chaque tâche** pour l'interface de recommandation.
+    - **Tests Interface** : Vérifier la lisibilité sur mobile et desktop.
+    - **Analyse des Logs Docker** : Surveiller le rafraîchissement des données via Websockets/Long polling.
+    - **Validation 100%** : Les recommandations affichées doivent être certifiées "Champion".
 
 ## Critères d'Acceptation
 - Seules les recommandations issues de modèles "Champion" actifs sont affichées.
