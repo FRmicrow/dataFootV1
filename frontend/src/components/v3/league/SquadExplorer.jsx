@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../../services/api';
-import { Card, Table, Badge, Stack, Grid } from '../../../design-system';
+import { Card, Table, Badge, Stack, Grid, Select } from '../../../design-system';
 import { getShortPosition } from '../../../utils/positionUtils';
 
 const SquadExplorer = ({ leagueId, season, teams }) => {
@@ -87,31 +87,28 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
             subtitle="Deep statistical drill-down"
             extra={
                 <Stack direction="row" gap="var(--spacing-xs)">
-                    <select
-                        value={teamId}
-                        onChange={(e) => setTeamId(e.target.value)}
-                        style={{ padding: '4px 12px', fontSize: '11px', fontWeight: 'bold' }}
-                    >
-                        <option value="">All Teams</option>
-                        {teams.map(t => (
-                            <option key={t.team_id} value={t.team_id}>{t.team_name}</option>
-                        ))}
-                    </select>
+                    <Select
+                        options={[{ value: '', label: 'All Teams' }, ...teams.map(t => ({ value: t.team_id, label: t.team_name }))]}
+                        value={teamId ? { value: teamId, label: teams.find(t => t.team_id == teamId)?.team_name } : { value: '', label: 'All Teams' }}
+                        onChange={(opt) => setTeamId(opt.value)}
+                        placeholder="Team"
+                    />
 
-                    <select
-                        value={position}
-                        onChange={(e) => setPosition(e.target.value)}
-                        style={{ padding: '4px 12px', fontSize: '11px', fontWeight: 'bold' }}
-                    >
-                        <option value="ALL">Positions</option>
-                        <option value="Goalkeeper">GK</option>
-                        <option value="Defender">DF</option>
-                        <option value="Midfielder">MF</option>
-                        <option value="Attacker">FW</option>
-                    </select>
+                    <Select
+                        options={[
+                            { value: 'ALL', label: 'Positions' },
+                            { value: 'Goalkeeper', label: 'GK' },
+                            { value: 'Defender', label: 'DF' },
+                            { value: 'Midfielder', label: 'MF' },
+                            { value: 'Attacker', label: 'FW' }
+                        ]}
+                        value={{ value: position, label: position === 'ALL' ? 'Positions' : position === 'Goalkeeper' ? 'GK' : position === 'Defender' ? 'DF' : position === 'Midfielder' ? 'MF' : 'FW' }}
+                        onChange={(opt) => setPosition(opt.value)}
+                        placeholder="Pos"
+                    />
                 </Stack>
             }
-            style={{ flex: 1, height: '100%', minHeight: '600px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+            style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
             className="animate-slide-up"
         >
             <div className="ds-card-body scrollbar-custom" style={{ padding: 0, overflowY: 'auto', flex: 1 }}>

@@ -3,7 +3,7 @@ import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import {
     Card, Grid, Stack, Badge, Button,
-    Progress, MetricCard
+    Progress, MetricCard, MetricCardSkeleton, CardSkeleton, Skeleton
 } from '../../design-system';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -34,9 +34,18 @@ const V3Dashboard = () => {
     }, []);
 
     if (loading || !stats) return (
-        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="ds-button-spinner" style={{ marginBottom: '12px' }}></div>
-            <p style={{ color: 'var(--color-text-dim)' }}>Initializing Intelligence Hub...</p>
+        <div className="v3-dashboard-content">
+            <header className="v3-header mb-xl">
+                <Skeleton width="200px" height="40px" style={{ marginBottom: '12px' }} />
+                <Skeleton width="300px" height="20px" />
+            </header>
+            <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-md)" style={{ marginBottom: 'var(--spacing-xl)' }}>
+                {Array(4).fill(0).map((_, i) => <MetricCardSkeleton key={i} />)}
+            </Grid>
+            <Grid columns="repeat(2, 1fr)" gap="var(--spacing-lg)">
+                <CardSkeleton />
+                <CardSkeleton />
+            </Grid>
         </div>
     );
 

@@ -1,0 +1,30 @@
+.ds-skeleton {
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.03) 25%,
+            rgba(255, 255, 255, 0.08) 37%,
+            rgba(255, 255, 255, 0.03) 63%);
+    background-size: 400% 100%;
+    animation: ds-skeleton-loading 1.4s ease infinite;
+}
+
+@keyframes ds-skeleton-loading {
+    0% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+.ds-skeleton-card {
+    min-height: 200px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}
+
+.ds-skeleton-metric {
+    padding: var(--spacing-md);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}

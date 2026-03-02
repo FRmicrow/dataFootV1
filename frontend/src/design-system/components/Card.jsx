@@ -10,12 +10,14 @@ const Card = ({
     extra,
     onClick,
     className = '',
+    style = {},
     ghost = false
 }) => {
     return (
         <div
             className={`ds-card ${ghost ? 'ds-card--ghost' : ''} ${onClick ? 'ds-card--interactive' : ''} ${className}`}
             onClick={onClick}
+            style={style}
         >
             {(title || extra) && (
                 <div className="ds-card-header">

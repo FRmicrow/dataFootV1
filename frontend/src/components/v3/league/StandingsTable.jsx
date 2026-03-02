@@ -137,12 +137,13 @@ const StandingsTable = ({
     }
 
     return (
-        <Stack gap="var(--spacing-lg)" className="animate-fade-in">
+        <Stack gap="var(--spacing-lg)" className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {groups.map(([groupName, teams], idx) => (
                 <Card
                     key={groupName}
                     title={groupName}
                     padding="0"
+                    style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
                     extra={idx === 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', background: 'rgba(255,255,255,0.03)', padding: '4px 12px', borderRadius: 'var(--radius-full)' }}>
                             <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--color-text-dim)' }}>FILTER RANKS</span>
@@ -163,9 +164,7 @@ const StandingsTable = ({
                         </div>
                     )}
                 >
-                    <div style={{ overflowX: 'auto' }} className="scrollbar-custom">
-                        <Table columns={columns} data={teams} className="plain" interactive />
-                    </div>
+                    <Table columns={columns} data={teams} className="plain" interactive style={{ flex: 1, minHeight: 0 }} />
                 </Card>
             ))}
         </Stack>

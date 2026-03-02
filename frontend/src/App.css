@@ -119,7 +119,22 @@ select:focus {
   box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
 }
 
-/* Legacy Overrides for V2 components still in transition */
+.season-tab-content>div {
+  animation: ds-tab-fade-in 0.3s ease-out;
+}
+
+@keyframes ds-tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .btn-primary {
   background: var(--color-primary-600) !important;
   color: white !important;

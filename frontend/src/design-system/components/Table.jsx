@@ -1,9 +1,9 @@
 import React from 'react';
 import './Table.css';
 
-const Table = ({ columns, data, loading = false, rowKey = 'id', onRowClick, className = '', interactive = false }) => {
+const Table = ({ columns, data, loading = false, rowKey = 'id', onRowClick, className = '', style = {}, interactive = false }) => {
     return (
-        <div className={`ds-table-container ${className}`}>
+        <div className={`ds-table-container ${className}`} style={style}>
             <table className={`ds-table ${interactive ? 'ds-table--interactive' : ''}`}>
                 <thead>
                     <tr>
