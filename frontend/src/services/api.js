@@ -155,9 +155,24 @@ export default {
     // --- Tactical Stats & Normalization (US_F11) ---
     normalizeSeason: (data) => api.post('/import/normalize', data),
 
-    // --- Forge Laboratory (PO Vision) ---
-    startBreeding: (leagueId) => api.post('/forge/breed', { leagueId }),
-    getBreedingStatus: (leagueId) => api.get(`/forge/breed-status?leagueId=${leagueId}`),
+    // --- Machine Learning V19 ---
+    getMLOrchestratorStatus: () => api.get('/ml-platform/orchestrator/status'),
+    getMLRecentAnalyses: () => api.get('/ml-platform/risk/recent'),
+    getMLSimulationFilters: () => api.get('/ml-platform/simulations/filters'),
+    getMLSimulationOverview: () => api.get('/ml-platform/simulations/overview'),
+
+    getMLRecommendations: () => api.get('/ml-platform/recommendations'),
+
+    syncMLUpcomingOdds: () => api.post('/ml-platform/odds/sync'),
+    syncMLAdvancedOdds: () => api.post('/ml-platform/odds/advanced-sync'),
+    runMLOddsCatchup: () => api.post('/ml-platform/odds/catchup'),
+    getMLModelEvaluation: (leagueId, seasonYear) => {
+        const params = new URLSearchParams();
+        if (leagueId) params.append('leagueId', leagueId);
+        if (seasonYear) params.append('seasonYear', seasonYear);
+        return api.get(`/ml-platform/simulations/evaluation?${params.toString()}`);
+    },
+
     // --- Discovery ---
     getDiscoveryCountries: () => api.get('/import/discovery/countries'),
     getDiscoveryLeagues: (country) => api.get(`/import/discovery/leagues?country=${country}`),

@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import db from './config/database.js';
 import v3Routes from './routes/v3_routes.js';
 import MigrationService from './services/v3/MigrationService.js';
+import SimulationQueueService from './services/v3/SimulationQueueService.js';
 
 dotenv.config();
 
@@ -15,6 +16,9 @@ const PORT = process.env.PORT || 3001;
 
 // Initialize database
 await db.init();
+
+// Initialize Simulation Queue (after DB)
+await SimulationQueueService.init();
 
 // --- DB Migrations (US-161) ---
 await MigrationService.runPending().catch(err => {

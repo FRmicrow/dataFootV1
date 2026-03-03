@@ -15,12 +15,7 @@ import ImportTrophiesPage from './components/v3/ImportTrophiesPage';
 import ImportEventsPage from './components/v3/ImportEventsPage';
 import ImportLineupsPage from './components/v3/ImportLineupsPage';
 import MatchDetailPage from './components/v3/MatchDetailPage';
-import LiveBetHub from './components/v3/live-bet/LiveBetHub';
-import LiveBetDashboard from './components/v3/live-bet/LiveBetDashboard';
-import LiveBetMatchDetails from './components/v3/live-bet/LiveBetMatchDetails';
-import MonitoringConsole from './components/v3/live-bet/MonitoringConsole';
-import SimulationDashboard from './components/v3/live-bet/SimulationDashboard';
-import ForgeLaboratory from './components/v3/ForgeLaboratory';
+import MachineLearningHub from './components/v3/ml/MachineLearningHub';
 import DesignSystemPage from './components/v3/DesignSystemPage';
 import { ImportProvider } from './context/ImportContext.jsx';
 import { Navbar } from './design-system';
@@ -51,17 +46,12 @@ function App() {
                             <Route path="/search" element={<SearchPageV3 />} />
                             <Route path="/club/:id" element={<ClubProfilePageV3 />} />
                             <Route path="/studio" element={<ContentStudioV3 />} />
-                            <Route path="/forge/lab" element={<ForgeLaboratory />} />
                             <Route path="/health" element={<HealthCenterPage />} />
                             <Route path="/trophies" element={<ImportTrophiesPage />} />
                             <Route path="/events" element={<ImportEventsPage />} />
                             <Route path="/lineups-import" element={<ImportLineupsPage />} />
-                            <Route path="/live-bet" element={<LiveBetHub />} />
-                            <Route path="/live-bet/board" element={<LiveBetDashboard />} />
-                            <Route path="/live-bet/monitoring" element={<MonitoringConsole />} />
-                            <Route path="/live-bet/match/:id" element={<LiveBetMatchDetails />} />
-                            <Route path="/live-bet/alpha" element={<SimulationDashboard />} />
                             <Route path="/match/:id" element={<MatchDetailPage />} />
+                            <Route path="/machine-learning/*" element={<MachineLearningHub />} />
                             <Route path="/design" element={<DesignSystemPage />} />
                         </Route>
 
