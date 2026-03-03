@@ -17,7 +17,16 @@ import {
     retrainModel,
     getRetrainStatus,
     getEligibleHorizons,
-    getLeagueModels
+    getLeagueModels,
+    getMLOrchestratorStatus,
+    getMLRecentAnalyses,
+    getMLModelEvaluation,
+    getMLSimulationOverview,
+    getMLRecommendations,
+    syncUpcomingOdds,
+    syncAdvancedOdds,
+    runOddsCatchup,
+    getMLSimulationFilters
 } from '../../controllers/v3/mlController.js';
 import {
     triggerSimulation,
@@ -28,7 +37,6 @@ import {
     checkBulkJobStatus,
     getLeagueSimulations
 } from '../../controllers/v3/simulationController.js';
-import { startBreeding, getBreedingStatus } from '../../controllers/v3/forgeLaboratoryController.js';
 
 const router = express.Router();
 
@@ -44,9 +52,15 @@ router.get('/forge/retrain-status', getRetrainStatus);
 router.get('/forge/eligible-horizons', getEligibleHorizons);
 router.get('/forge/league-models/:leagueId', validateRequest(leagueIdV3ParamSchema), getLeagueModels);
 
-// Forge Laboratory
-router.post('/forge/breed', validateRequest(breedingSchema), startBreeding);
-router.get('/forge/breed-status', validateRequest(breedingStatusSchema), getBreedingStatus);
+// Machine Learning Platform V19
+router.get('/ml-platform/orchestrator/status', getMLOrchestratorStatus);
+router.get('/ml-platform/risk/recent', getMLRecentAnalyses);
+router.get('/ml-platform/simulations/evaluation', getMLModelEvaluation);
+router.get('/ml-platform/simulations/overview', getMLSimulationOverview);
+router.get('/ml-platform/recommendations', getMLRecommendations);
+router.post('/ml-platform/odds/sync', syncUpcomingOdds);
+router.post('/ml-platform/odds/advanced-sync', syncAdvancedOdds);
+router.post('/ml-platform/odds/catchup', runOddsCatchup);
 
 // Simulation Engine
 router.post('/simulation/start', triggerSimulation);
