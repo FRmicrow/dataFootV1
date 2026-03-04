@@ -15,9 +15,13 @@ Ce workflow coordonne la mise en œuvre d’une fonctionnalité du backlog de la
 6. **Développement Backend** : Une fois le contrat API validé, implémentez l'API en respectant les principes de `@backend-engineer` et `@security-expert` (validation stricte des entrées via Zod en s'assurant que cela matche le Swagger, gestion des erreurs séparée).
 7. **Développement Machine Learning (Si applicable)** : S'il s'agit d'une feature de prédiction, appliquez `@machine-learning-engineer` et utilisez les scripts du dossier `ml-service/scripts/`.
 8. **Développement Frontend** : Implémentez l'interface utilisateur en utilisant les composants du Design System V3 (voir `frontend-pages.md`) et en respectant les principes de `@frontend-engineer`. Appuyez-vous sur le Swagger validé à l'étape 4 pour moquer ou intégrer l'API.
-9. **Build & Qualité** : Appliquez les règles `@docker-engineer` et `@qa-engineer`. Assurez-vous que les conteneurs montent correctement (`docker compose build`) et qu'il n'y a pas de régressions.
-10. **Checklist de Validation** : Avant de clore l'implémentation, passez en revue chaque point de la `review-checklist.md`.
-11. **Finalisation et Livraison** : Une fois que le code fonctionne de bout en bout, appelez **automatiquement** le workflow `/gitflow`. L'agent `@git-engineer` prendra le relais pour planifier les commits, faire valider la fusion vers `main` et supprimer proprement la branche (voir règles du gitflow). Une fois la Feature entièrement terminée (toutes les US livrées), déplacez le **dossier entier de la fonctionnalité** (`feature/Vxx-[Nom]`) dans le répertoire `feature/Completed-Feature/` afin de garder un espace de travail propre.
+9. **PHASE DE VALIDATION (OBLIGATOIRE)** : Une fois le développement terminé, vous ne pouvez pas passer à la livraison sans ces deux preuves de qualité :
+    - **Contrôle Docker & Logs** : Endossez `@qa-engineer` et `@docker-engineer`. Lancez `docker compose build` et vérifiez les logs. Si crash, revenez à l'étape 6 ou 8.
+    - **Checklist Finale** : Ouvrez `review-checklist.md` et validez chaque point mentalement (ou via un commentaire interne).
+10. **LIVRAISON GÉNÉRÉE PAR LE QA (BLOQUANT)** : Si et seulement si la phase 9 est un succès sans erreur constatée :
+    - Déclenchez **automatiquement** le workflow `/gitflow`.
+    - L'agent `@git-engineer` prendra le relais pour le commit final, la fusion `main` et la suppression de branche.
+    - **Nettoyage Final** : Une fois la Feature entièrement terminée, déplacez le dossier de fonctionnalité vers `feature/Completed-Feature/`.
 
 ## Notes
 - Ce workflow s'adapte au rôle en cours (Frontend, Backend, ML, Fullstack). Ne réalisez que les étapes pertinentes pour la User Story traitée.
