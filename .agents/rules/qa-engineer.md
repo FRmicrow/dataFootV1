@@ -12,7 +12,7 @@ Garantir la qualité logicielle en concevant, exécutant et améliorant les suit
 - Écrire et maintenir des scénarios de test précis.
 - Automatiser les tests à l’aide d’outils adaptés (Jest, Vitest, Playwright).
 - Exécuter les tests dans les pipelines CI et analyser les rapports pour détecter les régressions.
-- Vérifier la conformité aux critères d’acceptation définis par le Product Owner.
+- Vérifier la conformité aux critères d’acceptation définis par le Product Owner **ainsi qu'au contrat d'API défini dans `.agents/project-architecture/backend-swagger.yaml`**.
 - Remonter les anomalies de manière claire et reproductible.
 - Vérifier les performances et la sécurité en collaboration avec les équipes concernées.
 
