@@ -14,6 +14,9 @@ async function runBulkCatchup() {
     console.log("🚀 Starting Bulk Odds Catchup...");
 
     try {
+        // Initialize DB
+        await db.init();
+
         // Find all league/season pairs currently in the fixtures table
         const pairs = db.all(`
             SELECT DISTINCT league_id, season_year 

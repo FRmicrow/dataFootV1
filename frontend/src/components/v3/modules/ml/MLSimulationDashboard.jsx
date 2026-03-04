@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
-import { Card, Badge, Table, Button } from '../../../../design-system';
+import { Card, Badge, Table, Button, MetricCard, Stack, Grid } from '../../../../design-system';
 
 const ExpandedLeagueStats = ({ league_id, season_year }) => {
     const [stats, setStats] = useState(null);
@@ -79,18 +79,35 @@ const ExpandedLeagueStats = ({ league_id, season_year }) => {
         }
     ];
 
-    if (loading) return <div className="p-md ds-text-center"><div className="ds-button-spinner"></div> Loading details...</div>;
+    if (loading) return <div className="p-md ds-text-center"><div className="ds-spinner"></div> Loading details...</div>;
     if (error) return <div className="p-md ds-text-danger-400">{error}</div>;
 
     return (
         <div className="ds-p-sm" style={{ background: 'var(--color-bg-base)', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
-            <div className="ds-border ds-border-neutral-800 ds-rounded-lg" style={{ maxHeight: '350px', overflowY: 'auto' }}>
-                <Table
-                    columns={detailColumns}
-                    data={details}
-                    rowKey={(record) => `${record.fixture_id}-${record.market}`}
-                />
-            </div>
+            <Stack gap="md">
+                <Grid columns="repeat(3, 1fr)" gap="sm">
+                    <MetricCard
+                        label="Overall Hit Rate"
+                        value={`${(stats?.overall_hit_rate * 100).toFixed(1)}%`}
+                        variant="default"
+                    />
+                    <MetricCard
+                        label="Brier Score"
+                        value={stats?.brier_score?.toFixed(3) || '0.000'}
+                    />
+                    <MetricCard
+                        label="Sample Size"
+                        value={details.length}
+                    />
+                </Grid>
+                <div className="ds-table-overflow ds-border ds-border-neutral-800 ds-rounded-lg" style={{ maxHeight: '350px' }}>
+                    <Table
+                        columns={detailColumns}
+                        data={details}
+                        rowKey={(record) => `${record.fixture_id}-${record.market}`}
+                    />
+                </div>
+            </Stack>
         </div>
     );
 };
@@ -121,20 +138,14 @@ const MLSimulationDashboard = () => {
         fetchOverview();
     }, []);
 
-    /*
-     * [!TIP]
-     * > **Trend Analysis Strategy**: By including `captured_at` in the Primary Key, we store the full "Line Movement". This allows future ML models to calculate deltas between Opening, Intermediate, and Closing prices (Smart Money signals).
-     * >
-     * > **Data Retention**: We will **NOT** delete pre-match snapshots after the match ends. Keeping the full history is essential for training the ML model to recognize betting patterns. We will monitor DB size but prioritize "Data Quality" over "Storage Space".
-     */
     const formatHitRate = (rate) => {
         if (rate === null || rate === undefined) return '-';
         const pct = rate * 100;
-        let colorClass = 'ds-text-neutral-300';
-        if (pct >= 55) colorClass = 'ds-text-success-400';
-        else if (pct < 45) colorClass = 'ds-text-danger-400';
+        let variant = 'surface';
+        if (pct >= 55) variant = 'success';
+        else if (pct < 45) variant = 'danger';
 
-        return <span className={`ds-font-bold ${colorClass}`}>{pct.toFixed(1)}%</span>;
+        return <Badge variant={variant} size="sm">{pct.toFixed(1)}%</Badge>;
     };
 
     const handleSort = (key) => {
@@ -209,7 +220,7 @@ const MLSimulationDashboard = () => {
             render: (text) => <Badge variant="surface">{text}</Badge>
         },
         {
-            title: 'Global Hit Rate',
+            title: 'Avg Hit Rate',
             dataIndex: 'global_hit_rate',
             key: 'global_hit_rate',
             width: '130px',
@@ -217,12 +228,12 @@ const MLSimulationDashboard = () => {
             render: formatHitRate
         },
         {
-            title: 'Brier Score',
+            title: 'Brier',
             dataIndex: 'brier_score',
             key: 'brier_score',
-            width: '120px',
+            width: '100px',
             align: 'right',
-            render: (val) => val ? val.toFixed(3) : '-'
+            render: (val) => <span className="ds-text-xs ds-text-neutral-400">{val ? val.toFixed(3) : '-'}</span>
         },
         {
             title: '1N2 FT',
@@ -272,41 +283,59 @@ const MLSimulationDashboard = () => {
         ) : col.title
     }));
 
+    // Calculate Global Averages for Top Cards
+    const avgHitRate = overviewData.length > 0
+        ? overviewData.reduce((acc, curr) => acc + (curr.global_hit_rate || 0), 0) / overviewData.length
+        : 0;
+
+    const avgBrier = overviewData.length > 0
+        ? overviewData.reduce((acc, curr) => acc + (curr.brier_score || 0), 0) / overviewData.length
+        : 0;
+
     return (
-        <Card style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column', padding: 'var(--spacing-md)' }}>
-            <div className="ds-card-body ds-flex ds-flex-col ds-gap-xl" style={{ flex: 1, overflowY: 'auto', paddingRight: 'var(--spacing-sm)' }}>
+        <Stack gap="xl">
+            {/* Global Performance Header */}
+            <Grid columns="repeat(3, 1fr)" gap="lg">
+                <MetricCard
+                    label="Algorithmic Confidence"
+                    value={`${(avgHitRate * 100).toFixed(1)}%`}
+                    subValue="Mean Hit Rate across all leagues"
+                    variant="primary"
+                />
+                <MetricCard
+                    label="Model Calibration"
+                    value={avgBrier.toFixed(3)}
+                    subValue="Average Brier Score (lower is better)"
+                />
+                <MetricCard
+                    label="Coverage"
+                    value={overviewData.length}
+                    subValue="Active league/season pairs"
+                />
+            </Grid>
+
+            <Card title="Simulation Overview" subtitle="Click any row to expand deep-dive backtesting logs and market-specific breakdowns.">
                 {error && <div className="ds-alert ds-alert--error">{error}</div>}
 
-                <div className="ds-flex ds-flex-col ds-gap-md" style={{ flex: 1 }}>
-                    <div>
-                        <h2 className="ds-text-heading-3 mb-xs">Simulation Overview</h2>
-                        <p className="ds-text-body ds-text-neutral-400">
-                            Global algorithmic performance. Click any row to expand deep-dive backtesting logs.
-                        </p>
-                    </div>
-
-                    <div className="ds-border ds-border-neutral-800 ds-rounded-lg" style={{ overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <Table
-                            columns={columns}
-                            data={sortedData}
-                            rowKey={(record) => `${record.league_id}-${record.season_year}`}
-                            loading={loadingOverview}
-                            interactive={true}
-                            onExpand={toggleExpand}
-                            expandedRowKeys={expandedRowKeys}
-                            expandedRowRender={(record) => (
-                                <ExpandedLeagueStats
-                                    league_id={record.league_id}
-                                    season_year={record.season_year}
-                                />
-                            )}
-                            style={{ flex: 1 }}
-                        />
-                    </div>
+                <div className="ds-table-overflow">
+                    <Table
+                        columns={columns}
+                        data={sortedData}
+                        rowKey={(record) => `${record.league_id}-${record.season_year}`}
+                        loading={loadingOverview}
+                        interactive={true}
+                        onExpand={toggleExpand}
+                        expandedRowKeys={expandedRowKeys}
+                        expandedRowRender={(record) => (
+                            <ExpandedLeagueStats
+                                league_id={record.league_id}
+                                season_year={record.season_year}
+                            />
+                        )}
+                    />
                 </div>
-
-            </div>
-        </Card>
+            </Card>
+        </Stack>
     );
 };
 

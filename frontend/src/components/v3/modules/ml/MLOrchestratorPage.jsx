@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
-import { Card, Badge, Table, Button } from '../../../../design-system';
+import { Card, Badge, Table, Button, MetricCard, Stack, Grid } from '../../../../design-system';
 
 const MLOrchestratorPage = () => {
     const [status, setStatus] = useState(null);
@@ -45,10 +45,10 @@ const MLOrchestratorPage = () => {
             render: (text, row) => (
                 <div>
                     <div className="ds-font-bold">
-                        {row.league_name} - {row.home_team} - {row.away_team} - {row.round}
+                        {row.league_name} - {row.home_team} - {row.away_team}
                     </div>
                     <div className="ds-text-neutral-400 ds-text-xs mt-2xs">
-                        {new Date(row.date).toLocaleDateString()} • ID: {row.fixture_id}
+                        {new Date(row.date).toLocaleDateString()} • {row.round}
                     </div>
                 </div>
             )
@@ -86,77 +86,56 @@ const MLOrchestratorPage = () => {
             dataIndex: 'fair_odd',
             key: 'odd',
             width: '120px',
-            render: (val) => <span className="ds-text-accent-400 ds-font-bold ds-text-lg">{val.toFixed(2)}</span>
+            render: (val) => <Badge variant="primary" size="md">{val.toFixed(2)}</Badge>
         }
     ];
 
     return (
-        <div className="ds-grid ds-gap-xl" style={{ gridTemplateColumns: 'minmax(300px, 1fr) 2fr' }}>
+        <Stack gap="xl">
+            {/* Status Overview */}
+            <Grid columns="repeat(4, 1fr)" gap="lg">
+                <MetricCard
+                    label="Python Service"
+                    value={isOnline ? "Online" : "Offline"}
+                    variant={isOnline ? "success" : "danger"}
+                    icon={isOnline ? "🌐" : "⚠️"}
+                />
+                <MetricCard
+                    label="Model Engine"
+                    value={status?.model_loaded ? "Active" : "Locked"}
+                    subValue={`v${status?.version || '1.3.0'}`}
+                    icon="🧠"
+                />
+                <MetricCard
+                    label="Risk Database"
+                    value={status?.total_risk_rows?.toLocaleString() || 0}
+                    subValue="Computed Fair Odds"
+                    icon="📊"
+                />
+                <MetricCard
+                    label="Status"
+                    value={status?.training?.is_training ? "Training" : "Idle"}
+                    variant={status?.training?.is_training ? "warning" : "default"}
+                    icon="⚙️"
+                />
+            </Grid>
 
-            {/* Sidebar: Status & Metrics */}
-            <div className="ds-stack ds-gap-lg">
-                <Card>
-                    <div className="ds-card-header">
-                        <h2 className="ds-text-heading-3 ds-flex ds-items-center ds-gap-sm">
-                            <span className={`ds-status-dot ${isOnline ? 'ds-status-dot--success' : 'ds-status-dot--danger'}`}></span>
-                            Python Service Status
-                        </h2>
-                    </div>
-                    <div className="ds-card-body">
-                        <div className="ds-grid ds-gap-md mb-md" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                            <div className="ds-stat-block">
-                                <span className="ds-stat-label">Service</span>
-                                <span className="ds-stat-value ds-text-success-400">Online</span>
-                            </div>
-                            <div className="ds-stat-block">
-                                <span className="ds-stat-label">Version</span>
-                                <span className="ds-stat-value">{status?.version || '1.3.0'}</span>
-                            </div>
-                        </div>
-                        <div className="ds-stat-block mb-md">
-                            <span className="ds-stat-label">Main Model DB</span>
-                            <span className="ds-stat-value">{status?.model_loaded ? '✅ Active' : '❌ Missing'}</span>
-                        </div>
-                        {status?.training?.is_training && (
-                            <div className="ds-alert ds-alert--warning mt-md">
-                                ⏳ Model training in progress...
-                            </div>
-                        )}
-                    </div>
-                </Card>
-
-                <Card>
-                    <div className="ds-card-header">
-                        <h2 className="ds-text-heading-3">Risk Engine Database</h2>
-                    </div>
-                    <div className="ds-card-body">
-                        <div className="ds-stat-block">
-                            <span className="ds-stat-label">Total Fair Odds Computed</span>
-                            <span className="ds-stat-value ds-text-primary-400">{status?.total_risk_rows?.toLocaleString() || 0}</span>
-                        </div>
-                    </div>
-                </Card>
-            </div>
-
-            {/* Main Area: Recent Risk Engine Output */}
-            <Card className="ds-flex-1">
-                <div className="ds-flex ds-justify-between ds-items-center mb-md ds-card-header">
-                    <h2 className="ds-text-heading-3">Latest Risk Analyses (Fair Odds)</h2>
-                    <Badge variant="primary" pulse>Live updating</Badge>
+            {/* Main Content Area */}
+            <Card title="Latest Risk Analyses" subtitle="Real-time fair odds calculated by the backend engine.">
+                <div className="ds-flex ds-justify-between ds-items-center mb-md px-md">
+                    <Badge variant="primary" pulse>Live Pulse Active</Badge>
                 </div>
 
-                <div style={{ padding: '0 var(--spacing-md) var(--spacing-md)' }}>
+                <div className="ds-table-overflow">
                     <Table
                         columns={columns}
                         data={recentAnalyses}
                         rowKey={(record) => `${record.fixture_id}-${record.market_type}-${record.selection}-${record.analyzed_at}`}
                         loading={false}
-                        style={{ maxHeight: '600px', overflowY: 'auto' }}
                     />
                 </div>
             </Card>
-
-        </div>
+        </Stack>
     );
 };
 
