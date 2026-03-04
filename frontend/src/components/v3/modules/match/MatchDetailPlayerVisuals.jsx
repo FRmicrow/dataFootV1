@@ -50,23 +50,29 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
         ];
     };
 
-    const renderPlayerCard = (p) => (
-        <div
-            key={p.fixture_player_stats_id}
-            className={`player-mini-card ${selectedPlayer?.fixture_player_stats_id === p.fixture_player_stats_id ? 'active' : ''}`}
-            onClick={() => setSelectedPlayer(p)}
-        >
-            <div className="p-card-header">
-                <span className="p-rating" style={{ background: getRatingColor(p.rating) }}>
-                    {p.rating || 'N/A'}
-                </span>
-                <span className="p-name">{p.player_name}</span>
+    const renderPlayerCard = (p) => {
+        const key = p.player_id || p.fixture_player_stats_id || Math.random().toString();
+        const isActive = (selectedPlayer?.player_id && selectedPlayer.player_id === p.player_id) ||
+            (selectedPlayer?.fixture_player_stats_id && selectedPlayer.fixture_player_stats_id === p.fixture_player_stats_id);
+
+        return (
+            <div
+                key={key}
+                className={`player-mini-card ${isActive ? 'active' : ''}`}
+                onClick={() => setSelectedPlayer({ ...p })}
+            >
+                <div className="p-card-header">
+                    <span className="p-rating" style={{ background: getRatingColor(p.rating) }}>
+                        {p.rating || 'N/A'}
+                    </span>
+                    <span className="p-name">{p.player_name}</span>
+                </div>
+                <div className="p-card-meta">
+                    {p.minutes_played}' • {p.side?.toUpperCase()}
+                </div>
             </div>
-            <div className="p-card-meta">
-                {p.minutes_played}' • {p.side?.toUpperCase()}
-            </div>
-        </div>
-    );
+        );
+    };
 
     const getRatingColor = (r) => {
         if (!r || r === 'N/A') return '#475569';

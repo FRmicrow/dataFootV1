@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../../../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Badge, Stack, Button, Grid } from '../../../../../design-system';
+import { Card, Table, Badge, Stack, Button, Grid, Accordion } from '../../../../../design-system';
 
 const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
     const navigate = useNavigate();
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [venueFilter, setVenueFilter] = useState('all');
-    const [winsOnly, setWinsOnly] = useState(false);
-    const [defeatOnly, setDefeatOnly] = useState(false);
+
+    // New unified result filter state
+    const [resultFilter, setResultFilter] = useState('all'); // 'all', 'win', 'draw', 'defeat'
     const [selectedCompName, setSelectedCompName] = useState('all');
 
     useEffect(() => {
@@ -19,7 +20,8 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
                 const data = await api.getClubMatches(clubId, {
                     year,
                     competition: competitionId !== 'all' ? competitionId : undefined,
-                    venue_type: venueFilter !== 'all' ? venueFilter : undefined
+                    venue_type: venueFilter !== 'all' ? venueFilter : undefined,
+                    limit: 100 // Fetch all matches of the season
                 });
                 setMatches(data);
             } catch (error) {
@@ -36,32 +38,45 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
         const comps = Array.from(new Set(matches.map(m => m.league_name || m.competition?.name))).filter(Boolean);
 
         let filtered = [...matches];
-        if (winsOnly) {
+
+        // Apply Native Venue filtering just in case API venue filter is ignored
+        if (venueFilter === 'home') {
+            filtered = filtered.filter(m => String(m.home_id || m.home?.id) === String(clubId));
+        } else if (venueFilter === 'away') {
+            filtered = filtered.filter(m => String(m.away_id || m.away?.id) === String(clubId));
+        }
+
+        if (resultFilter !== 'all') {
             filtered = filtered.filter(m => {
+                if (!finishedStatuses.includes(m.status)) return true; // KEEP ALL UPCOMING MATCHES
                 const isHome = String(m.home_id || m.home?.id) === String(clubId);
-                const [hg, ag] = (m.score || `${m.home_goals}-${m.away_goals}`).split('-').map(Number);
-                return isHome ? (hg > ag) : (ag > hg);
+                const hg = parseInt(m.home_goals, 10);
+                const ag = parseInt(m.away_goals, 10);
+                const [shg, sag] = (m.score || "").split('-').map(Number);
+                const final_hg = !isNaN(hg) ? hg : shg;
+                const final_ag = !isNaN(ag) ? ag : sag;
+
+                if (resultFilter === 'draw') return final_hg === final_ag;
+                if (resultFilter === 'win') return isHome ? (final_hg > final_ag) : (final_ag > final_hg);
+                if (resultFilter === 'defeat') return isHome ? (final_ag > final_hg) : (final_hg > final_ag);
+                return true;
             });
         }
-        if (defeatOnly) {
-            filtered = filtered.filter(m => {
-                const isHome = String(m.home_id || m.home?.id) === String(clubId);
-                const [hg, ag] = (m.score || `${m.home_goals}-${m.away_goals}`).split('-').map(Number);
-                return isHome ? (ag > hg) : (hg > ag);
-            });
-        }
+
         if (selectedCompName !== 'all') {
             filtered = filtered.filter(m => (m.league_name || m.competition?.name) === selectedCompName);
         }
 
         const sorted = filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+        const now = new Date();
+
         return {
             finished: sorted.filter(m => finishedStatuses.includes(m.status)),
-            scheduled: sorted.filter(m => !finishedStatuses.includes(m.status)).reverse(),
+            scheduled: sorted.filter(m => !finishedStatuses.includes(m.status) && new Date(m.date) > now).reverse(),
             competitionList: comps
         };
-    }, [matches, clubId, winsOnly, defeatOnly, selectedCompName]);
+    }, [matches, clubId, resultFilter, selectedCompName, venueFilter]);
 
     if (loading) return (
         <Card style={{ padding: '80px', textAlign: 'center' }}>
@@ -75,57 +90,104 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
     const MatchRow = ({ m }) => {
         const isHome = String(m.home_id || m.home?.id) === String(clubId);
         const [hg, ag] = (m.score || `${m.home_goals}-${m.away_goals}`).split('-').map(Number);
-        const result = hg === ag ? 'D' : (isHome ? (hg > ag ? 'W' : 'L') : (ag > hg ? 'W' : 'L'));
+        let result = null;
+        if (m.status !== 'NS') {
+            result = hg === ag ? 'D' : (isHome ? (hg > ag ? 'W' : 'L') : (ag > hg ? 'W' : 'L'));
+        }
+
+        const getResultVariant = (res) => {
+            if (res === 'W') return 'success';
+            if (res === 'L') return 'danger';
+            if (res === 'D') return 'warning';
+            return 'primary';
+        };
+
+        const compName = m.league_name || m.competition?.name;
 
         return (
-            <div className={`ds-match-row ${result.toLowerCase()}`} onClick={() => navigate(`/match/${m.match_id || m.fixture_id}`)}>
-                <Stack direction="row" align="center" gap="var(--spacing-xl)">
-                    <div style={{ width: '60px', textAlign: 'center' }}>
-                        <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold' }}>{new Date(m.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{new Date(m.date).getFullYear()}</div>
+            <div className="ds-fixture-row" onClick={() => navigate(`/match/${m.match_id || m.fixture_id}`)}>
+                <Grid columns="80px 1fr 40px" gap="var(--spacing-md)" align="center">
+
+                    {/* Date Block */}
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold', color: 'var(--color-text-main)' }}>
+                            {new Date(m.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                            {new Date(m.date).getFullYear()}
+                        </div>
                     </div>
 
-                    <div style={{ flex: 1 }}>
-                        <Stack gap="4px">
-                            <Stack direction="row" align="center" gap="8px">
-                                <img src={m.league_logo || m.competition?.logo} alt="" style={{ width: '14px' }} />
-                                <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>{m.league_name || m.competition?.name}</span>
+                    {/* Match Center Block */}
+                    <Stack gap="2px">
+                        {compName && (
+                            <Stack direction="row" align="center" justify="center" gap="8px" style={{ marginBottom: '4px' }}>
+                                <img src={m.league_logo || m.competition?.logo} alt="" style={{ width: '12px' }} />
+                                <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{compName}</span>
                             </Stack>
-                            <Stack direction="row" align="center" justify="space-between">
-                                <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1, justifyContent: 'flex-end' }}>
-                                    <span style={{ fontWeight: isHome ? 'bold' : 'normal', color: isHome ? 'white' : 'var(--color-text-muted)' }}>{isHome ? clubName : (m.home_name || m.home?.name)}</span>
-                                    <img src={m.home_logo || m.home?.logo} alt="" style={{ width: '24px' }} />
-                                </Stack>
+                        )}
 
-                                <div className="ds-match-score">
-                                    {m.status === 'NS' ? (
-                                        <Badge variant="neutral">{new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Badge>
-                                    ) : (
-                                        <Stack direction="row" gap="4px" align="center">
-                                            <span className="s">{hg}</span>
-                                            <span className="v">-</span>
-                                            <span className="s">{ag}</span>
-                                        </Stack>
-                                    )}
-                                </div>
-
-                                <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1 }}>
-                                    <img src={m.away_logo || m.away?.logo} alt="" style={{ width: '24px' }} />
-                                    <span style={{ fontWeight: !isHome ? 'bold' : 'normal', color: !isHome ? 'white' : 'var(--color-text-muted)' }}>{!isHome ? clubName : (m.away_name || m.away?.name)}</span>
-                                </Stack>
+                        <Grid columns="1fr 80px 1fr" gap="var(--spacing-sm)" align="center">
+                            {/* Home */}
+                            <Stack direction="row" gap="var(--spacing-sm)" align="center" justify="flex-end">
+                                <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: isHome ? 'bold' : 'normal', color: isHome ? 'white' : 'var(--color-text-main)', textAlign: 'right' }}>
+                                    {isHome ? clubName : (m.home_name || m.home?.name)}
+                                </span>
+                                <img src={m.home_logo || m.home?.logo} alt="" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
                             </Stack>
-                        </Stack>
-                    </div>
 
-                    <div style={{ width: '32px' }}>
-                        {m.status !== 'NS' && (
-                            <Badge variant={result === 'W' ? 'success' : result === 'L' ? 'danger' : 'warning'} size="sm">{result}</Badge>
+                            {/* Score / Time */}
+                            <div style={{ textAlign: 'center' }}>
+                                {m.status === 'NS' ? (
+                                    <Badge variant="neutral" size="sm">{new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Badge>
+                                ) : (
+                                    <div style={{ fontFamily: 'Inter, monospace', fontSize: 'var(--font-size-lg)', fontWeight: '900', color: 'var(--color-text-main)' }}>
+                                        <span>{hg}</span> <span style={{ color: 'var(--color-text-muted)' }}>-</span> <span>{ag}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Away */}
+                            <Stack direction="row" gap="var(--spacing-sm)" align="center" justify="flex-start">
+                                <img src={m.away_logo || m.away?.logo} alt="" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+                                <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: !isHome ? 'bold' : 'normal', color: !isHome ? 'white' : 'var(--color-text-main)', textAlign: 'left' }}>
+                                    {!isHome ? clubName : (m.away_name || m.away?.name)}
+                                </span>
+                            </Stack>
+                        </Grid>
+                    </Stack>
+
+                    {/* Result Badge */}
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        {result && (
+                            <Badge
+                                variant={getResultVariant(result)}
+                                style={{
+                                    minWidth: '60px',
+                                    padding: '2px 12px',
+                                    textAlign: 'center',
+                                    fontSize: '10px',
+                                    fontWeight: 'bold',
+                                    letterSpacing: '0.05em'
+                                }}
+                            >
+                                {result === 'W' ? 'WIN' : result === 'L' ? 'LOSE' : 'DRAW'}
+                            </Badge>
                         )}
                     </div>
-                </Stack>
+                </Grid>
             </div>
         );
     };
+
+    const headerFilters = (
+        <Stack direction="row" gap="8px">
+            <Button size="xs" variant={resultFilter === 'all' ? 'primary' : 'ghost'} onClick={() => setResultFilter('all')}>All</Button>
+            <Button size="xs" variant={resultFilter === 'win' ? 'primary' : 'ghost'} onClick={() => setResultFilter('win')}>Win</Button>
+            <Button size="xs" variant={resultFilter === 'draw' ? 'primary' : 'ghost'} onClick={() => setResultFilter('draw')}>Draw</Button>
+            <Button size="xs" variant={resultFilter === 'defeat' ? 'primary' : 'ghost'} onClick={() => setResultFilter('defeat')}>Defeat</Button>
+        </Stack>
+    );
 
     return (
         <Stack gap="var(--spacing-xl)">
@@ -140,22 +202,6 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
                                 </Button>
                             ))}
                         </Stack>
-                        <Stack direction="row" gap="8px">
-                            <Badge
-                                variant={winsOnly ? 'success' : 'neutral'}
-                                onClick={() => { setWinsOnly(!winsOnly); setDefeatOnly(false); }}
-                                style={{ cursor: 'pointer' }}
-                            >
-                                Wins Only
-                            </Badge>
-                            <Badge
-                                variant={defeatOnly ? 'danger' : 'neutral'}
-                                onClick={() => { setDefeatOnly(!defeatOnly); setWinsOnly(false); }}
-                                style={{ cursor: 'pointer' }}
-                            >
-                                Defeats Only
-                            </Badge>
-                        </Stack>
                     </Stack>
 
                     <Stack direction="row" gap="4px" style={{ overflowX: 'auto', paddingBottom: '4px' }}>
@@ -169,14 +215,14 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
 
             <Grid columns="1fr" gap="var(--spacing-lg)">
                 {scheduled.length > 0 && (
-                    <Card title="Upcoming Fixtures">
+                    <Accordion title="Upcoming Fixtures" defaultExpanded={true} maxHeight="750px">
                         <Stack gap="var(--spacing-xs)">
                             {scheduled.map(m => <MatchRow key={m.fixture_id || m.match_id} m={m} />)}
                         </Stack>
-                    </Card>
+                    </Accordion>
                 )}
 
-                <Card title="Match History" subtitle="Full results for the selected period">
+                <Accordion title="Match History" defaultExpanded={true} maxHeight="750px" headerRight={headerFilters}>
                     <Stack gap="var(--spacing-xs)">
                         {finished.map(m => <MatchRow key={m.fixture_id || m.match_id} m={m} />)}
                         {finished.length === 0 && (
@@ -185,7 +231,7 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
                             </div>
                         )}
                     </Stack>
-                </Card>
+                </Accordion>
             </Grid>
         </Stack>
     );

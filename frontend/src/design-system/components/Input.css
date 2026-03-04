@@ -1,0 +1,27 @@
+.ds-input {
+    background: var(--glass-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-main);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    outline: none;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ds-input:focus {
+    border-color: var(--color-primary-400);
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+.ds-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ds-input::placeholder {
+    color: var(--color-text-dim);
+}

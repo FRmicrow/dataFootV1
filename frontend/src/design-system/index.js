@@ -15,6 +15,7 @@ export { default as FixtureRow } from './components/FixtureRow';
 export { default as TeamSelector } from './components/TeamSelector';
 export { default as LeagueHeader } from './components/LeagueHeader';
 export { default as Select } from './components/Select';
+export { default as Input } from './components/Input';
 export { default as Skeleton, CardSkeleton, MetricCardSkeleton, TableSkeleton } from './components/Skeleton';
 
 import './tokens.css';
@@ -27,3 +28,5 @@ import './components/LeagueCard.css';
 import './components/PlayerCard.css';
 import './components/FixtureRow.css';
 import './components/TeamSelector.css';
+
+export { default as Accordion } from './components/Accordion';

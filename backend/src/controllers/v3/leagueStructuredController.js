@@ -8,7 +8,7 @@ import LeagueRepository from '../../repositories/v3/LeagueRepository.js';
 const CACHE_KEY = 'v3_structured_leagues';
 let cache = {
     data: null,
-    timestamp: 0
+    timestamp: 0 // Resetting cache here 
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -25,7 +25,7 @@ export const getStructuredLeagues = async (req, res) => {
 
         const structured = {
             international: {
-                global: [],
+                world: [],
                 continental: {} // Keyed by continent name
             },
             national: [] // List of countries with their leagues
@@ -34,6 +34,8 @@ export const getStructuredLeagues = async (req, res) => {
         const nationalMap = {};
 
         rows.forEach(row => {
+            const isCup = row.league_type?.toLowerCase() === 'cup';
+
             const league = {
                 id: row.league_id,
                 api_id: row.api_id,
@@ -41,8 +43,12 @@ export const getStructuredLeagues = async (req, res) => {
                 type: row.league_type,
                 logo: row.logo_url,
                 rank: row.league_rank,
-                is_cup: row.league_type?.toLowerCase() === 'cup',
-                seasons_count: row.seasons_count
+                is_cup: isCup,
+                seasons_count: row.seasons_count,
+                leader_name: isCup ? null : row.leader_name,
+                leader_logo: isCup ? null : row.leader_logo,
+                current_matchday: isCup ? null : row.current_matchday,
+                current_round: isCup ? (row.next_round_name || row.last_round_name) : null
             };
 
             const isVirtual = row.country_name === row.continent;
@@ -50,7 +56,7 @@ export const getStructuredLeagues = async (req, res) => {
 
             if (isVirtual) {
                 if (isWorld) {
-                    structured.international.global.push(league);
+                    structured.international.world.push(league);
                 } else {
                     const continent = row.continent || 'Other';
                     if (!structured.international.continental[continent]) {

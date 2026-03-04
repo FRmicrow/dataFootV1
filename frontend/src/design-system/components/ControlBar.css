@@ -1,13 +1,15 @@
 .ds-control-bar {
     background: var(--color-bg-card);
-    border-bottom: 1px solid var(--color-border);
-    padding: var(--spacing-xs) var(--spacing-xl);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xs) var(--spacing-lg);
+    margin-top: var(--spacing-md);
     margin-bottom: var(--spacing-md);
     position: sticky;
     top: 64px;
-    /* Below Navbar */
     z-index: var(--z-index-sticky);
     backdrop-filter: var(--glass-blur);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .ds-control-bar-content {

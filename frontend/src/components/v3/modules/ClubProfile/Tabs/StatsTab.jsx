@@ -43,8 +43,8 @@ const StatsTab = ({ clubId, year, competitionId }) => {
         </Card>
     );
 
-    const MetricRow = ({ label, value, subValue, variant = 'neutral' }) => (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+    const MetricRow = ({ label, value, subValue, variant = 'neutral', title }) => (
+        <div title={title} className={title ? 'tooltip-hover' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)', cursor: title ? 'help' : 'default' }}>
             <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>{label}</span>
             <Stack align="flex-end" gap="2px">
                 <span style={{ fontWeight: 'bold' }}>{value || '—'}</span>
@@ -73,28 +73,30 @@ const StatsTab = ({ clubId, year, competitionId }) => {
                 <Grid columns="1fr 1fr 1fr" gap="var(--spacing-lg)">
                     <Card title="Possession & Passing">
                         <Stack>
-                            <MetricRow label="Ball Possession" value={`${s.possession}%`} />
-                            <MetricRow label="Pass Accuracy" value={`${s.pass_accuracy}%`} />
-                            <MetricRow label="Corners / Match" value={s.corners_per_match} />
-                            <MetricRow label="Touches in Box" value={s.touches_per_match} />
+                            <MetricRow label="Ball Possession" value={`${s.possession}%`} title="Average percentage of time the team controls the ball per match." />
+                            <MetricRow label="Pass Accuracy" value={`${s.pass_accuracy}%`} title="Percentage of successful passes." />
+                            <MetricRow label="Corners / Match" value={s.corners_per_match} title="Average corners won per match." />
+                            <MetricRow label="Touches in Box" value={s.touches_per_match} title="Average number of ball touches inside the opponent's penalty area per match." />
                         </Stack>
                     </Card>
 
                     <Card title="Shooting & Efficiency">
                         <Stack>
-                            <MetricRow label="Shots / Match" value={s.shots_per_match} subValue={`${s.shots_on_target_per_match} Target`} />
-                            <MetricRow label="Goal Conv. Rate" value={`${s.shot_conversion}%`} />
-                            <MetricRow label="Big Chances / M" value={s.big_chances_per_match} />
-                            <MetricRow label="Goals Scored / M" value={s.goals_scored_per_match} />
+                            <MetricRow label="Expected Goals (xG)" value={s.expected_goals || '—'} title="Cumulative probability of shots resulting in a goal (Expected Goals)." />
+                            <MetricRow label="Shots / Match" value={s.shots_per_match} subValue={`${s.shots_on_target_per_match} Target`} title="Total shots attempted per match, and how many hit the target." />
+                            <MetricRow label="Goal Conv. Rate" value={`${s.shot_conversion}%`} title="Percentage of shots that result in a goal." />
+                            <MetricRow label="Big Chances / M" value={s.big_chances_per_match} title="Average number of clear scoring opportunities per match." />
+                            <MetricRow label="Goals Scored / M" value={s.goals_scored_per_match} title="Average number of goals scored per match in this selection." />
                         </Stack>
                     </Card>
 
                     <Card title="Defense & Discipline">
                         <Stack>
-                            <MetricRow label="Clean Sheet %" value={`${s.clean_sheet_pct}%`} />
-                            <MetricRow label="Gls Conceded / M" value={s.goals_conceded_per_match} />
-                            <MetricRow label="Saves / Match" value={s.saves_per_match} />
-                            <MetricRow label="Yellow / Match" value={s.yellow_cards_per_match} />
+                            <MetricRow label="Clean Sheet %" value={`${s.clean_sheet_pct}%`} title="Percentage of matches where the team conceded zero goals." />
+                            <MetricRow label="xG Against (xGA)" value={s.expected_goals_against || '—'} title="Cumulative Expected Goals conceded. Measures defensive frailty." />
+                            <MetricRow label="Gls Conceded / M" value={s.goals_conceded_per_match} title="Average goals conceded per match." />
+                            <MetricRow label="Saves / Match" value={s.saves_per_match} title="Average goalkeeper saves per match." />
+                            <MetricRow label="Yellow / Match" value={s.yellow_cards_per_match} title="Average yellow cards received per match." />
                         </Stack>
                     </Card>
                 </Grid>

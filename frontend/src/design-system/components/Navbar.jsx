@@ -33,20 +33,20 @@ const Navbar = () => {
                     <NavLink
                         key={link.to}
                         to={link.to}
-                        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                        style={link.color ? { color: link.color } : {}}
+                        className={({ isActive }) => `ds-button ds-button--md ${isActive ? 'ds-button--primary active' : 'ds-button--ghost'}`}
+                        style={link.color ? { color: link.color, borderColor: link.color } : {}}
                     >
-                        {link.label}
+                        <span className="ds-button-text">{link.label}</span>
                     </NavLink>
                 ))}
+                <button
+                    className={`ds-button ds-button--md ds-button--ghost ${debugMode ? 'active' : ''}`}
+                    onClick={() => setDebugMode(!debugMode)}
+                    title="Toggle Design System Debug Mode"
+                >
+                    <span className="ds-button-text">🛠️</span>
+                </button>
             </div>
-            <button
-                className={`debug-toggle ${debugMode ? 'active' : ''}`}
-                onClick={() => setDebugMode(!debugMode)}
-                title="Toggle Design System Debug Mode"
-            >
-                🛠️
-            </button>
         </nav>
     );
 };
