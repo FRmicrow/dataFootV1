@@ -31,7 +31,7 @@ class OddsRefineryService {
             ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `;
 
-        const dbConn = db.instance || db; // Handle better-sqlite3 instance wrapping if applicable
+        const dbConn = db.db || db; // Use the raw better-sqlite3 instance if it's the wrapper
 
         for (const bet of bookmaker.bets) {
             const marketName = bet.name;

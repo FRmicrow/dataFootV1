@@ -141,19 +141,29 @@ const MLOrchestratorPage = () => {
                 <Grid columns="repeat(4, 1fr)" gap="md">
                     <Button
                         variant="primary"
-                        icon="⚡"
+                        icon="⏪"
                         block
-                        onClick={() => api.runMLOddsCatchup()}
+                        onClick={async () => {
+                            try {
+                                await api.runMLOddsCatchup();
+                                alert("Past odds sync triggered.");
+                            } catch (e) { alert("Sync failed."); }
+                        }}
                     >
-                        Run Odds Catchup
+                        Sync Past Odds
                     </Button>
                     <Button
-                        variant="outline"
-                        icon="🔄"
+                        variant="primary"
+                        icon="⏩"
                         block
-                        onClick={() => api.syncMLUpcomingOdds()}
+                        onClick={async () => {
+                            try {
+                                await api.syncMLUpcomingOdds();
+                                alert("Future odds sync triggered.");
+                            } catch (e) { alert("Sync failed."); }
+                        }}
                     >
-                        Sync Current Odds
+                        Sync Future Odds
                     </Button>
                     <Button
                         variant="outline"
@@ -161,7 +171,7 @@ const MLOrchestratorPage = () => {
                         block
                         onClick={() => api.syncMLAdvancedOdds()}
                     >
-                        Advanced Sync
+                        Detailed Market Sync
                     </Button>
                     <Button
                         variant="surface"

@@ -101,22 +101,39 @@ const MLOddsPage = () => {
                         variant="success"
                     />
                 </Grid>
-                <div className="ds-mb-xs">
+                <div className="ds-mb-xs ds-flex ds-gap-sm">
                     <Button
-                        variant="primary"
-                        icon="⚡"
+                        variant="outline"
+                        icon="⏪"
                         onClick={async () => {
-                            if (window.confirm("Launch a mass odds synchronization?")) {
+                            if (window.confirm("Launch a historical catch-up for past match odds (last 7 days)?")) {
                                 try {
                                     await api.runMLOddsCatchup();
-                                    await fetchUpcoming();
+                                    alert("Past odds synchronization completed.");
                                 } catch (e) {
-                                    console.error(e);
+                                    alert("Sync failed (Past matches).");
                                 }
                             }
                         }}
                     >
-                        Sync Odds Feed
+                        Sync Past Odds
+                    </Button>
+                    <Button
+                        variant="primary"
+                        icon="⏩"
+                        onClick={async () => {
+                            if (window.confirm("Launch a synchronization for upcoming match odds (next 7 days)?")) {
+                                try {
+                                    await api.syncMLUpcomingOdds();
+                                    await fetchUpcoming();
+                                    alert("Upcoming odds synchronization completed.");
+                                } catch (e) {
+                                    alert("Sync failed (Upcoming matches).");
+                                }
+                            }
+                        }}
+                    >
+                        Sync Future Odds
                     </Button>
                 </div>
             </div>

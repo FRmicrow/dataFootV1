@@ -21,9 +21,12 @@ La fonctionnalité d'importation et d'affichage des cotes pré-match (Odds) est 
 - **Redesign des Modules** : Refonte complète des pages `Orchestrator`, `Simulations`, `Recommendations` et `Odds` pour une conformité à 100% avec le **Design System V3**.
 - **Composants Premium** : Utilisation intensive de `MetricCard`, `Stack`, `Grid` et `Badge` pour une data-visualisation esthétique.
 - **Header Polished** : Ajout d'un dégradé radial et de bordures lumineuses sur l'en-tête du Hub.
+- **Double Bouton de Sync** : Séparation claire entre **Sync Past Odds** (rattrapage historique) et **Sync Future Odds** (matchs à venir) dans les pages Odds et Orchestrator.
+- **Stabilisation Backend** : Correction des erreurs 500 liées à l'accès à la base de données et au mapping des identifiants API (utilisation de l'api_id externe).
 
-### 🚀 Bulk Catchup
-- **Script automatisé** : Création de `oddsCatchupBulk.js` permettant de rattraper les cotes pour toutes les ligues déjà présentes en base (plus de 2700 combinaisons ligue/saison supportées).
+### 🚀 Bulk Catchup & Sync
+- **Rattrapage Historique** : Utilisation de `runMLOddsCatchup` pour récupérer les cotes de fermeture des 7 derniers jours.
+- **Synchronisation Pré-Match** : Utilisation de `syncMLUpcomingOdds` pour les matchs des 7 prochains jours, avec réconciliation automatique des probabilités ML.
 
 ## Vérification effectuée
 

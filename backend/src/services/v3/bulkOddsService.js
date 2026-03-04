@@ -92,7 +92,14 @@ export const ingestMultiMarketOdds = async (fixtureId) => {
     console.log(`📡 [US_140] Depth fetching odds for fixture ${fixtureId}...`);
 
     try {
-        const response = await footballApi.getOdds({ fixture: fixtureId });
+        // Fetch the external api_id from DB if not already provided
+        const fixture = db.get("SELECT api_id FROM V3_Fixtures WHERE fixture_id = ?", [fixtureId]);
+        if (!fixture || !fixture.api_id) {
+            console.error(`❌ [US_140] Fixture ${fixtureId} not found or missing api_id`);
+            return { success: false, reason: 'fixture_not_found' };
+        }
+
+        const response = await footballApi.getOdds({ fixture: fixture.api_id });
         const data = response.response?.[0];
         if (!data || !data.bookmakers?.length) {
             return { success: false, reason: 'no_odds_available' };
