@@ -22,32 +22,32 @@ const MachineLearningHub = () => {
                     </div>
                 </div>
 
-                <div className="ds-tabs mt-lg">
+                <nav className="ml-control-bar mt-lg">
                     <NavLink
                         to="/machine-learning/orchestrator"
-                        className={({ isActive }) => `ds-tab ${isActive ? 'ds-tab--active' : ''}`}
+                        className={({ isActive }) => `ml-control-btn ${isActive ? 'active' : ''}`}
                     >
-                        <span>⚙️ Orchestrator & Risk Engine</span>
+                        <span>⚙️</span> Orchestrator
                     </NavLink>
                     <NavLink
                         to="/machine-learning/simulations"
-                        className={({ isActive }) => `ds-tab ${isActive ? 'ds-tab--active' : ''}`}
+                        className={({ isActive }) => `ml-control-btn ${isActive ? 'active' : ''}`}
                     >
-                        <span>🧪 Simulations & Strategy</span>
+                        <span>🧪</span> Simulations
                     </NavLink>
                     <NavLink
                         to="/machine-learning/betting"
-                        className={({ isActive }) => `ds-tab ${isActive ? 'ds-tab--active' : ''}`}
+                        className={({ isActive }) => `ml-control-btn ${isActive ? 'active' : ''}`}
                     >
-                        <span>💰 Betting Hub</span>
+                        <span>💰</span> Betting Hub
                     </NavLink>
                     <NavLink
                         to="/machine-learning/odds"
-                        className={({ isActive }) => `ds-tab ${isActive ? 'ds-tab--active' : ''}`}
+                        className={({ isActive }) => `ml-control-btn ${isActive ? 'active' : ''}`}
                     >
-                        <span>📊 Pre-Match Odds</span>
+                        <span>📊</span> Odds
                     </NavLink>
-                </div>
+                </nav>
             </header>
 
             <main className="ml-hub-content mt-xl">

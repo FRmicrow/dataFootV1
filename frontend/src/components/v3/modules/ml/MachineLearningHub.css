@@ -4,12 +4,69 @@
 }
 
 .ml-hub-header {
-    background: var(--color-surface-900);
+    background: radial-gradient(circle at top right, var(--color-surface-800), var(--color-surface-900));
     border: 1px solid var(--color-surface-800);
     border-radius: var(--radius-xl);
     padding: var(--spacing-xl);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     border-top: 2px solid var(--color-primary-500);
+    margin-bottom: var(--spacing-2xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.ml-hub-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-primary-400), transparent);
+    opacity: 0.3;
+}
+
+/* Control Bar Styles */
+.ml-control-bar {
+    display: flex;
+    background: var(--color-surface-950);
+    border: 1px solid var(--color-surface-800);
+    padding: 6px;
+    border-radius: var(--radius-full);
+    gap: 4px;
+    width: fit-content;
+    margin: 0 auto;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.ml-control-btn {
+    padding: 10px 24px;
+    border-radius: var(--radius-full);
+    color: var(--color-neutral-400);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.ml-control-btn:hover {
+    color: var(--color-white);
+    background: var(--color-surface-800);
+}
+
+.ml-control-btn.active {
+    color: var(--color-white);
+    background: var(--color-primary-600);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    /* Approximate primary shadow */
+}
+
+.ml-control-btn span {
+    font-size: 16px;
 }
 
 .ml-hub-content {
