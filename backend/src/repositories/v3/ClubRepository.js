@@ -121,11 +121,12 @@ class ClubRepository extends BaseRepository {
                     SUM(CASE WHEN home_team_id = ? THEN goals_home ELSE goals_away END) as scored,
                     SUM(CASE WHEN home_team_id = ? THEN goals_away ELSE goals_home END) as conceded,
                     SUM(CASE WHEN home_team_id = ? AND goals_away = 0 THEN 1 WHEN away_team_id = ? AND goals_home = 0 THEN 1 ELSE 0 END) as clean_sheets,
-                    SUM(CASE WHEN (home_team_id = ? AND goals_home > goals_away) OR (away_team_id = ? AND goals_away > goals_home) THEN 1 ELSE 0 END) as wins
+                    SUM(CASE WHEN (home_team_id = ? AND goals_home > goals_away) OR (away_team_id = ? AND goals_away > goals_home) THEN 1 ELSE 0 END) as wins,
+                    COUNT(fixture_id) as played
                 FROM V3_Fixtures
-                WHERE (home_team_id = ? OR away_team_id = ?) AND status_short = 'FT'
+                WHERE (home_team_id = ? OR away_team_id = ?) AND status_short IN ('FT', 'AET', 'PEN')
             `;
-            let goalsParams = [teamId, teamId, teamId, teamId, teamId, teamId, teamId, teamId];
+            let goalsParams = [teamId, teamId, teamId, teamId, teamId, teamId, teamId, teamId, teamId, teamId];
 
             if (year) { goalsSql += ` AND season_year = ?`; goalsParams.push(year); }
             if (competition && competition !== 'all') { goalsSql += ` AND league_id = ?`; goalsParams.push(competition); }
@@ -134,10 +135,12 @@ class ClubRepository extends BaseRepository {
 
             const g = this.db.get(goalsSql, cleanParams(goalsParams));
 
-            s.goals_scored_per_match = s.matches > 0 ? parseFloat((g.scored / s.matches).toFixed(2)) : 0;
-            s.goals_conceded_per_match = s.matches > 0 ? parseFloat((g.conceded / s.matches).toFixed(2)) : 0;
-            s.clean_sheet_pct = s.matches > 0 ? parseFloat(((g.clean_sheets / s.matches) * 100).toFixed(1)) : 0;
-            s.win_rate = s.matches > 0 ? parseFloat(((g.wins / s.matches) * 100).toFixed(1)) : 0;
+            const matchesPlayed = g.played || 0;
+
+            s.goals_scored_per_match = matchesPlayed > 0 ? parseFloat((g.scored / matchesPlayed).toFixed(2)) : 0;
+            s.goals_conceded_per_match = matchesPlayed > 0 ? parseFloat((g.conceded / matchesPlayed).toFixed(2)) : 0;
+            s.clean_sheet_pct = matchesPlayed > 0 ? parseFloat(((g.clean_sheets / matchesPlayed) * 100).toFixed(1)) : 0;
+            s.win_rate = matchesPlayed > 0 ? Math.min(100, parseFloat(((g.wins / matchesPlayed) * 100).toFixed(1))) : 0;
             s.shot_conversion = s.shots_per_match > 0 ? parseFloat(((s.goals_scored_per_match / s.shots_per_match) * 100).toFixed(1)) : 0;
 
             // Placeholders for fields not in DB yet

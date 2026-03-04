@@ -48,7 +48,7 @@ const V3LeaguesList = () => {
     };
 
     const totalLeaguesCount = structuredData ? (
-        structuredData.international.global.length +
+        structuredData.international.world.length +
         Object.values(structuredData.international.continental).reduce((acc, curr) => acc + curr.length, 0) +
         structuredData.national.reduce((acc, curr) => acc + curr.leagues.length, 0)
     ) : 0;
@@ -56,7 +56,7 @@ const V3LeaguesList = () => {
     const getFeaturedLeagues = () => {
         if (!structuredData) return [];
         const all = [
-            ...structuredData.international.global,
+            ...structuredData.international.world,
             ...Object.values(structuredData.international.continental).flat(),
             ...structuredData.national.flatMap(c => c.leagues)
         ];
@@ -89,7 +89,8 @@ const V3LeaguesList = () => {
                 title="Global Circuits"
                 subtitle="Verified competition registry and discovery hub"
                 badge={{ label: "Competition Registry", variant: "primary" }}
-                extra={<Badge variant="neutral">{totalLeaguesCount} Active Modules</Badge>}
+                extra={<div className="sf-badge sf-badge--neutral">{totalLeaguesCount} Active Modules</div>}
+                style={{ marginBottom: 0 }}
             />
 
             <PageContent>
@@ -103,11 +104,13 @@ const V3LeaguesList = () => {
                                     key={league.id}
                                     name={league.name}
                                     logo={league.logo}
-                                    rank={league.rank}
-                                    seasonsCount={league.seasons_count}
                                     isCup={league.is_cup}
                                     countryName={league.country_name}
                                     countryFlag={league.country_flag}
+                                    leaderName={league.leader_name}
+                                    leaderLogo={league.leader_logo}
+                                    currentMatchday={league.current_matchday}
+                                    currentRound={league.current_round}
                                     featured
                                     onClick={() => handleCardClick(league)}
                                 />
@@ -119,7 +122,8 @@ const V3LeaguesList = () => {
                 <Tabs
                     items={[
                         { id: 'NATIONAL', label: 'National Systems' },
-                        { id: 'INTERNATIONAL', label: 'International Circuits' }
+                        { id: 'WORLD', label: 'World' },
+                        { id: 'CONTINENTAL', label: 'Continental Competition (Club)' }
                     ]}
                     activeId={activeTab}
                     onChange={setActiveTab}
@@ -127,28 +131,35 @@ const V3LeaguesList = () => {
                 />
 
                 <div className="leagues-container">
-                    {activeTab === 'INTERNATIONAL' ? (
+                    {activeTab === 'WORLD' && (
                         <Stack gap="var(--spacing-2xl)">
-                            {structuredData.international.global.length > 0 && (
+                            {structuredData.international.world.length > 0 && (
                                 <section>
-                                    <h3 className="ds-section-subtitle">Global</h3>
+                                    <h3 className="ds-section-subtitle">World</h3>
                                     <Grid columns="repeat(auto-fill, minmax(240px, 1fr))" gap="var(--spacing-md)">
-                                        {structuredData.international.global.map(league => (
+                                        {structuredData.international.world.map(league => (
                                             <LeagueCard
                                                 key={league.id}
                                                 name={league.name}
                                                 logo={league.logo}
-                                                rank={league.rank}
-                                                seasonsCount={league.seasons_count}
                                                 isCup={league.is_cup}
+                                                countryName={league.country_name}
                                                 countryFlag={league.country_flag}
+                                                leaderName={league.leader_name}
+                                                leaderLogo={league.leader_logo}
+                                                currentMatchday={league.current_matchday}
+                                                currentRound={league.current_round}
                                                 onClick={() => handleCardClick(league)}
                                             />
                                         ))}
                                     </Grid>
                                 </section>
                             )}
+                        </Stack>
+                    )}
 
+                    {activeTab === 'CONTINENTAL' && (
+                        <Stack gap="var(--spacing-2xl)">
                             {Object.entries(structuredData.international.continental).map(([continent, items]) => (
                                 <section key={continent}>
                                     <h3 className="ds-section-subtitle">{continent}</h3>
@@ -158,9 +169,13 @@ const V3LeaguesList = () => {
                                                 key={league.id}
                                                 name={league.name}
                                                 logo={league.logo}
-                                                rank={league.rank}
-                                                seasonsCount={league.seasons_count}
                                                 isCup={league.is_cup}
+                                                countryName={league.country_name}
+                                                countryFlag={league.country_flag}
+                                                leaderName={league.leader_name}
+                                                leaderLogo={league.leader_logo}
+                                                currentMatchday={league.current_matchday}
+                                                currentRound={league.current_round}
                                                 onClick={() => handleCardClick(league)}
                                             />
                                         ))}
@@ -168,7 +183,9 @@ const V3LeaguesList = () => {
                                 </section>
                             ))}
                         </Stack>
-                    ) : (
+                    )}
+
+                    {activeTab === 'NATIONAL' && (
                         <Stack gap="var(--spacing-md)">
                             {structuredData.national.map(country => {
                                 const isExpanded = expandedCountries?.includes(country.name);
@@ -199,10 +216,13 @@ const V3LeaguesList = () => {
                                                             key={league.id}
                                                             name={league.name}
                                                             logo={league.logo}
-                                                            rank={league.rank}
-                                                            seasonsCount={league.seasons_count}
                                                             isCup={league.is_cup}
+                                                            countryName={league.country_name}
                                                             countryFlag={country.flag}
+                                                            leaderName={league.leader_name}
+                                                            leaderLogo={league.leader_logo}
+                                                            currentMatchday={league.current_matchday}
+                                                            currentRound={league.current_round}
                                                             onClick={() => handleCardClick(league)}
                                                         />
                                                     ))}

@@ -5,7 +5,7 @@
     position: relative;
     overflow: hidden;
     margin-bottom: var(--spacing-md);
-    background: linear-gradient(135deg, var(--header-accent) 0%, var(--header-secondary) 50%, var(--header-tertiary) 100%);
+    background: linear-gradient(135deg, var(--header-accent) 0%, var(--header-accent) 40%, var(--header-secondary) 85%, var(--header-tertiary) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: var(--shadow-xl);
 }
@@ -125,12 +125,13 @@
 }
 
 .ds-profile-venue-preview {
-    width: 140px;
-    height: 70px;
-    border-radius: var(--radius-sm);
+    width: 200px;
+    height: 100px;
+    border-radius: var(--radius-md);
     overflow: hidden;
-    border: 1px solid var(--color-border);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     background: var(--color-bg-card);
+    box-shadow: var(--shadow-md);
 }
 
 .ds-profile-venue-preview img {

@@ -2,15 +2,14 @@
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 var(--spacing-sm);
-    height: calc(100vh - 64px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+}
+
+.ds-club-page .ds-profile-header {
+    margin-bottom: var(--spacing-3xs);
 }
 
 .ds-club-content {
-    flex: 1;
-    overflow-y: auto;
+    padding-top: var(--spacing-3xs);
     padding-bottom: var(--spacing-xl);
     animation: slideUp 0.4s ease-out;
 }

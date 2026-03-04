@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Table, Badge, Stack, Button, Grid } from '../../../../design-system';
+import { Card, Table, Badge, Stack, Button, Grid, Input } from '../../../../design-system';
 
 const StandingsTable = ({
     standings = [],
@@ -147,18 +147,18 @@ const StandingsTable = ({
                     extra={idx === 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', background: 'rgba(255,255,255,0.03)', padding: '4px 12px', borderRadius: 'var(--radius-full)' }}>
                             <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--color-text-dim)' }}>FILTER RANKS</span>
-                            <input
+                            <Input
                                 type="number"
                                 value={rangeStart}
                                 onChange={e => setRangeStart(e.target.value)}
-                                style={{ width: '32px', background: 'transparent', border: 'none', color: 'white', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}
+                                style={{ width: '48px', textAlign: 'center', padding: '4px' }}
                             />
                             <span style={{ opacity: 0.3 }}>-</span>
-                            <input
+                            <Input
                                 type="number"
                                 value={rangeEnd}
                                 onChange={e => setRangeEnd(e.target.value)}
-                                style={{ width: '32px', background: 'transparent', border: 'none', color: 'white', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}
+                                style={{ width: '48px', textAlign: 'center', padding: '4px' }}
                             />
                             <Button size="xs" variant="ghost" onClick={handleRangeUpdate} loading={loading} style={{ padding: '2px 8px' }}>APPLY</Button>
                         </div>

@@ -41,10 +41,11 @@ const V3Layout = () => {
                         <NavLink
                             key={item.to}
                             to={item.to}
-                            className={({ isActive }) => `v3-nav-item ${isActive ? 'active' : ''}`}
+                            className={({ isActive }) => `ds-button ds-button--md v3-nav-item ${isActive ? 'ds-button--secondary active' : 'ds-button--ghost'}`}
+                            style={{ justifyContent: 'flex-start', width: '100%', marginBottom: '4px' }}
                             onClick={() => setIsSidebarOpen(false)}
                         >
-                            {item.label}
+                            <span className="ds-button-text">{item.label}</span>
                         </NavLink>
                     ))}
                 </nav>

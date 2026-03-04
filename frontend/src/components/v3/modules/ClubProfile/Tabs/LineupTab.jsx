@@ -56,20 +56,86 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
     }, [lineup]);
 
     const activeStarters = useMemo(() => {
-        const raw = (lineup?.roster || []).slice(0, 11);
-        const getPriority = (pos) => {
-            if (!pos) return 99;
-            const p = pos.toUpperCase();
-            if (p.includes('GK') || p.includes('GOAL') || p === 'G') return 0;
-            if (p.includes('MID') || p === 'M') return 2;
-            if (p.includes('DEF') || p.includes('BACK') || p === 'D') return 1;
-            if (p.includes('ATT') || p.includes('STRI') || p.includes('FORW') || p.includes('FW') || p.includes('ST') || p === 'A') return 3;
-            return 4;
-        };
-        return [...raw].sort((a, b) => getPriority(a.position) - getPriority(b.position));
-    }, [lineup]);
+        if (!roster || roster.length === 0) return (lineup?.roster || []).slice(0, 11);
 
-    const bench = (lineup?.roster || []).slice(11, 16);
+        const formation = lineup?.formation || '4-3-3';
+        const parts = formation.includes('.') ? formation.split('.') : formation.split('-');
+        const rows = parts.map(Number);
+
+        // Categorize by mapping position string to simple categories
+        const availGK = [];
+        const availDEF = [];
+        const availMID = [];
+        const availATT = [];
+
+        // Sort roster by appearances descending
+        const sortedRoster = [...roster].sort((a, b) => (b.appearances || 0) - (a.appearances || 0));
+
+        sortedRoster.forEach(p => {
+            const pos = (p.position || '').toUpperCase();
+            if (pos.includes('G')) availGK.push(p);
+            else if (pos.includes('D') || pos.includes('BACK')) availDEF.push(p);
+            else if (pos.includes('M')) availMID.push(p);
+            else availATT.push(p);
+        });
+
+        const pullPlayers = (count, prefs) => {
+            const pulled = [];
+            while (pulled.length < count) {
+                let found = false;
+                for (let arr of prefs) {
+                    if (arr.length > 0) {
+                        pulled.push(arr.shift());
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    // Fallback to any remaining player if we somehow run out
+                    if (availMID.length > 0) pulled.push(availMID.shift());
+                    else if (availDEF.length > 0) pulled.push(availDEF.shift());
+                    else if (availATT.length > 0) pulled.push(availATT.shift());
+                    else if (availGK.length > 0) pulled.push(availGK.shift());
+                    else break;
+                }
+            }
+            return pulled;
+        };
+
+        const newStarters = [];
+
+        // 1. GK
+        newStarters.push(...pullPlayers(1, [availGK]));
+
+        // 2. Outfield Rows
+        rows.forEach((count, i) => {
+            if (i === 0) {
+                // Defense
+                newStarters.push(...pullPlayers(count, [availDEF, availMID]));
+            } else if (i === rows.length - 1) {
+                // Attack
+                newStarters.push(...pullPlayers(count, [availATT, availMID, availDEF]));
+            } else {
+                // Midfield / Advanced Midfield
+                newStarters.push(...pullPlayers(count, [availMID, availATT, availDEF]));
+            }
+        });
+
+        while (newStarters.length < 11) {
+            newStarters.push({ player_id: Math.random(), name: 'Unknown', photo_url: '' });
+        }
+
+        return newStarters.slice(0, 11);
+    }, [lineup, roster]);
+
+    const bench = useMemo(() => {
+        if (!roster) return (lineup?.roster || []).slice(11, 16);
+        const starterIds = new Set(activeStarters.map(s => s.player_id));
+        return [...roster]
+            .filter(p => !starterIds.has(p.player_id))
+            .sort((a, b) => (b.appearances || 0) - (a.appearances || 0))
+            .slice(0, 5);
+    }, [activeStarters, roster, lineup]);
 
     const groupedRoster = useMemo(() => {
         if (!roster) return {};

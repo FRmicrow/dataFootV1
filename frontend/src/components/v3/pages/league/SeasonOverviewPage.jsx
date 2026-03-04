@@ -18,7 +18,7 @@ const SeasonOverviewPage = () => {
     const { id, year } = useParams();
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState('standings');
     const [selectedTeamId, setSelectedTeamId] = useState(null);
     const [teamSquad, setTeamSquad] = useState([]);
     const [squadLoading, setSquadLoading] = useState(false);
