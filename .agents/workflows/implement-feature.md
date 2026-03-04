@@ -20,8 +20,7 @@ Ce workflow coordonne la mise en œuvre d’une fonctionnalité du backlog de la
     - **Checklist Finale** : Ouvrez `review-checklist.md` et validez chaque point mentalement (ou via un commentaire interne).
 10. **LIVRAISON GÉNÉRÉE PAR LE QA (BLOQUANT)** : Si et seulement si la phase 9 est un succès sans erreur constatée :
     - Déclenchez **automatiquement** le workflow `/gitflow`.
-    - L'agent `@git-engineer` prendra le relais pour le commit final, la fusion `main` et la suppression de branche.
-    - **Nettoyage Final** : Une fois la Feature entièrement terminée, déplacez le dossier de fonctionnalité vers `feature/Completed-Feature/`.
+    - L'agent `@git-engineer` prendra le relais pour **l'archivage du dossier de feature** dans `Completed-Feature`, le commit final, la fusion `main` et la suppression de branche.
 
 ## Notes
 - Ce workflow s'adapte au rôle en cours (Frontend, Backend, ML, Fullstack). Ne réalisez que les étapes pertinentes pour la User Story traitée.
