@@ -2,23 +2,33 @@ openapi: 3.0.0
 info:
   title: StatFootV3 - API Reference
   description: Documentation exhaustive des API Backend (V3) incluant les payloads et réponses exactes.
-  version: 3.0
+  version: "3.0"
 servers:
   - url: "http://localhost:3001/api"
     description: Serveur local
 tags:
   - name: Admin & Health
+    description: Administration and health-check endpoints for the application and database.
   - name: Betting & ML
+    description: Machine learning predictions and betting recommendations.
   - name: Dashboard
+    description: General dashboard statistics and metrics.
   - name: Fixtures
+    description: Management of matches, events, lineups, and tactical stats.
   - name: Import & Sync
+    description: Endpoints for importing and synchronizing data from external providers.
   - name: Leagues
+    description: League management and retrieval.
   - name: Players & Clubs
+    description: Endpoints relating to player profiles, club profiles, and career statistics.
   - name: Studio
+    description: Content studio management pathways.
   - name: Resolution & Intelligence
+    description: Intelligent operations like duplication resolution and backtesting.
 paths:
   /stats:
     get:
+      operationId: getStats
       tags:
         - Dashboard
       summary: Obtenir les statistiques globales V3
@@ -57,6 +67,7 @@ paths:
           description: Erreur serveur
   /leagues/imported:
     get:
+      operationId: getLeaguesImported
       tags:
         - Dashboard
       summary: Lister les ligues importées
@@ -73,6 +84,7 @@ paths:
           description: Erreur serveur
   /leagues/discovered:
     get:
+      operationId: getLeaguesDiscovered
       tags:
         - Dashboard
       summary: Lister les ligues découvertes groupées par pays
@@ -89,6 +101,7 @@ paths:
           description: Erreur serveur
   /admin/health:
     get:
+      operationId: getAdminHealth
       tags:
         - Admin & Health
       summary: Vérifier la santé de la base de données
@@ -105,6 +118,7 @@ paths:
           description: Erreur serveur
   /admin/health/fix:
     post:
+      operationId: postAdminHealthFix
       tags:
         - Admin & Health
       summary: Corriger un problème de santé spécifique
@@ -135,6 +149,7 @@ paths:
                   type: string
   /admin/health/fix-all:
     post:
+      operationId: postAdminHealthFixAll
       tags:
         - Admin & Health
       summary: Lancer toutes les routines de correction
@@ -167,6 +182,7 @@ paths:
                         type: string
   /admin/health/history:
     get:
+      operationId: getAdminHealthHistory
       tags:
         - Admin & Health
       summary: Historique du nettoyage
@@ -183,6 +199,7 @@ paths:
           description: Erreur serveur
   /admin/health/revert/{groupId}:
     post:
+      operationId: postAdminHealthRevertByGroupid
       tags:
         - Admin & Health
       summary: Annuler une correction
@@ -199,12 +216,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: groupId
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /admin/health/leagues:
     get:
+      operationId: getAdminHealthLeagues
       tags:
         - Admin & Health
       summary: Noms des ligues pour health check
@@ -221,6 +239,7 @@ paths:
           description: Erreur serveur
   /admin/health/check-league:
     post:
+      operationId: postAdminHealthCheckLeague
       tags:
         - Admin & Health
       summary: Check de santé d'une ligue
@@ -248,6 +267,7 @@ paths:
                   type: string
   /admin/health/check-deep:
     post:
+      operationId: postAdminHealthCheckDeep
       tags:
         - Admin & Health
       summary: Check profond
@@ -273,6 +293,7 @@ paths:
                   type: number
   /preferences:
     get:
+      operationId: getPreferences
       tags:
         - Admin & Health
       summary: Obtenir les préférences utilisateur
@@ -288,6 +309,7 @@ paths:
         500:
           description: Erreur serveur
     put:
+      operationId: putPreferences
       tags:
         - Admin & Health
       summary: Mettre à jour les préférences
@@ -323,6 +345,7 @@ paths:
                     type: number
   /import/league:
     post:
+      operationId: postImportLeague
       tags:
         - Import & Sync
       summary: Importer une ligue
@@ -355,6 +378,7 @@ paths:
                   type: boolean
   /import/batch:
     post:
+      operationId: postImportBatch
       tags:
         - Import & Sync
       summary: Import par lots
@@ -395,6 +419,7 @@ paths:
                         type: boolean
   /import/matrix-status:
     get:
+      operationId: getImportMatrixStatus
       tags:
         - Import & Sync
       summary: Statut global de la matrice d'import
@@ -411,6 +436,7 @@ paths:
           description: Erreur serveur
   /import/state:
     get:
+      operationId: getImportState
       tags:
         - Import & Sync
       summary: État du processus d'import
@@ -427,6 +453,7 @@ paths:
           description: Erreur serveur
   /import/audit-scan:
     post:
+      operationId: postImportAuditScan
       tags:
         - Import & Sync
       summary: Scanner les anomalies d'import
@@ -443,6 +470,7 @@ paths:
           description: Erreur serveur
   /import/league/{id}/deep-sync:
     post:
+      operationId: postImportLeagueByIdDeepSync
       tags:
         - Import & Sync
       summary: Deep sync d'une ligue
@@ -459,12 +487,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /fixtures/events/candidates:
     get:
+      operationId: getFixturesEventsCandidates
       tags:
         - Fixtures
       summary: Matchs candidats pour import d'événements
@@ -481,6 +510,7 @@ paths:
           description: Erreur serveur
   /fixtures/events/sync:
     post:
+      operationId: postFixturesEventsSync
       tags:
         - Fixtures
       summary: Sync des événements d'un match
@@ -514,6 +544,7 @@ paths:
                   type: number
   /fixtures/{id}/events:
     get:
+      operationId: getFixturesByIdEvents
       tags:
         - Fixtures
       summary: Obtenir les événements d'un match
@@ -530,12 +561,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /fixtures/{id}/tactical-stats:
     get:
+      operationId: getFixturesByIdTacticalStats
       tags:
         - Fixtures
       summary: Statistiques tactiques d'un match
@@ -552,12 +584,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /fixtures/{id}/player-stats:
     get:
+      operationId: getFixturesByIdPlayerStats
       tags:
         - Fixtures
       summary: Statistiques des joueurs d'un match
@@ -574,12 +607,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /fixtures/{id}:
     get:
+      operationId: getFixturesById
       tags:
         - Fixtures
       summary: Détails d'un match
@@ -596,12 +630,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /fixtures/{id}/lineups:
     get:
+      operationId: getFixturesByIdLineups
       tags:
         - Fixtures
       summary: Compositions d'un match
@@ -618,12 +653,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /fixtures/lineups/candidates:
     get:
+      operationId: getFixturesLineupsCandidates
       tags:
         - Fixtures
       summary: Matchs candidats pour import de compos
@@ -640,6 +676,7 @@ paths:
           description: Erreur serveur
   /fixtures/lineups/import:
     post:
+      operationId: postFixturesLineupsImport
       tags:
         - Fixtures
       summary: Import des compos
@@ -672,6 +709,7 @@ paths:
                   type: number
   /player/{id}:
     get:
+      operationId: getPlayerById
       tags:
         - Players & Clubs
       summary: Profil d'un joueur
@@ -688,12 +726,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /player/{id}/sync-career:
     post:
+      operationId: postPlayerByIdSyncCareer
       tags:
         - Players & Clubs
       summary: Synchroniser la carrière d'un joueur
@@ -710,12 +749,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /search:
     get:
+      operationId: getSearch
       tags:
         - Players & Clubs
       summary: Recherche globale
@@ -732,22 +772,23 @@ paths:
           description: Erreur serveur
       parameters:
         - name: q
-                in: query
-                required: true
-                schema:
-                  type: string
+          in: query
+          required: true
+          schema:
+            type: string
         - name: type
-                in: query
-                required: false
-                schema:
-                  type: string
+          in: query
+          required: false
+          schema:
+            type: string
         - name: country
-                in: query
-                required: false
-                schema:
-                  type: string
+          in: query
+          required: false
+          schema:
+            type: string
   /club/{id}:
     get:
+      operationId: getClubById
       tags:
         - Players & Clubs
       summary: Profil d'un club
@@ -764,12 +805,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /club/{id}/tactical-summary:
     get:
+      operationId: getClubByIdTacticalSummary
       tags:
         - Players & Clubs
       summary: Résumé tactique d'un club
@@ -786,12 +828,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /club/{id}/matches:
     get:
+      operationId: getClubByIdMatches
       tags:
         - Players & Clubs
       summary: Matchs d'un club
@@ -808,12 +851,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /import/trophies:
     post:
+      operationId: postImportTrophies
       tags:
         - Players & Clubs
       summary: Importer trophées de joueurs
@@ -843,6 +887,7 @@ paths:
                     type: number
   /players/nationalities:
     get:
+      operationId: getPlayersNationalities
       tags:
         - Players & Clubs
       summary: Lister les nationalités des joueurs
@@ -859,6 +904,7 @@ paths:
           description: Erreur serveur
   /players/by-nationality:
     get:
+      operationId: getPlayersByNationality
       tags:
         - Players & Clubs
       summary: Joueurs par nationalité
@@ -875,12 +921,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: country
-                in: query
-                required: true
-                schema:
-                  type: string
+          in: query
+          required: true
+          schema:
+            type: string
   /countries:
     get:
+      operationId: getCountries
       tags:
         - Leagues
       summary: Liste des pays
@@ -897,6 +944,7 @@ paths:
           description: Erreur serveur
   /leagues:
     get:
+      operationId: getLeagues
       tags:
         - Leagues
       summary: Liste des ligues
@@ -913,6 +961,7 @@ paths:
           description: Erreur serveur
   /leagues/structured:
     get:
+      operationId: getLeaguesStructured
       tags:
         - Leagues
       summary: Ligues structurées
@@ -929,6 +978,7 @@ paths:
           description: Erreur serveur
   /leagues/{id}/seasons:
     get:
+      operationId: getLeaguesByIdSeasons
       tags:
         - Leagues
       summary: Saisons d'une ligue
@@ -945,12 +995,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /leagues/seasons/init:
     post:
+      operationId: postLeaguesSeasonsInit
       tags:
         - Leagues
       summary: Initialiser des saisons
@@ -984,6 +1035,7 @@ paths:
                   type: number
   /league/{id}/season/{year}:
     get:
+      operationId: getLeagueByIdSeasonByYear
       tags:
         - Leagues
       summary: Aperçu d'une saison
@@ -1000,17 +1052,18 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
         - name: year
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /league/{id}/standings:
     get:
+      operationId: getLeagueByIdStandings
       tags:
         - Leagues
       summary: Classement d'une ligue
@@ -1027,12 +1080,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /standings/dynamic:
     get:
+      operationId: getStandingsDynamic
       tags:
         - Leagues
       summary: Classement dynamique
@@ -1049,6 +1103,7 @@ paths:
           description: Erreur serveur
   /studio/meta/stats:
     get:
+      operationId: getStudioMetaStats
       tags:
         - Studio
       summary: Liste des statistiques Studio
@@ -1065,6 +1120,7 @@ paths:
           description: Erreur serveur
   /studio/meta/leagues:
     get:
+      operationId: getStudioMetaLeagues
       tags:
         - Studio
       summary: Liste des ligues Studio
@@ -1081,6 +1137,7 @@ paths:
           description: Erreur serveur
   /studio/meta/nationalities:
     get:
+      operationId: getStudioMetaNationalities
       tags:
         - Studio
       summary: Liste des nationalités Studio
@@ -1097,6 +1154,7 @@ paths:
           description: Erreur serveur
   /studio/meta/players:
     get:
+      operationId: getStudioMetaPlayers
       tags:
         - Studio
       summary: Recherche joueurs Studio
@@ -1113,12 +1171,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: search
-                in: query
-                required: false
-                schema:
-                  type: string
+          in: query
+          required: false
+          schema:
+            type: string
   /studio/meta/teams:
     get:
+      operationId: getStudioMetaTeams
       tags:
         - Studio
       summary: Recherche équipes Studio
@@ -1135,12 +1194,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: search
-                in: query
-                required: false
-                schema:
-                  type: string
+          in: query
+          required: false
+          schema:
+            type: string
   /studio/query:
     post:
+      operationId: postStudioQuery
       tags:
         - Studio
       summary: Exécuter une requête Studio
@@ -1190,6 +1250,7 @@ paths:
                   type: object
   /predictions/sync:
     post:
+      operationId: postPredictionsSync
       tags:
         - Betting & ML
       summary: Synchroniser les prédictions
@@ -1215,6 +1276,7 @@ paths:
                   type: boolean
   /predictions:
     get:
+      operationId: getPredictions
       tags:
         - Betting & ML
       summary: Récupérer les prédictions
@@ -1231,6 +1293,7 @@ paths:
           description: Erreur serveur
   /live-bet/fixtures:
     get:
+      operationId: getLiveBetFixtures
       tags:
         - Betting & ML
       summary: Matchs du jour pour live bet
@@ -1247,6 +1310,7 @@ paths:
           description: Erreur serveur
   /live-bet/upcoming:
     get:
+      operationId: getLiveBetUpcoming
       tags:
         - Betting & ML
       summary: Matchs à venir
@@ -1263,6 +1327,7 @@ paths:
           description: Erreur serveur
   /live-bet/match/{id}/save-odds:
     post:
+      operationId: postLiveBetMatchByIdSaveOdds
       tags:
         - Betting & ML
       summary: Sauvegarder les cotes d'un match
@@ -1279,12 +1344,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: id
-                in: path
-                required: true
-                schema:
-                  type: string
+          in: path
+          required: true
+          schema:
+            type: string
   /ml/train:
     post:
+      operationId: postMlTrain
       tags:
         - Betting & ML
       summary: Entraîner les modèles ML
@@ -1310,6 +1376,7 @@ paths:
                   type: boolean
   /ml/status:
     get:
+      operationId: getMlStatus
       tags:
         - Betting & ML
       summary: Statut du ML
@@ -1326,6 +1393,7 @@ paths:
           description: Erreur serveur
   /forge/models:
     get:
+      operationId: getForgeModels
       tags:
         - Betting & ML
       summary: Modèles Forge
@@ -1342,6 +1410,7 @@ paths:
           description: Erreur serveur
   /ml-platform/simulations/overview:
     get:
+      operationId: getMlPlatformSimulationsOverview
       tags:
         - Betting & ML
       summary: Aperçu des simulations
@@ -1358,6 +1427,7 @@ paths:
           description: Erreur serveur
   /ml-platform/recommendations:
     get:
+      operationId: getMlPlatformRecommendations
       tags:
         - Betting & ML
       summary: Recommandations de paris
@@ -1374,6 +1444,7 @@ paths:
           description: Erreur serveur
   /ml-platform/odds/sync:
     post:
+      operationId: postMlPlatformOddsSync
       tags:
         - Betting & ML
       summary: Synchroniser les cotes à venir
@@ -1390,6 +1461,7 @@ paths:
           description: Erreur serveur
   /simulation/start:
     post:
+      operationId: postSimulationStart
       tags:
         - Betting & ML
       summary: Lancer une simulation
@@ -1406,6 +1478,7 @@ paths:
           description: Erreur serveur
   /simulation/status:
     get:
+      operationId: getSimulationStatus
       tags:
         - Betting & ML
       summary: Statut d'une simulation
@@ -1422,22 +1495,23 @@ paths:
           description: Erreur serveur
       parameters:
         - name: leagueId
-                in: query
-                required: true
-                schema:
-                  type: string
+          in: query
+          required: true
+          schema:
+            type: string
         - name: seasonYear
-                in: query
-                required: true
-                schema:
-                  type: string
+          in: query
+          required: true
+          schema:
+            type: string
         - name: horizon
-                in: query
-                required: false
-                schema:
-                  type: string
+          in: query
+          required: false
+          schema:
+            type: string
   /resolution/duplicates:
     get:
+      operationId: getResolutionDuplicates
       tags:
         - Resolution & Intelligence
       summary: Trouver les doublons potentiels
@@ -1454,12 +1528,13 @@ paths:
           description: Erreur serveur
       parameters:
         - name: threshold
-                in: query
-                required: false
-                schema:
-                  type: string
+          in: query
+          required: false
+          schema:
+            type: string
   /resolution/merge:
     post:
+      operationId: postResolutionMerge
       tags:
         - Resolution & Intelligence
       summary: Fusionner des entités (joueurs etc)
@@ -1492,6 +1567,7 @@ paths:
                   type: number
   /health/prescribe:
     post:
+      operationId: postHealthPrescribe
       tags:
         - Resolution & Intelligence
       summary: Générer des prescriptions de santé
@@ -1508,6 +1584,7 @@ paths:
           description: Erreur serveur
   /health/prescriptions:
     get:
+      operationId: getHealthPrescriptions
       tags:
         - Resolution & Intelligence
       summary: Obtenir les prescriptions
@@ -1524,17 +1601,18 @@ paths:
           description: Erreur serveur
       parameters:
         - name: status
-                in: query
-                required: false
-                schema:
-                  type: string
+          in: query
+          required: false
+          schema:
+            type: string
         - name: type
-                in: query
-                required: false
-                schema:
-                  type: string
+          in: query
+          required: false
+          schema:
+            type: string
   /health/execute:
     post:
+      operationId: postHealthExecute
       tags:
         - Resolution & Intelligence
       summary: Exécuter une prescription
@@ -1562,6 +1640,7 @@ paths:
                   type: number
   /intelligence/backtest:
     get:
+      operationId: getIntelligenceBacktest
       tags:
         - Resolution & Intelligence
       summary: Résultats de backtest ML
