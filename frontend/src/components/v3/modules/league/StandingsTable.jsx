@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Table, Badge, Stack, Button, Grid } from '../../../design-system';
+import { Card, Table, Badge, Stack, Button, Grid } from '../../../../design-system';
 
 const StandingsTable = ({
     standings = [],

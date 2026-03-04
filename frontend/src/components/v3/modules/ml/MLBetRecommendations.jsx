@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../../services/api';
-import { Card, Badge, Table, Grid, Stack, Button } from '../../../design-system';
+import api from '../../../../services/api';
+import { Card, Badge, Table, Grid, Stack, Button } from '../../../../design-system';
 
 const MLBetRecommendations = () => {
     const [recommendations, setRecommendations] = useState(null);

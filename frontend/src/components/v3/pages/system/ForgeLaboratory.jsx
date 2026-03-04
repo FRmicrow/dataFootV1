@@ -11,7 +11,7 @@ import {
     AreaChart,
     Area
 } from 'recharts';
-import api from '../../../../../services/api';
+import api from '../../../../services/api';
 import './ForgeLaboratory.css';
 
 const ForgeLaboratory = () => {

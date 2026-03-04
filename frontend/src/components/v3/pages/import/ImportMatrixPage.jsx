@@ -3,7 +3,7 @@ import api from '../../../../services/api';
 import { useImport } from '../../../../context/ImportContext.jsx';
 import { PageLayout, PageHeader, PageContent } from '../../layouts';
 import { Badge, Stack, Button } from '../../../../design-system';
-import './ImportMatrixPage.css';
+import '../../modules/import/ImportMatrix.css';
 
 /**
  * Import Status Constants (mirror backend)

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
 import MatchDetailEvents from './MatchDetailEvents';
 import InlineMatchDetailTactical from './InlineMatchDetailTactical';
-import InlinePlayerStatCard from './InlinePlayerStatCard';
+import InlinePlayerStatCard from '../shared/InlinePlayerStatCard';
 import { Stack, Grid, Tabs, Card, Badge } from '../../../../design-system';
 import './InlineFixtureDetails.css';
 

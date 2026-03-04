@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import api from '../../../../services/api';
+import api from '../../../../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Badge, Stack, Button, Grid } from '../../../../design-system';
+import { Card, Table, Badge, Stack, Button, Grid } from '../../../../../design-system';
 
 const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
     const navigate = useNavigate();

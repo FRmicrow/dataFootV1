@@ -24,3 +24,31 @@ const Navbar = () => {
         { to: '/forge/lab', label: '🧪 Forge Lab', color: 'var(--color-primary-400)' },
         { to: '/import', label: 'Import' },
         { to: '/live-bet', label: '🔥 Live Bet', color: 'var(--color-accent-500)' },
+    ];
+
+    return (
+        <nav className="ds-navbar">
+            <div className="navbar-links">
+                {links.map(link => (
+                    <NavLink
+                        key={link.to}
+                        to={link.to}
+                        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                        style={link.color ? { color: link.color } : {}}
+                    >
+                        {link.label}
+                    </NavLink>
+                ))}
+            </div>
+            <button
+                className={`debug-toggle ${debugMode ? 'active' : ''}`}
+                onClick={() => setDebugMode(!debugMode)}
+                title="Toggle Design System Debug Mode"
+            >
+                🛠️
+            </button>
+        </nav>
+    );
+};
+
+export default Navbar;

@@ -1,7 +1,7 @@
 import React from 'react';
 import SquadExplorer from './SquadExplorer';
 import LeagueLeaders from './LeagueLeaders';
-import { Grid, Stack } from '../../../design-system';
+import { Grid, Stack } from '../../../../design-system';
 
 const LeagueOverview = ({
     leagueId,

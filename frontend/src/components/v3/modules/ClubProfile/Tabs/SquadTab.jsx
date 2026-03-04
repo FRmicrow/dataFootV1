@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Badge, Stack, Button } from '../../../../design-system';
-import { getShortPosition } from '../../../../utils/positionUtils';
+import { Card, Table, Badge, Stack, Button } from '../../../../../design-system';
+import { getShortPosition } from '../../../../../utils/positionUtils';
 
 const SquadTab = ({ roster, year }) => {
     const navigate = useNavigate();

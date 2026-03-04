@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
     Stack, Grid, Badge, Button,
     MetricCard, PlayerCard, TeamSelector
-} from '../../../design-system';
+} from '../../../../design-system';
 import './SquadList.css';
 
 const SquadList = ({

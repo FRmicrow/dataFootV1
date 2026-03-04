@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import api from '../../../../services/api';
-import { Card, Table, Badge, Stack, Button, Grid } from '../../../../design-system';
+import api from '../../../../../services/api';
+import { Card, Table, Badge, Stack, Button, Grid } from '../../../../../design-system';
 
 const LineupTab = ({ clubId, year, competitionId, roster }) => {
     const [lineup, setLineup] = useState(null);

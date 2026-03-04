@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Stack, Badge, Grid } from '../../../design-system';
+import { Card, Stack, Badge, Grid } from '../../../../design-system';
 
 const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) => {
 

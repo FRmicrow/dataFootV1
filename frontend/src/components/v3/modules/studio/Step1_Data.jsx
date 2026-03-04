@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStudio } from './StudioContext';
-import { Tabs } from '../../../design-system';
+import { Tabs } from '../../../../design-system';
 import './Step1_Data.css';
 
 const Step1_Data = () => {

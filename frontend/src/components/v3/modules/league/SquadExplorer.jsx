@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../../services/api';
-import { Card, Table, Badge, Stack, Grid, Select } from '../../../design-system';
-import { getShortPosition } from '../../../utils/positionUtils';
+
+import api from '../../../../services/api';
+import { Card, Table, Badge, Stack, Grid, Select } from '../../../../design-system';
+import { getShortPosition } from '../../../../utils/positionUtils';
 
 const SquadExplorer = ({ leagueId, season, teams }) => {
     const [teamId, setTeamId] = useState('');

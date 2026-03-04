@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../../../../../services/api';
-import LeagueDiscovery from '../LeagueDiscovery';
-import LeagueActivationStage from '../LeagueActivationStage';
+import LeagueDiscovery from '../../../modules/league/LeagueDiscovery';
+import LeagueActivationStage from '../../../modules/league/LeagueActivationStage';
 import './SimulationDashboard.css';
 
 const SimulationDashboard = () => {

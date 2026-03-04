@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Table, Grid, Stack, Badge } from '../../../../design-system';
+import { Card, Table, Grid, Stack, Badge } from '../../../../../design-system';
 
 const PerformanceTab = ({ clubId, year, competitionId, summary, seasons }) => {
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../../services/api';
-import { Card, Badge, Table, Button } from '../../../design-system';
+import api from '../../../../services/api';
+import { Card, Badge, Table, Button } from '../../../../design-system';
 
 const MLOrchestratorPage = () => {
     const [status, setStatus] = useState(null);

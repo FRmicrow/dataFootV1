@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Stack, Badge, Grid, Button, FixtureRow } from '../../../design-system';
-import InlineFixtureDetails from '../InlineFixtureDetails';
+import { Card, Stack, Badge, Grid, Button, FixtureRow } from '../../../../design-system';
+import InlineFixtureDetails from '../match/InlineFixtureDetails';
 
 const FixturesList = ({
     fixturesData,
