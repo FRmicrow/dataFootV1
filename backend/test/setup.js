@@ -12,9 +12,14 @@ export async function setupTestDb() {
     await db.init();
 
     // Use .exec() for multiple SQL statements - Only use 02_V3_schema.sql which is the current source of truth
-    const schemaPath = path.resolve(__dirname, '../../sql/schema/02_V3_schema.sql');
+    const schemaPath = path.resolve(__dirname, '../sql/schema/02_V3_schema.sql');
+    const baselinePath = path.resolve(__dirname, '../sql/schema/V3_Baseline.sql');
+
     if (fs.existsSync(schemaPath)) {
         const sql = fs.readFileSync(schemaPath, 'utf8');
+        db.db.exec(sql);
+    } else if (fs.existsSync(baselinePath)) {
+        const sql = fs.readFileSync(baselinePath, 'utf8');
         db.db.exec(sql);
     }
 

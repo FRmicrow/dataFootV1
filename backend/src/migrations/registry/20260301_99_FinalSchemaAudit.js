@@ -12,7 +12,14 @@ export const up = async (db) => {
             columns: [
                 { name: 'is_trophy_synced', type: 'BOOLEAN DEFAULT 0' },
                 { name: 'last_sync_trophies', type: 'DATETIME' },
-                { name: 'position', type: 'TEXT' }
+                { name: 'position', type: 'TEXT' },
+                { name: 'scout_rank', type: 'REAL' }
+            ]
+        },
+        {
+            table: 'V3_Teams',
+            columns: [
+                { name: 'scout_rank', type: 'REAL' }
             ]
         },
         {

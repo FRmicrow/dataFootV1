@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
@@ -8,8 +10,6 @@ import db from './config/database.js';
 import v3Routes from './routes/v3_routes.js';
 import MigrationService from './services/v3/MigrationService.js';
 import SimulationQueueService from './services/v3/SimulationQueueService.js';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;

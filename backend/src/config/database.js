@@ -7,16 +7,21 @@ import { cleanParams } from '../utils/sqlHelpers.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const dbPath = process.env.DATABASE_PATH || join(__dirname, '..', '..', 'database.sqlite');
-
 let db;
-
 /**
  * Initialize database connection using better-sqlite3
  * This replaces sql.js to handle large databases (>2GB) and prevent memory leaks.
  */
 async function initDatabase() {
     try {
+        const defaultDbPath = join(__dirname, '..', '..', 'database.sqlite');
+        let dbPath = process.env.DATABASE_PATH || defaultDbPath;
+
+        // If the path is relative, resolve it from the backend root (one level up from src)
+        if (process.env.DATABASE_PATH && !process.env.DATABASE_PATH.startsWith('/')) {
+            dbPath = join(__dirname, '..', '..', process.env.DATABASE_PATH);
+        }
+
         console.log('🧪 Connecting to SQLite (Native):', dbPath);
 
         // Open the database file

@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS V3_Venues (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+DROP TABLE IF EXISTS V3_Teams;
 CREATE TABLE IF NOT EXISTS V3_Teams (
     team_id INTEGER PRIMARY KEY AUTOINCREMENT,
     api_id INTEGER UNIQUE,
@@ -53,10 +54,12 @@ CREATE TABLE IF NOT EXISTS V3_Teams (
     logo_url TEXT,
     venue_id INTEGER,
     accent_color TEXT,
+    scout_rank REAL, -- For sorting relevance
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (venue_id) REFERENCES V3_Venues(venue_id)
 );
 
+DROP TABLE IF EXISTS V3_Players;
 CREATE TABLE IF NOT EXISTS V3_Players (
     player_id INTEGER PRIMARY KEY AUTOINCREMENT,
     api_id INTEGER UNIQUE,
@@ -72,6 +75,7 @@ CREATE TABLE IF NOT EXISTS V3_Players (
     weight TEXT,
     injured BOOLEAN,
     photo_url TEXT,
+    scout_rank REAL, -- For sorting relevance
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

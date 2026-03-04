@@ -147,7 +147,10 @@ const SearchPageV3 = () => {
             <PageHeader
                 title="Scout Engine"
                 subtitle="Accessing 50+ professional leagues & 320,000+ player statistical profiles"
-                extra={
+            />
+
+            <PageContent>
+                <div className="ds-search-hero">
                     <div className="ds-search-container">
                         <Stack gap="var(--spacing-lg)">
                             <div className="ds-search-input-wrapper">
@@ -165,7 +168,7 @@ const SearchPageV3 = () => {
                                 )}
                             </div>
 
-                            <Stack direction="row" justify="space-between" align="center">
+                            <Stack direction="row" justify="space-between" align="center" wrap>
                                 <Stack direction="row" gap="var(--spacing-sm)" className="ds-filter-tabs">
                                     {['all', 'player', 'club'].map(t => (
                                         <button
@@ -186,10 +189,8 @@ const SearchPageV3 = () => {
                             </Stack>
                         </Stack>
                     </div>
-                }
-            />
+                </div>
 
-            <PageContent>
                 <main className="ds-search-main">
                     {loading && (
                         <Stack align="center" justify="center" style={{ padding: '80px' }}>

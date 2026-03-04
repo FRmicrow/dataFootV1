@@ -10,7 +10,7 @@ export const searchV3 = async (req, res) => {
             return res.json([]);
         }
 
-        const results = SearchRepository.globalSearch(query, 50);
+        const results = await SearchRepository.globalSearch(query, 50);
         res.json(results);
 
     } catch (error) {
@@ -21,8 +21,8 @@ export const searchV3 = async (req, res) => {
 
 export const getSearchCountries = async (req, res) => {
     try {
-        const rows = SearchRepository.getSearchCountries();
-        res.json(rows.map(r => r.nationality));
+        const rows = await SearchRepository.getSearchCountries();
+        res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
