@@ -356,6 +356,23 @@ CREATE TABLE IF NOT EXISTS V3_Trophies (
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id)
 );
 
+-- 6.5 PRE-MATCH ODDS
+CREATE TABLE IF NOT EXISTS V3_Odds (
+    odd_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fixture_id INTEGER NOT NULL,
+    bookmaker_id INTEGER NOT NULL,
+    bookmaker_name TEXT NOT NULL,
+    bet_id INTEGER NOT NULL,
+    bet_name TEXT NOT NULL,
+    value_label TEXT NOT NULL, -- e.g. "Home", "Draw", "Away", "Over 2.5"
+    value_odd TEXT NOT NULL,   -- The actual odd string value (usually float as string)
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE,
+    UNIQUE(fixture_id, bookmaker_id, bet_id, value_label)
+);
+
+
 -- 7. IMPORT SYSTEM & AUDIT
 CREATE TABLE IF NOT EXISTS V3_Import_Status (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -399,3 +416,5 @@ CREATE INDEX IF NOT EXISTS idx_v3_player_season_stats_composite ON V3_Player_Sea
 CREATE INDEX IF NOT EXISTS idx_v3_leagues_name_country ON V3_Leagues(name, country_id);
 CREATE INDEX IF NOT EXISTS idx_v3_trophies_player_id ON V3_Trophies(player_id);
 CREATE INDEX IF NOT EXISTS idx_import_status_lookup ON V3_Import_Status(league_id, season_year);
+CREATE INDEX IF NOT EXISTS idx_v3_odds_fixture ON V3_Odds(fixture_id);
+

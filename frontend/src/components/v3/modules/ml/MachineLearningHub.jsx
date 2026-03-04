@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import MLOrchestratorPage from './MLOrchestratorPage';
 import MLSimulationDashboard from './MLSimulationDashboard';
 import MLBetRecommendations from './MLBetRecommendations';
+import MLOddsPage from './MLOddsPage';
 import './MachineLearningHub.css';
 
 const MachineLearningHub = () => {
@@ -40,6 +41,12 @@ const MachineLearningHub = () => {
                     >
                         <span>💰 Betting Hub</span>
                     </NavLink>
+                    <NavLink
+                        to="/machine-learning/odds"
+                        className={({ isActive }) => `ds-tab ${isActive ? 'ds-tab--active' : ''}`}
+                    >
+                        <span>📊 Pre-Match Odds</span>
+                    </NavLink>
                 </div>
             </header>
 
@@ -49,6 +56,7 @@ const MachineLearningHub = () => {
                     <Route path="orchestrator" element={<MLOrchestratorPage />} />
                     <Route path="simulations" element={<MLSimulationDashboard />} />
                     <Route path="betting" element={<MLBetRecommendations />} />
+                    <Route path="odds" element={<MLOddsPage />} />
                 </Routes>
             </main>
         </div>

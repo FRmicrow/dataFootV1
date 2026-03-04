@@ -180,4 +180,9 @@ export default {
     getDiscoveryCountries: () => api.get('/import/discovery/countries'),
     getDiscoveryLeagues: (country) => api.get(`/import/discovery/leagues?country=${country}`),
     triggerDiscoveryImport: (data) => api.post('/import/discovery/import', data),
+
+    // --- Odds (V28) ---
+    getUpcomingOdds: () => api.get('/odds/upcoming'),
+    getFixtureOdds: (id) => api.get(`/odds/fixture/${id}`),
+    importOdds: (leagueId, seasonYear) => api.post('/odds/import', { leagueId, seasonYear }),
 };

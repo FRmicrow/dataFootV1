@@ -1500,12 +1500,18 @@ paths:
           description: Erreur de validation
         500:
           description: Erreur serveur
-  /ml-platform/odds/sync:
-    post:
-      operationId: postMlPlatformOddsSync
+  /odds/fixture/{fixtureId}:
+    get:
+      operationId: getOddsFixtureByFixtureid
       tags:
         - Betting & ML
-      summary: Synchroniser les cotes à venir
+      summary: Obtenir les cotes pré-match d'un match
+      parameters:
+        - name: fixtureId
+          in: path
+          required: true
+          schema:
+            type: integer
       responses:
         200:
           description: Succès
@@ -1513,6 +1519,50 @@ paths:
             application/json:
               schema:
                 type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /odds/upcoming:
+    get:
+      operationId: getOddsUpcoming
+      tags:
+        - Betting & ML
+      summary: Lister les matchs à venir ayant des cotes
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /odds/import:
+    post:
+      operationId: postOddsImport
+      tags:
+        - Betting & ML
+      summary: Importer manuellement les cotes pour une ligue/saison
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leagueId
+                - seasonYear
+              properties:
+                leagueId:
+                  type: integer
+                seasonYear:
+                  type: integer
+      responses:
+        200:
+          description: Succès
         400:
           description: Erreur de validation
         500:

@@ -21,9 +21,8 @@ const Navbar = () => {
         { to: '/leagues', label: 'Leagues' },
         { to: '/search', label: 'Search' },
         { to: '/studio', label: 'Studio' },
-        { to: '/forge/lab', label: '🧪 Forge Lab', color: 'var(--color-primary-400)' },
+        { to: '/machine-learning', label: '🤖 ML Hub', color: 'var(--color-primary-400)' },
         { to: '/import', label: 'Import' },
-        { to: '/live-bet', label: '🔥 Live Bet', color: 'var(--color-accent-500)' },
     ];
 
     return (

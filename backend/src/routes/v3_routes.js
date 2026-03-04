@@ -11,6 +11,7 @@ import bettingRoutes from './v3/betting_routes.js';
 import mlRoutes from './v3/ml_routes.js';
 import resolutionRoutes from './v3/resolution_routes.js';
 import studioRoutes from './v3/studio_routes.js';
+import oddsRoutes from './v3/odds_routes.js';
 
 const router = express.Router();
 
@@ -29,5 +30,6 @@ router.use('/', bettingRoutes);
 router.use('/', mlRoutes);
 router.use('/', resolutionRoutes);
 router.use('/', studioRoutes);
+router.use('/odds', oddsRoutes);
 
 export default router;
