@@ -761,11 +761,47 @@ paths:
       summary: Recherche globale
       responses:
         200:
-          description: Succès
+          description: Succès - Résultats groupés par type (joueurs et clubs)
           content:
             application/json:
               schema:
                 type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        player_id: { type: number }
+                        api_id: { type: number }
+                        name: { type: string }
+                        firstname: { type: string }
+                        lastname: { type: string }
+                        nationality: { type: string }
+                        nationality_flag:
+                          {
+                            type: string,
+                            format: uri,
+                            description: "URL du drapeau de la nationalité",
+                          }
+                        photo_url: { type: string, format: uri }
+                        age: { type: number }
+                  clubs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        team_id: { type: number }
+                        api_id: { type: number }
+                        name: { type: string }
+                        logo_url: { type: string, format: uri }
+                        country: { type: string }
+                        country_flag:
+                          {
+                            type: string,
+                            format: uri,
+                            description: "URL du drapeau du pays",
+                          }
         400:
           description: Erreur de validation
         500:
@@ -781,11 +817,33 @@ paths:
           required: false
           schema:
             type: string
+            enum: [all, player, club]
         - name: country
           in: query
           required: false
           schema:
             type: string
+  /search/countries:
+    get:
+      operationId: getSearchCountries
+      tags:
+        - Players & Clubs
+      summary: Lister les pays disponibles pour le filtrage de recherche (avec métadonnées V3)
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name: { type: string }
+                    flag_url: { type: string, format: uri }
+                    importance_rank: { type: number }
+        500:
+          description: Erreur serveur
   /club/{id}:
     get:
       operationId: getClubById
