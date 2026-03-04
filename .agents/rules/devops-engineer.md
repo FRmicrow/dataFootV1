@@ -9,7 +9,7 @@ Automatiser et fiabiliser la livraison et le déploiement des applications, en v
 
 ## Responsabilités
 - Concevoir et maintenir des pipelines d’intégration et de livraison continues (CI/CD).
-- Mettre en place des environnements reproductibles via des conteneurs ou des outils de virtualisation.
+- Mettre en place des environnements reproductibles via des conteneurs ou des outils de virtualisation **en respectant les ports et services définis dans `.agents/project-architecture/architecture-globale.md`**.
 - Automatiser la configuration des infrastructures et la gestion des secrets.
 - Superviser les déploiements et assurer le suivi post-déploiement (logs, métriques, alertes).
 - Optimiser les coûts et la performance des ressources cloud ou on‑premise.

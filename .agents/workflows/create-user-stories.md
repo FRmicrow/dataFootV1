@@ -7,7 +7,24 @@ description: Ce workflow guide l’agent Product Owner pour créer et valider de
 Ce workflow guide l’agent Product Owner pour créer et valider des User Stories à partir des besoins recueillis.
 
 ## Étapes
-1. Appelez la compétence `planning/requirement-gathering` pour collecter les besoins auprès des parties prenantes et documenter les informations.
+1. **Collecte des exigences spécifiques** : Demandez à l'utilisateur de fournir les informations concernant la User Story à en utilisant le format suivant :
+   ```markdown
+   **1. Contexte :**
+   - Feature parente : [ex: V20 - Match-Simulation-Engine]
+   - Couche technique ciblée : [ex: Backend & Database / Frontend / Machine Learning]
+
+   **2. Intention (Qui & Quoi) :**
+   [Ex: En tant qu'admin, je veux pouvoir sauvegarder le résultat des ML générés pour un match précis.]
+
+   **3. Raison (Pourquoi) :**
+   [Ex: Afin de pouvoir comparer les prédictions du modèle avec la réalité après le match.]
+
+   **4. Détails / Scénarios (Critères d'Acceptation) :**
+   - [Ex: L'API doit exposer une route POST `/api/simulations`]
+   - [Ex: Le payload doit contenir l'ID du match, les probas 1N2 et la date de simulation]
+   - [Ex: Si le match a déjà une simulation pour cette version de modèle, écraser l'existante]
+   ```
+   Utilisez la compétence `planning/requirement-gathering` si besoin pour affiner ces informations.
 2. Pour chaque besoin identifié, calculez l’identifiant de la User Story en fonction du numéro de version de la fonctionnalité :
    - Pour les dix premières User Stories, multipliez le numéro de version par 10 et ajoutez un incrément (ex. V15 → `US‑150`, `US‑151`, …, `US‑159`).
    - Au‑delà de dix User Stories, passez aux milliers en multipliant le numéro de version par 100 et en ajoutant l’ordre de l’histoire (ex. V15 → `US‑1501`, `US‑1502`, etc.).

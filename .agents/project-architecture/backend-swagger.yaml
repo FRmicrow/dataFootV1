@@ -1,0 +1,1578 @@
+openapi: 3.0.0
+info:
+  title: StatFootV3 - API Reference
+  description: Documentation exhaustive des API Backend (V3) incluant les payloads et réponses exactes.
+  version: 3.0
+servers:
+  - url: "http://localhost:3001/api"
+    description: Serveur local
+tags:
+  - name: Admin & Health
+  - name: Betting & ML
+  - name: Dashboard
+  - name: Fixtures
+  - name: Import & Sync
+  - name: Leagues
+  - name: Players & Clubs
+  - name: Studio
+  - name: Resolution & Intelligence
+paths:
+  /stats:
+    get:
+      tags:
+        - Dashboard
+      summary: Obtenir les statistiques globales V3
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  volumetrics:
+                    type: object
+                  distribution:
+                    type: object
+                  players_by_country:
+                    type: array
+                    items:
+                      type: object
+                  fixture_trends:
+                    type: object
+                  health_summary:
+                    type: object
+                    properties:
+                      score:
+                        type: number
+                      coverage_percent:
+                        type: number
+                      orphans:
+                        type: number
+                      partial_seasons:
+                        type: number
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /leagues/imported:
+    get:
+      tags:
+        - Dashboard
+      summary: Lister les ligues importées
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /leagues/discovered:
+    get:
+      tags:
+        - Dashboard
+      summary: Lister les ligues découvertes groupées par pays
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /admin/health:
+    get:
+      tags:
+        - Admin & Health
+      summary: Vérifier la santé de la base de données
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /admin/health/fix:
+    post:
+      tags:
+        - Admin & Health
+      summary: Corriger un problème de santé spécifique
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - issueId
+                - type
+              properties:
+                issueId:
+                  type: string
+                type:
+                  type: string
+  /admin/health/fix-all:
+    post:
+      tags:
+        - Admin & Health
+      summary: Lancer toutes les routines de correction
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                issues:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+  /admin/health/history:
+    get:
+      tags:
+        - Admin & Health
+      summary: Historique du nettoyage
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /admin/health/revert/{groupId}:
+    post:
+      tags:
+        - Admin & Health
+      summary: Annuler une correction
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: groupId
+                in: path
+                required: true
+                schema:
+                  type: string
+  /admin/health/leagues:
+    get:
+      tags:
+        - Admin & Health
+      summary: Noms des ligues pour health check
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /admin/health/check-league:
+    post:
+      tags:
+        - Admin & Health
+      summary: Check de santé d'une ligue
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leagueName
+              properties:
+                leagueName:
+                  type: string
+  /admin/health/check-deep:
+    post:
+      tags:
+        - Admin & Health
+      summary: Check profond
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                leagueId:
+                  type: number
+  /preferences:
+    get:
+      tags:
+        - Admin & Health
+      summary: Obtenir les préférences utilisateur
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+    put:
+      tags:
+        - Admin & Health
+      summary: Mettre à jour les préférences
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                favorite_leagues:
+                  type: array
+                  items:
+                    type: number
+                favorite_teams:
+                  type: array
+                  items:
+                    type: number
+                tracked_leagues:
+                  type: array
+                  items:
+                    type: number
+  /import/league:
+    post:
+      tags:
+        - Import & Sync
+      summary: Importer une ligue
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leagueId
+                - season
+              properties:
+                leagueId:
+                  type: number
+                season:
+                  type: number
+                forceApiId:
+                  type: boolean
+  /import/batch:
+    post:
+      tags:
+        - Import & Sync
+      summary: Import par lots
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - selection
+              properties:
+                selection:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      leagueId:
+                        type: number
+                      seasons:
+                        type: array
+                        items:
+                          type: number
+                      forceApiId:
+                        type: boolean
+                      forceRefresh:
+                        type: boolean
+  /import/matrix-status:
+    get:
+      tags:
+        - Import & Sync
+      summary: Statut global de la matrice d'import
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /import/state:
+    get:
+      tags:
+        - Import & Sync
+      summary: État du processus d'import
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /import/audit-scan:
+    post:
+      tags:
+        - Import & Sync
+      summary: Scanner les anomalies d'import
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /import/league/{id}/deep-sync:
+    post:
+      tags:
+        - Import & Sync
+      summary: Deep sync d'une ligue
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /fixtures/events/candidates:
+    get:
+      tags:
+        - Fixtures
+      summary: Matchs candidats pour import d'événements
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /fixtures/events/sync:
+    post:
+      tags:
+        - Fixtures
+      summary: Sync des événements d'un match
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fixture_ids:
+                  type: array
+                  items:
+                    type: number
+                league_id:
+                  type: number
+                season_year:
+                  type: number
+                limit:
+                  type: number
+  /fixtures/{id}/events:
+    get:
+      tags:
+        - Fixtures
+      summary: Obtenir les événements d'un match
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /fixtures/{id}/tactical-stats:
+    get:
+      tags:
+        - Fixtures
+      summary: Statistiques tactiques d'un match
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /fixtures/{id}/player-stats:
+    get:
+      tags:
+        - Fixtures
+      summary: Statistiques des joueurs d'un match
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /fixtures/{id}:
+    get:
+      tags:
+        - Fixtures
+      summary: Détails d'un match
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /fixtures/{id}/lineups:
+    get:
+      tags:
+        - Fixtures
+      summary: Compositions d'un match
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /fixtures/lineups/candidates:
+    get:
+      tags:
+        - Fixtures
+      summary: Matchs candidats pour import de compos
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /fixtures/lineups/import:
+    post:
+      tags:
+        - Fixtures
+      summary: Import des compos
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - league_id
+                - season_year
+              properties:
+                league_id:
+                  type: number
+                season_year:
+                  type: number
+                limit:
+                  type: number
+  /player/{id}:
+    get:
+      tags:
+        - Players & Clubs
+      summary: Profil d'un joueur
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /player/{id}/sync-career:
+    post:
+      tags:
+        - Players & Clubs
+      summary: Synchroniser la carrière d'un joueur
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /search:
+    get:
+      tags:
+        - Players & Clubs
+      summary: Recherche globale
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: q
+                in: query
+                required: true
+                schema:
+                  type: string
+        - name: type
+                in: query
+                required: false
+                schema:
+                  type: string
+        - name: country
+                in: query
+                required: false
+                schema:
+                  type: string
+  /club/{id}:
+    get:
+      tags:
+        - Players & Clubs
+      summary: Profil d'un club
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /club/{id}/tactical-summary:
+    get:
+      tags:
+        - Players & Clubs
+      summary: Résumé tactique d'un club
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /club/{id}/matches:
+    get:
+      tags:
+        - Players & Clubs
+      summary: Matchs d'un club
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /import/trophies:
+    post:
+      tags:
+        - Players & Clubs
+      summary: Importer trophées de joueurs
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - playerIds
+              properties:
+                playerIds:
+                  type: array
+                  items:
+                    type: number
+  /players/nationalities:
+    get:
+      tags:
+        - Players & Clubs
+      summary: Lister les nationalités des joueurs
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /players/by-nationality:
+    get:
+      tags:
+        - Players & Clubs
+      summary: Joueurs par nationalité
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: country
+                in: query
+                required: true
+                schema:
+                  type: string
+  /countries:
+    get:
+      tags:
+        - Leagues
+      summary: Liste des pays
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /leagues:
+    get:
+      tags:
+        - Leagues
+      summary: Liste des ligues
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /leagues/structured:
+    get:
+      tags:
+        - Leagues
+      summary: Ligues structurées
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /leagues/{id}/seasons:
+    get:
+      tags:
+        - Leagues
+      summary: Saisons d'une ligue
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /leagues/seasons/init:
+    post:
+      tags:
+        - Leagues
+      summary: Initialiser des saisons
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leagueId
+                - startYear
+                - endYear
+              properties:
+                leagueId:
+                  type: number
+                startYear:
+                  type: number
+                endYear:
+                  type: number
+  /league/{id}/season/{year}:
+    get:
+      tags:
+        - Leagues
+      summary: Aperçu d'une saison
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+        - name: year
+                in: path
+                required: true
+                schema:
+                  type: string
+  /league/{id}/standings:
+    get:
+      tags:
+        - Leagues
+      summary: Classement d'une ligue
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /standings/dynamic:
+    get:
+      tags:
+        - Leagues
+      summary: Classement dynamique
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /studio/meta/stats:
+    get:
+      tags:
+        - Studio
+      summary: Liste des statistiques Studio
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /studio/meta/leagues:
+    get:
+      tags:
+        - Studio
+      summary: Liste des ligues Studio
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /studio/meta/nationalities:
+    get:
+      tags:
+        - Studio
+      summary: Liste des nationalités Studio
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /studio/meta/players:
+    get:
+      tags:
+        - Studio
+      summary: Recherche joueurs Studio
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: search
+                in: query
+                required: false
+                schema:
+                  type: string
+  /studio/meta/teams:
+    get:
+      tags:
+        - Studio
+      summary: Recherche équipes Studio
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: search
+                in: query
+                required: false
+                schema:
+                  type: string
+  /studio/query:
+    post:
+      tags:
+        - Studio
+      summary: Exécuter une requête Studio
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - stat
+                - filters
+              properties:
+                stat:
+                  type: string
+                filters:
+                  type: object
+                  properties:
+                    years:
+                      type: array
+                      items:
+                        type: number
+                    leagues:
+                      type: array
+                      items:
+                        type: number
+                    countries:
+                      type: array
+                      items:
+                        type: string
+                    teams:
+                      type: array
+                      items:
+                        type: number
+                selection:
+                  type: object
+  /predictions/sync:
+    post:
+      tags:
+        - Betting & ML
+      summary: Synchroniser les prédictions
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force:
+                  type: boolean
+  /predictions:
+    get:
+      tags:
+        - Betting & ML
+      summary: Récupérer les prédictions
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /live-bet/fixtures:
+    get:
+      tags:
+        - Betting & ML
+      summary: Matchs du jour pour live bet
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /live-bet/upcoming:
+    get:
+      tags:
+        - Betting & ML
+      summary: Matchs à venir
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /live-bet/match/{id}/save-odds:
+    post:
+      tags:
+        - Betting & ML
+      summary: Sauvegarder les cotes d'un match
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+                in: path
+                required: true
+                schema:
+                  type: string
+  /ml/train:
+    post:
+      tags:
+        - Betting & ML
+      summary: Entraîner les modèles ML
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force:
+                  type: boolean
+  /ml/status:
+    get:
+      tags:
+        - Betting & ML
+      summary: Statut du ML
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /forge/models:
+    get:
+      tags:
+        - Betting & ML
+      summary: Modèles Forge
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /ml-platform/simulations/overview:
+    get:
+      tags:
+        - Betting & ML
+      summary: Aperçu des simulations
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /ml-platform/recommendations:
+    get:
+      tags:
+        - Betting & ML
+      summary: Recommandations de paris
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /ml-platform/odds/sync:
+    post:
+      tags:
+        - Betting & ML
+      summary: Synchroniser les cotes à venir
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /simulation/start:
+    post:
+      tags:
+        - Betting & ML
+      summary: Lancer une simulation
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /simulation/status:
+    get:
+      tags:
+        - Betting & ML
+      summary: Statut d'une simulation
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: leagueId
+                in: query
+                required: true
+                schema:
+                  type: string
+        - name: seasonYear
+                in: query
+                required: true
+                schema:
+                  type: string
+        - name: horizon
+                in: query
+                required: false
+                schema:
+                  type: string
+  /resolution/duplicates:
+    get:
+      tags:
+        - Resolution & Intelligence
+      summary: Trouver les doublons potentiels
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: threshold
+                in: query
+                required: false
+                schema:
+                  type: string
+  /resolution/merge:
+    post:
+      tags:
+        - Resolution & Intelligence
+      summary: Fusionner des entités (joueurs etc)
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id1
+                - id2
+              properties:
+                id1:
+                  type: number
+                id2:
+                  type: number
+                confidence:
+                  type: number
+  /health/prescribe:
+    post:
+      tags:
+        - Resolution & Intelligence
+      summary: Générer des prescriptions de santé
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /health/prescriptions:
+    get:
+      tags:
+        - Resolution & Intelligence
+      summary: Obtenir les prescriptions
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: status
+                in: query
+                required: false
+                schema:
+                  type: string
+        - name: type
+                in: query
+                required: false
+                schema:
+                  type: string
+  /health/execute:
+    post:
+      tags:
+        - Resolution & Intelligence
+      summary: Exécuter une prescription
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: number
+  /intelligence/backtest:
+    get:
+      tags:
+        - Resolution & Intelligence
+      summary: Résultats de backtest ML
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
