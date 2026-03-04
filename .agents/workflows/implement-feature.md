@@ -15,14 +15,18 @@ Ce workflow coordonne la mise en œuvre d’une fonctionnalité du backlog de la
 6. **Développement Backend** : Une fois le contrat API validé, implémentez l'API en respectant les principes de `@backend-engineer` et `@security-expert` (validation stricte des entrées via Zod en s'assurant que cela matche le Swagger, gestion des erreurs séparée).
 7. **Développement Machine Learning (Si applicable)** : S'il s'agit d'une feature de prédiction, appliquez `@machine-learning-engineer` et utilisez les scripts du dossier `ml-service/scripts/`.
 8. **Développement Frontend** : Implémentez l'interface utilisateur en utilisant les composants du Design System V3 (voir `frontend-pages.md`) et en respectant les principes de `@frontend-engineer`. Appuyez-vous sur le Swagger validé à l'étape 4 pour moquer ou intégrer l'API.
-9. **PHASE DE VALIDATION (PAR US)** : Une fois le développement d'une US terminé :
-    - **Contrôle Docker & Logs** : Endossez `@qa-engineer`. Lancez `docker compose build` et vérifiez les logs. Si crash, revenez au code.
+9. **PHASE DE VALIDATION (PAR US - RIGOUREUX)** : Une fois le développement d'une US terminé :
+    - **Contrôle Docker & Logs** : Endossez `@qa-engineer`. Lancez `docker compose build` et vérifiez les logs. 
+    - **Règle d'Auto-Correction** : Si une erreur est détectée et corrigée, vous **DEVEZ impérativement** relancer un `build` et une lecture de logs pour confirmer la disparition du bug. Ne jamais supposer qu'un fix "devrait" marcher sans preuve visuelle dans les logs.
     - **Checklist** : Vérifiez `review-checklist.md`.
-    - **Validation Intermédiaire (BLOQUANT)** : Vous ne devez JAMAIS enchaîner le développement de l'US suivante sans obtenir l'accord du P.O via `notify_user` (`BlockedOnUser=true`). Une fois validé, **bouclez sur l'étape 4** pour la prochaine US.
-10. **TESTS GLOBAUX & RAPPORT QA (FIN DE FEATURE)** : Une fois **TOUTES** les US implémentées et validées individuellement, le `@qa-engineer` effectue les tests globaux finaux. Il **DOIT IMPÉRATIVEMENT** générer un document Markdown (par ex. `feature/Vxx-[Nom]/QA-Report.md`) faisant foi du bon fonctionnement global.
-11. **LIVRAISON GÉNÉRÉE PAR LE QA (BLOQUANT)** : Si et seulement si la phase 10 est un succès et le rapport QA rédigé :
+    - **Validation Intermédiaire (BLOQUANT)** : Vous ne devez JAMAIS enchaîner le développement de l'US suivante sans obtenir l'accord du P.O via `notify_user` (`BlockedOnUser=true`).
+10. **TESTS GLOBAUX & RAPPORT QA (ARTIFACT OBLIGATOIRE)** : Une fois **TOUTES** les US implémentées :
+    - Le `@qa-engineer` doit générer un fichier **`feature/Vxx-[Nom]/QA-Report.md`**.
+    - Ce document doit lister : 1. Scénarios testés, 2. Logs Docker vérifiés (copier-coller les preuves de succès), 3. Screenshots (si UI), 4. Statut final.
+    - **AUCUNE fusion vers `main` n'est autorisée sans l'existence de ce fichier.**
+11. **LIVRAISON GÉNÉRÉE PAR LE QA (BLOQUANT)** : Si et seulement si le rapport QA est rédigé, complet et validé par l'utilisateur :
     - Déclenchez **automatiquement** le workflow `/gitflow`.
-    - L'agent `@git-engineer` prendra le relais pour **l'archivage du dossier de feature** dans `Completed-Feature`, le commit final, la fusion `main` et la suppression de branche.
+    - L'agent `@git-engineer` vérifiera la présence du `QA-Report.md` avant de lancer le `merge`.
 
 ## Notes
 - Ce workflow s'adapte au rôle en cours (Frontend, Backend, ML, Fullstack). Ne réalisez que les étapes pertinentes pour la User Story traitée.
