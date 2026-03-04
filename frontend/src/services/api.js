@@ -173,6 +173,9 @@ export default {
         return api.get(`/ml-platform/simulations/evaluation?${params.toString()}`);
     },
 
+    // --- Forge Laboratory (PO Vision) ---
+    startBreeding: (leagueId) => api.post('/forge/breed', { leagueId }),
+    getBreedingStatus: (leagueId) => api.get(`/forge/breed-status?leagueId=${leagueId}`),
     // --- Discovery ---
     getDiscoveryCountries: () => api.get('/import/discovery/countries'),
     getDiscoveryLeagues: (country) => api.get(`/import/discovery/leagues?country=${country}`),

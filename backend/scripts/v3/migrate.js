@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import 'dotenv/config';
+=======
+>>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
 import db from '../../src/config/database.js';
 import MigrationService from '../../src/services/v3/MigrationService.js';
 

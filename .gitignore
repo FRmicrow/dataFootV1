@@ -50,6 +50,7 @@ ml-service/catboost_info/
 
 # OS & Editeurs
 .DS_Store
+<<<<<<< HEAD
 .vscode/
 .idea/
 *.swp
@@ -61,3 +62,16 @@ sonarqube*/
 .coverage
 coverage/
 htmlcov/
+=======
+*.sqlite
+*.sqlite*
+backend/*.sql
+backend/*.db
+backend/backups/
+backend/database.sqlite-journal
+ml-service/venv/
+sonarqube*/
+.scannerwork/
+frontend/coverage/
+backend/coverage/
+>>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463

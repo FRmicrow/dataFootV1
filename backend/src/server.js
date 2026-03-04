@@ -7,7 +7,10 @@ import rateLimit from 'express-rate-limit';
 import db from './config/database.js';
 import v3Routes from './routes/v3_routes.js';
 import MigrationService from './services/v3/MigrationService.js';
+<<<<<<< HEAD
 import SimulationQueueService from './services/v3/SimulationQueueService.js';
+=======
+>>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
 
 dotenv.config();
 
@@ -17,9 +20,12 @@ const PORT = process.env.PORT || 3001;
 // Initialize database
 await db.init();
 
+<<<<<<< HEAD
 // Initialize Simulation Queue (after DB)
 await SimulationQueueService.init();
 
+=======
+>>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
 // --- DB Migrations (US-161) ---
 await MigrationService.runPending().catch(err => {
     console.error('❌ Critical Migration Error:', err);

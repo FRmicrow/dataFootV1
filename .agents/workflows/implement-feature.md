@@ -8,17 +8,17 @@ Ce workflow coordonne la mise en œuvre d’une fonctionnalité du backlog de la
 
 ## Étapes
 1. Sélectionnez la User Story à implémenter et lisez attentivement ses critères d’acceptation.
-2. **Analyse d'Architecture (Obligatoire)** : Avant de coder, consultez le dossier `.agents/project-architecture/` (notamment `backend-swagger.yaml` et `frontend-pages.md`) pour identifier précisément les fichiers à modifier et garantir que vous ne dupliquez pas du code existant.
-3. **Planification et Soumission (BLOQUANT)** : AVANT DE FAIRE QUOI QUE CE SOIT, générez un fichier structuré `implementation_plan.md` listant les modifications exactes prévues, les rôles qui seront activés (`@api-designer`, `@backend-engineer`, etc) et pourquoi. Utilisez `notify_user` en `BlockedOnUser=true` pour soumettre ce plan. Ne passez aux étapes suivantes qu'une fois le plan explicitement "Validé" par le P.O.
-4. **Design d'API (API-First)** : S'il y a un besoin de communication Client/Serveur, endossez le rôle `@api-designer`. Concevez les schémas d'entrée/sortie et mettez à jour `.agents/project-architecture/backend-swagger.yaml` *avant* d'écrire le moindre code. Faites valider ce contrat par l'utilisateur.
-5. **Conception BDD (Si applicable)** : Si la User Story modifie le modèle de données, appliquez les principes de la règle `@database-architect` pour concevoir le schéma et rédigez les scripts de migration adéquats.
-6. **Développement Backend** : Une fois le contrat API validé, implémentez l'API en respectant les principes de `@backend-engineer` et `@security-expert` (validation stricte des entrées via Zod en s'assurant que cela matche le Swagger, gestion des erreurs séparée).
-7. **Développement Machine Learning (Si applicable)** : S'il s'agit d'une feature de prédiction, appliquez `@machine-learning-engineer` et utilisez les scripts du dossier `ml-service/scripts/`.
-8. **Développement Frontend** : Implémentez l'inter face utilisateur en utilisant les composants du Design System V3 (voir `frontend-pages.md`) et en respectant les principes de `@frontend-engineer`. Appuyez-vous sur le Swagger validé à l'étape 4 pour moquer ou intégrer l'API.
-9. **Build & Qualité** : Appliquez les règles `@docker-engineer` et `@qa-engineer`. Assurez-vous que les conteneurs montent correctement (`docker compose build`) et qu'il n'y a pas de régressions.
-10. **Checklist de Validation** : Avant de clore l'implémentation, passez en revue chaque point de la `review-checklist.md`.
-11. **Finalisation et Livraison** : Une fois que le code fonctionne de bout en bout, appelez **automatiquement** le workflow `/gitflow`. L'agent `@git-engineer` prendra le relais pour planifier les commits, faire valider la fusion vers `main` et supprimer proprement la branche (voir règles du gitflow). Une fois la Feature entièrement terminée (toutes les US livrées), déplacez le **dossier entier de la fonctionnalité** (`feature/Vxx-[Nom]`) dans le répertoire `feature/Completed-Feature/` afin de garder un espace de travail propre.
+2. Activez la compétence `design/architecture` pour choisir l’architecture adaptée, puis `design/api-specification` si des endpoints doivent être ajoutés.
+3. Concevez le schéma de données en appliquant `database/normalization` et `database/indexing-strategy`, puis rédigez les scripts avec `database/migration-script` si nécessaire.
+4. Développez l’API en suivant les compétences `backend/rest-endpoint-design`, `backend/input-validation`, `backend/error-handling` et `backend/authentication-authorization` au besoin.
+5. Implémentez l’interface utilisateur en appliquant `frontend/component-architecture`, `frontend/state-management`, `frontend/form-validation` et `frontend/accessibility-and-ux`.
+6. Intégrez l’API côté front à l’aide de `fullstack/api-integration` et vérifiez la cohérence avec `fullstack/cross-layer-coordination`.
+7. Rebuild l'application en appliquant `docker/SKILL.md` et s'assurer que l'application compile correctement.
+8. Realisez les test en appliquant `run-tests` et s'assurer de n'avoir aucune regression sur l'intégralité du code.
+9. Écrivez et exécutez les tests en suivant `testing/unit-testing-node`, `testing/frontend-testing-react`, `testing/integration-testing` et `testing/e2e-testing-playwright`.
+10. Mettez à jour la documentation avec `documentation/api-documentation` et `documentation/readme-guidelines`.
+11. Soumettez votre travail pour revue en vérifiant la liste de contrôle de `review-checklist.md`.
+12. Une fois les revues terminées faire valider à l'utilisateur que les changements sont OK. Une fois fait lancer le workflow `gitflow`. Lorsque c'est terminé, s'assurer que tout est validé pour clore la feature et déplacer le dossier de la feature courante dans le dossier /feature/Completed-Feature
 
 ## Notes
-- Ce workflow s'adapte au rôle en cours (Frontend, Backend, ML, Fullstack). Ne réalisez que les étapes pertinentes pour la User Story traitée.
-- La consultation de `.agents/project-architecture/` à l'étape 2 est non-négociable pour maintenir la cohérence du projet V3.
+Ce workflow s’étend sur plusieurs rôles et compétences. Adaptez ou sautez certaines étapes selon la nature de la fonctionnalité.

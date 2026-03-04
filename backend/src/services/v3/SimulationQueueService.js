@@ -17,9 +17,12 @@ const venvPythonPath = path.join(mlServicePath, 'venv/bin/python');
 class SimulationQueueService {
     constructor() {
         this.activeProcesses = new Map(); // Store child_process objects
+<<<<<<< HEAD
     }
 
     async init() {
+=======
+>>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
         this._recoverActiveJobs();
         this._startWatchdog();
     }

@@ -1,0 +1,199 @@
+.ds-search-page {
+    min-height: 100vh;
+}
+
+.ds-search-hero {
+    padding: var(--spacing-2xl) var(--spacing-md) var(--spacing-xl);
+    background: radial-gradient(circle at top center, var(--color-primary-bg) 0%, transparent 70%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ds-search-container {
+    width: 100%;
+    max-width: 800px;
+    padding: var(--spacing-lg);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+}
+
+.ds-search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.ds-search-icon {
+    position: absolute;
+    left: var(--spacing-md);
+    color: var(--color-text-muted);
+}
+
+.ds-search-input-wrapper input {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: var(--glass-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-main);
+    font-size: var(--font-size-lg);
+    transition: var(--transition-fast) ease;
+}
+
+.ds-search-input-wrapper input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--color-primary-500);
+    box-shadow: var(--focus-ring);
+}
+
+.ds-clear-btn {
+    position: absolute;
+    right: var(--spacing-md);
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+}
+
+.ds-filter-tabs {
+    background: var(--color-slate-900);
+    padding: var(--spacing-3xs);
+    border-radius: var(--radius-md);
+}
+
+.ds-filter-tab {
+    padding: 6px 16px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ds-filter-tab.active {
+    background: var(--color-primary-500);
+    color: white;
+}
+
+/* Country Selector */
+.ds-country-selector {
+    position: relative;
+}
+
+.ds-selector-trigger {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: var(--font-size-sm);
+}
+
+.ds-selector-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    width: 240px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    z-index: 100;
+}
+
+.ds-menu-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: var(--font-size-sm);
+}
+
+.ds-menu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ds-menu-group {
+    padding: 8px 0;
+}
+
+.ds-group-label {
+    padding: 4px 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    font-weight: bold;
+}
+
+/* Results */
+.ds-search-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.ds-result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ds-result-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ds-result-image {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ds-result-image img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.ds-result-image.ds-round img {
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+}
+
+.ds-arrow {
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.2s;
+}
+
+.ds-result-row:hover .ds-arrow {
+    opacity: 1;
+    transform: translateX(0);
+    color: var(--color-primary-400);
+}
+
+.ds-empty-msg {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}

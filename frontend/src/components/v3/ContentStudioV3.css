@@ -1,0 +1,18 @@
+.content-studio-page {
+    padding: 2.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Outfit', sans-serif;
+    color: #f8fafc;
+    min-height: 100vh;
+}
+
+.v3-header.studio {
+    margin-bottom: 4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.content-studio-page main {
+    max-width: 1000px;
+    margin: 0 auto;
+}
