@@ -2,3 +2,6 @@ backend/database.sqlite filter=lfs diff=lfs merge=lfs -text
 ml-service/*.joblib filter=lfs diff=lfs merge=lfs -text
 *.sqlite filter=lfs diff=lfs merge=lfs -text
 *.joblib filter=lfs diff=lfs merge=lfs -text
+
+# Protection des fichiers agents : favoriser toujours la version locale en cas de conflit
+.agents/** merge=ours
