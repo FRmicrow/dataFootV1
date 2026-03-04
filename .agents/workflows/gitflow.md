@@ -19,11 +19,12 @@ Ce workflow guide l’agent et l’utilisateur dans le processus de commit, test
    - Le message de commit (conforme à `commit-message-guidelines.md`).
    - La stratégie de fusion vers `main`.
    **VOUS DEVEZ UTILISER l'outil `notify_user` (`BlockedOnUser=true`) POUR FAIRE VALIDER CE PLAN A L'UTILISATEUR.** Interdiction absolue de l'exécuter sans son accord.
-4. **Commit et Tests Locaux** : Une fois le plan validé, créez le commit. Appelez impérativement le workflow `/run-tests` pour vérifier qu'aucune régression n'a été introduite par ces ajouts.
+4. **Commit et Tests Locaux** : Une fois le plan validé, créez le commit. **Vérifiez via `git status` que TOUS les fichiers attendus sont bien trackés et commités.** Appelez impérativement le workflow `/run-tests`.
 5. **Push de la branche** : Poussez le commit sur la branche courante distante (`git push -u origin HEAD`).
-6. **Demande d'Intégration vers Main (BLOQUANT)** : Redemandez une confirmation explicite à l'utilisateur : *"Puis-je fusionner la branche <nom> sur la branche `main` ?"*. Ne touchez pas à `main` sans ce feu vert.
-7. **Fusion (Merge)** : Basculez sur `main` (`git checkout main`), mettez à jour (`git pull origin main`), et fusionnez la branche (`git merge <branche>`). Poussez `main` (`git push origin main`).
-8. **Nettoyage (Suppression de Branche)** : Supprimez la branche de travail localement (`git branch -d <branche>`) et sur le distant (`git push origin --delete <branche>`). Confirmez la suppression à l'utilisateur.
+6. **Contrôle d'Intégrité (Zéro-Perte)** : Avant de demander la fusion, exécutez un dernier `git status`. S'il reste le moindre fichier modifié ou non suivi (untracked), commitez-le ou gérez-le. **Interdiction de passer à l'étape suivante si le status n'est pas "nothing to commit, working tree clean".**
+7. **Demande d'Intégration vers Main (BLOQUANT)** : Redemandez une confirmation explicite à l'utilisateur : *"Puis-je fusionner la branche <nom> sur la branche `main` ?"*. Ne touchez pas à `main` sans ce feu vert.
+8. **Fusion (Merge)** : Basculez sur `main` (`git checkout main`), mettez à jour (`git pull origin main`), et fusionnez la branche (`git merge <branche>`). Poussez `main` (`git push origin main`).
+9. **Nettoyage (Suppression de Branche)** : Supprimez la branche de travail localement (`git branch -d <branche>`) et sur le distant (`git push origin --delete <branche>`). Confirmez la suppression à l'utilisateur.
 
 ## Notes
 - La suppression de la branche à l'étape 8 remplace l'ancienne méthodologie de renommage en `-DONE`.
