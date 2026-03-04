@@ -135,6 +135,44 @@ const MLOrchestratorPage = () => {
                     />
                 </div>
             </Card>
+
+            {/* Service Controls / Quick Actions */}
+            <Card title="Quick Actions" subtitle="Trigger manual operations for odds synchronization and model management.">
+                <Grid columns="repeat(4, 1fr)" gap="md">
+                    <Button
+                        variant="primary"
+                        icon="⚡"
+                        block
+                        onClick={() => api.runMLOddsCatchup()}
+                    >
+                        Run Odds Catchup
+                    </Button>
+                    <Button
+                        variant="outline"
+                        icon="🔄"
+                        block
+                        onClick={() => api.syncMLUpcomingOdds()}
+                    >
+                        Sync Current Odds
+                    </Button>
+                    <Button
+                        variant="outline"
+                        icon="📈"
+                        block
+                        onClick={() => api.syncMLAdvancedOdds()}
+                    >
+                        Advanced Sync
+                    </Button>
+                    <Button
+                        variant="surface"
+                        icon="🧠"
+                        block
+                        disabled
+                    >
+                        Retrain Models
+                    </Button>
+                </Grid>
+            </Card>
         </Stack>
     );
 };

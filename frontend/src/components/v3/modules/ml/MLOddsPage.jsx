@@ -80,26 +80,46 @@ const MLOddsPage = () => {
 
     return (
         <Stack gap="xl">
-            <Grid columns="repeat(3, 1fr)" gap="lg">
-                <MetricCard
-                    label="Active Fixtures"
-                    value={upcoming.length}
-                    subValue="Upcoming week coverage"
-                    variant="primary"
-                />
-                <MetricCard
-                    label="Market Snapshot"
-                    value="Real-time"
-                    subValue="Direct from API-Football"
-                    variant="default"
-                />
-                <MetricCard
-                    label="Liquidity"
-                    value="High"
-                    subValue="Pre-match verified"
-                    variant="success"
-                />
-            </Grid>
+            <div className="ds-flex ds-justify-between ds-items-end ds-gap-lg">
+                <Grid columns="repeat(3, 1fr)" gap="lg" style={{ flex: 1 }}>
+                    <MetricCard
+                        label="Active Fixtures"
+                        value={upcoming.length}
+                        subValue="Upcoming week coverage"
+                        variant="primary"
+                    />
+                    <MetricCard
+                        label="Market Snapshot"
+                        value="Real-time"
+                        subValue="Direct from API-Football"
+                        variant="default"
+                    />
+                    <MetricCard
+                        label="Liquidity"
+                        value="High"
+                        subValue="Pre-match verified"
+                        variant="success"
+                    />
+                </Grid>
+                <div className="ds-mb-xs">
+                    <Button
+                        variant="primary"
+                        icon="⚡"
+                        onClick={async () => {
+                            if (window.confirm("Launch a mass odds synchronization?")) {
+                                try {
+                                    await api.runMLOddsCatchup();
+                                    await fetchUpcoming();
+                                } catch (e) {
+                                    console.error(e);
+                                }
+                            }
+                        }}
+                    >
+                        Sync Odds Feed
+                    </Button>
+                </div>
+            </div>
 
             <Grid columns="1fr 1fr" gap="lg" align="start">
                 <Card title="Upcoming Odds" subtitle="Matches with pre-match market availability.">
