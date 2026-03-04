@@ -375,7 +375,7 @@ def get_league_models(league_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-<<<<<<< HEAD
+
 @app.get("/predict/fixture/{fixture_id}")
 def predict_fixture_all(fixture_id: int):
     """
@@ -393,8 +393,7 @@ def predict_fixture_all(fixture_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-=======
->>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8008)

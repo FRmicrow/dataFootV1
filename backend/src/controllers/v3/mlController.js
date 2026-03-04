@@ -1,11 +1,8 @@
 import mlService from '../../services/v3/mlService.js';
-<<<<<<< HEAD
 import dbModule from '../../config/database.js';
 import axios from 'axios';
 import OddsSyncService from '../../services/v3/OddsSyncService.js';
 import OddsCrawlerService from '../../services/v3/OddsCrawlerService.js';
-=======
->>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
 
 export const triggerModelRetrain = async (req, res) => {
     try {
@@ -19,10 +16,7 @@ export const triggerModelRetrain = async (req, res) => {
 export const getModelStatus = async (req, res) => {
     try {
         const status = await mlService.getTrainingStatus();
-<<<<<<< HEAD
-=======
         // Merge ML service health check
->>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
         res.json({ success: true, data: { ...status, status: 'online' } });
     } catch (err) {
         res.status(500).json({ success: true, data: { status: 'offline', is_training: false } });
@@ -30,7 +24,6 @@ export const getModelStatus = async (req, res) => {
 };
 
 /**
-<<<<<<< HEAD
  * Machine Learning Platform V19
  */
 export const getMLOrchestratorStatus = async (req, res) => {
@@ -410,8 +403,6 @@ export const runOddsCatchup = async (req, res) => {
 };
 
 /**
-=======
->>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
  * Forge Model Building (V8)
  */
 export const buildForgeModels = async (req, res) => {
@@ -508,7 +499,6 @@ export const getLeagueModels = async (req, res) => {
 export default {
     triggerModelRetrain,
     getModelStatus,
-<<<<<<< HEAD
     getMLOrchestratorStatus,
     getMLRecentAnalyses,
     getMLSimulationFilters,
@@ -516,8 +506,6 @@ export default {
     getMLSimulationOverview,
     getMLRecommendations,
     syncUpcomingOdds,
-=======
->>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
     buildForgeModels,
     getForgeBuildStatus,
     cancelForgeBuild,
@@ -525,11 +513,7 @@ export default {
     retrainModel,
     getRetrainStatus,
     getEligibleHorizons,
-<<<<<<< HEAD
     getLeagueModels,
     syncAdvancedOdds,
     runOddsCatchup
-=======
-    getLeagueModels
->>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
 };
