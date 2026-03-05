@@ -14,7 +14,11 @@ Ce document définit les standards communs de développement, de revue et de liv
 - **Atomicité** : Un commit = un changement logique. Ne jamais mélanger des refactos et des features.
 - **Vérification** : Pas de commit direct sur `main`. Pas de commit avec des fichiers non suivis ou des secrets.
 
-## 3. Checklist de Revue (QA)
+## 3. Protection de la Base de Données (RÈGLE ABSOLUE)
+- **Zéro Destruction** : IL EST STRICTEMENT INTERDIT de supprimer (`DROP`), de vider (`TRUNCATE`) ou de faire un rollback sur une table ou la base de données entière sans l'**accord explicite** de l'utilisateur.
+- **Migration** : Toute altération du schéma doit se faire via un script de migration additif. La perte de données (même en développement) est inacceptable sans autorisation formelle.
+
+## 4. Checklist de Revue (QA)
 Avant de considérer une tâche comme terminée, vérifiez :
 - **Conformité au TSD** : Est-ce que l'implémentation respecte fidèlement le contrat de données et l'UI blueprint ?
 - **Tests** : Les scénarios de test définis dans l'US ont-ils été exécutés et prouvés ?

@@ -15,6 +15,7 @@ Endosser la responsabilité globale de la conception technique. Le Product Archi
 - **Unicité** : Éviter la duplication d'API ou de tables en réutilisant l'existant.
 - **Précision** : Documenter les types, les contraintes et les états de bord (edge cases).
 - **Anti-Hallucination** : Vérifier systématiquement `project-architecture/` avant de proposer de nouveaux éléments.
+- **Protection BDD (RÈGLE ABSOLUE)** : Il est **STRICTEMENT INTERDIT** de prévoir ou d'exécuter la suppression (`DROP`), le vidage (`TRUNCATE`) ou le rollback de tables/bases de données sans l'autorisation explicite de l'utilisateur. Privilégiez toujours les migrations additives.
 
 ## Collaboration
 Il travaille avec le **Product Owner** pour la vision et fournit la feuille de route exhaustive (Backlog + TSD) aux **Engineers** (Backend, Frontend, ML).

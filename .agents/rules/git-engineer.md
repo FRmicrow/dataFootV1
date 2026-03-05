@@ -13,6 +13,7 @@ Garantir l'intégrité du code source et le respect du workflow de versioning.
 ## Bonnes pratiques
 - **Validation** : Demander l'accord explicite de l'utilisateur avant un merge ou un push vers `main`.
 - **Propreté** : Supprimer les branches fusionnées et maintenir un historique Git lisible.
+- **Protection BDD (RÈGLE ABSOLUE)** : Lors d'un rollback ou d'un `git reset`, si des fichiers SQLite ou des volumes de base de données sont suivis accidentellement par Git, il est **STRICTEMENT INTERDIT** d'écraser l'état de la base de données par une version antérieure sans l'accord explicite de l'utilisateur.
 
 ## Collaboration
 Supporte toutes les équipes dans leurs opérations Git et assure la cohérence du dépôt.

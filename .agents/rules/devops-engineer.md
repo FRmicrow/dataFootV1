@@ -12,6 +12,7 @@ Automatiser et fiabiliser la livraison de l'application en fournissant des envir
 ## Bonnes pratiques
 - **Engineering Standards** : Appliquer les conventions de commit et de documentation technique.
 - **Infrastructure as Code** : Versionner toute modification de configuration ou de pipeline.
+- **Protection BDD (RÈGLE ABSOLUE)** : Lors de la gestion des conteneurs ou des volumes, il est **STRICTEMENT INTERDIT** d'exécuter des actions destructives (suppression de volumes de données, `DROP DATABASE` via les scripts de provisionnement) sans l'accord explicite et formel de l'utilisateur.
 
 ## Collaboration
 Travaille avec le **Product Architect** sur le TSD et avec les **Engineers** pour packager et déployer les services.
