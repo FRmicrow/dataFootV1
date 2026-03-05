@@ -28,16 +28,20 @@ La fonctionnalité d'importation et d'affichage des cotes pré-match (Odds) est 
 - **Rattrapage Historique** : Utilisation de `runMLOddsCatchup` pour récupérer les cotes de fermeture des 7 derniers jours.
 - **Synchronisation Pré-Match** : Utilisation de `syncMLUpcomingOdds` pour les matchs des 7 prochains jours, avec réconciliation automatique des probabilités ML.
 
+## Résolution des Erreurs Critiques (Stabilisation Docker)
+
+- **Fix "Invalid ELF Header"** : Correction de l'incompatibilité d'architecture pour `better-sqlite3` en isolant les `node_modules` de l'hôte du conteneur via `.dockerignore`.
+- **Inter-service Communication** : Mise à jour du Backend pour utiliser le nom d'hôte Docker `ml-service:8008` au lieu de `localhost`.
+- **Base de Données** : Création de la table `V3_Risk_Analysis` manquante via la migration `20260305_00_CreateRiskAnalysis.js`.
+
 ## Vérification effectuée
 
-- ✅ **API Key** : Validation de la clé API-Football avec succès.
-- ✅ **Injection DB** : Validation de l'insertion et de la gestion des conflits (Upsert) côté SQLite.
-- ✅ **API Endpoints** : Testés via `curl` avec succès (réponses JSON 200).
-- ✅ **Console QA** : Aucune erreur frontend critique détectée lors de la navigation entre les onglets.
-- ✅ **API Robustness** : Le système gère gracieusement l'absence de service ML en arrière-plan via des placeholders et des états d'erreur informatifs.
-- ✅ **UI Verification** : Enregistrement de la validation visuelle effectuée par l'agent :
+- ✅ **Orchestrateur ML** : Statut "Online" et récupération des métriques OK (335k+ analyses détectées).
+- ✅ **Dual Sync Buttons** : Les boutons "Sync Past Odds" et "Sync Future Odds" sont fonctionnels et appellent les bons endpoints.
+- ✅ **Docker** : Rebuild complet effectué, tous les services sont stables et communicants.
 
-![ML Hub QA Verification](/Users/dominiqueparsis/.gemini/antigravity/brain/1e8da797-4758-4fcd-8b77-bb270eae6d1c/ml_hub_qa_verification_1772666452795.webp)
+### 🎥 Evidence & Validation
+La capture suivante montre le Hub ML stabilisé après le rebuild Docker :
+![ML Hub Stabilized](file:///Users/dominiqueparsis/.gemini/antigravity/brain/1e8da797-4758-4fcd-8b77-bb270eae6d1c/verify_dual_sync_buttons_v28_retry_1772669513147.webp)
 
-## Prochaines étapes suggérées
-- Lancer un import complet sur une ligue majeure (ex: Ligue 1 ou Premier League) via l'endpoint `/api/odds/import` ou directement via le futur bouton d'import dans l'UI.
+**Statut Final : PRÊT POUR MERGE**

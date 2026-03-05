@@ -1,0 +1,17 @@
+node_modules
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+data/*.sqlite
+data/*.sqlite-journal
+data/*.sqlite-wal
+models/

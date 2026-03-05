@@ -33,7 +33,8 @@ export const getMLOrchestratorStatus = async (req, res) => {
         // Proxy FastAPI health endpoint for real-time python state
         let pythonStatus = { status: 'offline', model_loaded: false, version: 'Unknown' };
         try {
-            const pyRes = await axios.get('http://localhost:8008/health', { timeout: 1500 });
+            const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://ml-service:8008';
+            const pyRes = await axios.get(`${mlServiceUrl}/health`, { timeout: 1500 });
             pythonStatus = pyRes.data;
         } catch (e) { /* Python might be down, ignore and return DB metrics */ }
 

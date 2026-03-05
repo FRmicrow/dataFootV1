@@ -4,7 +4,7 @@ import axios from 'axios';
  * ML Service Integration (US_154)
  * Bridges the Node.js backend with the Python-based FastAPI predictive engine.
  */
-const ML_SERVICE_URL = 'http://localhost:8000';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://ml-service:8008';
 
 /**
  * Fallback Heuristic (Poisson-based approximation)

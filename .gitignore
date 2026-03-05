@@ -75,3 +75,4 @@ sonarqube*/
 frontend/coverage/
 backend/coverage/
 >>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
+backend/node_modules_host_backup

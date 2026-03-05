@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+data/*.sqlite
+data/*.sqlite-journal
+data/*.sqlite-wal
+.env
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+build
+dist
