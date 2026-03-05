@@ -7,40 +7,35 @@ description: Ce workflow initie une nouvelle fonctionnalité et guide l’agent 
 Ce workflow initie une nouvelle fonctionnalité et guide l’agent Product Owner dans la collecte des informations et la création des User Stories. Il se déclenche via la commande `/create-new-feature`.
 
 ## Étapes
-1. **Isolation Git (Obligatoire)** : L'agent doit endosser le rôle `@git-engineer`. S'il est positionné sur la branche `main`, il doit s'assurer que celle-ci est bien à jour (`git pull`), puis demander obligatoirement le nom de la fonctionnalité à l'utilisateur pour **créer une nouvelle branche de travail dédiée** (ex: `git checkout -b feature/Vxx-[Nom]`). Le reste de ce workflow doit s'effectuer impérativement sur cette nouvelle branche.
-2. **Collecte des informations initiales** : Demandez à l'utilisateur de fournir les détails de la fonctionnalité en utilisant le format suivant :
-   ```markdown
-   **1. Identification de la Feature :**
-   - Version : [ex: V20]
-   - Nom : [ex: Match-Simulation-Engine]
 
-   **2. Objectif global (Vision) :**
-   [Expliquez le but de cette fonctionnalité en 2-3 phrases]
+### Phase 0 : Raffinement & Contexte (Product Owner)
+1. **Dialogue Initial** : Engagez une discussion approfondie avec l'utilisateur pour comprendre le "Pourquoi" et le "Quoi". Posez toutes les questions nécessaires pour éliminer les zones d'ombre.
+2. **Identification de la Feature** :
+   - Version : [ex: V29]
+   - Nom : [ex: Live-Betting-Dashboard]
+3. **Vision & Objectifs** : Déterminez les piliers de la feature (Ex: Performance, UX premium, Intégrité des données).
 
-   **3. Acteurs concernés :**
-   - [ex: Utilisateur, Admin, ML Engine]
+### Phase 1 : Spécifications Techniques - Le TSD (Product Architect)
+4. **Analyse d'Impact** : Analysez `.agents/project-architecture/` pour identifier les points de contact.
+5. **Rédaction du TSD** : Avant tout code, rédigez un document `technical-spec.md` (ou `feature-spec.md`) comprenant :
+   - **Data Contract** : Schéma SQL précis (tables/colonnes) et contrats API (Zod).
+   - **UI Blueprint** : Layout exact et liste des composants V3 à utiliser.
+   - **Logic & Edge Cases** : Gestion des erreurs, états vides, etc.
+6. **Validation du TSD** : Obtenez l'accord explicite de l'utilisateur sur ce document avant de découper en US.
 
-   **4. Liste des besoins / Fonctionnalités attendues :**
-   - [ex: Action 1 attendue]
-   - [ex: Action 2 attendue]
+### Phase 2 : Isolation & Structure (Git Engineer)
+7. **Création de Branche** : Basculez sur une nouvelle branche fraîche (ex: `feature/Vxx-[Nom]`).
+8. **Initialisation du Dossier** : Créez le dossier `docs/features/Vxx-[Nom]/` et déplacez-y le TSD validé.
 
-   **5. Règles métier & Contraintes :**
-   - [ex: Cas limites, performances, règles spécifiques]
+### Phase 3 : Définition des US & Tests (Product Owner)
+9. **Découpage en US** : Définissez les User Stories basées sur le TSD.
+10. **Intégration des Tests (QA Gatekeeper)** : Chaque US **doit** inclure une section "Scénarios de Test / Preuves" pour éviter le "raccourci technique".
+11. **Numérotation** : Utilisez le système standard (V15 -> US-150, US-151... ou US-1501 si > 9 US).
+12. **Création des Fichiers** : Générez les fichiers `US-<num>-<role>-<nom>.md` dans le dossier de la feature.
 
-   **6. Technique & Dépendances (Optionnel) :**
-   - [ex: Modèles de BDD, endpoints, ML]
-   ```
-2. **Analyse de l'Architecture Existante (Obligatoire)** : Avant de rédiger quoi que ce soit, consultez systématiquement les documents d'architecture dans le dossier `.agents/project-architecture/` (notamment `backend-swagger.yaml`, `backend-apis.md`, `frontend-pages.md`). Liez les besoins fonctionnels à la réalité technique du projet (routes existantes, tables impactées, composants V3 à réutiliser).
-3. **Compréhension et Affinage** : Résumez l’objectif général de la fonctionnalité et l'impact technique estimé. Si nécessaire, utilisez la compétence `planning/requirement-gathering` interactivement avec l'utilisateur pour combler les zones d'ombre.
-4. **Validation du périmètre** : Synthétisez les informations collectées (exigences, contraintes, architecture ciblée) et demandez à l’utilisateur de confirmer que le plan d'action est correct avant de passer à la création des User Stories.
-5. **Calcul de la numérotation des US** :
-   - Démarrez la numérotation à la `version` concaténée avec `0`. (Exemple pour V15 : la première US est `US-150`).
-   - Incrémentez de 1 pour chaque US (`US-151`, `US-152`...).
-   - Si vous dépassez la 9ème US (c'est-à-dire `US-159`), passez directement au format millier pour les suivantes : `US-1501`, `US-1502`, etc.
-6. **Attente de validation finale avant création** : Indiquez la liste des User Stories prévues avec leur numérotation calculée. Aucune création de fichier ou de dossier ne doit être faite sans l'accord explicite de l'utilisateur.
-7. **Création de la structure** : Une fois validé, créez le dossier `/feature/V<version>-<FeatureName>/`. Pour chaque User Story validée, créez un fichier `.md` nommé selon le modèle `US-<numéro>-<rôle>-<nom-court>.md` (ex. `US-150-front-inscription.md`). Le contenu détaillé de chaque US doit être rédigé par l’agent Product Owner en appelant le workflow `create-user-stories`.
-8. **Revue du Backlog** : Informez l’utilisateur que la Feature a été correctement découpée et documentée. Invitez-le à relire les fichiers des User Stories générés dans le dossier.
-9. **Passage de relais** : Une fois le backlog validé, conseillez à l'utilisateur de lancer la commande `/implement-feature` pour confier le développement technique à l'équipe.
+### Phase 4 : Lancement (Full-Stack Engineer)
+13. **Validation Finale** : Présentez le backlog et le TSD à l'utilisateur.
+14. **Passage de Relais** : Une fois validé, lancez `/implement-feature`.
 
 ## Notes
 - Ce workflow est la responsabilité exclusive de l'agent assumant le rôle de **Product Owner**.
