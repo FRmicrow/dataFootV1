@@ -15,7 +15,7 @@ import ImportTrophiesPage from './components/v3/pages/import/ImportTrophiesPage'
 import ImportEventsPage from './components/v3/pages/import/ImportEventsPage';
 import ImportLineupsPage from './components/v3/pages/import/ImportLineupsPage';
 import MatchDetailPage from './components/v3/pages/match/MatchDetailPage';
-import MachineLearningHub from './components/v3/modules/ml/MachineLearningHub';
+import MachineLearningHub from './components/v3/modules/ml/MachineLearningHubV29';
 import DesignSystemPage from './components/v3/pages/system/DesignSystemPage';
 
 // New features from main integrated into V3 architecture

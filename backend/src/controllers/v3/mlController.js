@@ -64,9 +64,10 @@ export const getMLRecentAnalyses = async (req, res) => {
             FROM V3_Risk_Analysis r
             JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id
             JOIN V3_Leagues l ON f.league_id = l.league_id
+            JOIN V3_Countries c ON l.country_id = c.country_id
             JOIN V3_Teams ht ON f.home_team_id = ht.team_id
             JOIN V3_Teams at ON f.away_team_id = at.team_id
-            ORDER BY r.analyzed_at DESC
+            ORDER BY c.importance_rank ASC, l.importance_rank ASC, r.analyzed_at DESC
             LIMIT 50
         `);
         res.json({ success: true, data: recentRows });
@@ -321,6 +322,12 @@ export const getMLSimulationOverview = async (req, res) => {
         });
 
         overview.sort((a, b) => {
+            if (a.country_importance_rank !== b.country_importance_rank) {
+                return a.country_importance_rank - b.country_importance_rank;
+            }
+            if (a.league_importance_rank !== b.league_importance_rank) {
+                return a.league_importance_rank - b.league_importance_rank;
+            }
             if (a.league_name < b.league_name) return -1;
             if (a.league_name > b.league_name) return 1;
             return b.season_year - a.season_year;
@@ -497,6 +504,16 @@ export const getLeagueModels = async (req, res) => {
     }
 };
 
+export const predictFixtureAll = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await mlService.predictFixtureAll(id);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 export default {
     triggerModelRetrain,
     getModelStatus,
@@ -516,5 +533,6 @@ export default {
     getEligibleHorizons,
     getLeagueModels,
     syncAdvancedOdds,
-    runOddsCatchup
+    runOddsCatchup,
+    predictFixtureAll
 };

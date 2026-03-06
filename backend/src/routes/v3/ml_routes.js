@@ -26,7 +26,8 @@ import {
     syncUpcomingOdds,
     syncAdvancedOdds,
     runOddsCatchup,
-    getMLSimulationFilters
+    getMLSimulationFilters,
+    predictFixtureAll
 } from '../../controllers/v3/mlController.js';
 import {
     triggerSimulation,
@@ -62,6 +63,7 @@ router.get('/ml-platform/recommendations', getMLRecommendations);
 router.post('/ml-platform/odds/sync', syncUpcomingOdds);
 router.post('/ml-platform/odds/advanced-sync', syncAdvancedOdds);
 router.post('/ml-platform/odds/catchup', runOddsCatchup);
+router.get('/predict/fixture/:id', predictFixtureAll);
 
 // Forge Laboratory
 router.post('/forge/breed', validateRequest(breedingSchema), startBreeding);

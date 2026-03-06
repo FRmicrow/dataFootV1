@@ -176,6 +176,16 @@ export const getLeagueModels = async (leagueId) => {
     }
 };
 
+export const predictFixtureAll = async (fixtureId) => {
+    try {
+        const response = await axios.get(`${ML_SERVICE_URL}/predict/fixture/${fixtureId}`);
+        return response.data;
+    } catch (err) {
+        console.error(`❌ ML Master Prediction Error: ${err.message}`);
+        return { success: false, message: err.message };
+    }
+};
+
 export default {
     getPredictionForFixture,
     getBatchPredictions,
@@ -188,5 +198,6 @@ export default {
     retrainFromSimulation,
     getRetrainStatus,
     getEligibleHorizons,
-    getLeagueModels
+    getLeagueModels,
+    predictFixtureAll
 };

@@ -18,11 +18,12 @@ export const syncUpcomingOdds = async () => {
             WHERE status_short = 'NS' 
               AND date >= date('now') 
               AND date <= date('now', '+7 days')
+            LIMIT 50
         `);
 
         if (fixtures.length === 0) {
-            console.log("ℹ️ No upcoming matches to sync odds for.");
-            return { success: true, count: 0 };
+            console.log("ℹ️ [US-1915] No upcoming matches to sync odds for.");
+            return { success: true, count: 0, message: "No upcoming matches found in window." };
         }
 
         console.log(`🔍 Found ${fixtures.length} upcoming fixtures to sync.`);
@@ -39,14 +40,14 @@ export const syncUpcomingOdds = async () => {
         }
 
         // 2. Reconcile with V3_Risk_Analysis
-        console.log("⚖️ Reconciling V3_Risk_Analysis with new odds...");
-        await reconcileRiskWithOdds();
+        console.log("⚖️ [US-1915] Reconciling V3_Risk_Analysis with new odds...");
+        const reconciled = await reconcileRiskWithOdds();
 
-        console.log(`✅ Synchronization completed. ${syncedCount} fixtures updated.`);
-        return { success: true, count: syncedCount };
+        console.log(`✅ [US-1915] Synchronization completed. ${syncedCount} fixtures updated. ${reconciled} risk rows reconciled.`);
+        return { success: true, count: syncedCount, reconciled_rows: reconciled };
 
     } catch (err) {
-        console.error("❌ Odds Synchronization Critical Error:", err);
+        console.error("❌ [US-1915] Odds Synchronization Critical Error:", err);
         throw err;
     }
 };
@@ -64,12 +65,6 @@ export const reconcileRiskWithOdds = async () => {
         WHERE market_id = 1
     `);
 
-    for (const o of ftOdds) {
-        updateSelectionOdd(o.fixture_id, '1N2_FT', '1', o.value_home_over);
-        updateSelectionOdd(o.fixture_id, '1N2_FT', 'N', o.value_draw);
-        updateSelectionOdd(o.fixture_id, '1N2_FT', '2', o.value_away_under);
-    }
-
     // 2. 1N2_HT (Market ID 10)
     const htOdds = db.all(`
         SELECT fixture_id, value_home_over, value_draw, value_away_under 
@@ -77,15 +72,22 @@ export const reconcileRiskWithOdds = async () => {
         WHERE market_id = 10
     `);
 
+    let count = 0;
+    for (const o of ftOdds) {
+        updateSelectionOdd(o.fixture_id, '1N2_FT', '1', o.value_home_over);
+        updateSelectionOdd(o.fixture_id, '1N2_FT', 'N', o.value_draw);
+        updateSelectionOdd(o.fixture_id, '1N2_FT', '2', o.value_away_under);
+        count++;
+    }
+
     for (const o of htOdds) {
         updateSelectionOdd(o.fixture_id, '1N2_HT', '1', o.value_home_over);
         updateSelectionOdd(o.fixture_id, '1N2_HT', 'N', o.value_draw);
         updateSelectionOdd(o.fixture_id, '1N2_HT', '2', o.value_away_under);
+        count++;
     }
 
-    // 3. Over/Under Markets (simplified)
-    // US-1915 focuses on main 1N2 for now in Value Dashboard, 
-    // but schema allows extension.
+    return count;
 };
 
 const updateSelectionOdd = (fixtureId, marketType, selection, odd) => {

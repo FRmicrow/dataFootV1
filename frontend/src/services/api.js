@@ -163,9 +163,10 @@ export default {
 
     getMLRecommendations: () => api.get('/ml-platform/recommendations'),
 
-    syncMLUpcomingOdds: () => api.post('/ml-platform/odds/sync'),
-    syncMLAdvancedOdds: () => api.post('/ml-platform/odds/advanced-sync'),
-    runMLOddsCatchup: () => api.post('/ml-platform/odds/catchup'),
+    syncMLUpcomingOdds: () => api.post('/ml-platform/odds/sync', {}),
+    syncMLAdvancedOdds: () => api.post('/ml-platform/odds/advanced-sync', {}),
+    runMLOddsCatchup: () => api.post('/ml-platform/odds/catchup', {}),
+    getFixturePrediction: (id) => api.get(`/predict/fixture/${id}`),
     getMLModelEvaluation: (leagueId, seasonYear) => {
         const params = new URLSearchParams();
         if (leagueId) params.append('leagueId', leagueId);

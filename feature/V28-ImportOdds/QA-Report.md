@@ -31,3 +31,31 @@
 
 ## 🏁 Conclusion
 L'environnement Docker est stable et prêt pour le développement. Le correctif du proxy garantit la portabilité entre l'hôte et le conteneur.
+
+---
+
+# Rapport de Test QA - V29 ML Hub Rework
+
+## 📝 Informations Générales
+- **Date** : 2026-03-05
+- **Feature** : V29 ML Hub Rework & Database Recovery
+- **Statut** : ✅ REUSSI (avec limitations acceptées)
+
+## 🧪 Scénarios de Test
+### 1. Database Integrity & Recovery
+- **Action** : Restauration d'un dump de 3.5GB suite à des erreurs `SQLITE_CORRUPT`.
+- **Résultat** : La BDD a été reconstruite. Les tables principales sont peuplées (Fixtures: ~20k, Leagues: 353, Risk_Analysis: ~335k). Le PRAGMA integrity_check retourne 'ok'. 
+- **Note** : La synchronisation des cotes (`V3_Odds`) a été volontairement ignorée pour le moment ("S'il y a un problème avec V3_odds, abandonne nous verrons plus tard").
+
+### 2. Frontend UI - Design System Compliance
+- **Action** : Refactoring complet des composants `MLDashboard`, `MLLeaderboard`, `MLTestLab`, et `MLModelFactory`.
+- **Résultat** : Utilisation exclusive des composants du Design System (`Card`, `Stack`, `Table`, `Badge`, `Input`). 
+    - L'interface utilise désormais des listes consultables (tables) au lieu de simples menus déroulants pour `MLTestLab` et `MLModelFactory`.
+    - L'exécution de modèles est possible via des boutons d'action directement par ligne ("Run Model", "Build Models").
+
+### 3. Backend - Importance Sorting
+- **Action** : Mise à jour des requêtes de contrôleurs (`mlController.js`, `oddsController.js`).
+- **Résultat** : Intégration de `country_importance_rank` et `league_importance_rank`. Les ligues majeures avec un fort "importance rank" s'affichent désormais en tête du Dashboard, Leaderboard, et Test Lab.
+
+## 🏁 Conclusion ML Hub
+Le module ML Hub version 31 est techniquement déployé. La structure UI est conforme aux standards visuels premiums exigés, et les données historiques sont de nouveau consultables sans erreurs 500 serveur. Le module Odds sera revisité ultérieurement.
