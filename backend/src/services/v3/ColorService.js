@@ -47,7 +47,7 @@ class ColorService {
                 const secondary = colors[1] || colors[0];
                 const tertiary = colors[2] || colors[1] || colors[0];
 
-                db.run(`
+                await db.run(`
                     UPDATE V3_Teams 
                     SET accent_color = ?, secondary_color = ?, tertiary_color = ? 
                     WHERE team_id = ?
@@ -70,7 +70,7 @@ class ColorService {
      * @param {number} limit 
      */
     async batchProcessMissingColors(limit = 50) {
-        const teams = db.all(`
+        const teams = await db.all(`
             SELECT team_id, name, logo_url 
             FROM V3_Teams 
             WHERE logo_url IS NOT NULL 

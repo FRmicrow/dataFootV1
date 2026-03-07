@@ -5,7 +5,7 @@
 
 -- 1. BASE TABLES
 CREATE TABLE IF NOT EXISTS V3_Countries (
-    country_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    country_id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     code TEXT,
     flag_url TEXT,
@@ -13,24 +13,25 @@ CREATE TABLE IF NOT EXISTS V3_Countries (
     api_id INTEGER UNIQUE,
     importance_rank INTEGER DEFAULT 999,
     continent TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS V3_Leagues (
-    league_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league_id SERIAL PRIMARY KEY,
     api_id INTEGER UNIQUE,
     name TEXT NOT NULL,
     type TEXT, -- League, Cup
     logo_url TEXT,
     country_id INTEGER,
     importance_rank INTEGER DEFAULT 999,
-    is_discovered BOOLEAN DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_discovered BOOLEAN DEFAULT FALSE,
+    is_live_enabled BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (country_id) REFERENCES V3_Countries(country_id)
 );
 
 CREATE TABLE IF NOT EXISTS V3_Venues (
-    venue_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    venue_id SERIAL PRIMARY KEY,
     api_id INTEGER UNIQUE,
     name TEXT NOT NULL,
     address TEXT,
@@ -38,30 +39,30 @@ CREATE TABLE IF NOT EXISTS V3_Venues (
     capacity INTEGER,
     surface TEXT,
     image_url TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 DROP TABLE IF EXISTS V3_Teams;
 CREATE TABLE IF NOT EXISTS V3_Teams (
-    team_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_id SERIAL PRIMARY KEY,
     api_id INTEGER UNIQUE,
     name TEXT NOT NULL,
     code TEXT,
     country TEXT,
     founded INTEGER,
-    national BOOLEAN DEFAULT 0,
-    is_national_team BOOLEAN DEFAULT 0,
+    national BOOLEAN DEFAULT FALSE,
+    is_national_team BOOLEAN DEFAULT FALSE,
     logo_url TEXT,
     venue_id INTEGER,
     accent_color TEXT,
     scout_rank REAL, -- For sorting relevance
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (venue_id) REFERENCES V3_Venues(venue_id)
 );
 
 DROP TABLE IF EXISTS V3_Players;
 CREATE TABLE IF NOT EXISTS V3_Players (
-    player_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id SERIAL PRIMARY KEY,
     api_id INTEGER UNIQUE,
     name TEXT NOT NULL,
     firstname TEXT,
@@ -76,45 +77,62 @@ CREATE TABLE IF NOT EXISTS V3_Players (
     injured BOOLEAN,
     photo_url TEXT,
     scout_rank REAL, -- For sorting relevance
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    is_trophy_synced BOOLEAN DEFAULT FALSE,
+    last_sync_trophies TIMESTAMPTZ,
+    position TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. SEASONAL TRACKING
 CREATE TABLE IF NOT EXISTS V3_League_Seasons (
-    league_season_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league_season_id SERIAL PRIMARY KEY,
     league_id INTEGER NOT NULL,
     season_year INTEGER NOT NULL,
     start_date TEXT,
     end_date TEXT,
-    is_current BOOLEAN DEFAULT 0,
+    is_current BOOLEAN DEFAULT FALSE,
     sync_status TEXT DEFAULT 'NONE', -- NONE, PARTIAL_DISCOVERY, SYNCED
     
     -- Coverage Flags
-    coverage_fixtures BOOLEAN DEFAULT 0,
-    coverage_standings BOOLEAN DEFAULT 0,
-    coverage_players BOOLEAN DEFAULT 0,
-    coverage_top_scorers BOOLEAN DEFAULT 0,
-    coverage_top_assists BOOLEAN DEFAULT 0,
-    coverage_top_cards BOOLEAN DEFAULT 0,
-    coverage_injuries BOOLEAN DEFAULT 0,
-    coverage_predictions BOOLEAN DEFAULT 0,
-    coverage_odds BOOLEAN DEFAULT 0,
+    coverage_fixtures BOOLEAN DEFAULT FALSE,
+    coverage_standings BOOLEAN DEFAULT FALSE,
+    coverage_players BOOLEAN DEFAULT FALSE,
+    coverage_top_scorers BOOLEAN DEFAULT FALSE,
+    coverage_top_assists BOOLEAN DEFAULT FALSE,
+    coverage_top_cards BOOLEAN DEFAULT FALSE,
+    coverage_injuries BOOLEAN DEFAULT FALSE,
+    coverage_predictions BOOLEAN DEFAULT FALSE,
+    coverage_odds BOOLEAN DEFAULT FALSE,
     
-    -- Import Status Flags (Legacy but kept for compatibility)
-    imported_standings BOOLEAN DEFAULT 0,
-    imported_fixtures BOOLEAN DEFAULT 0,
-    imported_players BOOLEAN DEFAULT 0,
-    last_imported_at DATETIME,
-    last_updated DATETIME,
+    -- Import & Sync Status Flags
+    imported_standings BOOLEAN DEFAULT FALSE,
+    imported_fixtures BOOLEAN DEFAULT FALSE,
+    imported_players BOOLEAN DEFAULT FALSE,
+    imported_events BOOLEAN DEFAULT FALSE,
+    imported_lineups BOOLEAN DEFAULT FALSE,
+    imported_trophies BOOLEAN DEFAULT FALSE,
+    imported_fixture_stats BOOLEAN DEFAULT FALSE,
+    imported_player_stats BOOLEAN DEFAULT FALSE,
     
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- Sync Timestamps
+    last_sync_core TIMESTAMPTZ,
+    last_sync_events TIMESTAMPTZ,
+    last_sync_lineups TIMESTAMPTZ,
+    last_sync_trophies TIMESTAMPTZ,
+    last_sync_fixture_stats TIMESTAMPTZ,
+    last_sync_player_stats TIMESTAMPTZ,
+    
+    last_imported_at TIMESTAMPTZ,
+    last_updated TIMESTAMPTZ,
+    
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id),
     UNIQUE(league_id, season_year)
 );
 
 -- 3. STANDINGS & FIXTURES
 CREATE TABLE IF NOT EXISTS V3_Standings (
-    standings_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    standings_id SERIAL PRIMARY KEY,
     league_id INTEGER NOT NULL,
     season_year INTEGER NOT NULL,
     team_id INTEGER NOT NULL,
@@ -131,19 +149,19 @@ CREATE TABLE IF NOT EXISTS V3_Standings (
     status TEXT, -- "Promotion", "Relegation"
     description TEXT,
     group_name TEXT, -- For Cups/Group stages
-    update_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id),
     FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
     UNIQUE(league_id, season_year, team_id, group_name)
 );
 
 CREATE TABLE IF NOT EXISTS V3_Fixtures (
-    fixture_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fixture_id SERIAL PRIMARY KEY,
     api_id INTEGER UNIQUE NOT NULL,
     league_id INTEGER NOT NULL,
     season_year INTEGER NOT NULL,
     round TEXT,
-    date DATETIME,
+    date TIMESTAMPTZ,
     timestamp INTEGER,
     timezone TEXT,
     venue_id INTEGER,
@@ -163,8 +181,8 @@ CREATE TABLE IF NOT EXISTS V3_Fixtures (
     score_penalty_home INTEGER,
     score_penalty_away INTEGER,
     referee TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id),
     FOREIGN KEY (venue_id) REFERENCES V3_Venues(venue_id),
     FOREIGN KEY (home_team_id) REFERENCES V3_Teams(team_id),
@@ -173,7 +191,7 @@ CREATE TABLE IF NOT EXISTS V3_Fixtures (
 
 -- 4. MATCH EVENTS & DETAILS
 CREATE TABLE IF NOT EXISTS V3_Fixture_Events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     fixture_id INTEGER NOT NULL,
     time_elapsed INTEGER NOT NULL,
     extra_minute INTEGER,
@@ -185,12 +203,12 @@ CREATE TABLE IF NOT EXISTS V3_Fixture_Events (
     type TEXT NOT NULL, -- 'Goal', 'Card', 'subst', 'Var'
     detail TEXT,        -- 'Normal Goal', 'Yellow Card'
     comments TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS V3_Fixture_Stats (
-    fixture_stats_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fixture_stats_id SERIAL PRIMARY KEY,
     fixture_id INTEGER NOT NULL,
     team_id INTEGER NOT NULL,
     half TEXT NOT NULL, -- 'FT', '1H', '2H'
@@ -210,19 +228,19 @@ CREATE TABLE IF NOT EXISTS V3_Fixture_Stats (
     passes_total INTEGER DEFAULT 0,
     passes_accurate INTEGER DEFAULT 0,
     pass_accuracy_pct INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
     UNIQUE(fixture_id, team_id, half)
 );
 
 CREATE TABLE IF NOT EXISTS V3_Fixture_Player_Stats (
-    fixture_player_stats_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fixture_player_stats_id SERIAL PRIMARY KEY,
     fixture_id INTEGER NOT NULL,
     team_id INTEGER NOT NULL,
     player_id INTEGER NOT NULL,
-    is_start_xi BOOLEAN DEFAULT 1,
+    is_start_xi BOOLEAN DEFAULT TRUE,
     minutes_played INTEGER DEFAULT 0,
     position TEXT,
     rating TEXT,
@@ -251,8 +269,8 @@ CREATE TABLE IF NOT EXISTS V3_Fixture_Player_Stats (
     penalty_scored INTEGER DEFAULT 0,
     penalty_missed INTEGER DEFAULT 0,
     penalty_saved INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
     FOREIGN KEY (player_id) REFERENCES V3_Players(player_id),
@@ -261,7 +279,7 @@ CREATE TABLE IF NOT EXISTS V3_Fixture_Player_Stats (
 
 -- 5. SEASONAL STATISTICS
 CREATE TABLE IF NOT EXISTS V3_Player_Season_Stats (
-    season_stat_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    season_stat_id SERIAL PRIMARY KEY,
     player_id INTEGER NOT NULL,
     team_id INTEGER NOT NULL,
     league_id INTEGER NOT NULL,
@@ -281,8 +299,8 @@ CREATE TABLE IF NOT EXISTS V3_Player_Season_Stats (
     interceptions_per_90 REAL DEFAULT 0.0,
     duels_won_per_90 REAL DEFAULT 0.0,
     dribbles_success_per_90 REAL DEFAULT 0.0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (player_id) REFERENCES V3_Players(player_id),
     FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id),
@@ -291,7 +309,7 @@ CREATE TABLE IF NOT EXISTS V3_Player_Season_Stats (
 
 -- Compatibility / Legacy Stat table (from 02_V3)
 CREATE TABLE IF NOT EXISTS V3_Player_Stats (
-    stat_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stat_id SERIAL PRIMARY KEY,
     player_id INTEGER NOT NULL,
     team_id INTEGER NOT NULL,
     league_id INTEGER NOT NULL,
@@ -302,7 +320,7 @@ CREATE TABLE IF NOT EXISTS V3_Player_Stats (
     games_number INTEGER,
     games_position TEXT,
     games_rating TEXT,
-    games_captain BOOLEAN DEFAULT 0,
+    games_captain BOOLEAN DEFAULT FALSE,
     substitutes_in INTEGER DEFAULT 0,
     substitutes_out INTEGER DEFAULT 0,
     substitutes_bench INTEGER DEFAULT 0,
@@ -333,8 +351,8 @@ CREATE TABLE IF NOT EXISTS V3_Player_Stats (
     penalty_scored INTEGER DEFAULT 0,
     penalty_missed INTEGER DEFAULT 0,
     penalty_saved INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (player_id) REFERENCES V3_Players(player_id),
     FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id),
@@ -343,39 +361,69 @@ CREATE TABLE IF NOT EXISTS V3_Player_Stats (
 
 -- 6. TROPHIES
 CREATE TABLE IF NOT EXISTS V3_Trophies (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     player_id INTEGER NOT NULL,
     team_id INTEGER,
     league_id INTEGER,
     season_year INTEGER NOT NULL,
     name TEXT NOT NULL,
     place TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (player_id) REFERENCES V3_Players(player_id),
     FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id)
 );
 
--- 6.5 PRE-MATCH ODDS
+-- 6.5 PRE-MATCH ODDS (Wide Schema)
 CREATE TABLE IF NOT EXISTS V3_Odds (
-    odd_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    odds_id SERIAL PRIMARY KEY,
     fixture_id INTEGER NOT NULL,
     bookmaker_id INTEGER NOT NULL,
-    bookmaker_name TEXT NOT NULL,
-    bet_id INTEGER NOT NULL,
-    bet_name TEXT NOT NULL,
-    value_label TEXT NOT NULL, -- e.g. "Home", "Draw", "Away", "Over 2.5"
-    value_odd TEXT NOT NULL,   -- The actual odd string value (usually float as string)
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    market_id INTEGER NOT NULL,
+    value_home_over REAL,
+    value_draw REAL,
+    value_away_under REAL,
+    handicap_value REAL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE,
-    UNIQUE(fixture_id, bookmaker_id, bet_id, value_label)
+    UNIQUE NULLS NOT DISTINCT (fixture_id, bookmaker_id, market_id, handicap_value)
 );
 
 
 -- 7. IMPORT SYSTEM & AUDIT
+CREATE TABLE IF NOT EXISTS V3_System_Preferences (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    favorite_leagues JSON DEFAULT '[]',
+    favorite_teams JSON DEFAULT '[]',
+    tracked_leagues TEXT DEFAULT '[]'
+);
+
+CREATE TABLE IF NOT EXISTS V3_Predictions (
+    id SERIAL PRIMARY KEY,
+    fixture_id INTEGER NOT NULL UNIQUE,
+    league_id INTEGER,
+    season TEXT,
+    winner_id INTEGER,
+    winner_name TEXT,
+    winner_comment TEXT,
+    prob_home TEXT,
+    prob_draw TEXT,
+    prob_away TEXT,
+    goals_home INTEGER,
+    goals_away INTEGER,
+    advice TEXT,
+    comparison_data JSON,
+    h2h_data JSON,
+    teams_data JSON,
+    edge_value REAL,
+    confidence_score INTEGER,
+    risk_level TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS V3_Import_Status (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     league_id INTEGER NOT NULL,
     season_year INTEGER NOT NULL,
     pillar TEXT NOT NULL CHECK(pillar IN ('core', 'events', 'lineups', 'trophies', 'fs', 'ps')),
@@ -386,22 +434,22 @@ CREATE TABLE IF NOT EXISTS V3_Import_Status (
     total_items_imported INTEGER DEFAULT 0,
     data_range_start INTEGER,
     data_range_end INTEGER,
-    last_checked_at DATETIME,
-    last_success_at DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_checked_at TIMESTAMPTZ,
+    last_success_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id) ON DELETE CASCADE,
     UNIQUE(league_id, season_year, pillar)
 );
 
 CREATE TABLE IF NOT EXISTS V3_Cleanup_History (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     group_id TEXT NOT NULL,
     table_name TEXT NOT NULL,
     original_pk_id INTEGER,
     raw_data TEXT NOT NULL,
     reason TEXT,
-    deleted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    deleted_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 8. INDICES FOR PERFORMANCE

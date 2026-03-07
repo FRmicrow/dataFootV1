@@ -28,13 +28,13 @@ export class HealthPrescriptionService {
         let count = 0;
         for (const p of prescriptions) {
             const metaStr = JSON.stringify(p.metadata);
-            const exists = db.get(
+            const exists = await db.get(
                 "SELECT id FROM V3_Health_Prescriptions WHERE type = ? AND target_entity_type = ? AND target_entity_id = ? AND status = 'PENDING' AND metadata = ?",
                 cleanParams([p.type, p.target_entity_type, p.target_entity_id, metaStr])
             );
 
             if (!exists) {
-                db.run(
+                await db.run(
                     "INSERT INTO V3_Health_Prescriptions (type, priority, target_entity_type, target_entity_id, description, metadata) VALUES (?, ?, ?, ?, ?, ?)",
                     cleanParams([p.type, p.priority || 'MEDIUM', p.target_entity_type, p.target_entity_id, p.description, metaStr])
                 );
@@ -58,12 +58,12 @@ export class HealthPrescriptionService {
             GROUP BY s1.player_id, s1.league_id
             HAVING year_max > year_min + (COUNT(DISTINCT s1.season_year) - 1)
         `;
-        const gaps = db.all(sql);
+        const gaps = await db.all(sql);
         const results = [];
 
         for (const gap of gaps) {
             for (let year = gap.year_min + 1; year < gap.year_max; year++) {
-                const hasStat = db.get("SELECT 1 FROM V3_Player_Stats WHERE player_id = ? AND league_id = ? AND season_year = ?", cleanParams([gap.player_id, gap.league_id, year]));
+                const hasStat = await db.get("SELECT 1 FROM V3_Player_Stats WHERE player_id = ? AND league_id = ? AND season_year = ?", cleanParams([gap.player_id, gap.league_id, year]));
                 if (!hasStat) {
                     results.push({
                         type: 'MISSING_DATA',
@@ -81,7 +81,7 @@ export class HealthPrescriptionService {
 
     static async detectDuplicateCandidates() {
         const threshold = 85;
-        const candidates = ResolutionService.findGlobalDuplicates(threshold);
+        const candidates = await ResolutionService.findGlobalDuplicates(threshold);
         return candidates.map(c => ({
             type: 'DUPLICATE_CANDIDATE',
             priority: 'HIGH',
@@ -103,7 +103,7 @@ export class HealthPrescriptionService {
             AND e.id IS NULL
             GROUP BY f.league_id, f.season_year
         `;
-        const fixtures = db.all(sql);
+        const fixtures = await db.all(sql);
 
         return fixtures.map(g => ({
             type: 'DATA_INCONSISTENCY',
@@ -119,7 +119,7 @@ export class HealthPrescriptionService {
      * Executes the recovery action for a prescription.
      */
     static async execute(prescriptionId, sendLog) {
-        const prescription = db.get("SELECT * FROM V3_Health_Prescriptions WHERE id = ?", cleanParams([prescriptionId]));
+        const prescription = await db.get("SELECT * FROM V3_Health_Prescriptions WHERE id = ?", cleanParams([prescriptionId]));
         if (!prescription) throw new Error("Prescription not found");
         if (prescription.status === 'RESOLVED') throw new Error("Prescription already resolved");
 
@@ -138,7 +138,7 @@ export class HealthPrescriptionService {
 
                 case 'DUPLICATE_CANDIDATE':
                     // Merge logic
-                    result = ResolutionService.performMerge(prescription.target_entity_id, metadata.duplicate_id);
+                    result = await ResolutionService.performMerge(prescription.target_entity_id, metadata.duplicate_id);
                     break;
 
                 case 'DATA_INCONSISTENCY':
@@ -151,7 +151,7 @@ export class HealthPrescriptionService {
             }
 
             // Mark as RESOLVED
-            db.run("UPDATE V3_Health_Prescriptions SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP WHERE id = ?", cleanParams([prescriptionId]));
+            await db.run("UPDATE V3_Health_Prescriptions SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP WHERE id = ?", cleanParams([prescriptionId]));
 
             sendLog(`✅ Prescription #${prescriptionId} marked as RESOLVED.`, 'success');
             return result;

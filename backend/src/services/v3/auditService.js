@@ -11,7 +11,7 @@ import { IMPORT_STATUS, STATUS_LABELS, PILLARS } from './importStatusConstants.j
  */
 export const performDiscoveryScan = async () => {
     console.log('🔍 Starting Database Discovery Scan (US_268)...');
-    const seasons = db.all("SELECT * FROM V3_League_Seasons");
+    const seasons = await db.all("SELECT * FROM V3_League_Seasons");
     let updatedCount = 0;
     let autoLockedCount = 0;
     let alreadyLockedCount = 0;
@@ -20,31 +20,31 @@ export const performDiscoveryScan = async () => {
         const { league_id, season_year, league_season_id } = season;
 
         // 1. Count total finished fixtures (expected baseline)
-        const totalFixtures = db.get(
+        const totalFixtures = (await db.get(
             `SELECT COUNT(*) as count FROM V3_Fixtures 
              WHERE league_id = ? AND season_year = ? AND status_short IN ('FT', 'AET', 'PEN')`,
             cleanParams([league_id, season_year])
-        ).count;
+        )).count;
 
         // ──────────────────────────
         // Pillar: Core
         // ──────────────────────────
-        const currentCore = ImportStatusService.getStatus(league_id, season_year, 'core');
+        const currentCore = await ImportStatusService.getStatus(league_id, season_year, 'core');
         if (currentCore.status !== IMPORT_STATUS.NO_DATA && currentCore.status !== IMPORT_STATUS.LOCKED) {
-            const fixtureCount = db.get(
+            const fixtureCount = (await db.get(
                 "SELECT COUNT(*) as count FROM V3_Fixtures WHERE league_id = ? AND season_year = ?",
                 cleanParams([league_id, season_year])
-            ).count;
+            )).count;
 
-            const standingCount = db.get(
+            const standingCount = (await db.get(
                 "SELECT COUNT(*) as count FROM V3_Standings WHERE league_id = ? AND season_year = ?",
                 cleanParams([league_id, season_year])
-            ).count;
+            )).count;
 
-            const playerStatsCount = db.get(
+            const playerStatsCount = (await db.get(
                 "SELECT COUNT(*) as count FROM V3_Player_Stats WHERE league_id = ? AND season_year = ?",
                 cleanParams([league_id, season_year])
-            ).count;
+            )).count;
 
             const hasFixtures = fixtureCount > 0;
             const hasStandings = standingCount > 0;
@@ -53,13 +53,13 @@ export const performDiscoveryScan = async () => {
             if (!hasFixtures && !hasStandings && !hasPlayers) {
                 // Ratio = 0, status remains NONE
             } else if (hasFixtures && hasStandings && hasPlayers) {
-                ImportStatusService.setStatus(league_id, season_year, 'core', IMPORT_STATUS.COMPLETE, {
+                await ImportStatusService.setStatus(league_id, season_year, 'core', IMPORT_STATUS.COMPLETE, {
                     total_items_expected: 1,
                     total_items_imported: 1
                 });
                 updatedCount++;
             } else {
-                ImportStatusService.setStatus(league_id, season_year, 'core', IMPORT_STATUS.PARTIAL, {
+                await ImportStatusService.setStatus(league_id, season_year, 'core', IMPORT_STATUS.PARTIAL, {
                     total_items_expected: 3,
                     total_items_imported: (hasFixtures ? 1 : 0) + (hasStandings ? 1 : 0) + (hasPlayers ? 1 : 0)
                 });
@@ -78,26 +78,26 @@ export const performDiscoveryScan = async () => {
         // ──────────────────────────
         // Pillar: Events
         // ──────────────────────────
-        const currentEvents = ImportStatusService.getStatus(league_id, season_year, 'events');
+        const currentEvents = await ImportStatusService.getStatus(league_id, season_year, 'events');
         if (currentEvents.status !== IMPORT_STATUS.NO_DATA && currentEvents.status !== IMPORT_STATUS.LOCKED) {
-            const evtFixtures = db.get(`
+            const evtFixtures = (await db.get(`
                 SELECT COUNT(DISTINCT e.fixture_id) as count
                 FROM V3_Fixture_Events e
                 JOIN V3_Fixtures f ON e.fixture_id = f.fixture_id
                 WHERE f.league_id = ? AND f.season_year = ?
-            `, [league_id, season_year]).count;
+            `, [league_id, season_year])).count;
 
             if (totalFixtures === 0 || evtFixtures === 0) {
                 // No data yet
             } else {
                 const ratio = evtFixtures / totalFixtures;
                 if (ratio >= 0.95) {
-                    ImportStatusService.setStatus(league_id, season_year, 'events', IMPORT_STATUS.COMPLETE, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'events', IMPORT_STATUS.COMPLETE, {
                         total_items_expected: totalFixtures,
                         total_items_imported: evtFixtures
                     });
                 } else {
-                    ImportStatusService.setStatus(league_id, season_year, 'events', IMPORT_STATUS.PARTIAL, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'events', IMPORT_STATUS.PARTIAL, {
                         total_items_expected: totalFixtures,
                         total_items_imported: evtFixtures
                     });
@@ -109,24 +109,24 @@ export const performDiscoveryScan = async () => {
         // ──────────────────────────
         // Pillar: Lineups
         // ──────────────────────────
-        const currentLineups = ImportStatusService.getStatus(league_id, season_year, 'lineups');
+        const currentLineups = await ImportStatusService.getStatus(league_id, season_year, 'lineups');
         if (currentLineups.status !== IMPORT_STATUS.NO_DATA && currentLineups.status !== IMPORT_STATUS.LOCKED) {
-            const linFixtures = db.get(`
+            const linFixtures = (await db.get(`
                 SELECT COUNT(DISTINCT l.fixture_id) as count
                 FROM V3_Fixture_Lineups l
                 JOIN V3_Fixtures f ON l.fixture_id = f.fixture_id
                 WHERE f.league_id = ? AND f.season_year = ?
-            `, [league_id, season_year]).count;
+            `, [league_id, season_year])).count;
 
             if (totalFixtures > 0 && linFixtures > 0) {
                 const ratio = linFixtures / totalFixtures;
                 if (ratio >= 0.95) {
-                    ImportStatusService.setStatus(league_id, season_year, 'lineups', IMPORT_STATUS.COMPLETE, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'lineups', IMPORT_STATUS.COMPLETE, {
                         total_items_expected: totalFixtures,
                         total_items_imported: linFixtures
                     });
                 } else {
-                    ImportStatusService.setStatus(league_id, season_year, 'lineups', IMPORT_STATUS.PARTIAL, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'lineups', IMPORT_STATUS.PARTIAL, {
                         total_items_expected: totalFixtures,
                         total_items_imported: linFixtures
                     });
@@ -138,10 +138,10 @@ export const performDiscoveryScan = async () => {
         // ──────────────────────────
         // Pillar: Trophies
         // ──────────────────────────
-        const currentTrophies = ImportStatusService.getStatus(league_id, season_year, 'trophies');
+        const currentTrophies = await ImportStatusService.getStatus(league_id, season_year, 'trophies');
         if (currentTrophies.status !== IMPORT_STATUS.NO_DATA && currentTrophies.status !== IMPORT_STATUS.LOCKED) {
             // Trophies: check if players in this season are trophy-synced
-            const trophySync = db.get(`
+            const trophySync = await db.get(`
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN p.is_trophy_synced = 1 THEN 1 ELSE 0 END) as synced
@@ -153,9 +153,9 @@ export const performDiscoveryScan = async () => {
             if (trophySync && trophySync.total > 0) {
                 const ratio = trophySync.synced / trophySync.total;
                 if (ratio >= 0.95) {
-                    ImportStatusService.setStatus(league_id, season_year, 'trophies', IMPORT_STATUS.COMPLETE);
+                    await ImportStatusService.setStatus(league_id, season_year, 'trophies', IMPORT_STATUS.COMPLETE);
                 } else if (trophySync.synced > 0) {
-                    ImportStatusService.setStatus(league_id, season_year, 'trophies', IMPORT_STATUS.PARTIAL, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'trophies', IMPORT_STATUS.PARTIAL, {
                         total_items_expected: trophySync.total,
                         total_items_imported: trophySync.synced
                     });
@@ -167,24 +167,24 @@ export const performDiscoveryScan = async () => {
         // ──────────────────────────
         // Pillar: FS
         // ──────────────────────────
-        const currentFS = ImportStatusService.getStatus(league_id, season_year, 'fs');
+        const currentFS = await ImportStatusService.getStatus(league_id, season_year, 'fs');
         if (currentFS.status !== IMPORT_STATUS.NO_DATA && currentFS.status !== IMPORT_STATUS.LOCKED) {
-            const fsFixtures = db.get(`
+            const fsFixtures = (await db.get(`
                 SELECT COUNT(DISTINCT s.fixture_id) as count
                 FROM V3_Fixture_Stats s
                 JOIN V3_Fixtures f ON s.fixture_id = f.fixture_id
                 WHERE f.league_id = ? AND f.season_year = ?
-            `, [league_id, season_year]).count;
+            `, [league_id, season_year])).count;
 
             if (totalFixtures > 0 && fsFixtures > 0) {
                 const ratio = fsFixtures / totalFixtures;
                 if (ratio >= 0.95) {
-                    ImportStatusService.setStatus(league_id, season_year, 'fs', IMPORT_STATUS.COMPLETE, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'fs', IMPORT_STATUS.COMPLETE, {
                         total_items_expected: totalFixtures,
                         total_items_imported: fsFixtures
                     });
                 } else {
-                    ImportStatusService.setStatus(league_id, season_year, 'fs', IMPORT_STATUS.PARTIAL, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'fs', IMPORT_STATUS.PARTIAL, {
                         total_items_expected: totalFixtures,
                         total_items_imported: fsFixtures
                     });
@@ -196,24 +196,24 @@ export const performDiscoveryScan = async () => {
         // ──────────────────────────
         // Pillar: PS
         // ──────────────────────────
-        const currentPS = ImportStatusService.getStatus(league_id, season_year, 'ps');
+        const currentPS = await ImportStatusService.getStatus(league_id, season_year, 'ps');
         if (currentPS.status !== IMPORT_STATUS.NO_DATA && currentPS.status !== IMPORT_STATUS.LOCKED) {
-            const psFixtures = db.get(`
+            const psFixtures = (await db.get(`
                 SELECT COUNT(DISTINCT s.fixture_id) as count
                 FROM V3_Fixture_Player_Stats s
                 JOIN V3_Fixtures f ON s.fixture_id = f.fixture_id
                 WHERE f.league_id = ? AND f.season_year = ?
-            `, [league_id, season_year]).count;
+            `, [league_id, season_year])).count;
 
             if (totalFixtures > 0 && psFixtures > 0) {
                 const ratio = psFixtures / totalFixtures;
                 if (ratio >= 0.95) {
-                    ImportStatusService.setStatus(league_id, season_year, 'ps', IMPORT_STATUS.COMPLETE, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'ps', IMPORT_STATUS.COMPLETE, {
                         total_items_expected: totalFixtures,
                         total_items_imported: psFixtures
                     });
                 } else {
-                    ImportStatusService.setStatus(league_id, season_year, 'ps', IMPORT_STATUS.PARTIAL, {
+                    await ImportStatusService.setStatus(league_id, season_year, 'ps', IMPORT_STATUS.PARTIAL, {
                         total_items_expected: totalFixtures,
                         total_items_imported: psFixtures
                     });
@@ -223,7 +223,7 @@ export const performDiscoveryScan = async () => {
         } else { alreadyLockedCount++; }
 
         // Post-season: check auto-lock
-        const locked = ImportStatusService.checkAutoLock(league_id, season_year);
+        const locked = await ImportStatusService.checkAutoLock(league_id, season_year);
         if (locked) autoLockedCount++;
     }
 

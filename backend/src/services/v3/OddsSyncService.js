@@ -12,7 +12,7 @@ export const syncUpcomingOdds = async () => {
 
     try {
         // 1. Fetch upcoming fixtures (next 7 days) that are Not Started
-        const fixtures = db.all(`
+        const fixtures = await db.all(`
             SELECT fixture_id 
             FROM V3_Fixtures 
             WHERE status_short = 'NS' 
@@ -59,14 +59,14 @@ export const reconcileRiskWithOdds = async () => {
     // We map only supported ML markets for now: 1N2_FT, 1N2_HT
 
     // 1. 1N2_FT (Market ID 1)
-    const ftOdds = db.all(`
+    const ftOdds = await db.all(`
         SELECT fixture_id, value_home_over, value_draw, value_away_under 
         FROM V3_Odds 
         WHERE market_id = 1
     `);
 
     // 2. 1N2_HT (Market ID 10)
-    const htOdds = db.all(`
+    const htOdds = await db.all(`
         SELECT fixture_id, value_home_over, value_draw, value_away_under 
         FROM V3_Odds 
         WHERE market_id = 10
@@ -90,10 +90,10 @@ export const reconcileRiskWithOdds = async () => {
     return count;
 };
 
-const updateSelectionOdd = (fixtureId, marketType, selection, odd) => {
+const updateSelectionOdd = async (fixtureId, marketType, selection, odd) => {
     if (!odd) return;
 
-    db.run(`
+    await db.run(`
         UPDATE V3_Risk_Analysis 
         SET bookmaker_odd = ?,
             edge = CASE 

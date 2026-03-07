@@ -1,19 +1,18 @@
 import os
 import json
-import sqlite3
+from db_config import get_connection
 import numpy as np
 import pandas as pd
 from catboost import CatBoostRegressor
 
 MODEL_DIR = os.path.dirname(__file__)
 BASE_DIR = os.path.abspath(os.path.join(MODEL_DIR, '..', '..', '..'))
-DB_PATH = os.path.join(BASE_DIR, '..', 'backend', 'data', 'database.sqlite')
 
 # Global cache for loaded models
 _MODELS = {}
 
 def get_db_connection():
-    return sqlite3.connect(DB_PATH)
+    return get_connection()
 
 def load_models(version='v0'):
     """Loads and caches the CatBoost models for a given version."""

@@ -3,7 +3,7 @@ Train Forge — League-Scoped Multi-Horizon Model Training (V8)
 Supports FULL_HISTORICAL, 5Y_ROLLING, 3Y_ROLLING horizons per league.
 NO ODDS. Accuracy-only evaluation.
 """
-import sqlite3
+import psycopg2
 import pandas as pd
 import numpy as np
 import json
@@ -14,12 +14,12 @@ from datetime import datetime
 from catboost import CatBoostClassifier, Pool
 from sklearn.metrics import log_loss, accuracy_score
 from time_travel import TemporalFeatureFactory
+from db_config import get_connection
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', 'backend', 'database.sqlite'))
 
 def get_db_connection():
-    return sqlite3.connect(DB_PATH)
+    return get_connection()
 
 def get_horizon_cutoff(horizon_type: str, season_year: int = None) -> str:
     """Returns the earliest date to include training data for a given horizon."""
@@ -41,7 +41,7 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
     print(f"🧠 [Forge] Training {label} model ({horizon_type})...")
     
     conn = get_db_connection()
-    factory = TemporalFeatureFactory(DB_PATH)
+    factory = TemporalFeatureFactory()
     
     try:
         # 1. Determine training data window
@@ -53,16 +53,16 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
             WHERE f.status_short IN ('FT', 'AET', 'PEN')
               AND f.goals_home IS NOT NULL
               AND f.goals_away IS NOT NULL
-              AND f.date >= ?
+              AND f.date >= %s
         """
         params = [earliest]
         
         if league_id:
-            query += " AND f.league_id = ?"
+            query += " AND f.league_id = %s"
             params.append(league_id)
         
         if cutoff_date:
-            query += " AND f.date < ?"
+            query += " AND f.date < %s"
             params.append(cutoff_date)
         
         query += " ORDER BY f.date ASC"
@@ -168,24 +168,26 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
         version_tag = f"catboost_v{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         # Deactivate previous models for same scope
-        conn.execute("""
+        cur = conn.cursor()
+        cur.execute("""
             UPDATE V3_Model_Registry SET is_active = 0 
-            WHERE league_id IS ? AND horizon_type = ?
+            WHERE league_id IS NOT DISTINCT FROM %s AND horizon_type = %s
         """, (league_id, horizon_type))
         
-        conn.execute("""
+        cur.execute("""
             INSERT INTO V3_Model_Registry (
                 league_id, horizon_type, version_tag, 
                 training_dataset_size, features_count,
                 accuracy, log_loss, brier_score,
                 model_path, is_active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
         """, (
             league_id, horizon_type, version_tag,
             len(X_train), len(factory.feature_columns),
             float(acc), float(loss), float(brier),
             model_path, 
         ))
+        cur.close()
         
         conn.commit()
         conn.close()

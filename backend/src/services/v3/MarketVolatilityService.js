@@ -12,9 +12,9 @@ export class MarketVolatilityService {
     static async captureSnapshot(fixtureId) {
         console.log(`📸 [US_142] Capturing odds snapshot for fixture ${fixtureId}...`);
 
-        const lastSnapshot = db.get("SELECT * FROM V3_Odds_History WHERE fixture_id = ? ORDER BY capture_timestamp DESC LIMIT 1", cleanParams([fixtureId]));
+        const lastSnapshot = await db.get("SELECT * FROM V3_Odds_History WHERE fixture_id = ? ORDER BY capture_timestamp DESC LIMIT 1", cleanParams([fixtureId]));
 
-        const currentOdds = db.all("SELECT * FROM V3_Odds WHERE fixture_id = ?", cleanParams([fixtureId]));
+        const currentOdds = await db.all("SELECT * FROM V3_Odds WHERE fixture_id = ?", cleanParams([fixtureId]));
 
         if (currentOdds.length === 0) {
             console.warn(`   ⚠️ No current odds found in V3_Odds for fixture ${fixtureId}. Skipping snapshot.`);
@@ -42,7 +42,7 @@ export class MarketVolatilityService {
         `;
 
         for (const row of currentOdds) {
-            db.run(sql, cleanParams([
+            await db.run(sql, cleanParams([
                 row.fixture_id,
                 row.bookmaker_id,
                 row.market_id,
@@ -59,10 +59,10 @@ export class MarketVolatilityService {
     /**
      * Analyzes volatility for a specific market (e.g., Match Winner = 1)
      */
-    static getVolatilityReport(fixtureId, marketId = 1) {
+    static async getVolatilityReport(fixtureId, marketId = 1) {
         // Selection logic: Which bookmaker's history should we analyze? (US_175)
         // We look for history specifically for prioritized bookies
-        const historyRows = db.all(`
+        const historyRows = await db.all(`
             SELECT DISTINCT bookmaker_id FROM V3_Odds_History 
             WHERE fixture_id = ? AND market_id = ?
         `, cleanParams([fixtureId, marketId]));
@@ -72,7 +72,7 @@ export class MarketVolatilityService {
         const availableIds = historyRows.map(r => r.bookmaker_id);
         const bestId = [52, 11].find(id => availableIds.includes(id)) || availableIds[0];
 
-        const history = db.all(`
+        const history = await db.all(`
             SELECT * FROM V3_Odds_History 
             WHERE fixture_id = ? AND market_id = ? AND bookmaker_id = ?
             ORDER BY capture_timestamp ASC
@@ -129,7 +129,7 @@ export class MarketVolatilityService {
     static async runGlobalSnapshot() {
         console.log("🕒 [US_142] Starting Global Odds Snapshot Task...");
 
-        const trackedLeaguesRaw = db.get("SELECT tracked_leagues FROM V3_System_Preferences LIMIT 1")?.tracked_leagues || '[]';
+        const trackedLeaguesRaw = (await db.get("SELECT tracked_leagues FROM V3_System_Preferences LIMIT 1"))?.tracked_leagues || '[]';
         const trackedLeagues = JSON.parse(trackedLeaguesRaw);
 
         let leagueFilter = "";
@@ -141,11 +141,11 @@ export class MarketVolatilityService {
         }
 
         // Get upcoming fixtures (next 48h)
-        const upcoming = db.all(`
+        const upcoming = await db.all(`
             SELECT fixture_id 
             FROM V3_Fixtures 
-            WHERE date > datetime('now') 
-              AND date < datetime('now', '+2 days')
+            WHERE date > CURRENT_TIMESTAMP::text
+              AND date < (CURRENT_TIMESTAMP + INTERVAL '2 days')::text
               ${leagueFilter}
         `);
 

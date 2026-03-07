@@ -1,7 +1,7 @@
 import { cleanParams } from '../../utils/sqlHelpers.js';
 /**
  * BaseRepository
- * Provides common data access patterns for SQLite.
+ * Provides common data access patterns for PostgreSQL (via pg wrapper).
  */
 class BaseRepository {
     constructor(db, tableName) {
@@ -12,18 +12,18 @@ class BaseRepository {
     /**
      * Find one record by criteria
      */
-    findOne(criteria = {}) {
+    async findOne(criteria = {}) {
         const keys = Object.keys(criteria);
         const whereClause = keys.length ? `WHERE ${keys.map(k => `${k} = ?`).join(' AND ')}` : '';
         const params = Object.values(criteria);
 
-        return this.db.get(`SELECT * FROM ${this.tableName} ${whereClause} LIMIT 1`, cleanParams(params));
+        return await this.db.get(`SELECT * FROM ${this.tableName} ${whereClause} LIMIT 1`, cleanParams(params));
     }
 
     /**
      * Find many records by criteria
      */
-    findMany(criteria = {}, options = {}) {
+    async findMany(criteria = {}, options = {}) {
         const keys = Object.keys(criteria);
         const whereClause = keys.length ? `WHERE ${keys.map(k => `${k} = ?`).join(' AND ')}` : '';
         const params = Object.values(criteria);
@@ -32,18 +32,18 @@ class BaseRepository {
         const limit = options.limit ? `LIMIT ${options.limit}` : '';
         const offset = options.offset ? `OFFSET ${options.offset}` : '';
 
-        return this.db.all(`SELECT * FROM ${this.tableName} ${whereClause} ${orderBy} ${limit} ${offset}`, cleanParams(params));
+        return await this.db.all(`SELECT * FROM ${this.tableName} ${whereClause} ${orderBy} ${limit} ${offset}`, cleanParams(params));
     }
 
     /**
      * Insert a record
      */
-    insert(data) {
+    async insert(data) {
         const keys = Object.keys(data);
         const values = Object.values(data);
         const placeholders = keys.map(() => '?').join(', ');
 
-        const info = this.db.run(
+        const info = await this.db.run(
             `INSERT INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`,
             cleanParams(values)
         );
@@ -53,7 +53,7 @@ class BaseRepository {
     /**
      * Update a record
      */
-    update(criteria, data) {
+    async update(criteria, data) {
         const setKeys = Object.keys(data);
         const setClause = setKeys.map(k => `${k} = ?`).join(', ');
         const setValues = Object.values(data);
@@ -62,7 +62,7 @@ class BaseRepository {
         const whereClause = whereKeys.map(k => `${k} = ?`).join(' AND ');
         const whereValues = Object.values(criteria);
 
-        return this.db.run(
+        return await this.db.run(
             `UPDATE ${this.tableName} SET ${setClause} WHERE ${whereClause}`,
             cleanParams([...setValues, ...whereValues])
         );
@@ -71,24 +71,24 @@ class BaseRepository {
     /**
      * Delete a record
      */
-    delete(criteria) {
+    async delete(criteria) {
         const keys = Object.keys(criteria);
         const whereClause = keys.map(k => `${k} = ?`).join(' AND ');
         const params = Object.values(criteria);
 
-        return this.db.run(`DELETE FROM ${this.tableName} WHERE ${whereClause}`, cleanParams(params));
+        return await this.db.run(`DELETE FROM ${this.tableName} WHERE ${whereClause}`, cleanParams(params));
     }
 
     /**
      * Count records
      */
-    count(criteria = {}) {
+    async count(criteria = {}) {
         const keys = Object.keys(criteria);
         const whereClause = keys.length ? `WHERE ${keys.map(k => `${k} = ?`).join(' AND ')}` : '';
         const params = Object.values(criteria);
 
-        const result = this.db.get(`SELECT COUNT(*) as count FROM ${this.tableName} ${whereClause}`, cleanParams(params));
-        return result ? result.count : 0;
+        const result = await this.db.get(`SELECT COUNT(*) as count FROM ${this.tableName} ${whereClause}`, cleanParams(params));
+        return result ? parseInt(result.count, 10) : 0;
     }
 }
 

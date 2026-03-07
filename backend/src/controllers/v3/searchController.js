@@ -11,19 +11,19 @@ export const searchV3 = async (req, res) => {
         }
 
         const results = await SearchRepository.globalSearch(query, 50);
-        res.json(results);
+        res.json({ success: true, data: results });
 
     } catch (error) {
         console.error('V3 Search Error:', error);
-        res.status(500).json({ error: 'Search failed' });
+        res.status(500).json({ success: false, message: 'Search failed' });
     }
 };
 
 export const getSearchCountries = async (req, res) => {
     try {
         const rows = await SearchRepository.getSearchCountries();
-        res.json(rows);
+        res.json({ success: true, data: rows });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };

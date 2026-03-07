@@ -16,14 +16,14 @@ class MigrationService {
     }
 
     /**
-     * Initialize migration tracking table
+     * Initialize migration tracking table (PostgreSQL compatible)
      */
-    initTrackingTable() {
-        db.run(`
+    async initTrackingTable() {
+        await db.run(`
             CREATE TABLE IF NOT EXISTS V3_Migrations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 name TEXT UNIQUE NOT NULL,
-                applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                applied_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
             )
         `);
     }
@@ -32,7 +32,8 @@ class MigrationService {
      * Run all pending migrations
      */
     async runPending() {
-        this.initTrackingTable();
+        // Ensure registry table exists first using pool
+        await this.initTrackingTable();
 
         console.log('🏗️  Checking for Database Migrations...');
 
@@ -45,7 +46,7 @@ class MigrationService {
             .filter(f => f.endsWith('.js'))
             .sort();
 
-        const applied = db.all('SELECT name FROM V3_Migrations').map(m => m.name);
+        const applied = (await db.all('SELECT name FROM V3_Migrations')).map(m => m.name);
         let runCount = 0;
 
         for (const file of files) {
@@ -53,18 +54,26 @@ class MigrationService {
                 console.log(`🚀 Applying migration: ${file}...`);
                 const { up } = await import(path.join(this.registryPath, file));
 
+                // Acquire a dedicated client for the transaction
+                const client = await db.getTransactionClient();
+
                 try {
-                    // Start transaction for each migration if not already handled
-                    db.run('BEGIN TRANSACTION');
-                    await up(db);
-                    db.run('INSERT INTO V3_Migrations (name) VALUES (?)', [file]);
-                    db.run('COMMIT');
+                    await client.beginTransaction();
+
+                    // Pass the transactional client to the 'up' function
+                    await up(client);
+
+                    await client.run('INSERT INTO V3_Migrations (name) VALUES ($1)', [file]);
+                    await client.commit();
+
                     console.log(`✅ Successfully applied ${file}`);
                     runCount++;
                 } catch (error) {
-                    db.run('ROLLBACK');
+                    await client.rollback();
                     console.error(`❌ Failed to apply migration ${file}:`, error.message);
                     throw error;
+                } finally {
+                    client.release();
                 }
             }
         }

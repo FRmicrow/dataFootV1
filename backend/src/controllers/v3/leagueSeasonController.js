@@ -9,13 +9,13 @@ export const getLeagueSeasonsStatus = async (req, res) => {
         const { id: leagueId } = req.params;
 
         // Verify League Exists
-        const league = LeagueRepository.findOne({ league_id: leagueId });
+        const league = await LeagueRepository.findOne({ league_id: leagueId });
         if (!league) {
             return res.status(404).json({ error: 'V3 League not found' });
         }
 
         // Get Seasons Status
-        const seasons = LeagueSeasonRepository.getSeasonsStatusByLeague(leagueId);
+        const seasons = await LeagueSeasonRepository.getSeasonsStatusByLeague(leagueId);
 
         res.json({
             league: {
@@ -38,7 +38,7 @@ export const getLeagueSeasonsStatus = async (req, res) => {
 export const getSyncStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const seasons = LeagueSeasonRepository.findMany({ league_id: id });
+        const seasons = await LeagueSeasonRepository.findMany({ league_id: id });
 
         // Convert 1/0 to true/false
         const formatted = seasons.map(s => ({
@@ -69,10 +69,10 @@ export const initializeSeasons = async (req, res) => {
         const added = [];
         for (let year = startYear; year <= endYear; year++) {
             // Check if exists
-            const existing = LeagueSeasonRepository.findOne({ league_id: leagueId, season_year: year });
+            const existing = await LeagueSeasonRepository.findOne({ league_id: leagueId, season_year: year });
 
             if (!existing) {
-                LeagueSeasonRepository.insert({
+                await LeagueSeasonRepository.insert({
                     league_id: leagueId,
                     season_year: year,
                     is_current: year === new Date().getFullYear() ? 1 : 0

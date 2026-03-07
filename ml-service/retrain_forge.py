@@ -9,7 +9,8 @@ ML Strategy:
   4. Compare old vs new accuracy — only accept if improvement ≥ 0.5%
   5. Register the updated model in V3_Model_Registry with version bump
 """
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import pandas as pd
 import numpy as np
 import json
@@ -22,21 +23,20 @@ from sklearn.metrics import log_loss, accuracy_score
 from time_travel import TemporalFeatureFactory
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', 'backend', 'database.sqlite'))
 
 
 def retrain_from_simulation(model_id: int, simulation_id: int) -> dict:
     """
     Re-train a model using error signals from a completed simulation using CatBoost.
     """
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     factory = TemporalFeatureFactory(DB_PATH)
     
     try:
         # 1. Load the model registry entry
         reg = conn.execute("""
             SELECT id, league_id, horizon_type, model_path, accuracy, training_dataset_size
-            FROM V3_Model_Registry WHERE id = ?
+            FROM V3_Model_Registry WHERE id = %s
         """, (model_id,)).fetchone()
         
         if not reg:
@@ -58,7 +58,7 @@ def retrain_from_simulation(model_id: int, simulation_id: int) -> dict:
             SELECT r.fixture_id, r.prob_home, r.prob_draw, r.prob_away, 
                    r.actual_winner, r.is_correct
             FROM V3_Forge_Results r
-            WHERE r.simulation_id = ?
+            WHERE r.simulation_id = %s
         """, conn, params=(simulation_id,))
         
         if len(sim_results) < 20:

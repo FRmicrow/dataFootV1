@@ -11,3 +11,4 @@ seaborn
 uvicorn
 requests
 
+psycopg2-binary

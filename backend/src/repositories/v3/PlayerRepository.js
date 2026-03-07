@@ -7,12 +7,12 @@ class PlayerRepository extends BaseRepository {
         super(db, 'V3_Players');
     }
 
-    getPlayerProfile(id) {
-        return this.findOne({ player_id: id });
+    async getPlayerProfile(id) {
+        return await this.findOne({ player_id: id });
     }
 
-    getPlayerStats(playerId) {
-        return this.db.all(`
+    async getPlayerStats(playerId) {
+        return await this.db.all(`
             SELECT ps.*, t.name as team_name, t.logo_url as team_logo, l.name as league_name
             FROM V3_Player_Stats ps
             JOIN V3_Teams t ON ps.team_id = t.team_id
@@ -22,8 +22,8 @@ class PlayerRepository extends BaseRepository {
         `, cleanParams([playerId]));
     }
 
-    getPlayerTrophies(playerId) {
-        return this.db.all(`
+    async getPlayerTrophies(playerId) {
+        return await this.db.all(`
             SELECT t.*, c.flag_small_url as country_flag
             FROM V3_Trophies t
             LEFT JOIN V3_Countries c ON t.country = c.name
@@ -32,8 +32,8 @@ class PlayerRepository extends BaseRepository {
         `, cleanParams([playerId]));
     }
 
-    getCareerTotals(playerId) {
-        return this.db.all(`
+    async getCareerTotals(playerId) {
+        return await this.db.all(`
             SELECT 
                 ps.team_id,
                 t.name as team_name,
@@ -41,17 +41,18 @@ class PlayerRepository extends BaseRepository {
                 SUM(ps.games_appearences) as total_matches,
                 SUM(ps.goals_total) as total_goals,
                 SUM(ps.goals_assists) as total_assists,
-                ROUND(AVG(CAST(NULLIF(ps.games_rating, 'N/A') AS FLOAT)), 2) as avg_rating
+                ROUND(AVG(CAST(NULLIF(ps.games_rating, 'N/A') AS FLOAT))::numeric, 2) as avg_rating
             FROM V3_Player_Stats ps
             JOIN V3_Teams t ON ps.team_id = t.team_id
+            JOIN V3_Leagues l ON ps.league_id = l.league_id
             WHERE ps.player_id = ?
-            GROUP BY ps.team_id
+            GROUP BY ps.team_id, t.name, t.logo_url
         `, cleanParams([playerId]));
     }
 
-    getCurrentContext(playerId) {
+    async getCurrentContext(playerId) {
         // Find latest team and league
-        const latest = this.db.get(`
+        const latest = await this.db.get(`
             SELECT ps.team_id, t.name as team_name, t.logo_url as team_logo, 
                    t.accent_color, t.secondary_color, t.tertiary_color,
                    ps.league_id, l.name as league_name

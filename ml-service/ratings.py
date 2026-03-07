@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg2
 import pandas as pd
 import numpy as np
 import os
@@ -6,12 +6,11 @@ import logging
 import json
 from datetime import datetime
 from typing import Dict, List, Tuple, Any
+from db_config import get_connection
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('ELORatingEngine')
-
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'database.sqlite'))
 
 class ELORatingEngine:
     """
@@ -20,8 +19,7 @@ class ELORatingEngine:
     Includes K-factor optimization and league power adjustments.
     """
     
-    def __init__(self, db_path: str = DB_PATH, start_date: str = '2010-01-01'):
-        self.db_path = db_path
+    def __init__(self, start_date: str = '2010-01-01'):
         self.start_date = start_date
         self.team_elos: Dict[int, float] = {}         # team_id -> current_elo
         self.team_match_counts: Dict[int, int] = {}    # team_id -> matches played
@@ -35,9 +33,9 @@ class ELORatingEngine:
         self.home_advantage = 100.0
         
     def get_connection(self):
-        return sqlite3.connect(self.db_path)
+        return get_connection()
 
-    def load_league_ranks(self, conn: sqlite3.Connection):
+    def load_league_ranks(self, conn):
         """Pre-loads league importance ranks for inter-league adjustment."""
         cur = conn.cursor()
         cur.execute("SELECT league_id, importance_rank FROM V3_Leagues")
@@ -68,7 +66,9 @@ class ELORatingEngine:
         self.load_league_ranks(conn)
         
         # 1. Clear existing ratings
-        conn.execute("DELETE FROM V3_Team_Ratings")
+        cur = conn.cursor()
+        cur.execute("DELETE FROM V3_Team_Ratings")
+        cur.close()
         conn.commit()
         
         # 2. Fetch all finished matches
@@ -77,7 +77,7 @@ class ELORatingEngine:
                 fixture_id, date, league_id, season_year, 
                 home_team_id, away_team_id, goals_home, goals_away 
             FROM V3_Fixtures 
-            WHERE date >= ? 
+            WHERE date >= %s 
               AND status_short IN ('FT', 'AET', 'PEN')
               AND goals_home IS NOT NULL 
               AND goals_away IS NOT NULL
@@ -149,13 +149,15 @@ class ELORatingEngine:
         conn.close()
         logger.info(f"✅ ELO Backfill completed. Loaded {idx+1} matches.")
 
-    def _persist_snapshots(self, conn: sqlite3.Connection, snapshots: List[Tuple]):
+    def _persist_snapshots(self, conn, snapshots: List[Tuple]):
         """Bulk inserts ELO snapshots into the database."""
         sql = """
             INSERT INTO V3_Team_Ratings (team_id, league_id, season_year, elo_score, date, fixture_id)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """
-        conn.executemany(sql, snapshots)
+        cur = conn.cursor()
+        cur.executemany(sql, snapshots)
+        cur.close()
 
 if __name__ == "__main__":
     engine = ELORatingEngine()

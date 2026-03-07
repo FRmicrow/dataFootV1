@@ -1,4 +1,5 @@
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import pandas as pd
 import numpy as np
 import json
@@ -7,13 +8,9 @@ import time
 from datetime import datetime
 
 # Database path
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'backend', 'data', 'database.sqlite'))
 
 def get_db_connection():
-    if not os.path.exists(DB_PATH):
-        print(f"❌ Database not found at {DB_PATH}")
-        return None
-    return sqlite3.connect(DB_PATH, timeout=60)
+    return get_connection()
 
 def run_baseline_features_optimized():
     print("🚀 Starting Optimized BASELINE_V1 Feature Generation...")
@@ -246,7 +243,7 @@ def run_baseline_features_optimized():
         INSERT INTO V3_Team_Features_PreMatch (
             fixture_id, team_id, league_id, season_year,
             feature_set_id, horizon_type, as_of, features_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT(fixture_id, team_id, feature_set_id, horizon_type) DO UPDATE SET
             features_json = excluded.features_json,
             as_of = excluded.as_of,

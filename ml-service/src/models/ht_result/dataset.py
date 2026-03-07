@@ -1,14 +1,11 @@
-import sqlite3
+from db_config import get_connection
 import pandas as pd
 import json
 import os
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'backend', 'data', 'database.sqlite'))
 
 def get_db_connection():
-    if not os.path.exists(DB_PATH):
-        raise FileNotFoundError(f"Database not found at {DB_PATH}")
-    return sqlite3.connect(DB_PATH)
+    return get_connection()
 
 def fetch_ht_dataset(include_process_features=False):
     """

@@ -13,13 +13,13 @@ export const syncUpcomingProps = async (req, res) => {
     try {
         // 1. Get upcoming fixtures for top leagues (Rank <= 10)
         // We look for fixtures scheduled between TODAY and TODAY+5 days
-        const fixtures = db.all(`
+        const fixtures = await db.all(`
             SELECT f.fixture_id, f.api_id, f.league_id 
             FROM V3_Fixtures f
             JOIN V3_Leagues l ON f.league_id = l.league_id
             JOIN V3_Countries c ON l.country_id = c.country_id
             WHERE f.status_short = 'NS' 
-            AND date(f.date) BETWEEN date('now') AND date('now', '+5 days')
+            AND f.date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '5 days')
             AND c.importance_rank < 10
             ORDER BY c.importance_rank ASC, f.date ASC
             LIMIT 20 -- Batch limit to avoid API quota hit
@@ -35,7 +35,7 @@ export const syncUpcomingProps = async (req, res) => {
         for (const fixture of fixtures) {
             try {
                 // Check if we already have a prediction for this fixture
-                const existing = db.get("SELECT id FROM V3_Predictions WHERE fixture_id = ?", [fixture.fixture_id]);
+                const existing = await db.get("SELECT id FROM V3_Predictions WHERE fixture_id = ?", [fixture.fixture_id]);
                 if (existing) continue; // Skip if already exists
 
                 // Fetch from API
@@ -46,14 +46,14 @@ export const syncUpcomingProps = async (req, res) => {
                     const winner = p.predictions.winner || {};
                     const prob = p.predictions.percent || {};
 
-                    db.run(`
+                    await db.run(`
                         INSERT INTO V3_Predictions (
                             fixture_id, league_id, season,
                             winner_id, winner_name, winner_comment,
                             prob_home, prob_draw, prob_away,
                             goals_home, goals_away, advice,
                             comparison_data, h2h_data, teams_data
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     `, [
                         fixture.fixture_id,
                         fixture.league_id,
@@ -141,7 +141,7 @@ export const getPredictions = async (req, res) => {
 
         sql += " ORDER BY f.date ASC LIMIT 50";
 
-        const predictions = db.all(sql, params);
+        const predictions = await db.all(sql, params);
         res.json(predictions);
 
     } catch (e) {

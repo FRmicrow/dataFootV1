@@ -8,19 +8,19 @@ export const getClubProfile = async (req, res) => {
         const { id } = req.params;
         const { year, leagueId } = req.query;
 
-        const club = ClubRepository.getClubProfileWithVenue(id);
+        const club = await ClubRepository.getClubProfileWithVenue(id);
         if (!club) {
             return res.status(404).json({ error: 'Club not found' });
         }
 
-        const seasons = ClubRepository.getClubSeasons(id);
+        const seasons = await ClubRepository.getClubSeasons(id);
         const availableYears = [...new Set(seasons.map(s => s.season_year))].sort((a, b) => b - a);
 
         const rosterYear = year ? parseInt(year) : (availableYears[0] || null);
         const activeLeagueId = leagueId ? parseInt(leagueId) : null;
 
-        const roster = rosterYear ? ClubRepository.getClubRoster(id, rosterYear, activeLeagueId) : [];
-        const summary = rosterYear ? ClubRepository.getClubSummary(id, rosterYear, activeLeagueId) : null;
+        const roster = rosterYear ? await ClubRepository.getClubRoster(id, rosterYear, activeLeagueId) : [];
+        const summary = rosterYear ? await ClubRepository.getClubSummary(id, rosterYear, activeLeagueId) : null;
 
         res.json({
             club,
@@ -42,7 +42,7 @@ export const getClubTacticalSummary = async (req, res) => {
     try {
         const { id } = req.params;
         const { year, competition } = req.query;
-        const summary = ClubRepository.getClubTacticalSummary(id, {
+        const summary = await ClubRepository.getClubTacticalSummary(id, {
             year: year ? parseInt(year) : null,
             competition: competition
         });
@@ -56,7 +56,7 @@ export const getClubMatches = async (req, res) => {
     try {
         const { id } = req.params;
         const { year, competition, limit } = req.query;
-        const matches = ClubRepository.getClubMatches(id, {
+        const matches = await ClubRepository.getClubMatches(id, {
             year: year ? parseInt(year) : null,
             competition: competition,
             limit: limit ? parseInt(limit) : 20

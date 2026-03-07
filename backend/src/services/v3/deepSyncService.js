@@ -14,6 +14,7 @@ import {
     PILLARS,
     HISTORICAL_NO_DATA_STREAK_LIMIT
 } from './importStatusConstants.js';
+import { syncAllV3Sequences } from '../../utils/v3/dbMaintenance.js';
 
 /**
  * US_269: Status-Aware Deep Sync Orchestration
@@ -26,10 +27,13 @@ import {
  */
 export const runDeepSyncLeague = async (leagueId, sendLog) => {
     const leagueStart = Date.now();
-    const leagueInfo = db.get("SELECT name, api_id FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
+    const leagueInfo = await db.get("SELECT name, api_id FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
     const leagueName = leagueInfo ? leagueInfo.name : `ID ${leagueId}`;
 
     sendLog(`🚀 Deep Sync: ${leagueName} (ID: ${leagueId})`, 'info');
+
+    // 0. Ensure sequences are in sync (Prevent duplicate key errors)
+    await syncAllV3Sequences((msg) => sendLog(msg, 'info'));
 
     // US-208: Initialize all available seasons from API before starting the loop
     // This restores the "Full Career" behavior for discovered leagues.
@@ -41,10 +45,10 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
                 const apiSeasons = leagueRes.response[0].seasons;
                 let initializedCount = 0;
                 for (const s of apiSeasons) {
-                    const existing = db.get("SELECT 1 FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([leagueId, s.year]));
+                    const existing = await db.get("SELECT 1 FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([leagueId, s.year]));
                     if (!existing) {
                         // Use DB.upsertLeagueSeason which handles the basic insertion with PARTIAL_DISCOVERY status
-                        DB.upsertLeagueSeason(Mappers.leagueSeason(leagueId, s.year));
+                        await DB.upsertLeagueSeason(Mappers.leagueSeason(leagueId, s.year));
                         initializedCount++;
                     }
                 }
@@ -57,7 +61,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
         sendLog(`⚠️ Failed to initialize seasons from API: ${err.message}`, 'warning');
     }
 
-    const seasons = db.all(
+    const seasons = await db.all(
         "SELECT * FROM V3_League_Seasons WHERE league_id = ? ORDER BY season_year DESC",
         cleanParams([leagueId])
     );
@@ -67,7 +71,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
         throw new Error("No seasons initialized for this league.");
     }
 
-    const allStatuses = ImportStatusService.getLeagueMatrix(leagueId);
+    const allStatuses = await ImportStatusService.getLeagueMatrix(leagueId);
     let actionableSeasons = seasons.filter(season => {
         const seasonStatuses = allStatuses.filter(s => s.season_year === season.season_year);
         return !(seasonStatuses.length >= PILLARS.length && seasonStatuses.every(s => s.status === IMPORT_STATUS.LOCKED));
@@ -97,7 +101,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
 
         sendLog(`📅 Syncing Season: ${season_year}...`, 'info');
 
-        const fc = db.get(
+        const fc = await db.get(
             "SELECT COUNT(*) as total, SUM(CASE WHEN status_short IN ('FT','AET','PEN') THEN 1 ELSE 0 END) as finished FROM V3_Fixtures WHERE league_id = ? AND season_year = ?",
             cleanParams([leagueId, season_year])
         );
@@ -109,13 +113,13 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
         // 1. Core
         try {
             await ImportControl.checkAbortOrPause(sendLog);
-            if (ImportStatusService.shouldSkip(leagueId, season_year, 'core')) {
-                const stat = ImportStatusService.getStatus(leagueId, season_year, 'core');
+            if (await ImportStatusService.shouldSkip(leagueId, season_year, 'core')) {
+                const stat = await ImportStatusService.getStatus(leagueId, season_year, 'core');
                 sendLog(`   [C] Core — ${STATUS_LABELS[stat.status]} ⏩`, 'success');
             } else {
                 const start = Date.now();
                 await runImportJob(leagueId, season_year, sendLog);
-                ImportStatusService.setStatus(leagueId, season_year, 'core', IMPORT_STATUS.COMPLETE);
+                await ImportStatusService.setStatus(leagueId, season_year, 'core', IMPORT_STATUS.COMPLETE);
                 const elapsed = ((Date.now() - start) / 1000).toFixed(1);
                 sendLog(`   [C] Core ✅ — Done in ${elapsed}s`, 'success');
             }
@@ -128,14 +132,14 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
         // 2. Events
         try {
             await ImportControl.checkAbortOrPause(sendLog);
-            if (ImportStatusService.shouldSkip(leagueId, season_year, 'events')) {
-                const stat = ImportStatusService.getStatus(leagueId, season_year, 'events');
+            if (await ImportStatusService.shouldSkip(leagueId, season_year, 'events')) {
+                const stat = await ImportStatusService.getStatus(leagueId, season_year, 'events');
                 sendLog(`   [E] Events — ${STATUS_LABELS[stat.status]} ⏩`, 'success');
             } else {
                 const start = Date.now();
                 const res = await syncLeagueEventsService(leagueId, season_year, 2000, sendLog);
                 const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-                ImportStatusService.setStatus(leagueId, season_year, 'events', res.success > 0 || res.total === 0 ? IMPORT_STATUS.COMPLETE : IMPORT_STATUS.PARTIAL);
+                await ImportStatusService.setStatus(leagueId, season_year, 'events', res.success > 0 || res.total === 0 ? IMPORT_STATUS.COMPLETE : IMPORT_STATUS.PARTIAL);
                 sendLog(`   [E] Events ✅ — ${res.success} synced | ${elapsed}s`, 'success');
             }
         } catch (err) {
@@ -147,14 +151,14 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
         // 3. Lineups
         try {
             await ImportControl.checkAbortOrPause(sendLog);
-            if (ImportStatusService.shouldSkip(leagueId, season_year, 'lineups')) {
-                const stat = ImportStatusService.getStatus(leagueId, season_year, 'lineups');
+            if (await ImportStatusService.shouldSkip(leagueId, season_year, 'lineups')) {
+                const stat = await ImportStatusService.getStatus(leagueId, season_year, 'lineups');
                 sendLog(`   [L] Lineups — ${STATUS_LABELS[stat.status]} ⏩`, 'success');
             } else {
                 const start = Date.now();
                 const res = await syncSeasonLineups(leagueId, season_year, sendLog);
                 const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-                ImportStatusService.setStatus(leagueId, season_year, 'lineups', res.success > 0 ? IMPORT_STATUS.COMPLETE : (res.failed > 0 ? IMPORT_STATUS.PARTIAL : IMPORT_STATUS.NONE));
+                await ImportStatusService.setStatus(leagueId, season_year, 'lineups', res.success > 0 ? IMPORT_STATUS.COMPLETE : (res.failed > 0 ? IMPORT_STATUS.PARTIAL : IMPORT_STATUS.NONE));
                 sendLog(`   [L] Lineups ✅ — ${res.success} synced | ${elapsed}s`, 'success');
             }
         } catch (err) {
@@ -166,8 +170,8 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
         // 4. Tactical (FS+PS)
         try {
             await ImportControl.checkAbortOrPause(sendLog);
-            if (fsRangeInferenceActive) ImportStatusService.setStatus(leagueId, season_year, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
-            if (psRangeInferenceActive) ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
+            if (fsRangeInferenceActive) await ImportStatusService.setStatus(leagueId, season_year, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
+            if (psRangeInferenceActive) await ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
 
             if (!fsRangeInferenceActive || !psRangeInferenceActive) {
                 const start = Date.now();
@@ -175,13 +179,13 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
                 const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
                 if (!fsRangeInferenceActive) {
-                    const fsStatus = ImportStatusService.getStatus(leagueId, season_year, 'fs');
+                    const fsStatus = await ImportStatusService.getStatus(leagueId, season_year, 'fs');
                     if (fsStatus.status === IMPORT_STATUS.NO_DATA) fsNoDataStreak++;
                     else fsNoDataStreak = 0;
                     if (fsNoDataStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) fsRangeInferenceActive = true;
                 }
                 if (!psRangeInferenceActive) {
-                    const psStatus = ImportStatusService.getStatus(leagueId, season_year, 'ps');
+                    const psStatus = await ImportStatusService.getStatus(leagueId, season_year, 'ps');
                     if (psStatus.status === IMPORT_STATUS.NO_DATA) psNoDataStreak++;
                     else psNoDataStreak = 0;
                     if (psNoDataStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) psRangeInferenceActive = true;
@@ -196,7 +200,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
         }
         completedTasks++;
 
-        ImportStatusService.checkAutoLock(leagueId, season_year);
+        await ImportStatusService.checkAutoLock(leagueId, season_year);
         if (sendLog.emit) {
             sendLog.emit({ type: 'progress', step: 'overall', current: completedTasks, total: totalTasks, label: `${leagueName}: Season ${season_year} complete` });
         }
@@ -211,7 +215,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
  * Lineups Sync Helper
  */
 export async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
-    const targets = db.all(`
+    const targets = await db.all(`
         SELECT f.api_id, f.fixture_id FROM V3_Fixtures f
         LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Lineups) fl ON f.fixture_id = fl.fixture_id
         WHERE f.league_id = ? AND f.season_year = ? AND f.status_short IN ('FT','AET','PEN') AND fl.fixture_id IS NULL
@@ -226,7 +230,7 @@ export async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
             const response = await footballApi.getFixtureLineups(targets[i].api_id);
             if (response.response?.length) {
                 for (const l of response.response) {
-                    db.run("INSERT INTO V3_Fixture_Lineups (fixture_id, team_id, formation) VALUES (?,?,?)",
+                    await db.run("INSERT INTO V3_Fixture_Lineups (fixture_id, team_id, formation) VALUES (?,?,?)",
                         cleanParams([targets[i].fixture_id, l.team.id, l.formation]));
                 }
                 success++;

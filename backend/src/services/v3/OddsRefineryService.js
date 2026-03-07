@@ -11,7 +11,7 @@ class OddsRefineryService {
      * @param {object} apiData Raw fixture odds object from API-Football (the element in 'response' array)
      * @param {number} targetBookmakerId Default 8 (Bet365)
      */
-    refineAndStore(fixtureId, apiData, targetBookmakerId = 8) {
+    async refineAndStore(fixtureId, apiData, targetBookmakerId = 8) {
         if (!apiData || !apiData.bookmakers) {
             console.warn(`[Refinery] No bookmaker data for fixture ${fixtureId}`);
             return 0;
@@ -28,10 +28,8 @@ class OddsRefineryService {
         const sql = `
             INSERT INTO V3_Odds_Selections (
                 fixture_id, bookmaker_id, market_name, label, odd_value, handicap, captured_at
-            ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
         `;
-
-        const dbConn = db.db || db; // Use the raw better-sqlite3 instance if it's the wrapper
 
         for (const bet of bookmaker.bets) {
             const marketName = bet.name;
@@ -40,7 +38,7 @@ class OddsRefineryService {
                 const handicap = this._extractHandicap(val.value);
 
                 try {
-                    dbConn.prepare(sql).run([
+                    await db.run(sql, [
                         fixtureId,
                         targetBookmakerId,
                         marketName,

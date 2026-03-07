@@ -3,7 +3,8 @@ Forge Orchestrator (V8) — Sequential Simulation Pipeline
 Manages: Model Selection → Training → Prediction → Evaluation
 NO ODDS. KPI = Accuracy Rate.
 """
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import pandas as pd
 import os
 import sys
@@ -23,7 +24,6 @@ logging.basicConfig(
 logger = logging.getLogger('ForgeOrchestrator')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', 'backend', 'database.sqlite'))
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
 
 class ForgeOrchestrator:
@@ -56,7 +56,7 @@ class ForgeOrchestrator:
         # Lookup the most recent active model for this league/horizon
         cur.execute("""
             SELECT id, model_path FROM V3_Model_Registry 
-            WHERE league_id IS ? AND horizon_type = ? AND is_active = 1
+            WHERE league_id IS %s AND horizon_type = %s AND is_active = 1
             ORDER BY id DESC LIMIT 1
         """, (league_id, horizon))
         row = cur.fetchone()
@@ -107,13 +107,13 @@ class ForgeOrchestrator:
         if sim_id:
             logger.info(f"📍 Using provided Simulation ID: {sim_id}")
             cur.execute("""
-                UPDATE V3_Forge_Simulations SET model_id = ?, status = 'RUNNING', stage = 'PREPARING' 
-                WHERE id = ?
+                UPDATE V3_Forge_Simulations SET model_id = %s, status = 'RUNNING', stage = 'PREPARING' 
+                WHERE id = %s
             """, (model_id, sim_id))
         else:
             cur.execute("""
                 INSERT INTO V3_Forge_Simulations (league_id, season_year, model_id, status, horizon_type, stage)
-                VALUES (?, ?, ?, 'RUNNING', ?, 'PREPARING')
+                VALUES (%s, %s, %s, 'RUNNING', %s, 'PREPARING')
             """, (league_id, season_year, model_id, horizon, 'PREPARING'))
             sim_id = cur.lastrowid
         
@@ -173,7 +173,7 @@ class ForgeOrchestrator:
         query = """
             SELECT DISTINCT strftime('%Y-%m', date) as month 
             FROM V3_Fixtures 
-            WHERE league_id = ? AND season_year = ? AND status_short IN ('FT','AET','PEN')
+            WHERE league_id = %s AND season_year = %s AND status_short IN ('FT','AET','PEN')
             ORDER BY month ASC
         """
         months = pd.read_sql_query(query, conn, params=(league_id, season_year))['month'].tolist()
@@ -200,7 +200,7 @@ class ForgeOrchestrator:
                 row = conn.execute("""
                     SELECT r.model_path FROM V3_Model_Registry r 
                     JOIN V3_Forge_Simulations s ON r.id = s.model_id 
-                    WHERE s.id = ?
+                    WHERE s.id = %s
                 """, (sim_id,)).fetchone()
                 conn.close()
                 if row:

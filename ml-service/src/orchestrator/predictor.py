@@ -1,6 +1,6 @@
 import os
 import json
-import sqlite3
+from db_config import get_connection
 import traceback
 
 # Import our four submodels
@@ -10,10 +10,9 @@ from src.models.corners_total.inference import predict_total_corners
 from src.models.cards_total.inference import predict_total_cards
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-DB_PATH = os.path.join(BASE_DIR, 'backend', 'data', 'database.sqlite')
 
 def get_db_connection():
-    return sqlite3.connect(DB_PATH)
+    return get_connection()
 
 def save_to_submodel_outputs(fixture_id, model_type, prediction_dict):
     """
@@ -30,7 +29,7 @@ def save_to_submodel_outputs(fixture_id, model_type, prediction_dict):
         
         query = """
             INSERT INTO V3_Submodel_Outputs (fixture_id, team_id, model_type, prediction_json, calculated_at)
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
             ON CONFLICT(fixture_id, team_id, model_type) 
             DO UPDATE SET prediction_json=excluded.prediction_json, calculated_at=CURRENT_TIMESTAMP;
         """

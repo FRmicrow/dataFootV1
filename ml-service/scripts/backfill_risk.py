@@ -1,16 +1,16 @@
 import os
 import sys
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import time
 
 # Ensure we can import src
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.risk.engine import extract_and_save_fair_odds
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'backend', 'data', 'database.sqlite'))
 
 def run_risk_backfill():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     
     print("Querying for fixtures with calculated ML probabilities...")
     query = "SELECT DISTINCT fixture_id FROM V3_Submodel_Outputs ORDER BY fixture_id ASC"

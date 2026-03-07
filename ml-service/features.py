@@ -1,22 +1,14 @@
-import sqlite3
+import psycopg2
 import pandas as pd
 import numpy as np
 import json
 import os
 import sys
 from datetime import datetime
-
-# Path to the database - adjusting to be relative to the script location
-# The script is in /statFootV3/ml-service/features.py
-# The DB is in /statFootV3/database.sqlite
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'database.sqlite'))
+from db_config import get_connection
 
 def get_db_connection():
-    if not os.path.exists(DB_PATH):
-        print(f"❌ Database not found at {DB_PATH}")
-        sys.exit(1)
-    conn = sqlite3.connect(DB_PATH)
-    return conn
+    return get_connection()
 
 def compute_advanced_features(conn):
     """
@@ -118,7 +110,10 @@ def compute_lineup_quality(conn):
 
     # 2. Get all lineups
     lineups_query = "SELECT fixture_id, team_id, starting_xi FROM V3_Fixture_Lineups"
-    lineups = conn.execute(lineups_query).fetchall()
+    cur = conn.cursor()
+    cur.execute(lineups_query)
+    lineups = cur.fetchall()
+    cur.close()
     
     lqi_results = {} # (fixture_id, team_id) -> lqi
     
@@ -305,21 +300,23 @@ def run_feature_pipeline():
         upsert_data.append((fid, lid, json.dumps(vector)))
         processed_count += 1
 
-    # Bulk Insert
+    # Bulk Insert (PostgreSQL syntax)
     sql = """
         INSERT INTO V3_ML_Feature_Store (fixture_id, league_id, feature_vector)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
         ON CONFLICT(fixture_id) DO UPDATE SET 
-            feature_vector = excluded.feature_vector,
+            feature_vector = EXCLUDED.feature_vector,
             calculated_at = CURRENT_TIMESTAMP
     """
     
     # Process in chunks of 5000
     CHUNK_SIZE = 5000
+    cur = conn.cursor()
     for i in range(0, len(upsert_data), CHUNK_SIZE):
         chunk = upsert_data[i:i+CHUNK_SIZE]
-        conn.executemany(sql, chunk)
+        cur.executemany(sql, chunk)
         print(f"      Stored {min(i+CHUNK_SIZE, len(upsert_data))}/{len(upsert_data)} features...")
+    cur.close()
     
     conn.commit()
     conn.close()

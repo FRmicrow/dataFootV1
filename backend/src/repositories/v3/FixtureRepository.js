@@ -6,8 +6,8 @@ class FixtureRepository extends BaseRepository {
         super(db, 'V3_Fixtures');
     }
 
-    getFixtureDetails(id) {
-        return this.db.get(`
+    async getFixtureDetails(id) {
+        return await this.db.get(`
             SELECT f.*, 
                    t1.name as home_name, t1.logo_url as home_logo,
                    t2.name as away_name, t2.logo_url as away_logo,
@@ -22,21 +22,25 @@ class FixtureRepository extends BaseRepository {
         `, [id]);
     }
 
-    getFixtureEvents(fixtureId) {
-        return this.db.all(`
+    async getFixtureEvents(fixtureId) {
+        return await this.db.all(`
             SELECT 
                 fe.*,
-                (CASE WHEN t.team_id = f.home_team_id THEN 1 ELSE 0 END) as is_home_team
+                (CASE 
+                    WHEN fe.team_id = f.home_team_id THEN 1 
+                    WHEN t_home.api_id = fe.team_id THEN 1
+                    ELSE 0 
+                 END) as is_home_team
             FROM V3_Fixture_Events fe
             JOIN V3_Fixtures f ON fe.fixture_id = f.fixture_id
-            LEFT JOIN V3_Teams t ON fe.team_id = t.api_id
+            LEFT JOIN V3_Teams t_home ON f.home_team_id = t_home.team_id
             WHERE fe.fixture_id = ?
             ORDER BY fe.time_elapsed ASC, fe.extra_minute ASC
         `, [fixtureId]);
     }
 
-    getFixtureTacticalStats(fixtureId) {
-        return this.db.all(`
+    async getFixtureTacticalStats(fixtureId) {
+        return await this.db.all(`
             SELECT 
                 ts.*,
                 t.name as team_name,
@@ -51,8 +55,8 @@ class FixtureRepository extends BaseRepository {
 
 
 
-    getEventCandidates() {
-        return this.db.all(`
+    async getEventCandidates() {
+        return await this.db.all(`
             SELECT 
                 l.name as league_name,
                 l.logo_url,
@@ -73,12 +77,13 @@ class FixtureRepository extends BaseRepository {
             ORDER BY c.importance_rank ASC, l.name ASC
         `);
     }
-    getFixturePlayerTacticalStats(fixtureId) {
-        return this.db.all(`
+    async getFixturePlayerTacticalStats(fixtureId) {
+        return await this.db.all(`
             SELECT 
                 ps.*,
                 p.name as player_name,
                 p.photo_url as player_photo,
+                p.api_id as player_api_id,
                 t.name as team_name,
                 (CASE WHEN ps.team_id = f.home_team_id THEN 'home' ELSE 'away' END) as side
             FROM V3_Fixture_Player_Stats ps

@@ -8,24 +8,24 @@ import crypto from 'crypto';
  */
 
 // Helper: Archive and Delete
-const archiveAndDelete = (groupId, tableName, idColumn, ids, reason = 'Integrity Check') => {
+const archiveAndDelete = async (groupId, tableName, idColumn, ids, reason = 'Integrity Check') => {
     if (!ids || ids.length === 0) return 0;
 
     const placeholders = ids.map(() => '?').join(',');
 
     // 1. Fetch records to archive
-    const records = db.all(`SELECT * FROM ${tableName} WHERE ${idColumn} IN (${placeholders})`, cleanParams(ids));
+    const records = await db.all(`SELECT * FROM ${tableName} WHERE ${idColumn} IN (${placeholders})`, cleanParams(ids));
 
     // 2. Archive
     for (const record of records) {
-        db.run(
+        await db.run(
             `INSERT INTO V3_Cleanup_History (group_id, table_name, original_pk_id, raw_data, reason) VALUES (?, ?, ?, ?, ?)`,
             cleanParams([groupId, tableName, record[idColumn], JSON.stringify(record), reason])
         );
     }
 
     // 3. Delete
-    db.run(`DELETE FROM ${tableName} WHERE ${idColumn} IN (${placeholders})`, cleanParams(ids));
+    await db.run(`DELETE FROM ${tableName} WHERE ${idColumn} IN (${placeholders})`, cleanParams(ids));
 
     return ids.length;
 };
@@ -37,7 +37,7 @@ export const generateFullReport = async () => {
     };
 
     // 1. Duplicate Stats (Refined US-035: player+team+league+year)
-    const duplicates = db.all(`
+    const duplicates = await db.all(`
         SELECT 
             p.name as player_name, 
             s.season_year, 
@@ -63,7 +63,7 @@ export const generateFullReport = async () => {
     }
 
     // 2. League Name Collisions
-    const collisions = db.all(`
+    const collisions = await db.all(`
         SELECT name, COUNT(DISTINCT api_id) as api_count
         FROM V3_Leagues
         GROUP BY name
@@ -82,11 +82,11 @@ export const generateFullReport = async () => {
     }
 
     // 3. Relational Orphans
-    const orphanTrophies = db.all(`
+    const orphanTrophies = await db.all(`
         SELECT id FROM V3_Trophies t
         WHERE NOT EXISTS (SELECT 1 FROM V3_Players p WHERE p.player_id = t.player_id)
     `);
-    const orphanStats = db.all(`
+    const orphanStats = await db.all(`
         SELECT stat_id FROM V3_Player_Stats s
         WHERE NOT EXISTS (SELECT 1 FROM V3_Players p WHERE p.player_id = s.player_id)
         OR NOT EXISTS (SELECT 1 FROM V3_Leagues l WHERE l.league_id = s.league_id)
@@ -106,7 +106,7 @@ export const generateFullReport = async () => {
     }
 
     // 4. Nationality Mismatch (Soft Match Flag)
-    const mismatches = db.all(`
+    const mismatches = await db.all(`
         SELECT DISTINCT nationality 
         FROM V3_Players 
         WHERE nationality NOT IN (SELECT name FROM V3_Countries)
@@ -132,13 +132,13 @@ export const applyFix = async (issueId) => {
     let changes = 0;
 
     if (issueId === 'LEAGUE_COLLISION') {
-        const collisions = db.all(`
+        const collisions = await db.all(`
             SELECT name FROM V3_Leagues 
             GROUP BY name HAVING COUNT(DISTINCT api_id) > 1
         `);
 
         for (const col of collisions) {
-            const leagues = db.all(`
+            const leagues = await db.all(`
                 SELECT l.league_id, c.name as country_name 
                 FROM V3_Leagues l 
                 JOIN V3_Countries c ON l.country_id = c.country_id 
@@ -146,7 +146,7 @@ export const applyFix = async (issueId) => {
             `, cleanParams([col.name]));
 
             for (const l of leagues) {
-                db.run(`UPDATE V3_Leagues SET name = ? WHERE league_id = ?`,
+                await db.run(`UPDATE V3_Leagues SET name = ? WHERE league_id = ?`,
                     cleanParams([`${col.name} (${l.country_name})`, l.league_id])
                 );
                 changes++;
@@ -154,7 +154,7 @@ export const applyFix = async (issueId) => {
         }
     }
     else if (issueId === 'DUPLICATE_STATS') {
-        const dupeGroups = db.all(`
+        const dupeGroups = await db.all(`
             SELECT player_id, team_id, league_id, season_year, count(*) as count
             FROM V3_Player_Stats
             GROUP BY player_id, team_id, league_id, season_year
@@ -162,7 +162,7 @@ export const applyFix = async (issueId) => {
         `);
 
         for (const group of dupeGroups) {
-            const rows = db.all(`
+            const rows = await db.all(`
                 SELECT stat_id FROM V3_Player_Stats 
                 WHERE player_id = ? AND team_id = ? AND league_id = ? AND season_year = ?
                 ORDER BY stat_id DESC
@@ -178,21 +178,21 @@ export const applyFix = async (issueId) => {
     }
     else if (issueId === 'RELATIONAL_ORPHANS') {
         // Trophies - Player missing
-        const orphanTrophyIds = db.all(`
+        const orphanTrophyIds = (await db.all(`
             SELECT id FROM V3_Trophies t
             WHERE NOT EXISTS (SELECT 1 FROM V3_Players p WHERE p.player_id = t.player_id)
-        `).map(r => r.id);
+        `)).map(r => r.id);
         if (orphanTrophyIds.length > 0) {
             changes += archiveAndDelete(groupId, 'V3_Trophies', 'id', orphanTrophyIds, 'Orphan Trophy (Player missing)');
         }
 
         // Stats - Player or League missing
-        const orphanStatIds = db.all(`
+        const orphanStatIds = (await db.all(`
             SELECT stat_id FROM V3_Player_Stats s
             WHERE NOT EXISTS (SELECT 1 FROM V3_Players p WHERE p.player_id = s.player_id)
             OR NOT EXISTS (SELECT 1 FROM V3_Leagues l WHERE l.league_id = s.league_id)
             OR s.player_id IS NULL OR s.league_id IS NULL
-        `).map(r => r.stat_id);
+        `)).map(r => r.stat_id);
         if (orphanStatIds.length > 0) {
             changes += archiveAndDelete(groupId, 'V3_Player_Stats', 'stat_id', orphanStatIds, 'Orphan Stat (Player or League missing)');
         }
@@ -207,7 +207,7 @@ export const applyFix = async (issueId) => {
 };
 
 export const getHistory = async () => {
-    return db.all(`
+    return await db.all(`
         SELECT 
             group_id, 
             reason, 
@@ -221,7 +221,7 @@ export const getHistory = async () => {
 };
 
 export const revertGroup = async (groupId) => {
-    const archived = db.all(`SELECT * FROM V3_Cleanup_History WHERE group_id = ?`, [groupId]);
+    const archived = await db.all(`SELECT * FROM V3_Cleanup_History WHERE group_id = ?`, [groupId]);
 
     if (!archived || archived.length === 0) {
         throw new Error("No history found for this group ID.");
@@ -235,12 +235,12 @@ export const revertGroup = async (groupId) => {
         const values = Object.values(data);
 
         // Using INSERT OR IGNORE to avoid primary key collisions
-        db.run(`INSERT OR IGNORE INTO ${record.table_name} (${columns}) VALUES (${placeholders})`, cleanParams(values));
+        await db.run(`INSERT OR IGNORE INTO ${record.table_name} (${columns}) VALUES (${placeholders})`, cleanParams(values));
         restored++;
     }
 
     // Cleanup history after successful revert
-    db.run(`DELETE FROM V3_Cleanup_History WHERE group_id = ?`, [groupId]);
+    await db.run(`DELETE FROM V3_Cleanup_History WHERE group_id = ?`, [groupId]);
 
     return { success: true, restored, message: `Successfully restored ${restored} records.` };
 };
@@ -250,7 +250,7 @@ export const checkMilestone = async (milestone) => {
 
     switch (parseInt(milestone)) {
         case 1: // League Naming Check
-            const collisions = db.all(`
+            const collisions = await db.all(`
                 SELECT l.name, COUNT(DISTINCT l.api_id) as api_count, c.name as country
                 FROM V3_Leagues l
                 JOIN V3_Countries c ON l.country_id = c.country_id
@@ -268,7 +268,7 @@ export const checkMilestone = async (milestone) => {
             break;
 
         case 2: // Duplicate Stats Discovery
-            const duplicates = db.all(`
+            const duplicates = await db.all(`
                 SELECT s.player_id, s.team_id, s.league_id, s.season_year, COUNT(*) as dupe_count
                 FROM V3_Player_Stats s
                 GROUP BY s.player_id, s.team_id, s.league_id, s.season_year
@@ -281,8 +281,8 @@ export const checkMilestone = async (milestone) => {
             break;
 
         case 3: // Orphan/Broken Link Audit
-            const trophiesCount = db.all(`SELECT COUNT(*) as c FROM V3_Trophies t WHERE NOT EXISTS (SELECT 1 FROM V3_Players p WHERE p.player_id = t.player_id)`)[0].c;
-            const statsCount = db.all(`SELECT COUNT(*) as c FROM V3_Player_Stats s WHERE NOT EXISTS (SELECT 1 FROM V3_Players p WHERE p.player_id = s.player_id) OR NOT EXISTS (SELECT 1 FROM V3_Leagues l WHERE l.league_id = s.league_id)`)[0].c;
+            const trophiesCount = (await db.all(`SELECT COUNT(*) as c FROM V3_Trophies t WHERE NOT EXISTS (SELECT 1 FROM V3_Players p WHERE p.player_id = t.player_id)`))[0].c;
+            const statsCount = (await db.all(`SELECT COUNT(*) as c FROM V3_Player_Stats s WHERE NOT EXISTS (SELECT 1 FROM V3_Players p WHERE p.player_id = s.player_id) OR NOT EXISTS (SELECT 1 FROM V3_Leagues l WHERE l.league_id = s.league_id)`))[0].c;
             if (trophiesCount > 0 || statsCount > 0) {
                 result.status = 'ISSUES';
                 result.count = trophiesCount + statsCount;
@@ -291,12 +291,12 @@ export const checkMilestone = async (milestone) => {
             break;
 
         case 4: // Country/Nationality Matching
-            const mismatches = db.all(`
+            const mismatches = (await db.all(`
                 SELECT COUNT(DISTINCT nationality) as c 
                 FROM V3_Players 
                 WHERE nationality NOT IN (SELECT name FROM V3_Countries)
                 AND nationality IS NOT NULL
-            `)[0].c;
+            `))[0].c;
             if (mismatches > 0) {
                 result.status = 'ISSUES';
                 result.count = mismatches;
@@ -309,18 +309,18 @@ export const checkMilestone = async (milestone) => {
 
 export const getLeagueNames = async () => {
     const sql = `SELECT DISTINCT name, country_id FROM V3_Leagues ORDER BY name`;
-    return db.all(sql, []);
+    return await db.all(sql, []);
 };
 
 export const checkLeagueHealth = async (leagueName) => {
-    const ids = db.all(`SELECT league_id FROM V3_Leagues WHERE name = ?`, cleanParams([leagueName]))
+    const ids = (await db.all(`SELECT league_id FROM V3_Leagues WHERE name = ?`, cleanParams([leagueName])))
         .map(r => r.league_id);
 
     if (ids.length === 0) return { status: 'CLEAN', issues: [] };
 
     const placeholders = ids.map(() => '?').join(',');
 
-    const rows = db.all(`
+    const rows = await db.all(`
         SELECT 
             p.name as player_name, 
             s.player_id, s.season_year, s.stat_id, s.team_id, t.name as team_name, s.league_id,

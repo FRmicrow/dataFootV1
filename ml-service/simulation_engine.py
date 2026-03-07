@@ -1,4 +1,5 @@
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import pandas as pd
 import numpy as np
 import json
@@ -9,6 +10,7 @@ import joblib
 from datetime import datetime
 from time_travel import TemporalFeatureFactory
 from typing import Dict, Any, List
+from db_config import get_connection
 
 import logging
 import warnings
@@ -19,16 +21,13 @@ warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('LeagueReplayEngine')
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'database.sqlite'))
-
 class LeagueReplayEngine:
     """
     US_182: League Replay Engine
     Chronologically iterates through a season and generates leak-proof inferences.
     """
-    def __init__(self, db_path: str = DB_PATH, model_path: str = None, simulation_id: int = None):
-        self.db_path = db_path
-        self.factory = TemporalFeatureFactory(db_path)
+    def __init__(self, model_path: str = None, simulation_id: int = None):
+        self.factory = TemporalFeatureFactory()
         self.simulation_id = simulation_id
         self.model = None
         if model_path and os.path.exists(model_path):
@@ -36,7 +35,7 @@ class LeagueReplayEngine:
             logger.info(f"Loaded model from {model_path}")
 
     def get_connection(self):
-        return sqlite3.connect(self.db_path)
+        return get_connection(use_dict_cursor=True)
 
     def run_replay(self, league_id: int, season_year: int, start_date: str = None, end_date: str = None):
         """
@@ -48,25 +47,27 @@ class LeagueReplayEngine:
             raise ValueError("Simulation ID not set.")
 
         conn = self.get_connection()
-        conn.row_factory = sqlite3.Row
+        # psycopg2 with RealDictCursor gives dict-like rows (replaces sqlite3.Row)
         
         try:
             # 1. Update Simulation Status to RUNNING
-            conn.execute("UPDATE V3_Forge_Simulations SET status = 'RUNNING' WHERE id = ?", (self.simulation_id,))
+            cur = conn.cursor()
+            cur.execute("UPDATE V3_Forge_Simulations SET status = 'RUNNING' WHERE id = %s", (self.simulation_id,))
+            cur.close()
             conn.commit()
 
             # 2. Fetch Fixtures
             query = """
                 SELECT fixture_id, date, home_team_id, away_team_id, goals_home, goals_away, status_short, round
                 FROM V3_Fixtures
-                WHERE league_id = ? AND season_year = ?
+                WHERE league_id = %s AND season_year = %s
             """
             params = [league_id, season_year]
             if start_date:
-                query += " AND date >= ?"
+                query += " AND date >= %s"
                 params.append(start_date)
             if end_date:
-                query += " AND date <= ?"
+                query += " AND date <= %s"
                 params.append(end_date)
             
             query += " AND status_short IN ('FT', 'AET', 'PEN') ORDER BY date ASC"
@@ -120,13 +121,15 @@ class LeagueReplayEngine:
                     results_buffer = []
                     
                     progress_pct = int(((idx + 1) / total) * 100)
-                    curr_month = row['date'].split('T')[0][:7] # YYYY-MM
+                    curr_month = str(row['date']).split('T')[0][:7]  # YYYY-MM
                     
-                    conn.execute("""
+                    upd_cur = conn.cursor()
+                    upd_cur.execute("""
                         UPDATE V3_Forge_Simulations 
-                        SET completed_months = ?, current_month = ?
-                        WHERE id = ?
+                        SET completed_months = %s, current_month = %s
+                        WHERE id = %s
                     """, (idx + 1, curr_month, self.simulation_id))
+                    upd_cur.close()
                     conn.commit()
                     
                     # Log progress for US_190 Telemetry
@@ -138,7 +141,9 @@ class LeagueReplayEngine:
 
         except Exception as e:
             logger.error(f"Simulation {self.simulation_id} failed: {e}")
-            conn.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED' WHERE id = ?", (self.simulation_id,))
+            err_cur = conn.cursor()
+            err_cur.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED' WHERE id = %s", (self.simulation_id,))
+            err_cur.close()
             conn.commit()
             raise
         finally:
@@ -149,12 +154,14 @@ class LeagueReplayEngine:
         sql = """
             INSERT INTO V3_Forge_Results 
             (simulation_id, fixture_id, prob_home, prob_draw, prob_away, predicted_score, actual_winner, is_correct)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT(simulation_id, fixture_id) DO UPDATE SET 
-            prob_home=excluded.prob_home, prob_draw=excluded.prob_draw, prob_away=excluded.prob_away,
-            actual_winner=excluded.actual_winner, is_correct=excluded.is_correct
+            prob_home=EXCLUDED.prob_home, prob_draw=EXCLUDED.prob_draw, prob_away=EXCLUDED.prob_away,
+            actual_winner=EXCLUDED.actual_winner, is_correct=EXCLUDED.is_correct
         """
-        conn.executemany(sql, results)
+        cur = conn.cursor()
+        cur.executemany(sql, results)
+        cur.close()
 
 if __name__ == "__main__":
     # Test execution

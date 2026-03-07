@@ -4,14 +4,14 @@ export const up = async (db) => {
             table: 'V3_Leagues',
             columns: [
                 { name: 'importance_rank', type: 'INTEGER DEFAULT 999' },
-                { name: 'is_live_enabled', type: 'BOOLEAN DEFAULT 0' }
+                { name: 'is_live_enabled', type: 'BOOLEAN DEFAULT FALSE' }
             ]
         },
         {
             table: 'V3_Players',
             columns: [
-                { name: 'is_trophy_synced', type: 'BOOLEAN DEFAULT 0' },
-                { name: 'last_sync_trophies', type: 'DATETIME' },
+                { name: 'is_trophy_synced', type: 'BOOLEAN DEFAULT FALSE' },
+                { name: 'last_sync_trophies', type: 'TIMESTAMPTZ' },
                 { name: 'position', type: 'TEXT' },
                 { name: 'scout_rank', type: 'REAL' }
             ]
@@ -31,19 +31,19 @@ export const up = async (db) => {
         {
             table: 'V3_League_Seasons',
             columns: [
-                { name: 'imported_events', type: 'BOOLEAN DEFAULT 0' },
-                { name: 'imported_lineups', type: 'BOOLEAN DEFAULT 0' },
-                { name: 'imported_trophies', type: 'BOOLEAN DEFAULT 0' },
-                { name: 'last_sync_core', type: 'DATETIME' },
-                { name: 'last_sync_events', type: 'DATETIME' },
-                { name: 'last_sync_lineups', type: 'DATETIME' },
-                { name: 'last_sync_trophies', type: 'DATETIME' },
-                { name: 'coverage_fixtures', type: 'BOOLEAN DEFAULT 0' },
-                { name: 'last_updated', type: 'DATETIME' },
-                { name: 'imported_fixture_stats', type: 'BOOLEAN DEFAULT 0' },
-                { name: 'imported_player_stats', type: 'BOOLEAN DEFAULT 0' },
-                { name: 'last_sync_fixture_stats', type: 'DATETIME' },
-                { name: 'last_sync_player_stats', type: 'DATETIME' }
+                { name: 'imported_events', type: 'BOOLEAN DEFAULT FALSE' },
+                { name: 'imported_lineups', type: 'BOOLEAN DEFAULT FALSE' },
+                { name: 'imported_trophies', type: 'BOOLEAN DEFAULT FALSE' },
+                { name: 'last_sync_core', type: 'TIMESTAMPTZ' },
+                { name: 'last_sync_events', type: 'TIMESTAMPTZ' },
+                { name: 'last_sync_lineups', type: 'TIMESTAMPTZ' },
+                { name: 'last_sync_trophies', type: 'TIMESTAMPTZ' },
+                { name: 'coverage_fixtures', type: 'BOOLEAN DEFAULT FALSE' },
+                { name: 'last_updated', type: 'TIMESTAMPTZ' },
+                { name: 'imported_fixture_stats', type: 'BOOLEAN DEFAULT FALSE' },
+                { name: 'imported_player_stats', type: 'BOOLEAN DEFAULT FALSE' },
+                { name: 'last_sync_fixture_stats', type: 'TIMESTAMPTZ' },
+                { name: 'last_sync_player_stats', type: 'TIMESTAMPTZ' }
             ]
         },
         {
@@ -77,19 +77,19 @@ export const up = async (db) => {
         {
             name: 'V3_Feature_Snapshots',
             sql: `CREATE TABLE IF NOT EXISTS V3_Feature_Snapshots (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 fixture_id INTEGER NOT NULL,
                 team_id INTEGER NOT NULL,
                 feature_type TEXT NOT NULL,
                 feature_data JSON NOT NULL,
-                snapshot_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                snapshot_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(fixture_id, team_id, feature_type)
             )`
         },
         {
             name: 'V3_Predictions',
             sql: `CREATE TABLE IF NOT EXISTS V3_Predictions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 fixture_id INTEGER NOT NULL UNIQUE,
                 league_id INTEGER,
                 season TEXT,
@@ -105,14 +105,14 @@ export const up = async (db) => {
                 comparison_data JSON,
                 h2h_data JSON,
                 teams_data JSON,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
             )`
         }
     ];
 
     for (const t of tablesToCreate) {
         try {
-            db.run(t.sql);
+            await db.run(t.sql);
             console.log(`  ✅ Ensured table ${t.name} exists.`);
         } catch (e) {
             console.error(`  ❌ Error ensuring table ${t.name}:`, e.message);
@@ -121,18 +121,19 @@ export const up = async (db) => {
 
     for (const item of audit) {
         try {
-            const tableExists = db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='${item.table}'`);
+            const tableName = item.table.toLowerCase();
+            const tableExists = await db.get(`SELECT table_name FROM information_schema.tables WHERE table_name='${tableName}' AND table_schema='public'`);
             if (!tableExists) {
-                console.log(`  ⚠️ Table ${item.table} missing, skipping column audit.`);
+                console.log(`  ⚠️ Table ${item.table} (searched as ${tableName}) missing, skipping column audit.`);
                 continue;
             }
 
             for (const col of item.columns) {
                 try {
-                    db.run(`ALTER TABLE ${item.table} ADD COLUMN ${col.name} ${col.type}`);
-                    console.log(`  ✅ Added column ${col.name} to ${item.table}`);
+                    await db.run(`ALTER TABLE ${item.table} ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`);
+                    console.log(`  ✅ Ensured column ${col.name} exists in ${item.table}`);
                 } catch (e) {
-                    if (e.message.includes('duplicate column')) {
+                    if (e.message.includes('already exists')) {
                         // All good
                     } else {
                         console.error(`  ❌ Error adding ${col.name} to ${item.table}:`, e.message);

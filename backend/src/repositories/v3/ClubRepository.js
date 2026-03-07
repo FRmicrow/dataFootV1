@@ -7,16 +7,16 @@ class ClubRepository extends BaseRepository {
         super(db, 'V3_Teams');
     }
 
-    getClubProfileWithVenue(id) {
-        return this.db.get(`
+    async getClubProfileWithVenue(id) {
+        return await this.db.get(`
             SELECT t.*, v.name as venue_name, v.city as venue_city, v.capacity as venue_capacity, v.image_url as venue_image
             FROM V3_Teams t
             LEFT JOIN V3_Venues v ON t.venue_id = v.venue_id
-            WHERE t.team_id = ?
+            WHERE t.team_id = $1
         `, cleanParams([id]));
     }
 
-    getClubMatches(teamId, options = {}) {
+    async getClubMatches(teamId, options = {}) {
         const { year, competition, limit = 20 } = options;
 
         let sql = `
@@ -30,67 +30,68 @@ class ClubRepository extends BaseRepository {
             JOIN V3_Teams t1 ON f.home_team_id = t1.team_id
             JOIN V3_Teams t2 ON f.away_team_id = t2.team_id
             JOIN V3_Leagues l ON f.league_id = l.league_id
-            WHERE (f.home_team_id = ? OR f.away_team_id = ?)
+            WHERE (f.home_team_id = $1 OR f.away_team_id = $1)
         `;
-        const params = [teamId, teamId];
+        const params = [teamId];
 
+        let paramIdx = 2;
         if (year) {
-            sql += ` AND f.season_year = ?`;
+            sql += ` AND f.season_year = $${paramIdx++}`;
             params.push(year);
         }
         if (competition && competition !== 'all') {
-            sql += ` AND f.league_id = ?`;
+            sql += ` AND f.league_id = $${paramIdx++}`;
             params.push(competition);
         }
 
-        sql += ` ORDER BY f.date DESC LIMIT ?`;
+        sql += ` ORDER BY f.date DESC LIMIT $${paramIdx}`;
         params.push(limit);
 
-        return this.db.all(sql, params);
+        return await this.db.all(sql, params);
     }
 
 
-    getClubTacticalSummary(teamId, options = {}) {
+    async getClubTacticalSummary(teamId, options = {}) {
         const { year, competition } = options;
 
-        const fetchStats = (venueCondition = '') => {
+        const fetchStats = async (venueCondition = '') => {
             let sql = `
                 SELECT 
                     COUNT(DISTINCT fs.fixture_id) as matches,
-                    AVG(CAST(REPLACE(fs.ball_possession, '%', '') AS FLOAT)) as possession,
+                    AVG(CAST(NULLIF(REPLACE(fs.ball_possession, '%', ''), '') AS FLOAT)) as possession,
                     AVG(fs.pass_accuracy_pct) as pass_accuracy,
                     AVG(fs.shots_total) as shots_per_match,
                     AVG(fs.shots_on_goal) as shots_on_target_per_match,
                     AVG(fs.corner_kicks) as corners_per_match,
                     AVG(fs.goalkeeper_saves) as saves_per_match,
                     AVG(fs.yellow_cards) as yellow_cards_per_match,
-                    AVG(f.goals_home) as goals_home, -- Placeholder for more complex aggregation if needed
+                    AVG(f.goals_home) as goals_home,
                     AVG(f.goals_away) as goals_away
                 FROM V3_Fixture_Stats fs
                 JOIN V3_Fixtures f ON fs.fixture_id = f.fixture_id
-                WHERE fs.team_id = ?
+                WHERE fs.team_id = $1
             `;
             const params = [teamId];
+            let paramIdx = 2;
 
             if (year) {
-                sql += ` AND f.season_year = ?`;
+                sql += ` AND f.season_year = $${paramIdx++}`;
                 params.push(year);
             }
             if (competition && competition !== 'all') {
-                sql += ` AND f.league_id = ?`;
+                sql += ` AND f.league_id = $${paramIdx++}`;
                 params.push(competition);
             }
             if (venueCondition === 'home') {
-                sql += ` AND f.home_team_id = ?`;
+                sql += ` AND f.home_team_id = $${paramIdx++}`;
                 params.push(teamId);
             } else if (venueCondition === 'away') {
-                sql += ` AND f.away_team_id = ?`;
+                sql += ` AND f.away_team_id = $${paramIdx++}`;
                 params.push(teamId);
             }
 
-            const row = this.db.get(sql, cleanParams(params));
+            const row = await this.db.get(sql, cleanParams(params));
 
-            // Post-process some values
             if (row) {
                 row.possession = row.possession ? parseFloat(row.possession.toFixed(1)) : 0;
                 row.pass_accuracy = row.pass_accuracy ? parseFloat(row.pass_accuracy.toFixed(1)) : 0;
@@ -99,43 +100,40 @@ class ClubRepository extends BaseRepository {
                 row.corners_per_match = row.corners_per_match ? parseFloat(row.corners_per_match.toFixed(1)) : 0;
                 row.saves_per_match = row.saves_per_match ? parseFloat(row.saves_per_match.toFixed(1)) : 0;
                 row.yellow_cards_per_match = row.yellow_cards_per_match ? parseFloat(row.yellow_cards_per_match.toFixed(1)) : 0;
-
-                // For goal conversion, we need goals Scored
-                // This is a rough estimate based on average goals in those matches where they were home or away
-                // Better approach: SUM(CASE WHEN side=home THEN goals_home ELSE goals_away END)
             }
             return row;
         };
 
-        const all = fetchStats('all');
-        const home = fetchStats('home');
-        const away = fetchStats('away');
+        const [all, home, away] = await Promise.all([
+            fetchStats('all'),
+            fetchStats('home'),
+            fetchStats('away')
+        ]);
 
-        // Calculate missing fields for frontend compatibility
-        const finalize = (s, venue) => {
+        const finalize = async (s, venue) => {
             if (!s) return null;
 
-            // Get raw goals for this team
             let goalsSql = `
                 SELECT 
-                    SUM(CASE WHEN home_team_id = ? THEN goals_home ELSE goals_away END) as scored,
-                    SUM(CASE WHEN home_team_id = ? THEN goals_away ELSE goals_home END) as conceded,
-                    SUM(CASE WHEN home_team_id = ? AND goals_away = 0 THEN 1 WHEN away_team_id = ? AND goals_home = 0 THEN 1 ELSE 0 END) as clean_sheets,
-                    SUM(CASE WHEN (home_team_id = ? AND goals_home > goals_away) OR (away_team_id = ? AND goals_away > goals_home) THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN home_team_id = $1 THEN goals_home ELSE goals_away END) as scored,
+                    SUM(CASE WHEN home_team_id = $1 THEN goals_away ELSE goals_home END) as conceded,
+                    SUM(CASE WHEN home_team_id = $1 AND goals_away = 0 THEN 1 WHEN away_team_id = $1 AND goals_home = 0 THEN 1 ELSE 0 END) as clean_sheets,
+                    SUM(CASE WHEN (home_team_id = $1 AND goals_home > goals_away) OR (away_team_id = $1 AND goals_away > goals_home) THEN 1 ELSE 0 END) as wins,
                     COUNT(fixture_id) as played
                 FROM V3_Fixtures
-                WHERE (home_team_id = ? OR away_team_id = ?) AND status_short IN ('FT', 'AET', 'PEN')
+                WHERE (home_team_id = $1 OR away_team_id = $1) AND status_short IN ('FT', 'AET', 'PEN')
             `;
-            let goalsParams = [teamId, teamId, teamId, teamId, teamId, teamId, teamId, teamId, teamId, teamId];
+            let goalsParams = [teamId];
+            let gIdx = 2;
 
-            if (year) { goalsSql += ` AND season_year = ?`; goalsParams.push(year); }
-            if (competition && competition !== 'all') { goalsSql += ` AND league_id = ?`; goalsParams.push(competition); }
-            if (venue === 'home') { goalsSql += ` AND home_team_id = ?`; goalsParams.push(teamId); }
-            if (venue === 'away') { goalsSql += ` AND away_team_id = ?`; goalsParams.push(teamId); }
+            if (year) { goalsSql += ` AND season_year = $${gIdx++}`; goalsParams.push(year); }
+            if (competition && competition !== 'all') { goalsSql += ` AND league_id = $${gIdx++}`; goalsParams.push(competition); }
+            if (venue === 'home') { goalsSql += ` AND home_team_id = $${gIdx++}`; goalsParams.push(teamId); }
+            if (venue === 'away') { goalsSql += ` AND away_team_id = $${gIdx++}`; goalsParams.push(teamId); }
 
-            const g = this.db.get(goalsSql, cleanParams(goalsParams));
+            const g = await this.db.get(goalsSql, cleanParams(goalsParams));
 
-            const matchesPlayed = g.played || 0;
+            const matchesPlayed = parseInt(g.played, 10) || 0;
 
             s.goals_scored_per_match = matchesPlayed > 0 ? parseFloat((g.scored / matchesPlayed).toFixed(2)) : 0;
             s.goals_conceded_per_match = matchesPlayed > 0 ? parseFloat((g.conceded / matchesPlayed).toFixed(2)) : 0;
@@ -143,7 +141,6 @@ class ClubRepository extends BaseRepository {
             s.win_rate = matchesPlayed > 0 ? Math.min(100, parseFloat(((g.wins / matchesPlayed) * 100).toFixed(1))) : 0;
             s.shot_conversion = s.shots_per_match > 0 ? parseFloat(((s.goals_scored_per_match / s.shots_per_match) * 100).toFixed(1)) : 0;
 
-            // Placeholders for fields not in DB yet
             s.touches_per_match = "-";
             s.big_chances_per_match = "-";
 
@@ -151,19 +148,20 @@ class ClubRepository extends BaseRepository {
         };
 
         return {
-            all: finalize(all, 'all'),
-            home: finalize(home, 'home'),
-            away: finalize(away, 'away')
+            all: await finalize(all, 'all'),
+            home: await finalize(home, 'home'),
+            away: await finalize(away, 'away')
         };
     }
 
-    getClubSeasons(teamId) {
-        return this.db.all(`
+    async getClubSeasons(teamId) {
+        return await this.db.all(`
             SELECT DISTINCT 
                 l.league_id, 
                 l.name as league_name, 
                 l.logo_url as league_logo,
                 l.type as competition_type,
+                l.importance_rank,
                 ls.season_year,
                 ls.imported_lineups,
                 ls.imported_fixture_stats,
@@ -179,12 +177,12 @@ class ClubRepository extends BaseRepository {
             JOIN V3_Leagues l ON ps.league_id = l.league_id
             JOIN V3_League_Seasons ls ON (ps.league_id = ls.league_id AND ps.season_year = ls.season_year)
             LEFT JOIN V3_Standings st ON (ps.league_id = st.league_id AND ps.season_year = st.season_year AND ps.team_id = st.team_id)
-            WHERE ps.team_id = ?
+            WHERE ps.team_id = $1
             ORDER BY ls.season_year DESC, l.importance_rank ASC
         `, cleanParams([teamId]));
     }
 
-    getClubSummary(teamId, year = null, leagueId = null) {
+    async getClubSummary(teamId, year = null, leagueId = null) {
         let sql = `
             SELECT 
                 SUM(played) as total_played,
@@ -193,23 +191,24 @@ class ClubRepository extends BaseRepository {
                 SUM(goals_against) as goals_conceded,
                 CASE WHEN SUM(played) > 0 THEN (CAST(SUM(win) AS FLOAT) / SUM(played)) * 100 ELSE 0 END as win_rate
             FROM V3_Standings
-            WHERE team_id = ?
+            WHERE team_id = $1
         `;
         const params = [teamId];
+        let pIdx = 2;
 
         if (year) {
-            sql += ` AND season_year = ?`;
+            sql += ` AND season_year = $${pIdx++}`;
             params.push(year);
         }
         if (leagueId) {
-            sql += ` AND league_id = ?`;
+            sql += ` AND league_id = $${pIdx++}`;
             params.push(leagueId);
         }
 
-        return this.db.get(sql, cleanParams(params));
+        return await this.db.get(sql, cleanParams(params));
     }
 
-    getClubRoster(teamId, year, leagueId = null) {
+    async getClubRoster(teamId, year, leagueId = null) {
         let sql = `
             SELECT 
                 p.player_id, p.name, p.photo_url, p.nationality, p.position, p.age,
@@ -220,24 +219,22 @@ class ClubRepository extends BaseRepository {
                 SUM(ps.goals_assists) as assists,
                 SUM(ps.cards_yellow) as yellow_cards,
                 SUM(ps.cards_red) as red_cards,
-                AVG(CAST(NULLIF(ps.games_rating, 'N/A') AS FLOAT)) as rating
+                AVG(CAST(NULLIF(ps.games_rating, 'N/A') AS FLOAT))::numeric as rating
             FROM V3_Player_Stats ps
             JOIN V3_Players p ON ps.player_id = p.player_id
-            WHERE ps.team_id = ? AND ps.season_year = ?
+            WHERE ps.team_id = $1 AND ps.season_year = $2
         `;
         const params = [teamId, year];
+        let pIdx = 3;
 
         if (leagueId) {
-            sql += ` AND ps.league_id = ?`;
+            sql += ` AND ps.league_id = $${pIdx++}`;
             params.push(leagueId);
         }
 
-        sql += ` GROUP BY p.player_id ORDER BY appearances DESC, p.name ASC`;
-        return this.db.all(sql, cleanParams(params));
+        sql += ` GROUP BY p.player_id, p.name, p.photo_url, p.nationality, p.position, p.age ORDER BY appearances DESC, p.name ASC`;
+        return await this.db.all(sql, cleanParams(params));
     }
 }
-
-
-
 
 export default new ClubRepository();

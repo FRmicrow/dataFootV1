@@ -28,7 +28,7 @@ export const getModelStatus = async (req, res) => {
  */
 export const getMLOrchestratorStatus = async (req, res) => {
     try {
-        const rowCount = dbModule.get('SELECT COUNT(*) as count FROM V3_Risk_Analysis');
+        const rowCount = await dbModule.get('SELECT COUNT(*) as count FROM V3_Risk_Analysis');
 
         // Proxy FastAPI health endpoint for real-time python state
         let pythonStatus = { status: 'offline', model_loaded: false, version: 'Unknown' };
@@ -40,11 +40,13 @@ export const getMLOrchestratorStatus = async (req, res) => {
 
         res.json({
             success: true,
-            status: pythonStatus.status,
-            version: pythonStatus.version,
-            model_loaded: pythonStatus.model_loaded,
-            training: pythonStatus.training,
-            total_risk_rows: rowCount.count || 0
+            data: {
+                status: pythonStatus.status,
+                version: pythonStatus.version,
+                model_loaded: pythonStatus.model_loaded,
+                training: pythonStatus.training,
+                total_risk_rows: rowCount.count || 0
+            }
         });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -53,7 +55,7 @@ export const getMLOrchestratorStatus = async (req, res) => {
 
 export const getMLRecentAnalyses = async (req, res) => {
     try {
-        const recentRows = dbModule.all(`
+        const recentRows = await dbModule.all(`
             SELECT 
                 r.fixture_id, r.market_type, r.selection, r.ml_probability, r.fair_odd, r.analyzed_at,
                 l.name as league_name,
@@ -79,7 +81,7 @@ export const getMLRecentAnalyses = async (req, res) => {
 
 export const getMLSimulationFilters = async (req, res) => {
     try {
-        const rows = dbModule.all(`
+        const rows = await dbModule.all(`
             SELECT DISTINCT l.league_id, l.name as league_name, f.season_year
             FROM V3_Risk_Analysis r
             JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id
@@ -107,7 +109,7 @@ export const getMLModelEvaluation = async (req, res) => {
             queryParams.push(seasonYear);
         }
 
-        const rows = dbModule.all(`
+        const rows = await dbModule.all(`
             SELECT 
                 r.fixture_id, r.market_type, r.selection, r.ml_probability,
                 f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away,
@@ -212,7 +214,7 @@ export const getMLModelEvaluation = async (req, res) => {
 
 export const getMLSimulationOverview = async (req, res) => {
     try {
-        const rows = dbModule.all(`
+        const rows = await dbModule.all(`
             SELECT 
                 r.fixture_id, r.market_type, r.selection, r.ml_probability,
                 f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away,
@@ -342,7 +344,7 @@ export const getMLSimulationOverview = async (req, res) => {
 
 export const getMLRecommendations = async (req, res) => {
     try {
-        const recommendations = dbModule.all(`
+        const recommendations = await dbModule.all(`
             SELECT 
                 r.fixture_id, r.market_type, r.selection, r.ml_probability, r.fair_odd, r.bookmaker_odd, r.edge,
                 f.date, f.round,

@@ -11,7 +11,7 @@ import { cleanParams } from '../../utils/sqlHelpers.js';
 /**
  * US_266: Matrix API — Status-Aware Endpoint
  */
-export const getImportMatrixStatus = (req, res) => {
+export const getImportMatrixStatus = async (req, res) => {
     try {
         const leaguesSql = `
             SELECT 
@@ -29,8 +29,8 @@ export const getImportMatrixStatus = (req, res) => {
             ORDER BY c.importance_rank ASC, l.importance_rank ASC, l.name ASC, s.season_year DESC
         `;
 
-        const rows = db.all(leaguesSql);
-        const allStatuses = db.all(`SELECT * FROM V3_Import_Status`);
+        const rows = await db.all(leaguesSql);
+        const allStatuses = await db.all(`SELECT * FROM V3_Import_Status`);
 
         const statusIndex = {};
         for (const s of allStatuses) {
@@ -96,9 +96,9 @@ export const getImportMatrixStatus = (req, res) => {
             }
         });
 
-        res.json(Object.values(matrixMap));
+        res.json({ success: true, data: Object.values(matrixMap) });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -151,7 +151,7 @@ export const triggerBatchDeepSync = async (req, res) => {
 
         for (let i = 0; i < leagueIds.length; i++) {
             const leagueId = leagueIds[i];
-            const league = db.get("SELECT name FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
+            const league = await db.get("SELECT name FROM V3_Leagues WHERE league_id = ?", cleanParams([leagueId]));
             const leagueName = league ? league.name : `ID ${leagueId}`;
 
             sendLog(``, 'info');
@@ -189,10 +189,10 @@ export const triggerBatchDeepSync = async (req, res) => {
 /**
  * RESET manual override
  */
-export const resetImportStatus = (req, res) => {
+export const resetImportStatus = async (req, res) => {
     try {
         const { leagueId, seasonYear, pillar, reason, resetAll } = req.body;
-        ImportStatusService.resetStatus(leagueId, seasonYear, pillar, reason, !!resetAll);
+        await ImportStatusService.resetStatus(leagueId, seasonYear, pillar, reason, !!resetAll);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -218,7 +218,7 @@ export const resumeImport = (req, res) => {
 };
 
 export const getImportStateEndpoint = (req, res) => {
-    res.json(ImportControl.getImportState());
+    res.json({ success: true, data: ImportControl.getImportState() });
 };
 
 /**
@@ -275,9 +275,9 @@ export const triggerAuditScan = async (req, res) => {
 export const getDiscoveryCountries = async (req, res) => {
     try {
         const response = await footballApi.getCountries();
-        res.json(response.response || []);
+        res.json({ success: true, data: response.response || [] });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -293,12 +293,13 @@ export const getDiscoveryLeagues = async (req, res) => {
         const apiLeagues = response.response || [];
 
         // Filter out leagues that already exist in our DB
-        const existingApiIds = db.all("SELECT api_id FROM V3_Leagues").map(l => l.api_id);
+        const existingLeagues = await db.all("SELECT api_id FROM V3_Leagues");
+        const existingApiIds = existingLeagues.map(l => l.api_id);
         const filtered = apiLeagues.filter(l => !existingApiIds.includes(l.league.id));
 
-        res.json(filtered);
+        res.json({ success: true, data: filtered });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -347,9 +348,9 @@ export const triggerDiscoveryImport = async (req, res) => {
         await runImportJob(leagueId, sanitizedSeason, sendLog, { forceApiId: true });
 
         // Mark as complete for core
-        const localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [leagueId]);
+        const localLeague = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", [leagueId]);
         if (localLeague) {
-            ImportStatusService.setStatus(localLeague.league_id, seasonYear, 'core', IMPORT_STATUS.COMPLETE);
+            await ImportStatusService.setStatus(localLeague.league_id, seasonYear, 'core', IMPORT_STATUS.COMPLETE);
         }
 
         sendLog(`✅ Core Discovery Import Complete.`, 'complete');
@@ -410,9 +411,9 @@ export const triggerDiscoveryBatchImport = async (req, res) => {
                 sendLog(`\n[${successCount + failCount + 1}/${selection.length}] Processing League ID ${leagueId} (${seasonYear})...`, 'info');
                 await runImportJob(leagueId, parseInt(seasonYear), sendLog, { forceApiId: true });
 
-                const localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([leagueId]));
+                const localLeague = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([leagueId]));
                 if (localLeague) {
-                    ImportStatusService.setStatus(localLeague.league_id, seasonYear, 'core', IMPORT_STATUS.COMPLETE);
+                    await ImportStatusService.setStatus(localLeague.league_id, seasonYear, 'core', IMPORT_STATUS.COMPLETE);
                 }
                 successCount++;
             } catch (err) {

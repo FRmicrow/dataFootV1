@@ -5,7 +5,37 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const up = async (db) => {
+/**
+ * Splits a SQL file into individual statements and runs each one via client.run().
+ * This is required for PostgreSQL (pg) which does not support multi-statement exec.
+ */
+async function runSqlFile(client, filePath) {
+    const sql = fs.readFileSync(filePath, 'utf8');
+
+    // Split on semicolons
+    const rawStatements = sql.split(';');
+
+    for (const raw of rawStatements) {
+        const stmt = raw.trim();
+        // Skip empty statements (like those caused by trailing semicolons)
+        if (!stmt || stmt.length === 0) continue;
+
+        // If it's JUST comments, skip it (optional but cleaner)
+        if (stmt.split('\n').every(line => line.trim().startsWith('--') || line.trim() === '')) continue;
+        try {
+            await client.run(stmt);
+        } catch (err) {
+            console.error(`❌ Statement Failed: ${stmt.substring(0, 100)}...`);
+            console.error(`❌ Error Message: ${err.message}`);
+
+            // In PostgreSQL, any error aborts the transaction. 
+            // We cannot "silently skip" and continue on the same client.
+            throw err;
+        }
+    }
+}
+
+export const up = async (client) => {
     const schemaDir = path.join(__dirname, '../../../sql/schema');
     console.log('📜 Cleaning up Legacy V2 and Applying Baseline SQL Schemas...');
 
@@ -18,8 +48,7 @@ export const up = async (db) => {
         const filePath = path.join(schemaDir, file);
         if (fs.existsSync(filePath)) {
             console.log(`  📄 Applying ${file}...`);
-            const sql = fs.readFileSync(filePath, 'utf8');
-            db.db.exec(sql);
+            await runSqlFile(client, filePath);
         } else {
             console.warn(`  ⚠️ Schema file not found: ${file}`);
         }

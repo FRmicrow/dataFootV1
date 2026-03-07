@@ -14,13 +14,12 @@ def main():
     args = parser.parse_args()
     
     # Path configuration
-    db_path = os.path.join(os.path.dirname(__file__), '..', 'backend', 'database.sqlite')
     model_path = os.path.join(os.path.dirname(__file__), 'model_1x2.joblib')
     
     print(f"PROGRESS: 5%")
     print(f"Initializing Simulation Engine for League:{args.league_id} Model:{args.model_id}")
     
-    engine = LeagueReplayEngine(db_path, model_path, target_model_id=args.model_id)
+    engine = LeagueReplayEngine(model_path=model_path, simulation_id=args.model_id)
     
     print(f"PROGRESS: 10%")
     # Run Simulation

@@ -10,6 +10,7 @@ import sys
 import time
 from typing import List, Optional
 from datetime import datetime
+from db_config import get_connection
 
 app = FastAPI(title="StatFoot V3 ML Service", version="1.3.0-catboost-1x2")
 
@@ -18,7 +19,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.getenv('MODELS_PATH', BASE_DIR)
 MODEL_PATH = os.path.join(MODELS_DIR, 'model_1x2.joblib')
 IMPORTANCE_PATH = os.path.join(MODELS_DIR, 'model_1x2_importance.json')
-DB_PATH = os.getenv('DATABASE_PATH', os.path.abspath(os.path.join(BASE_DIR, '..', 'backend', 'database.sqlite')))
 
 # Global model state
 model = None
@@ -106,9 +106,12 @@ def predict(request: PredictionRequest):
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
-        conn = sqlite3.connect(DB_PATH)
-        query = "SELECT feature_vector FROM V3_ML_Feature_Store WHERE fixture_id = ?"
-        row = conn.execute(query, (request.fixture_id,)).fetchone()
+        conn = get_connection()
+        cur = conn.cursor()
+        query = "SELECT feature_vector FROM V3_ML_Feature_Store WHERE fixture_id = %s"
+        cur.execute(query, (request.fixture_id,))
+        row = cur.fetchone()
+        cur.close()
         conn.close()
 
         if not row:
@@ -157,10 +160,13 @@ def batch_predict(request: BatchPredictionRequest):
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
-        conn = sqlite3.connect(DB_PATH)
-        placeholders = ','.join(['?'] * len(request.fixture_ids))
+        conn = get_connection()
+        cur = conn.cursor()
+        placeholders = ','.join(['%s'] * len(request.fixture_ids))
         query = f"SELECT fixture_id, feature_vector FROM V3_ML_Feature_Store WHERE fixture_id IN ({placeholders})"
-        rows = conn.execute(query, request.fixture_ids).fetchall()
+        cur.execute(query, request.fixture_ids)
+        rows = cur.fetchall()
+        cur.close()
         conn.close()
 
         results = []
@@ -270,13 +276,16 @@ def get_forge_build_status():
 def list_forge_models():
     """Returns all registered models from the V3_Model_Registry."""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        rows = conn.execute("""
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
             SELECT id, league_id, horizon_type, version_tag, accuracy, log_loss, brier_score,
                    training_dataset_size, model_path, trained_at, is_active
             FROM V3_Model_Registry
             ORDER BY trained_at DESC
-        """).fetchall()
+        """)
+        rows = cur.fetchall()
+        cur.close()
         conn.close()
         
         models = []
@@ -354,14 +363,17 @@ def get_eligible_horizons(league_id: int, season_year: int):
 def get_league_models(league_id: int):
     """Returns active models for a specific league."""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        rows = conn.execute("""
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
             SELECT id, horizon_type, version_tag, accuracy, log_loss, brier_score,
                    training_dataset_size, trained_at, is_active
             FROM V3_Model_Registry
-            WHERE league_id = ? AND is_active = 1
+            WHERE league_id = %s AND is_active = 1
             ORDER BY horizon_type
-        """, (league_id,)).fetchall()
+        """, (league_id,))
+        rows = cur.fetchall()
+        cur.close()
         conn.close()
         
         models = []

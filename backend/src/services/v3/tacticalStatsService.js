@@ -30,12 +30,12 @@ export const syncLeagueTacticalStatsService = async (
     const { includeFS, includePS } = options;
 
     // US_262/263: Pre-check — should we skip?
-    const skipFS = !includeFS || ImportStatusService.shouldSkip(leagueId, seasonYear, 'fs');
-    const skipPS = !includePS || ImportStatusService.shouldSkip(leagueId, seasonYear, 'ps');
+    const skipFS = !includeFS || await ImportStatusService.shouldSkip(leagueId, seasonYear, 'fs');
+    const skipPS = !includePS || await ImportStatusService.shouldSkip(leagueId, seasonYear, 'ps');
 
     if (skipFS && skipPS) {
-        const fsStatus = ImportStatusService.getStatus(leagueId, seasonYear, 'fs');
-        const psStatus = ImportStatusService.getStatus(leagueId, seasonYear, 'ps');
+        const fsStatus = await ImportStatusService.getStatus(leagueId, seasonYear, 'fs');
+        const psStatus = await ImportStatusService.getStatus(leagueId, seasonYear, 'ps');
         log(`   ⏩ [FS+PS] Both pillars skipped — FS: ${fsStatus.status}, PS: ${psStatus.status}`, 'success');
         return { fs: { total: 0, success: 0, failed: 0, skipped: true }, ps: { total: 0, success: 0, failed: 0, skipped: true } };
     }
@@ -49,7 +49,7 @@ export const syncLeagueTacticalStatsService = async (
     if (!skipPS && !skipFS) {
         // Will adjust dynamically during processing
     } else if (!skipPS && skipFS) {
-        const fsStatus = ImportStatusService.getStatus(leagueId, seasonYear, 'fs');
+        const fsStatus = await ImportStatusService.getStatus(leagueId, seasonYear, 'fs');
         if (fsStatus.status === IMPORT_STATUS.NO_DATA) {
             psThreshold = CROSS_PILLAR_REDUCED_THRESHOLD;
             log(`   ℹ️ Cross-pillar: FS is NO_DATA, PS threshold reduced to ${psThreshold}`, 'info');
@@ -73,7 +73,7 @@ export const syncLeagueTacticalStatsService = async (
             AND (fs.fixture_id IS NULL OR fps.fixture_id IS NULL)
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
+        targetFixtures = await db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     } else if (!skipFS) {
         const sql = `
             SELECT f.fixture_id, f.api_id, 1 as needs_fs, 0 as needs_ps
@@ -84,7 +84,7 @@ export const syncLeagueTacticalStatsService = async (
             AND fs.fixture_id IS NULL
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
+        targetFixtures = await db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     } else if (!skipPS) {
         const sql = `
             SELECT f.fixture_id, f.api_id, 0 as needs_fs, 1 as needs_ps
@@ -95,7 +95,7 @@ export const syncLeagueTacticalStatsService = async (
             AND fps.fixture_id IS NULL
             LIMIT ?
         `;
-        targetFixtures = db.all(sql, cleanParams([leagueId, seasonYear, limit]));
+        targetFixtures = await db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     }
 
     if (targetFixtures.length === 0) {
@@ -103,10 +103,10 @@ export const syncLeagueTacticalStatsService = async (
 
         // Mark as COMPLETE if no missing data
         if (!skipFS) {
-            ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
+            await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
         }
         if (!skipPS) {
-            ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
+            await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
         }
 
         return {
@@ -127,7 +127,7 @@ export const syncLeagueTacticalStatsService = async (
         await ImportControl.checkAbortOrPause(sendLog);
 
         // Fetch team names for better logging
-        const fixtureInfo = db.get(`
+        const fixtureInfo = await db.get(`
             SELECT h.name as home, a.name as away 
             FROM V3_Fixtures f
             JOIN V3_Teams h ON f.home_team_id = h.team_id
@@ -156,14 +156,14 @@ export const syncLeagueTacticalStatsService = async (
                 const hasData = await fetchAndStoreFixtureStats(fixture.fixture_id, fixture.api_id);
                 if (hasData) {
                     fsConsecutiveFailures = 0;
-                    ImportStatusService.resetFailures(leagueId, seasonYear, 'fs');
+                    await ImportStatusService.resetFailures(leagueId, seasonYear, 'fs');
                     fsSuccess++;
                 } else {
                     fsConsecutiveFailures++;
                     if (fsConsecutiveFailures >= fsThreshold) {
                         // US_263: Auto-blacklist
                         const hasAnyData = fsSuccess > 0;
-                        ImportStatusService.setStatus(
+                        await ImportStatusService.setStatus(
                             leagueId, seasonYear, 'fs',
                             IMPORT_STATUS.NO_DATA,
                             { failure_reason: `${fsThreshold} consecutive fixtures returned no data (auto-blacklisted)` }
@@ -191,12 +191,12 @@ export const syncLeagueTacticalStatsService = async (
                 const hasData = await fetchAndStorePlayerStats(fixture.fixture_id, fixture.api_id);
                 if (hasData) {
                     psConsecutiveFailures = 0;
-                    ImportStatusService.resetFailures(leagueId, seasonYear, 'ps');
+                    await ImportStatusService.resetFailures(leagueId, seasonYear, 'ps');
                     psSuccess++;
                 } else {
                     psConsecutiveFailures++;
                     if (psConsecutiveFailures >= psThreshold) {
-                        ImportStatusService.setStatus(
+                        await ImportStatusService.setStatus(
                             leagueId, seasonYear, 'ps',
                             IMPORT_STATUS.NO_DATA,
                             { failure_reason: `${psThreshold} consecutive fixtures returned no data (auto-blacklisted)` }
@@ -225,20 +225,21 @@ export const syncLeagueTacticalStatsService = async (
     // Post-loop: Update statuses for non-blacklisted pillars
     if (!skipFS && !fsBlacklisted) {
         if (fsSuccess > 0) {
-            ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
+            await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
             // Backward compat
-            db.run(
+            await db.run(
+                "UPDATE V3_League_Seasons SET imported_fixture_stats = 1 WHERE league_id = ? AND season_year = ?",
                 cleanParams([leagueId, seasonYear])
             );
         } else if (fsFailed > 0) {
-            ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.PARTIAL);
+            await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.PARTIAL);
         }
     }
 
     if (!skipPS && !psBlacklisted) {
         if (psSuccess > 0) {
-            ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
-            db.run(
+            await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
+            await db.run(
                 "UPDATE V3_League_Seasons SET imported_player_stats = 1, last_sync_player_stats = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
                 cleanParams([leagueId, seasonYear])
             );
@@ -247,7 +248,7 @@ export const syncLeagueTacticalStatsService = async (
             await computePlayerSeasonNormalization(leagueId, seasonYear);
             log('✅ Normalization complete.');
         } else if (psFailed > 0) {
-            ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.PARTIAL);
+            await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.PARTIAL);
         }
     }
 
@@ -292,11 +293,12 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
         return false;
     }
 
-    db.run('BEGIN TRANSACTION');
+    await db.run('BEGIN TRANSACTION');
     try {
         for (const teamContainer of res.response) {
             const teamApiId = teamContainer.team.id;
-            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([teamApiId]))?.team_id;
+            const dbTeam = await db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([teamApiId]));
+            const localTeamId = dbTeam?.team_id;
 
             if (!localTeamId) {
                 console.warn(`      Team API ID ${teamApiId} not found locally.`);
@@ -309,19 +311,19 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
             const h2Stats = stats.filter(s => s.type.includes('2nd Half') || s.type.includes('Second Half'));
 
             if (ftStats.length > 0) {
-                DB.upsertFixtureStats(Mappers.fixtureStats(localFixtureId, localTeamId, 'FT', ftStats));
+                await DB.upsertFixtureStats(Mappers.fixtureStats(localFixtureId, localTeamId, 'FT', ftStats));
             }
             if (h1Stats.length > 0) {
-                DB.upsertFixtureStats(Mappers.fixtureStats(localFixtureId, localTeamId, '1H', h1Stats));
+                await DB.upsertFixtureStats(Mappers.fixtureStats(localFixtureId, localTeamId, '1H', h1Stats));
             }
             if (h2Stats.length > 0) {
-                DB.upsertFixtureStats(Mappers.fixtureStats(localFixtureId, localTeamId, '2H', h2Stats));
+                await DB.upsertFixtureStats(Mappers.fixtureStats(localFixtureId, localTeamId, '2H', h2Stats));
             }
         }
-        db.run('COMMIT');
+        await db.run('COMMIT');
         return true;
     } catch (err) {
-        try { db.run('ROLLBACK'); } catch (e) { }
+        try { await db.run('ROLLBACK'); } catch (e) { }
         throw err;
     }
 }
@@ -339,22 +341,23 @@ export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
         return false;
     }
 
-    db.run('BEGIN TRANSACTION');
+    await db.run('BEGIN TRANSACTION');
     try {
         for (const teamContainer of res.response) {
             const teamApiId = teamContainer.team.id;
-            const localTeamId = db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([teamApiId]))?.team_id;
+            const dbTeam = await db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([teamApiId]));
+            const localTeamId = dbTeam?.team_id;
 
             if (!localTeamId) continue;
 
             for (const playerStats of teamContainer.players) {
-                DB.upsertFixturePlayerStats(Mappers.fixturePlayerStats(localFixtureId, localTeamId, playerStats));
+                await DB.upsertFixturePlayerStats(Mappers.fixturePlayerStats(localFixtureId, localTeamId, playerStats));
             }
         }
-        db.run('COMMIT');
+        await db.run('COMMIT');
         return true;
     } catch (err) {
-        try { db.run('ROLLBACK'); } catch (e) { }
+        try { await db.run('ROLLBACK'); } catch (e) { }
         throw err;
     }
 }
@@ -364,7 +367,7 @@ export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
  */
 export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
     try {
-        const players = db.all(`
+        const players = await db.all(`
             SELECT DISTINCT player_id, team_id
             FROM V3_Fixture_Player_Stats
             WHERE fixture_id IN (SELECT fixture_id FROM V3_Fixtures WHERE league_id = ? AND season_year = ?)
@@ -372,9 +375,9 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
 
         if (players.length === 0) return;
 
-        db.run('BEGIN TRANSACTION');
+        await db.run('BEGIN TRANSACTION');
         for (const p of players) {
-            const sums = db.get(`
+            const sums = await db.get(`
                 SELECT 
                     COUNT(*) as appearances,
                     SUM(minutes_played) as total_minutes,
@@ -399,7 +402,7 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
             const mins = sums.total_minutes || 1;
             const factor = 90 / mins;
 
-            db.run(`
+            await db.run(`
                 INSERT INTO V3_Player_Season_Stats (
                     player_id, team_id, league_id, season_year,
                     appearances, minutes_played, goals_total, goals_conceded, goals_assists,
@@ -432,9 +435,9 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
                 sums.duels_won * factor, sums.dribbles_success * factor
             ]));
         }
-        db.run('COMMIT');
+        await db.run('COMMIT');
     } catch (err) {
-        try { db.run('ROLLBACK'); } catch (e) { }
+        try { await db.run('ROLLBACK'); } catch (e) { }
         console.error('Normalization Error:', err);
     }
 }

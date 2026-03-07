@@ -1,4 +1,5 @@
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import pandas as pd
 import numpy as np
 import json
@@ -11,7 +12,6 @@ from typing import Dict, Any, List, Optional
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('TemporalFeatureFactory')
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'database.sqlite'))
 
 class TemporalFeatureFactory:
     """
@@ -60,7 +60,7 @@ class TemporalFeatureFactory:
             cur.execute("""
                 SELECT date, home_team_id, away_team_id, league_id, round 
                 FROM V3_Fixtures 
-                WHERE fixture_id = ?
+                WHERE fixture_id = %s
             """, (fixture_id,))
             fixture = cur.fetchone()
             
@@ -177,8 +177,8 @@ class TemporalFeatureFactory:
         query = """
             SELECT goals_home, goals_away, home_team_id, away_team_id
             FROM V3_Fixtures
-            WHERE (home_team_id = ? OR away_team_id = ?)
-              AND date < ?
+            WHERE (home_team_id = %s OR away_team_id = %s)
+              AND date < %s
               AND status_short IN ('FT', 'AET', 'PEN')
             ORDER BY date DESC
             LIMIT 20
@@ -241,8 +241,8 @@ class TemporalFeatureFactory:
         query = """
             SELECT goals_home, goals_away, home_team_id, away_team_id
             FROM V3_Fixtures
-            WHERE (home_team_id = ? OR away_team_id = ?)
-              AND date < ?
+            WHERE (home_team_id = %s OR away_team_id = %s)
+              AND date < %s
               AND status_short IN ('FT', 'AET', 'PEN')
             ORDER BY date DESC
             LIMIT 20
@@ -269,8 +269,8 @@ class TemporalFeatureFactory:
         query = """
             SELECT goals_home, goals_away, home_team_id, away_team_id
             FROM V3_Fixtures
-            WHERE ((home_team_id = ? AND away_team_id = ?) OR (home_team_id = ? AND away_team_id = ?))
-              AND date < ?
+            WHERE ((home_team_id = %s AND away_team_id = %s) OR (home_team_id = %s AND away_team_id = %s))
+              AND date < %s
               AND status_short IN ('FT', 'AET', 'PEN')
             ORDER BY date DESC
             LIMIT 3
@@ -300,7 +300,7 @@ class TemporalFeatureFactory:
         # 1. Snapshot Priority (US_181)
         cur.execute("""
             SELECT feature_data FROM V3_Feature_Snapshots 
-            WHERE fixture_id = ? AND team_id = ? AND feature_type = 'SQUAD'
+            WHERE fixture_id = %s AND team_id = %s AND feature_type = 'SQUAD'
         """, (fixture_id, team_id))
         row = cur.fetchone()
         if row:
@@ -317,7 +317,7 @@ class TemporalFeatureFactory:
         # 2. Dynamic Reconstruction (SQL Fallback)
         cur.execute("""
             SELECT starting_xi FROM V3_Fixture_Lineups 
-            WHERE fixture_id = ? AND team_id = ?
+            WHERE fixture_id = %s AND team_id = %s
         """, (fixture_id, team_id))
         row = cur.fetchone()
         if row and row['starting_xi']:
@@ -347,7 +347,7 @@ class TemporalFeatureFactory:
         cur = conn.cursor()
         cur.execute("""
             SELECT elo_score FROM V3_Team_Ratings 
-            WHERE team_id = ? AND date < ? 
+            WHERE team_id = %s AND date < %s 
             ORDER BY date DESC LIMIT 1
         """, (team_id, morning_of))
         row = cur.fetchone()
@@ -370,7 +370,7 @@ class TemporalFeatureFactory:
         cur.execute("""
             SELECT v.city FROM V3_Teams t 
             LEFT JOIN V3_Venues v ON t.venue_id = v.api_id
-            WHERE t.team_id IN (?, ?)
+            WHERE t.team_id IN (%s, %s)
         """, (h_id, a_id))
         cities = [r[0] for r in cur.fetchall() if r[0]]
         if len(cities) == 2 and cities[0] == cities[1]:
@@ -394,7 +394,7 @@ if __name__ == "__main__":
     factory = TemporalFeatureFactory()
     # Test with a finished fixture
     import sys
-    conn_test = sqlite3.connect(DB_PATH)
+    conn_test = get_connection()
     test_fid = conn_test.execute("SELECT fixture_id FROM V3_Fixtures WHERE status_short='FT' ORDER BY date DESC LIMIT 1").fetchone()
     if test_fid:
         fid = test_fid[0]

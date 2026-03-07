@@ -107,7 +107,7 @@ const server = app.listen(PORT, () => {
     console.log('⚽ Football Player Database API');
     console.log('================================');
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 Database: SQLite V3 (Better-SQLite3)`);
+    console.log(`📊 Database: PostgreSQL (node-postgres)`);
     console.log(`🔑 API: API-Football v3`);
     console.log('================================\n');
 

@@ -45,7 +45,10 @@ const SeasonOverviewPage = () => {
                     const seasonsList = res.seasons || [];
                     const imported = seasonsList.filter(s => s.imported_players === 1);
                     if (imported.length > 0) {
-                        targetYear = imported[0].season_year;
+                        // Prioritize the season marked as current
+                        const currentSeason = imported.find(s => s.is_current === 1 || s.is_current === true);
+                        targetYear = currentSeason ? currentSeason.season_year : imported[0].season_year;
+
                         navigate(`/league/${id}/season/${targetYear}`, { replace: true });
                         return;
                     } else {
@@ -155,10 +158,22 @@ const SeasonOverviewPage = () => {
 
     const { league, topScorers, topAssists, topRated, availableYears, isFinished, hallOfFame } = data;
 
+    const isUEFACup = [1475, 1476, 1516].includes(Number(id));
+    const isModernUEFA = isUEFACup && Number(year) >= 2024;
+
     const tabItems = [
         { id: 'overview', label: 'Surveillance', icon: '🔭' },
-        { id: 'standings', label: 'Standings', icon: '📊', hidden: league.type === 'Cup' },
-        { id: 'fixtures', label: 'Results', icon: '📅' },
+        {
+            id: 'standings',
+            label: isModernUEFA ? 'Phase de Ligue' : (isUEFACup ? 'Phase de Groupes' : 'Standings'),
+            icon: '📊',
+            hidden: league.type === 'Cup' && !isUEFACup
+        },
+        {
+            id: 'fixtures',
+            label: isUEFACup ? 'Phase à Élimination' : 'Results',
+            icon: '📅'
+        },
         { id: 'squads', label: 'Squads', icon: '👥' }
     ];
 

@@ -35,14 +35,14 @@ export const getAvailableSeasons = async (req, res) => {
         const apiData = leagueResponse.response[0];
 
         // 2. Get local league record (if exists)
-        const localLeague = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([numericApiId]));
+        const localLeague = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([numericApiId]));
 
         // 3. Cross-reference each season with local DB
-        const seasons = (apiData.seasons || []).map(s => {
+        const seasons = await Promise.all((apiData.seasons || []).map(async s => {
             let status = 'NOT_IMPORTED';
 
             if (localLeague) {
-                const localSeason = db.get(
+                const localSeason = await db.get(
                     "SELECT sync_status, imported_players, imported_standings, imported_fixtures FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?",
                     cleanParams([localLeague.league_id, s.year])
                 );
@@ -65,21 +65,26 @@ export const getAvailableSeasons = async (req, res) => {
                 is_current: s.current,
                 status
             };
-        }).sort((a, b) => b.year - a.year);
+        }));
+
+        seasons.sort((a, b) => b.year - a.year);
 
         res.json({
-            league: {
-                api_id: apiData.league.id,
-                name: apiData.league.name,
-                type: apiData.league.type,
-                logo: apiData.league.logo,
-                country: apiData.country?.name || 'World'
-            },
-            seasons
+            success: true,
+            data: {
+                league: {
+                    api_id: apiData.league.id,
+                    name: apiData.league.name,
+                    type: apiData.league.type,
+                    logo: apiData.league.logo,
+                    country: apiData.country?.name || 'World'
+                },
+                seasons
+            }
         });
     } catch (error) {
         console.error("Error fetching available seasons:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -88,14 +93,14 @@ export const getAvailableSeasons = async (req, res) => {
  */
 export const getStandingsV3 = async (req, res) => {
     try {
-        const { id: leagueId } = req.params;
-        const { year: seasonYear } = req.query;
+        const leagueId = req.params.id || req.query.id || req.query.leagueId;
+        const seasonYear = req.query.year || req.query.season;
 
         if (!leagueId || !seasonYear) {
-            return res.status(400).json({ error: "Missing leagueId or year" });
+            return res.status(400).json({ error: "Missing leagueId or year", received: { leagueId, seasonYear } });
         }
 
-        const standings = db.all(`
+        const standings = await db.all(`
             SELECT 
                 s.*, t.name as team_name, t.logo_url as team_logo
             FROM V3_Standings s
@@ -104,9 +109,9 @@ export const getStandingsV3 = async (req, res) => {
             ORDER BY s.group_name ASC, s.rank ASC
         `, cleanParams([leagueId, seasonYear]));
 
-        res.json(standings);
+        res.json({ success: true, data: standings });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -115,14 +120,14 @@ export const getStandingsV3 = async (req, res) => {
  */
 export const getFixturesV3 = async (req, res) => {
     try {
-        const { id: leagueId } = req.params;
-        const { year: seasonYear } = req.query;
+        const leagueId = req.params.id || req.query.id || req.query.leagueId;
+        const seasonYear = req.query.year || req.query.season;
 
         if (!leagueId || !seasonYear) {
-            return res.status(400).json({ error: "Missing leagueId or year" });
+            return res.status(400).json({ error: "Missing leagueId or year", received: { leagueId, seasonYear } });
         }
 
-        const fixtures = db.all(`
+        const fixtures = await db.all(`
             SELECT 
                 f.*, 
                 ht.name as home_team_name, ht.logo_url as home_team_logo,
@@ -140,11 +145,14 @@ export const getFixturesV3 = async (req, res) => {
         const rounds = Array.from(new Set(fixtures.map(f => f.round)));
 
         res.json({
-            fixtures,
-            rounds
+            success: true,
+            data: {
+                fixtures,
+                rounds
+            }
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -156,26 +164,26 @@ export const getFixturesV3 = async (req, res) => {
 export const getCountriesV3 = async (req, res) => {
     try {
         // Use V3_Countries as the primary source for the full, ranked list
-        const countries = db.all(`
+        const countries = await db.all(`
             SELECT name, code, flag_url as flag
             FROM V3_Countries
             ORDER BY importance_rank ASC, name ASC
         `);
 
         if (countries && countries.length > 0) {
-            return res.json(countries);
+            return res.json({ success: true, data: countries });
         }
 
         // Fallback: footballApi
         const response = await footballApi.getCountries();
         if (response.response && response.response.length > 0) {
-            return res.json(response.response);
+            return res.json({ success: true, data: response.response });
         }
 
-        res.json([]);
+        res.json({ success: true, data: [] });
     } catch (error) {
         console.error("Error in getCountriesV3:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -187,9 +195,9 @@ export const getLeaguesV3 = async (req, res) => {
         const { country } = req.query;
         const params = country ? { country } : {};
         const response = await footballApi.getLeagues(params);
-        res.json(response.response);
+        res.json({ success: true, data: response.response });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 

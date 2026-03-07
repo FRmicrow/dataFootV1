@@ -30,28 +30,28 @@ class SimulationQueueService {
      */
     _startWatchdog() {
         console.log('🐕 [US_213] Starting Forge Watchdog...');
-        setInterval(() => {
+        setInterval(async () => {
             try {
                 // Find jobs that haven't pulsed a heartbeat in 2 minutes
-                const hangingJobs = db.all(`
+                const hangingJobs = await db.all(`
                     SELECT id FROM V3_Forge_Simulations 
                     WHERE status = 'RUNNING' 
                     AND (
-                        last_heartbeat < datetime('now', '-2 minutes')
-                        OR (last_heartbeat IS NULL AND created_at < datetime('now', '-5 minutes'))
+                        last_heartbeat < CURRENT_TIMESTAMP - INTERVAL '2 minutes'
+                        OR (last_heartbeat IS NULL AND created_at < CURRENT_TIMESTAMP - INTERVAL '5 minutes')
                     )
                 `);
 
-                hangingJobs.forEach(job => {
+                for (const job of hangingJobs) {
                     console.warn(`🚨 [US_213] Detected hanging simulation ${job.id}. Marking as FAILED (TIMEOUT-CRASH).`);
-                    db.run(`
+                    await db.run(`
                         UPDATE V3_Forge_Simulations 
                         SET status = 'FAILED', 
                             error_log = 'Process heartbeat timeout. Possible crash or OOM.',
                             stage = 'CRASHED'
                         WHERE id = ?
                     `, cleanParams([job.id]));
-                });
+                }
             } catch (err) {
                 console.error('❌ Watchdog Error:', err.message);
             }
@@ -63,21 +63,28 @@ class SimulationQueueService {
      * Note: We cannot recover the actual process object, but we allow the frontend
      * to see that a job *was* running. If the process is dead, we'll mark it as FAILED.
      */
-    _recoverActiveJobs() {
+    async _recoverActiveJobs() {
         console.log('🔄 [US_207] Scanning for orphaned simulation jobs...');
         try {
-            const runningJobs = db.all("SELECT id, league_id, season_year FROM V3_Forge_Simulations WHERE status = 'RUNNING'");
+            const runningJobs = await db.all("SELECT id, league_id, season_year FROM V3_Forge_Simulations WHERE status = 'RUNNING'");
 
-            runningJobs.forEach(job => {
+            for (const job of runningJobs) {
                 console.warn(`   ⚠️ Orphaned job detected: Sim ${job.id}. Marking as FAILED.`);
-                db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = 'Server restarted. Job interrupted.' WHERE id = ?", cleanParams([job.id]));
-            });
+                await db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = 'Server restarted. Job interrupted.' WHERE id = ?", cleanParams([job.id]));
+            }
         } catch (err) {
             console.warn('   ⚠️ Could not recover orphaned jobs (DB might not be ready yet):', err.message);
         }
     }
 
-    startSimulation(leagueId, seasonYear, mode = 'STATIC', horizon = 'FULL_HISTORICAL', isAudit = 0, calibrationTag = null) {
+    async startSimulation(
+        leagueId,
+        seasonYear,
+        mode = 'STATIC',
+        horizon = 'FULL_HISTORICAL',
+        isAudit = 0,
+        calibrationTag = null
+    ) {
         // Validation - US_251 Remediation
         const allowedModes = ['STATIC', 'WALK_FORWARD'];
         const allowedHorizons = ['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING'];
@@ -89,7 +96,7 @@ class SimulationQueueService {
         if (!allowedModes.includes(mode)) throw new Error(`Invalid simulation mode: ${mode}`);
         if (!allowedHorizons.includes(horizon)) throw new Error(`Invalid horizon type: ${horizon}`);
 
-        const existing = db.get("SELECT id FROM V3_Forge_Simulations WHERE league_id = ? AND season_year = ? AND horizon_type = ? AND status = 'RUNNING'", cleanParams([leagueId, seasonYear, horizon]));
+        const existing = await db.get("SELECT id FROM V3_Forge_Simulations WHERE league_id = ? AND season_year = ? AND horizon_type = ? AND status = 'RUNNING'", cleanParams([leagueId, seasonYear, horizon]));
         if (existing) {
             throw new Error(`Simulation already active for League ${leagueId} Season ${seasonYear} [${horizon}] (ID: ${existing.id})`);
         }
@@ -97,9 +104,9 @@ class SimulationQueueService {
         console.log(`🚀 [US_207] Spawning Forge Process: ${leagueId} | ${seasonYear} | ${horizon} | Audit: ${isAudit}`);
 
         // Insert new simulation record with Audit and Calibration fields (US_223)
-        const insertStmt = db.run(`
+        const insertStmt = await db.run(`
             INSERT INTO V3_Forge_Simulations (league_id, season_year, status, horizon_type, stage, last_heartbeat, is_audit, calibration_tag)
-            VALUES (?, ?, 'RUNNING', ?, 'INIT', datetime('now'), ?, ?)
+            VALUES (?, ?, 'RUNNING', ?, 'INIT', CURRENT_TIMESTAMP, ?, ?)
         `, cleanParams([leagueId, seasonYear, horizon, isAudit, calibrationTag]));
 
         const simId = insertStmt.lastInsertRowid;
@@ -115,46 +122,46 @@ class SimulationQueueService {
 
         const pythonProcess = spawn(venvPythonPath, pyArgs, { cwd: mlServicePath });
 
-        pythonProcess.stdout.on('data', (data) => {
+        pythonProcess.stdout.on('data', async data => {
             const line = data.toString().trim();
 
             // Heartbeat/Sync detection (US_213)
             if (line.includes('HEARTBEAT:')) {
-                db.run("UPDATE V3_Forge_Simulations SET last_heartbeat = datetime('now') WHERE id = ?", cleanParams([simId]));
+                await db.run("UPDATE V3_Forge_Simulations SET last_heartbeat = CURRENT_TIMESTAMP WHERE id = ?", cleanParams([simId]));
             }
 
             // Progress/Stage detection (US_214)
             if (line.includes('STAGE:')) {
                 const stage = line.split('STAGE:')[1].trim();
-                db.run("UPDATE V3_Forge_Simulations SET stage = ? WHERE id = ?", cleanParams([stage, simId]));
+                await db.run("UPDATE V3_Forge_Simulations SET stage = ? WHERE id = ?", cleanParams([stage, simId]));
             }
 
             if (line.includes('PROGRESS:')) {
                 const match = line.match(/PROGRESS:\s*(\d+)%/);
                 if (match) {
                     const progress = parseInt(match[1]);
-                    db.run("UPDATE V3_Forge_Simulations SET completed_months = ?, status = 'RUNNING' WHERE id = ?",
+                    await db.run("UPDATE V3_Forge_Simulations SET completed_months = ?, status = 'RUNNING' WHERE id = ?",
                         cleanParams([progress, simId]));
                 }
             }
             console.log(`[FORGE-OUT][ID:${simId}]: ${line}`);
         });
 
-        pythonProcess.stderr.on('data', (data) => {
+        pythonProcess.stderr.on('data', async data => {
             const line = data.toString().trim();
             if (line.toLowerCase().includes('error')) {
                 console.error(`[FORGE-ERR][ID:${simId}]: ${line}`);
                 // Capture error log (US_214)
-                db.run("UPDATE V3_Forge_Simulations SET error_log = ? WHERE id = ?", cleanParams([line, simId]));
+                await db.run("UPDATE V3_Forge_Simulations SET error_log = ? WHERE id = ?", cleanParams([line, simId]));
             }
         });
 
-        pythonProcess.on('close', (code) => {
+        pythonProcess.on('close', async code => {
             console.log(`📡 Forge process for Sim ${simId} exited with code ${code}`);
             this.activeProcesses.delete(`${leagueId}-${seasonYear}`);
 
             if (code !== 0) {
-                db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', stage = 'ERROR' WHERE id = ?", cleanParams([simId]));
+                await db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', stage = 'ERROR' WHERE id = ?", cleanParams([simId]));
             }
         });
 
@@ -162,7 +169,7 @@ class SimulationQueueService {
         return { success: true, message: 'Forge orchestration successfully spawned.' };
     }
 
-    getJobStatus(leagueId, seasonYear, horizon = null) {
+    async getJobStatus(leagueId, seasonYear, horizon = null) {
         let sql = `
             SELECT id, status, completed_months as progress, current_month, horizon_type, 
                    summary_metrics_json, stage, error_log, is_audit, calibration_tag, last_heartbeat
@@ -179,7 +186,7 @@ class SimulationQueueService {
 
         sql += ` ORDER BY id DESC LIMIT 1 `;
 
-        const job = db.get(sql, cleanParams(params));
+        const job = await db.get(sql, cleanParams(params));
         if (job && job.summary_metrics_json) {
             try {
                 job.metrics = JSON.parse(job.summary_metrics_json);
@@ -190,14 +197,14 @@ class SimulationQueueService {
         return job;
     }
 
-    getAllSimulationsForLeague(leagueId) {
+    async getAllSimulationsForLeague(leagueId) {
         const sql = `
             SELECT id, season_year, status, horizon_type, summary_metrics_json, stage, is_audit, calibration_tag, last_heartbeat
             FROM V3_Forge_Simulations
             WHERE league_id = ?
             ORDER BY id DESC
         `;
-        const rows = db.all(sql, cleanParams([leagueId]));
+        const rows = await db.all(sql, cleanParams([leagueId]));
         return rows.map(job => {
             if (job.summary_metrics_json) {
                 try { job.metrics = JSON.parse(job.summary_metrics_json); } catch (e) { job.metrics = {}; }

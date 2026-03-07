@@ -10,11 +10,11 @@ class SearchRepository extends BaseRepository {
     /**
      * Search players and teams in V3 with relevance sorting and scout_rank
      */
-    globalSearch(query, limit = 50) {
+    async globalSearch(query, limit = 50) {
         const searchTerm = `%${query}%`;
 
         // 1. Search Players
-        const players = this.db.all(`
+        const playersPromise = this.db.all(`
             SELECT 
                 p.player_id,
                 p.api_id,
@@ -27,22 +27,32 @@ class SearchRepository extends BaseRepository {
                 p.age,
                 p.scout_rank,
                 CASE 
-                    WHEN LOWER(p.name) = LOWER(?) THEN 0
-                    WHEN LOWER(p.lastname) = LOWER(?) THEN 1
-                    WHEN LOWER(p.lastname) LIKE LOWER(?) || ' %' THEN 1
-                    WHEN p.name LIKE ? OR p.lastname LIKE ? THEN 2
+                    -- Priority 0: Exact match or word boundary
+                    WHEN p.name ILIKE $1 
+                      OR p.name ILIKE $1 || ' %' 
+                      OR p.name ILIKE '% ' || $1 
+                      OR p.name ILIKE '% ' || $1 || ' %' THEN 0
+                    
+                    -- Priority 1: Exact lastname or word boundary in lastname
+                    WHEN p.lastname ILIKE $1 
+                      OR p.lastname ILIKE $1 || ' %' 
+                      OR p.lastname ILIKE '% ' || $1 
+                      OR p.lastname ILIKE '% ' || $1 || ' %' THEN 1
+                    
+                    -- Priority 2: Partial match
+                    WHEN p.name ILIKE $2 OR p.lastname ILIKE $2 THEN 2
                     ELSE 3
                 END as relevance_priority,
                 COALESCE(c.importance_rank, 999) as country_importance
             FROM V3_Players p
             LEFT JOIN V3_Countries c ON p.nationality = c.name
-            WHERE p.name LIKE ? OR p.firstname LIKE ? OR p.lastname LIKE ?
+            WHERE p.name ILIKE $2 OR p.firstname ILIKE $2 OR p.lastname ILIKE $2
             ORDER BY relevance_priority ASC, scout_rank DESC, country_importance ASC, p.name ASC
-            LIMIT ?
-        `, cleanParams([query, query, query, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, limit]));
+            LIMIT $3
+        `, cleanParams([query, searchTerm, limit]));
 
         // 2. Search Teams
-        const teams = this.db.all(`
+        const teamsPromise = this.db.all(`
             SELECT 
                 t.team_id,
                 t.api_id,
@@ -52,17 +62,22 @@ class SearchRepository extends BaseRepository {
                 t.scout_rank,
                 c.flag_url as country_flag,
                 CASE 
-                    WHEN LOWER(t.name) = LOWER(?) THEN 0
-                    WHEN t.name LIKE ? THEN 1
+                    WHEN t.name ILIKE $1 
+                      OR t.name ILIKE $1 || ' %' 
+                      OR t.name ILIKE '% ' || $1 
+                      OR t.name ILIKE '% ' || $1 || ' %' THEN 0
+                    WHEN t.name ILIKE $2 THEN 1
                     ELSE 2
                 END as relevance_priority,
                 COALESCE(c.importance_rank, 999) as country_importance
             FROM V3_Teams t
             LEFT JOIN V3_Countries c ON t.country = c.name
-            WHERE t.name LIKE ?
+            WHERE t.name ILIKE $2
             ORDER BY relevance_priority ASC, scout_rank DESC, country_importance ASC, t.name ASC
-            LIMIT ?
-        `, cleanParams([query, searchTerm, searchTerm, limit]));
+            LIMIT $3
+        `, cleanParams([query, searchTerm, limit]));
+
+        const [players, teams] = await Promise.all([playersPromise, teamsPromise]);
 
         return {
             players: players.map(({ relevance_priority, scout_rank, country_importance, ...rest }) => rest),
@@ -70,8 +85,8 @@ class SearchRepository extends BaseRepository {
         };
     }
 
-    getSearchCountries() {
-        return this.db.all(`
+    async getSearchCountries() {
+        return await this.db.all(`
             SELECT DISTINCT c.name, c.flag_url, c.importance_rank 
             FROM V3_Countries c
             JOIN V3_Players p ON p.nationality = c.name

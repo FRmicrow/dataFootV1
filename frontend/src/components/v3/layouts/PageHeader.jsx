@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Stack, Badge } from '../../../design-system';
 
 /**
@@ -6,9 +7,48 @@ import { Stack, Badge } from '../../../design-system';
  * @param {string} title - Page title.
  * @param {string} subtitle - Optional description/subtitle.
  * @param {React.ReactNode} actions - Optional area for buttons, filters, etc.
- * @param {React.ReactNode} breadcrumbs - Optional breadcrumb navigation.
+ * @param {React.ReactNode|Array} breadcrumbs - Optional breadcrumb navigation.
  */
 const PageHeader = ({ title, subtitle, actions, breadcrumbs, badge, extra, className = '', style = {} }) => {
+    const renderBreadcrumbs = () => {
+        if (!breadcrumbs) return null;
+        if (React.isValidElement(breadcrumbs)) return breadcrumbs;
+
+        if (Array.isArray(breadcrumbs)) {
+            return (
+                <div className="sf-breadcrumbs" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-xs)',
+                    fontSize: 'var(--font-size-xs)',
+                    color: 'var(--color-text-dim)',
+                    marginBottom: 'var(--spacing-xs)'
+                }}>
+                    {breadcrumbs.map((bc, idx) => (
+                        <React.Fragment key={idx}>
+                            {idx > 0 && <span>/</span>}
+                            {bc.path ? (
+                                <Link to={bc.path} style={{
+                                    color: 'inherit',
+                                    textDecoration: 'none',
+                                    transition: 'color var(--transition-fast)'
+                                }} onMouseOver={e => e.target.style.color = 'var(--color-text-main)'}
+                                    onMouseOut={e => e.target.style.color = 'inherit'}>
+                                    {bc.label}
+                                </Link>
+                            ) : (
+                                <span style={{ color: bc.active ? 'var(--color-text-main)' : 'inherit', fontWeight: bc.active ? 600 : 400 }}>
+                                    {bc.label}
+                                </span>
+                            )}
+                        </React.Fragment>
+                    ))}
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <header
             className={`sf-page-header ${className}`}
@@ -20,7 +60,7 @@ const PageHeader = ({ title, subtitle, actions, breadcrumbs, badge, extra, class
             }}
         >
             <Stack gap="var(--spacing-sm)">
-                {breadcrumbs && <div className="sf-breadcrumbs">{breadcrumbs}</div>}
+                {renderBreadcrumbs()}
                 <Stack direction="row" align="center" justify="space-between" wrap>
                     <Stack gap="4px">
                         <Stack direction="row" align="center" gap="var(--spacing-sm)">

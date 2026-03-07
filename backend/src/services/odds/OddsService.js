@@ -26,11 +26,11 @@ class OddsService {
                 updated_at = CURRENT_TIMESTAMP
         `);
 
-        const insertMany = db.db.transaction((items) => {
+        const insertMany = db.db.transaction(async items => {
             let count = 0;
             for (const item of items) {
                 // Ensure fixture exists in V3_Fixtures before inserting
-                const fixtureExists = db.get('SELECT 1 FROM V3_Fixtures WHERE fixture_id = ?', [item.fixture_id]);
+                const fixtureExists = await db.get('SELECT 1 FROM V3_Fixtures WHERE fixture_id = ?', [item.fixture_id]);
                 if (fixtureExists) {
                     stmt.run(
                         item.fixture_id,
@@ -126,7 +126,7 @@ class OddsService {
         console.log(`🚀 Starting upcoming week odds import based on tracked leagues...`);
 
         // Fetch current active leagues mapped to their current season
-        const currentTracking = db.all(`
+        const currentTracking = await db.all(`
             SELECT league_id, season_year 
             FROM V3_League_Seasons 
             WHERE is_current = 1

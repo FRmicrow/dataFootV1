@@ -32,7 +32,7 @@ export const getPrescriptions = async (req, res) => {
         }
 
         sql += " ORDER BY priority DESC, created_at DESC";
-        const prescriptions = db.all(sql, params);
+        const prescriptions = await db.all(sql, params);
         res.json(prescriptions);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -14,10 +14,24 @@ const api = axios.create({
 
 // Response interceptor
 api.interceptors.response.use(
-    (response) => response.data, // Return data directly for cleaner consumption
+    (response) => {
+        const body = response.data;
+        // Standard V3 Wrapper: { success: true, data: [...] }
+        if (body && typeof body === 'object' && body.success === true && body.data !== undefined) {
+            return body.data;
+        }
+        // Error state: { success: false, message: "..." }
+        if (body && typeof body === 'object' && body.success === false) {
+            const errorMsg = body.message || body.error || 'API Command Failed';
+            console.error('API Business Error:', errorMsg);
+            return Promise.reject(new Error(errorMsg));
+        }
+        // Fallback for raw data (V1, V2, or legacy endpoints)
+        return body;
+    },
     (error) => {
-        const message = error.response?.data?.error || error.message;
-        console.error('API Error:', message);
+        const message = error.response?.data?.error || error.response?.data?.message || error.message;
+        console.error('API Network/System Error:', message);
         return Promise.reject(error);
     }
 );

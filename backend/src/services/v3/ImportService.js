@@ -220,27 +220,27 @@ export const Mappers = {
 };
 
 export const ImportRepository = {
-    getOrInsertCountry: (data) => {
-        let country = db.get("SELECT country_id FROM V3_Countries WHERE name = ?", cleanParams([data.name]));
+    getOrInsertCountry: async (data) => {
+        let country = await db.get("SELECT country_id FROM V3_Countries WHERE name = ?", cleanParams([data.name]));
         if (!country) {
-            const info = db.run("INSERT INTO V3_Countries (name, code, flag_url) VALUES (?, ?, ?)", cleanParams([data.name, data.code, data.flag_url]));
+            const info = await db.run("INSERT INTO V3_Countries (name, code, flag_url) VALUES (?, ?, ?) RETURNING country_id", cleanParams([data.name, data.code, data.flag_url]));
             return info.lastInsertRowid;
         }
         return country.country_id;
     },
-    getOrInsertVenue: (data) => {
+    getOrInsertVenue: async (data) => {
         if (!data.api_id) return null;
-        let venue = db.get("SELECT venue_id FROM V3_Venues WHERE api_id = ?", cleanParams([data.api_id]));
+        let venue = await db.get("SELECT venue_id FROM V3_Venues WHERE api_id = ?", cleanParams([data.api_id]));
         if (!venue) {
-            const info = db.run(`INSERT INTO V3_Venues (api_id, name, address, city, capacity, surface, image_url) VALUES (?,?,?,?,?,?,?)`,
+            const info = await db.run(`INSERT INTO V3_Venues (api_id, name, address, city, capacity, surface, image_url) VALUES (?,?,?,?,?,?,?) RETURNING venue_id`,
                 cleanParams([data.api_id, data.name, data.address, data.city, data.capacity, data.surface, data.image_url]));
             return info.lastInsertRowid;
         }
         return venue.venue_id;
     },
-    upsertLeague: (data, countryId, countryName) => {
+    upsertLeague: async (data, countryId, countryName) => {
         // 1. Primary Check: API ID
-        let league = db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([data.api_id]));
+        let league = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([data.api_id]));
         if (league) {
             return league.league_id;
         }
@@ -257,44 +257,44 @@ export const ImportRepository = {
         }
 
         // 3. Identity Check (Prevent Duplicates if API ID is missing/changed but Name+Country matches)
-        let existingIdentity = db.get("SELECT league_id FROM V3_Leagues WHERE name = ? AND country_id = ?", cleanParams([finalName, countryId]));
+        let existingIdentity = await db.get("SELECT league_id FROM V3_Leagues WHERE name = ? AND country_id = ?", cleanParams([finalName, countryId]));
         if (existingIdentity) {
             // Update API ID if missing? optionally
-            db.run("UPDATE V3_Leagues SET api_id = ? WHERE league_id = ?", cleanParams([data.api_id, existingIdentity.league_id]));
+            await db.run("UPDATE V3_Leagues SET api_id = ? WHERE league_id = ?", cleanParams([data.api_id, existingIdentity.league_id]));
             return existingIdentity.league_id;
         }
 
         // 4. Create New Discovered League
         const rank = CompetitionRanker.calculate({ name: finalName, type: data.type, country_name: countryName });
-        const info = db.run(
-            "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered, importance_rank) VALUES (?, ?, ?, ?, ?, 1, ?)",
+        const info = await db.run(
+            "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered, importance_rank) VALUES (?, ?, ?, ?, ?, 1, ?) RETURNING league_id",
             cleanParams([data.api_id, finalName, data.type, data.logo_url, countryId, rank])
         );
-        return info.lastInsertRowid;
+        return info.lastInsertRowid || info.league_id || info[0]?.league_id;
     },
-    upsertLeagueSeason: (data) => {
-        let season = db.get("SELECT league_season_id FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([data.league_id, data.season_year]));
+    upsertLeagueSeason: async (data) => {
+        let season = await db.get("SELECT league_season_id FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?", cleanParams([data.league_id, data.season_year]));
         if (season) {
             return season.league_season_id;
         } else {
             // New Season -> PARTIAL_DISCOVERY
-            const info = db.run(`INSERT INTO V3_League_Seasons (
+            const info = await db.run(`INSERT INTO V3_League_Seasons (
                 league_id, season_year, sync_status, is_current, 
                 coverage_standings, coverage_players, coverage_top_scorers, coverage_top_assists, coverage_top_cards, coverage_injuries, coverage_predictions, coverage_odds
-            ) VALUES (?, ?, 'PARTIAL_DISCOVERY', 0, 0, 0, 0, 0, 0, 0, 0, 0)`,
+            ) VALUES (?, ?, 'PARTIAL_DISCOVERY', 0, 0, 0, 0, 0, 0, 0, 0, 0) RETURNING league_season_id`,
                 cleanParams([data.league_id, data.season_year]));
-            return info.lastInsertRowid;
+            return info.lastInsertRowid || info.league_season_id || info[0]?.league_season_id;
         }
     },
-    upsertTeam: (data, venueId) => {
-        let team = db.get("SELECT team_id, logo_url, accent_color FROM V3_Teams WHERE api_id = ?", cleanParams([data.api_id]));
+    upsertTeam: async (data, venueId) => {
+        let team = await db.get("SELECT team_id, logo_url, accent_color FROM V3_Teams WHERE api_id = ?", cleanParams([data.api_id]));
 
         if (team) {
             // Update if logo changed or colors missing
             const logoChanged = team.logo_url !== data.logo_url;
             const needsColors = !team.accent_color;
 
-            db.run(`UPDATE V3_Teams SET name=?, code=?, logo_url=?, venue_id=?, is_national_team=? WHERE team_id=?`,
+            await db.run(`UPDATE V3_Teams SET name=?, code=?, logo_url=?, venue_id=?, is_national_team=? WHERE team_id=?`,
                 cleanParams([data.name, data.code, data.logo_url, venueId, data.is_national_team, team.team_id]));
 
             if (logoChanged || needsColors) {
@@ -303,34 +303,34 @@ export const ImportRepository = {
             }
             return team.team_id;
         } else {
-            const info = db.run(`INSERT INTO V3_Teams (api_id, name, code, country, founded, national, is_national_team, logo_url, venue_id) VALUES (?,?,?,?,?,?,?,?,?)`,
+            const info = await db.run(`INSERT INTO V3_Teams (api_id, name, code, country, founded, national, is_national_team, logo_url, venue_id) VALUES (?,?,?,?,?,?,?,?,?) RETURNING team_id`,
                 cleanParams([data.api_id, data.name, data.code, data.country, data.founded, data.national, data.is_national_team, data.logo_url, venueId]));
 
-            const newTeamId = info.lastInsertRowid;
+            const newTeamId = info.lastInsertRowid || info.team_id || info[0]?.team_id;
             // Extract colors for new team
             ColorService.processTeamColors(newTeamId, data.logo_url).catch(console.error);
 
             return newTeamId;
         }
     },
-    upsertPlayer: (data) => {
-        let player = db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", cleanParams([data.api_id]));
+    upsertPlayer: async (data) => {
+        let player = await db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", cleanParams([data.api_id]));
         if (player) {
             // Update critical fields if needed
-            db.run(`UPDATE V3_Players SET age=?, height=?, weight=?, injured=?, photo_url=?, preferred_foot=? WHERE player_id=?`,
+            await db.run(`UPDATE V3_Players SET age=?, height=?, weight=?, injured=?, photo_url=?, preferred_foot=? WHERE player_id=?`,
                 cleanParams([data.age, data.height, data.weight, data.injured, data.photo_url, data.preferred_foot, player.player_id]));
             return player.player_id;
         } else {
-            const info = db.run(`INSERT INTO V3_Players (api_id, name, firstname, lastname, age, birth_date, birth_place, birth_country, nationality, height, weight, injured, photo_url, preferred_foot) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            const info = await db.run(`INSERT INTO V3_Players (api_id, name, firstname, lastname, age, birth_date, birth_place, birth_country, nationality, height, weight, injured, photo_url, preferred_foot) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING player_id`,
                 cleanParams([data.api_id, data.name, data.firstname, data.lastname, data.age, data.birth_date, data.birth_place, data.birth_country, data.nationality, data.height, data.weight, data.injured, data.photo_url, data.preferred_foot]));
-            return info.lastInsertRowid;
+            return info.lastInsertRowid || info.player_id || info[0]?.player_id;
         }
     },
-    upsertPlayerStats: (s) => {
-        const existing = db.get(`SELECT stat_id FROM V3_Player_Stats WHERE player_id=? AND team_id=? AND league_id=? AND season_year=?`,
+    upsertPlayerStats: async (s) => {
+        const existing = await db.get(`SELECT stat_id FROM V3_Player_Stats WHERE player_id=? AND team_id=? AND league_id=? AND season_year=?`,
             cleanParams([s.player_id, s.team_id, s.league_id, s.season_year]));
         if (existing) {
-            db.run(`UPDATE V3_Player_Stats SET 
+            await db.run(`UPDATE V3_Player_Stats SET 
                 games_appearences=?, games_lineups=?, games_minutes=?, games_number=?, games_position=?, games_rating=?, games_captain=?,
                 substitutes_in=?, substitutes_out=?, substitutes_bench=?, shots_total=?, shots_on=?, goals_total=?, goals_conceded=?, goals_assists=?, goals_saves=?,
                 passes_total=?, passes_key=?, passes_accuracy=?, tackles_total=?, tackles_blocks=?, tackles_interceptions=?, duels_total=?, duels_won=?,
@@ -343,7 +343,7 @@ export const ImportRepository = {
                 s.dribbles_attempts, s.dribbles_success, s.dribbles_past, s.fouls_drawn, s.fouls_committed, s.cards_yellow, s.cards_yellowred, s.cards_red,
                 s.penalty_won, s.penalty_commited, s.penalty_scored, s.penalty_missed, s.penalty_saved, existing.stat_id]));
         } else {
-            db.run(`INSERT INTO V3_Player_Stats (
+            await db.run(`INSERT INTO V3_Player_Stats (
                 player_id, team_id, league_id, season_year, games_appearences, games_lineups, games_minutes, games_number, games_position, games_rating, games_captain,
                 substitutes_in, substitutes_out, substitutes_bench, shots_total, shots_on, goals_total, goals_conceded, goals_assists, goals_saves,
                 passes_total, passes_key, passes_accuracy, tackles_total, tackles_blocks, tackles_interceptions, duels_total, duels_won,
@@ -356,25 +356,25 @@ export const ImportRepository = {
                 s.penalty_won, s.penalty_commited, s.penalty_scored, s.penalty_missed, s.penalty_saved]));
         }
     },
-    upsertStanding: (s) => {
-        const existing = db.get(`SELECT standings_id FROM V3_Standings WHERE league_id=? AND season_year=? AND team_id=? AND group_name=?`,
+    upsertStanding: async (s) => {
+        const existing = await db.get(`SELECT standings_id FROM V3_Standings WHERE league_id=? AND season_year=? AND team_id=? AND group_name=?`,
             cleanParams([s.league_id, s.season_year, s.team_id, s.group_name]));
         if (existing) {
-            db.run(`UPDATE V3_Standings SET 
+            await db.run(`UPDATE V3_Standings SET 
                 rank=?, points=?, goals_diff=?, played=?, win=?, draw=?, lose=?, goals_for=?, goals_against=?, form=?, status=?, description=?, update_date=CURRENT_TIMESTAMP
                 WHERE standings_id=?`,
                 cleanParams([s.rank, s.points, s.goals_diff, s.played, s.win, s.draw, s.lose, s.goals_for, s.goals_against, s.form, s.status, s.description, existing.standings_id]));
         } else {
-            db.run(`INSERT INTO V3_Standings (
+            await db.run(`INSERT INTO V3_Standings (
                 league_id, season_year, team_id, rank, points, goals_diff, played, win, draw, lose, goals_for, goals_against, form, status, description, group_name
                 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                 cleanParams([s.league_id, s.season_year, s.team_id, s.rank, s.points, s.goals_diff, s.played, s.win, s.draw, s.lose, s.goals_for, s.goals_against, s.form, s.status, s.description, s.group_name]));
         }
     },
-    upsertFixture: (f) => {
-        const existing = db.get(`SELECT fixture_id FROM V3_Fixtures WHERE api_id=?`, cleanParams([f.api_id]));
+    upsertFixture: async (f) => {
+        const existing = await db.get(`SELECT fixture_id FROM V3_Fixtures WHERE api_id=?`, cleanParams([f.api_id]));
         if (existing) {
-            db.run(`UPDATE V3_Fixtures SET 
+            await db.run(`UPDATE V3_Fixtures SET 
                 round=?, date=?, timestamp=?, timezone=?, venue_id=?, status_long=?, status_short=?, elapsed=?, goals_home=?, goals_away=?, 
                 score_halftime_home=?, score_halftime_away=?, score_fulltime_home=?, score_fulltime_away=?, score_extratime_home=?, score_extratime_away=?, 
                 score_penalty_home=?, score_penalty_away=?, updated_at=CURRENT_TIMESTAMP
@@ -383,7 +383,7 @@ export const ImportRepository = {
                 f.score_halftime_home, f.score_halftime_away, f.score_fulltime_home, f.score_fulltime_away, f.score_extratime_home, f.score_extratime_away,
                 f.score_penalty_home, f.score_penalty_away, existing.fixture_id]));
         } else {
-            db.run(`INSERT INTO V3_Fixtures (
+            await db.run(`INSERT INTO V3_Fixtures (
                 api_id, league_id, season_year, round, date, timestamp, timezone, venue_id, status_long, status_short, elapsed, home_team_id, away_team_id, 
                 goals_home, goals_away, score_halftime_home, score_halftime_away, score_fulltime_home, score_fulltime_away, score_extratime_home, score_extratime_away, 
                 score_penalty_home, score_penalty_away
@@ -393,11 +393,11 @@ export const ImportRepository = {
                 f.score_extratime_home, f.score_extratime_away, f.score_penalty_home, f.score_penalty_away]));
         }
     },
-    upsertFixtureStats: (s) => {
-        const existing = db.get(`SELECT fixture_stats_id FROM V3_Fixture_Stats WHERE fixture_id=? AND team_id=? AND half=?`,
+    upsertFixtureStats: async (s) => {
+        const existing = await db.get(`SELECT fixture_stats_id FROM V3_Fixture_Stats WHERE fixture_id=? AND team_id=? AND half=?`,
             cleanParams([s.fixture_id, s.team_id, s.half]));
         if (existing) {
-            db.run(`UPDATE V3_Fixture_Stats SET 
+            await db.run(`UPDATE V3_Fixture_Stats SET 
                 shots_on_goal=?, shots_off_goal=?, shots_inside_box=?, shots_outside_box=?, shots_total=?, shots_blocked=?, 
                 fouls=?, corner_kicks=?, offsides=?, ball_possession=?, yellow_cards=?, red_cards=?, goalkeeper_saves=?, 
                 passes_total=?, passes_accurate=?, pass_accuracy_pct=?, updated_at=CURRENT_TIMESTAMP
@@ -406,7 +406,7 @@ export const ImportRepository = {
                 s.fouls, s.corner_kicks, s.offsides, s.ball_possession, s.yellow_cards, s.red_cards, s.goalkeeper_saves,
                 s.passes_total, s.passes_accurate, s.pass_accuracy_pct, existing.fixture_stats_id]));
         } else {
-            db.run(`INSERT INTO V3_Fixture_Stats (
+            await db.run(`INSERT INTO V3_Fixture_Stats (
                 fixture_id, team_id, half, shots_on_goal, shots_off_goal, shots_inside_box, shots_outside_box, shots_total, shots_blocked, 
                 fouls, corner_kicks, offsides, ball_possession, yellow_cards, red_cards, goalkeeper_saves, passes_total, passes_accurate, pass_accuracy_pct
                 ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
@@ -414,12 +414,12 @@ export const ImportRepository = {
                 s.fouls, s.corner_kicks, s.offsides, s.ball_possession, s.yellow_cards, s.red_cards, s.goalkeeper_saves, s.passes_total, s.passes_accurate, s.pass_accuracy_pct]));
         }
     },
-    upsertFixturePlayerStats: (s) => {
+    upsertFixturePlayerStats: async (s) => {
         // Resolve player_id from API ID to local ID
-        const localPlayer = db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", cleanParams([s.player_id]));
+        const localPlayer = await db.get("SELECT player_id FROM V3_Players WHERE api_id = ?", cleanParams([s.player_id]));
         if (!localPlayer) return; // Should not happen if players are synced first
 
-        const existing = db.get(`SELECT fixture_player_stats_id FROM V3_Fixture_Player_Stats WHERE fixture_id=? AND player_id=?`,
+        const existing = await db.get(`SELECT fixture_player_stats_id FROM V3_Fixture_Player_Stats WHERE fixture_id=? AND player_id=?`,
             cleanParams([s.fixture_id, localPlayer.player_id]));
 
         const params = cleanParams([
@@ -432,7 +432,7 @@ export const ImportRepository = {
         ]);
 
         if (existing) {
-            db.run(`UPDATE V3_Fixture_Player_Stats SET 
+            await db.run(`UPDATE V3_Fixture_Player_Stats SET 
                 team_id=?, is_start_xi=?, minutes_played=?, position=?, rating=?,
                 goals_total=?, goals_conceded=?, goals_assists=?, goals_saves=?,
                 shots_total=?, shots_on=?, passes_total=?, passes_key=?, passes_accuracy=?,
@@ -442,7 +442,7 @@ export const ImportRepository = {
                 WHERE fixture_player_stats_id=?`,
                 cleanParams([...params.slice(1), existing.fixture_player_stats_id]));
         } else {
-            db.run(`INSERT INTO V3_Fixture_Player_Stats (
+            await db.run(`INSERT INTO V3_Fixture_Player_Stats (
                 fixture_id, team_id, player_id, is_start_xi, minutes_played, position, rating,
                 goals_total, goals_conceded, goals_assists, goals_saves,
                 shots_total, shots_on, passes_total, passes_key, passes_accuracy,

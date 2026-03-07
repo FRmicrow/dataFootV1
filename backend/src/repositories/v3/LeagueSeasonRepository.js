@@ -10,8 +10,8 @@ class LeagueSeasonRepository extends BaseRepository {
     /**
      * Get detailed status of all seasons for a league
      */
-    getSeasonsStatusByLeague(leagueId) {
-        return this.db.all(`
+    async getSeasonsStatusByLeague(leagueId) {
+        return await this.db.all(`
             SELECT 
                 ls.*,
                 l.name as league_name
@@ -25,8 +25,8 @@ class LeagueSeasonRepository extends BaseRepository {
     /**
      * Find a season with its league info
      */
-    getFullSeasonInfo(leagueId, seasonYear) {
-        return this.db.get(`
+    async getFullSeasonInfo(leagueId, seasonYear) {
+        return await this.db.get(`
             SELECT ls.*, l.name, l.type, l.logo_url
             FROM V3_League_Seasons ls
             JOIN V3_Leagues l ON ls.league_id = l.league_id
@@ -37,8 +37,8 @@ class LeagueSeasonRepository extends BaseRepository {
     /**
      * Update import flags safely
      */
-    updateImportStatus(leagueId, seasonYear, updates) {
-        return this.update({ league_id: leagueId, season_year: seasonYear }, updates);
+    async updateImportStatus(leagueId, seasonYear, updates) {
+        return await this.update({ league_id: leagueId, season_year: seasonYear }, updates);
     }
 }
 

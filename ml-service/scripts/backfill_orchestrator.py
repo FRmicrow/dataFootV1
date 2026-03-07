@@ -1,16 +1,16 @@
 import os
 import sys
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import time
 
 # Ensure we can import src
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.orchestrator.predictor import generate_master_prediction
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'backend', 'data', 'database.sqlite'))
 
 def run_backfill():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     
     # Find all completed fixtures that have PROCESS_V1 features for both teams
     print("Querying for eligible historical fixtures...")

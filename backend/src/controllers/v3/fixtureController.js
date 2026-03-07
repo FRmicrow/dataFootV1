@@ -6,7 +6,7 @@ import FixtureRepository from '../../repositories/v3/FixtureRepository.js';
 export const getFixtureDetails = async (req, res) => {
     try {
         const { id } = req.params;
-        const fixture = FixtureRepository.getFixtureDetails(id);
+        const fixture = await FixtureRepository.getFixtureDetails(id);
 
         if (!fixture) {
             return res.status(404).json({ error: 'Fixture not found' });
@@ -22,7 +22,7 @@ export const getFixtureDetails = async (req, res) => {
 export const getFixtureEvents = async (req, res) => {
     try {
         const { id } = req.params;
-        const events = FixtureRepository.getFixtureEvents(id);
+        const events = await FixtureRepository.getFixtureEvents(id);
         res.json(events);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -32,7 +32,7 @@ export const getFixtureEvents = async (req, res) => {
 export const getFixtureTacticalStats = async (req, res) => {
     try {
         const { id } = req.params;
-        const stats = FixtureRepository.getFixtureTacticalStats(id);
+        const stats = await FixtureRepository.getFixtureTacticalStats(id);
         res.json(stats);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -41,7 +41,7 @@ export const getFixtureTacticalStats = async (req, res) => {
 
 export const getEventCandidates = async (req, res) => {
     try {
-        const candidates = FixtureRepository.getEventCandidates();
+        const candidates = await FixtureRepository.getEventCandidates();
         res.json(candidates);
     } catch (error) {
         console.error('Error finding event candidates:', error);
@@ -62,7 +62,7 @@ export const syncFixtureEvents = async (req, res) => {
 export const getFixturePlayerTacticalStats = async (req, res) => {
     try {
         const { id } = req.params;
-        const stats = FixtureRepository.getFixturePlayerTacticalStats(id);
+        const stats = await FixtureRepository.getFixturePlayerTacticalStats(id);
         res.json(stats);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -1,7 +1,7 @@
 export const up = async (db) => {
     // 1. FIXTURE STATS (Team Level)
-    db.run(`CREATE TABLE IF NOT EXISTS V3_Fixture_Stats (
-        fixture_stats_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    await db.run(`CREATE TABLE IF NOT EXISTS V3_Fixture_Stats (
+        fixture_stats_id SERIAL PRIMARY KEY,
         fixture_id INTEGER NOT NULL,
         team_id INTEGER NOT NULL,
         half TEXT NOT NULL,
@@ -21,20 +21,19 @@ export const up = async (db) => {
         passes_total INTEGER DEFAULT 0,
         passes_accurate INTEGER DEFAULT 0,
         pass_accuracy_pct INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE,
-        FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(fixture_id, team_id, half)
     )`);
 
+
     // 2. FIXTURE PLAYER STATS
-    db.run(`CREATE TABLE IF NOT EXISTS V3_Fixture_Player_Stats (
-        fixture_player_stats_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    await db.run(`CREATE TABLE IF NOT EXISTS V3_Fixture_Player_Stats (
+        fixture_player_stats_id SERIAL PRIMARY KEY,
         fixture_id INTEGER NOT NULL,
         team_id INTEGER NOT NULL,
         player_id INTEGER NOT NULL,
-        is_start_xi BOOLEAN DEFAULT 1,
+        is_start_xi BOOLEAN DEFAULT TRUE,
         minutes_played INTEGER DEFAULT 0,
         position TEXT,
         rating TEXT,
@@ -63,17 +62,15 @@ export const up = async (db) => {
         penalty_scored INTEGER DEFAULT 0,
         penalty_missed INTEGER DEFAULT 0,
         penalty_saved INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE,
-        FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
-        FOREIGN KEY (player_id) REFERENCES V3_Players(player_id),
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(fixture_id, player_id)
     )`);
 
+
     // 3. PLAYER TROPHIES
-    db.run(`CREATE TABLE IF NOT EXISTS V3_Player_Trophies (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+    await db.run(`CREATE TABLE IF NOT EXISTS V3_Player_Trophies (
+        id SERIAL PRIMARY KEY,
         player_id INTEGER NOT NULL,
         league_id INTEGER,
         season_year INTEGER NOT NULL,
@@ -82,12 +79,11 @@ export const up = async (db) => {
         league_name TEXT,
         trophy_name TEXT NOT NULL,
         place TEXT, -- 'Winner', 'Runner-up'
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (player_id) REFERENCES V3_Players(player_id) ON DELETE CASCADE
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )`);
 
     // 4. INDEXES
-    db.run('CREATE INDEX IF NOT EXISTS idx_v3_fixture_stats_fixture ON V3_Fixture_Stats(fixture_id)');
-    db.run('CREATE INDEX IF NOT EXISTS idx_v3_fixture_player_stats_fixture ON V3_Fixture_Player_Stats(fixture_id)');
-    db.run('CREATE INDEX IF NOT EXISTS idx_v3_player_trophies_player ON V3_Player_Trophies(player_id)');
+    await db.run('CREATE INDEX IF NOT EXISTS idx_v3_fixture_stats_fixture ON V3_Fixture_Stats(fixture_id)');
+    await db.run('CREATE INDEX IF NOT EXISTS idx_v3_fixture_player_stats_fixture ON V3_Fixture_Player_Stats(fixture_id)');
+    await db.run('CREATE INDEX IF NOT EXISTS idx_v3_player_trophies_player ON V3_Player_Trophies(player_id)');
 };

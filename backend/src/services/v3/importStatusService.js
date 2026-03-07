@@ -27,20 +27,20 @@ import {
  * @param {string} pillar
  * @returns {Object} status row
  */
-export function getStatus(leagueId, seasonYear, pillar) {
-    let row = db.get(
+export async function getStatus(leagueId, seasonYear, pillar) {
+    let row = await db.get(
         `SELECT * FROM V3_Import_Status 
          WHERE league_id = ? AND season_year = ? AND pillar = ?`,
         cleanParams([leagueId, seasonYear, pillar])
     );
 
     if (!row) {
-        db.run(
+        await db.run(
             `INSERT INTO V3_Import_Status (league_id, season_year, pillar, status) 
              VALUES (?, ?, ?, ?)`,
             cleanParams([leagueId, seasonYear, pillar, IMPORT_STATUS.NONE])
         );
-        row = db.get(
+        row = await db.get(
             `SELECT * FROM V3_Import_Status 
              WHERE league_id = ? AND season_year = ? AND pillar = ?`,
             cleanParams([leagueId, seasonYear, pillar])
@@ -54,8 +54,8 @@ export function getStatus(leagueId, seasonYear, pillar) {
  * Check if a pillar should be skipped (COMPLETE, LOCKED, or NO_DATA).
  * @returns {boolean}
  */
-export function shouldSkip(leagueId, seasonYear, pillar) {
-    const row = getStatus(leagueId, seasonYear, pillar);
+export async function shouldSkip(leagueId, seasonYear, pillar) {
+    const row = await getStatus(leagueId, seasonYear, pillar);
     return [IMPORT_STATUS.COMPLETE, IMPORT_STATUS.LOCKED, IMPORT_STATUS.NO_DATA].includes(row.status);
 }
 
@@ -63,8 +63,8 @@ export function shouldSkip(leagueId, seasonYear, pillar) {
  * Get data range for a league/pillar (earliest and latest year with confirmed data).
  * @returns {{ start: number|null, end: number|null }}
  */
-export function getDataRange(leagueId, pillar) {
-    const row = db.get(
+export async function getDataRange(leagueId, pillar) {
+    const row = await db.get(
         `SELECT MIN(data_range_start) as start, MAX(data_range_end) as end
          FROM V3_Import_Status
          WHERE league_id = ? AND pillar = ? AND status IN (?, ?)`,
@@ -78,7 +78,7 @@ export function getDataRange(leagueId, pillar) {
  * Returns enriched status objects per pillar.
  * @param {number|null} leagueId - null for all leagues
  */
-export function getLeagueMatrix(leagueId = null) {
+export async function getLeagueMatrix(leagueId = null) {
     let sql = `SELECT * FROM V3_Import_Status`;
     const params = [];
 
@@ -88,15 +88,15 @@ export function getLeagueMatrix(leagueId = null) {
     }
     sql += ` ORDER BY league_id, season_year DESC, pillar`;
 
-    return db.all(sql, params);
+    return await db.all(sql, params);
 }
 
 /**
  * Get all statuses for a specific league/season (all 6 pillars).
  * @returns {Object[]}
  */
-export function getSeasonStatuses(leagueId, seasonYear) {
-    return db.all(
+export async function getSeasonStatuses(leagueId, seasonYear) {
+    return await db.all(
         `SELECT * FROM V3_Import_Status 
          WHERE league_id = ? AND season_year = ?`,
         cleanParams([leagueId, seasonYear])
@@ -116,8 +116,8 @@ export function getSeasonStatuses(leagueId, seasonYear) {
  * @param {number} status - IMPORT_STATUS enum value
  * @param {Object} metadata - Optional: { failure_reason, total_items_expected, total_items_imported, data_range_start, data_range_end }
  */
-export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
-    const existing = db.get(
+export async function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
+    const existing = await db.get(
         `SELECT id FROM V3_Import_Status WHERE league_id = ? AND season_year = ? AND pillar = ?`,
         cleanParams([leagueId, seasonYear, pillar])
     );
@@ -126,7 +126,7 @@ export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
     const isSuccess = (status === IMPORT_STATUS.COMPLETE || status === IMPORT_STATUS.LOCKED);
 
     if (existing) {
-        db.run(
+        await db.run(
             `UPDATE V3_Import_Status SET
                 status = ?,
                 last_checked_at = ?,
@@ -152,7 +152,7 @@ export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
             ])
         );
     } else {
-        db.run(
+        await db.run(
             `INSERT INTO V3_Import_Status 
              (league_id, season_year, pillar, status, last_checked_at, last_success_at, failure_reason,
               total_items_expected, total_items_imported, data_range_start, data_range_end)
@@ -177,7 +177,7 @@ export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
 
     // Auto-lock check after terminal state changes
     if (status === IMPORT_STATUS.COMPLETE || status === IMPORT_STATUS.NO_DATA) {
-        checkAutoLock(leagueId, seasonYear);
+        await checkAutoLock(leagueId, seasonYear);
     }
 }
 
@@ -186,11 +186,11 @@ export function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
  * If threshold reached (for FS/PS), auto-sets status to NO_DATA.
  * @returns {{ blacklisted: boolean, consecutiveFailures: number }}
  */
-export function incrementFailure(leagueId, seasonYear, pillar, threshold = CONSECUTIVE_FAILURE_THRESHOLD) {
-    const row = getStatus(leagueId, seasonYear, pillar);
+export async function incrementFailure(leagueId, seasonYear, pillar, threshold = CONSECUTIVE_FAILURE_THRESHOLD) {
+    const row = await getStatus(leagueId, seasonYear, pillar);
     const newCount = (row.consecutive_failures || 0) + 1;
 
-    db.run(
+    await db.run(
         `UPDATE V3_Import_Status SET 
             consecutive_failures = ?,
             last_checked_at = ?,
@@ -213,8 +213,8 @@ export function incrementFailure(leagueId, seasonYear, pillar, threshold = CONSE
 /**
  * Reset consecutive failure counter to 0 on successful import.
  */
-export function resetFailures(leagueId, seasonYear, pillar) {
-    db.run(
+export async function resetFailures(leagueId, seasonYear, pillar) {
+    await db.run(
         `UPDATE V3_Import_Status SET 
             consecutive_failures = 0,
             updated_at = ?
@@ -227,8 +227,8 @@ export function resetFailures(leagueId, seasonYear, pillar) {
  * Check if all 6 pillars are in terminal state (COMPLETE or NO_DATA).
  * If yes, set all COMPLETE pillars to LOCKED.
  */
-export function checkAutoLock(leagueId, seasonYear) {
-    const statuses = db.all(
+export async function checkAutoLock(leagueId, seasonYear) {
+    const statuses = await db.all(
         `SELECT pillar, status FROM V3_Import_Status 
          WHERE league_id = ? AND season_year = ?`,
         cleanParams([leagueId, seasonYear])
@@ -250,7 +250,7 @@ export function checkAutoLock(leagueId, seasonYear) {
     if (completePillars.length === 0) return false; // All NO_DATA, nothing to lock
 
     for (const s of completePillars) {
-        db.run(
+        await db.run(
             `UPDATE V3_Import_Status SET 
                 status = ?, updated_at = ?
              WHERE league_id = ? AND season_year = ? AND pillar = ?`,
@@ -269,18 +269,18 @@ export function checkAutoLock(leagueId, seasonYear) {
  * @param {string|null} reason - Override reason for audit trail
  * @param {boolean} resetAll - If true, reset ALL pillars for the season
  */
-export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAll = false) {
+export async function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAll = false) {
     const now = new Date().toISOString();
 
     if (resetAll) {
         // Reset all pillars for this season
-        const allStatuses = getSeasonStatuses(leagueId, seasonYear);
+        const allStatuses = await getSeasonStatuses(leagueId, seasonYear);
 
         // First check if any are LOCKED - if so, unlock them
         const hasLocked = allStatuses.some(s => s.status === IMPORT_STATUS.LOCKED);
         if (hasLocked) {
             // Revert all LOCKED to COMPLETE first
-            db.run(
+            await db.run(
                 `UPDATE V3_Import_Status SET status = ?, updated_at = ?
                  WHERE league_id = ? AND season_year = ? AND status = ?`,
                 cleanParams([IMPORT_STATUS.COMPLETE, now, leagueId, seasonYear, IMPORT_STATUS.LOCKED])
@@ -289,7 +289,7 @@ export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAl
 
         // Then reset all to NONE
         for (const p of PILLARS) {
-            db.run(
+            await db.run(
                 `UPDATE V3_Import_Status SET 
                     status = ?, consecutive_failures = 0, failure_reason = NULL, updated_at = ?
                  WHERE league_id = ? AND season_year = ? AND pillar = ?`,
@@ -303,11 +303,11 @@ export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAl
     }
 
     // Check if season was LOCKED — un-locking one pillar must un-LOCK all
-    const allStatuses = getSeasonStatuses(leagueId, seasonYear);
+    const allStatuses = await getSeasonStatuses(leagueId, seasonYear);
     const hasLocked = allStatuses.some(s => s.status === IMPORT_STATUS.LOCKED);
 
     if (hasLocked) {
-        db.run(
+        await db.run(
             `UPDATE V3_Import_Status SET status = ?, updated_at = ?
              WHERE league_id = ? AND season_year = ? AND status = ?`,
             cleanParams([IMPORT_STATUS.COMPLETE, now, leagueId, seasonYear, IMPORT_STATUS.LOCKED])
@@ -319,7 +319,7 @@ export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAl
     }
 
     // Reset the specific pillar to NONE
-    db.run(
+    await db.run(
         `UPDATE V3_Import_Status SET 
             status = ?, consecutive_failures = 0, failure_reason = NULL, updated_at = ?
          WHERE league_id = ? AND season_year = ? AND pillar = ?`,
@@ -338,7 +338,7 @@ export function resetStatus(leagueId, seasonYear, pillar, reason = null, resetAl
  * Sync old V3_League_Seasons boolean flags when status changes.
  * During transition period, both systems stay in sync.
  */
-function syncLegacyFlags(leagueId, seasonYear, pillar, status) {
+async function syncLegacyFlags(leagueId, seasonYear, pillar, status) {
     const isImported = (status === IMPORT_STATUS.COMPLETE || status === IMPORT_STATUS.LOCKED) ? 1 : 0;
     const now = new Date().toISOString();
 
@@ -361,12 +361,12 @@ function syncLegacyFlags(leagueId, seasonYear, pillar, status) {
     const params = mapping.flags.map(() => isImported);
 
     if (isImported) {
-        db.run(
+        await db.run(
             `UPDATE V3_League_Seasons SET ${updates}, ${mapping.sync} = ? WHERE league_id = ? AND season_year = ?`,
             cleanParams([...params, now, leagueId, seasonYear])
         );
     } else {
-        db.run(
+        await db.run(
             `UPDATE V3_League_Seasons SET ${updates} WHERE league_id = ? AND season_year = ?`,
             cleanParams([...params, leagueId, seasonYear])
         );
@@ -380,10 +380,10 @@ function syncLegacyFlags(leagueId, seasonYear, pillar, status) {
 /**
  * Bulk set NO_DATA for multiple seasons (used by historical range inference).
  */
-export function bulkSetNoData(leagueId, pillar, seasonYears, reason) {
+export async function bulkSetNoData(leagueId, pillar, seasonYears, reason) {
     const now = new Date().toISOString();
     for (const year of seasonYears) {
-        setStatus(leagueId, year, pillar, IMPORT_STATUS.NO_DATA, {
+        await setStatus(leagueId, year, pillar, IMPORT_STATUS.NO_DATA, {
             failure_reason: reason
         });
     }

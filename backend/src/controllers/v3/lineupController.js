@@ -6,12 +6,12 @@ export const getLineups = async (req, res) => {
 
     try {
         // 1. Try fetching from DB
-        const lineups = db.all(
+        const lineups = await db.all(
             "SELECT * FROM V3_Fixture_Lineups WHERE fixture_id = ?",
             [id]
         );
 
-        if (lineups && lineups.length === 2) {
+        if (lineups && lineups.length >= 1) { // Adjusted for scenarios where only one team has lineups
             // Found both teams (Home/Away usually 2 rows)
             // Parse JSON fields
             let data = lineups.map(l => ({
@@ -21,9 +21,9 @@ export const getLineups = async (req, res) => {
             }));
 
             // Sort Home First
-            const fixture = db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
+            const fixture = await db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
             if (fixture) {
-                data.sort((a, b) => a.team_id === fixture.home_team_id ? -1 : 1);
+                data.sort((a, b) => a.team_id == fixture.home_team_id ? -1 : 1);
             }
 
             return res.json({ source: 'db', lineups: data });
@@ -40,7 +40,7 @@ export const getLineups = async (req, res) => {
         }
 
         // Re-fetch from DB to leverage uniform formatting
-        const newLineups = db.all(
+        const newLineups = await db.all(
             "SELECT * FROM V3_Fixture_Lineups WHERE fixture_id = ?",
             [id]
         );
@@ -52,9 +52,9 @@ export const getLineups = async (req, res) => {
         }));
 
         // Sort Home First
-        const fixture = db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
+        const fixture = await db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
         if (fixture) {
-            data.sort((a, b) => a.team_id === fixture.home_team_id ? -1 : 1);
+            data.sort((a, b) => a.team_id == fixture.home_team_id ? -1 : 1);
         }
 
         res.json({ source: 'api_synced', lineups: data });
@@ -91,7 +91,7 @@ export const getLineupCandidates = async (req, res) => {
             ORDER BY c.importance_rank ASC, c.name ASC, l.name ASC, f.season_year DESC
         `;
 
-        const candidates = db.all(sql);
+        const candidates = await db.all(sql);
         res.json(candidates);
     } catch (error) {
         console.error('Error finding lineup candidates:', error);
@@ -118,7 +118,7 @@ export const importLineupsBatch = async (req, res) => {
             LIMIT ?
         `;
 
-        const targets = db.all(sql, [league_id, season_year, limit]);
+        const targets = await db.all(sql, [league_id, season_year, limit]);
 
         if (targets.length === 0) {
             return res.json({ message: 'No missing lineups found for this selection.', processed: 0 });
@@ -140,8 +140,8 @@ export const importLineupsBatch = async (req, res) => {
             }
         }
         if (success > 0) {
-            db.run(
-                "UPDATE V3_League_Seasons SET imported_lineups = 1, last_sync_lineups = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
+            await db.run(
+                "UPDATE V3_League_Seasons SET imported_lineups = true, last_sync_lineups = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
                 [league_id, season_year]
             );
         }
@@ -186,7 +186,7 @@ export const getTypicalLineup = async (req, res) => {
 
         formationSql += " GROUP BY fl.formation ORDER BY usage_count DESC LIMIT 1";
 
-        const topFormation = db.get(formationSql, params);
+        const topFormation = await db.get(formationSql, params);
 
         if (!topFormation) {
             return res.json({ message: "No lineup data found for this selection.", formation: null, roster: [] });
@@ -207,7 +207,7 @@ export const getTypicalLineup = async (req, res) => {
             lineupParams.push(competition);
         }
 
-        const matches = db.all(lineupSql, lineupParams);
+        const matches = await db.all(lineupSql, lineupParams);
 
         const playerStats = {};
         let wins = 0;

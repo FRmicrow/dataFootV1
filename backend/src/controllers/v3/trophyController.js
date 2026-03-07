@@ -11,7 +11,7 @@ export const importPlayerTrophies = async (req, res) => {
 
     try {
         // Step 1: Get the correct API ID from V3_Players using the Local ID
-        const player = db.get("SELECT api_id, is_trophy_synced FROM V3_Players WHERE player_id = ?", [playerId]);
+        const player = await db.get("SELECT api_id, is_trophy_synced FROM V3_Players WHERE player_id = ?", [playerId]);
 
         if (!player || !player.api_id) {
             console.error(`Player ${playerId} not found in V3_Players or missing API ID.`);
@@ -51,22 +51,22 @@ export const importPlayerTrophies = async (req, res) => {
 
             try {
                 // db.run is synchronous/wrapper in database_v3.js
-                db.run(sql, params);
+                await db.run(sql, params);
                 inserted++;
             } catch (err) {
                 console.error("Error inserting trophy:", err.message);
             }
         }
         // Update sync flags
-        db.run(
-            "UPDATE V3_Players SET is_trophy_synced = 1, last_sync_trophies = CURRENT_TIMESTAMP WHERE player_id = ?",
+        await db.run(
+            "UPDATE V3_Players SET is_trophy_synced = true, last_sync_trophies = CURRENT_TIMESTAMP WHERE player_id = ?",
             [playerId]
         );
 
-        res.json({ success: true, count: trophies.length, inserted });
+        res.json({ success: true, data: { count: trophies.length, inserted } });
     } catch (e) {
         console.error(`Trophy import failed for player ${playerId}`, e);
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 
@@ -83,10 +83,10 @@ export const getPlayerTrophiesLocal = async (req, res) => {
             WHERE t.player_id = ? 
             ORDER BY c.importance_rank ASC, t.season DESC
         `;
-        const rows = db.all(sql, [id]);
-        res.json(rows);
+        const rows = await db.all(sql, [id]);
+        res.json({ success: true, data: rows });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 
@@ -111,11 +111,11 @@ export const getPlayersMissingTrophies = async (req, res) => {
         `;
 
         // Synchronous call
-        const rows = db.all(sql, [leagueId]);
-        res.json(rows);
+        const rows = await db.all(sql, [leagueId]);
+        res.json({ success: true, data: rows });
 
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 
@@ -131,10 +131,10 @@ export const getNationalities = async (req, res) => {
             GROUP BY nationality 
             ORDER BY count DESC
         `;
-        const rows = db.all(sql);
-        res.json(rows);
+        const rows = await db.all(sql);
+        res.json({ success: true, data: rows });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 
@@ -154,9 +154,9 @@ export const getPlayersByNationality = async (req, res) => {
             WHERE p.nationality = ?
             ORDER BY p.name
         `;
-        const rows = db.all(sql, [country]);
-        res.json(rows);
+        const rows = await db.all(sql, [country]);
+        res.json({ success: true, data: rows });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };

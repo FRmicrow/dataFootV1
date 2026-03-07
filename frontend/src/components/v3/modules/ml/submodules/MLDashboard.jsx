@@ -10,10 +10,8 @@ const MLDashboard = () => {
     useEffect(() => {
         const fetchRecent = async () => {
             try {
-                const res = await api.getMLRecentAnalyses();
-                if (res.success) {
-                    setRecentAnalyses(res.data);
-                }
+                const data = await api.getMLRecentAnalyses();
+                setRecentAnalyses(data);
             } catch (err) {
                 console.error("Dashboard feed fetch failed", err);
             } finally {

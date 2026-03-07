@@ -1,4 +1,5 @@
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import pandas as pd
 import numpy as np
 import json
@@ -13,11 +14,10 @@ from sklearn.metrics import log_loss, accuracy_score, f1_score, brier_score_loss
 
 # Path setup
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', 'backend', 'database.sqlite'))
 MODEL_PATH = os.path.abspath(os.path.join(BASE_DIR, 'model_1x2.joblib'))
 
 def get_db_connection():
-    return sqlite3.connect(DB_PATH)
+    return get_connection()
 
 def objective(trial, X, y):
     # Hyperparameter search space for CatBoost
@@ -151,7 +151,7 @@ def train_model(use_optuna=True):
             training_dataset_size, features_count,
             accuracy, log_loss, brier_score,
             model_path, is_active
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
     """, (
         None, 'FULL_HISTORICAL', version_tag,
         json.dumps(best_params), json.dumps(list(X.columns)),

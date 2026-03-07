@@ -1,9 +1,9 @@
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import json
 import os
 import time
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'backend', 'data', 'database.sqlite'))
 
 def backfill_lineups():
     print("🚀 Starting Lineups Normalization Backfill...")
@@ -13,7 +13,7 @@ def backfill_lineups():
         print(f"❌ Database not found at {DB_PATH}")
         return
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
 
     # Pass 1: Parse JSON lineups
@@ -64,7 +64,7 @@ def backfill_lineups():
             INSERT INTO V3_Fixture_Lineup_Players (
                 fixture_id, team_id, player_id, is_starting, 
                 shirt_number, player_name, position, grid
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT(fixture_id, team_id, player_id) DO UPDATE SET
                 is_starting=excluded.is_starting,
                 shirt_number=COALESCE(excluded.shirt_number, V3_Fixture_Lineup_Players.shirt_number),
@@ -97,15 +97,15 @@ def backfill_lineups():
     if sub_out_updates:
         cursor.executemany("""
             UPDATE V3_Fixture_Lineup_Players
-            SET sub_out_minute = COALESCE(sub_out_minute, ?)
-            WHERE fixture_id = ? AND team_id = ? AND player_id = ?
+            SET sub_out_minute = COALESCE(sub_out_minute, %s)
+            WHERE fixture_id = %s AND team_id = %s AND player_id = %s
         """, sub_out_updates)
         
     if sub_in_updates:
         cursor.executemany("""
             UPDATE V3_Fixture_Lineup_Players
-            SET sub_in_minute = COALESCE(sub_in_minute, ?)
-            WHERE fixture_id = ? AND team_id = ? AND player_id = ?
+            SET sub_in_minute = COALESCE(sub_in_minute, %s)
+            WHERE fixture_id = %s AND team_id = %s AND player_id = %s
         """, sub_in_updates)
         
     conn.commit()

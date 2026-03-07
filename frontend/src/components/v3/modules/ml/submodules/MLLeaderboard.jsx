@@ -9,10 +9,8 @@ const MLLeaderboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await api.getMLSimulationOverview();
-                if (res.success) {
-                    setData(res.data);
-                }
+                const data = await api.getMLSimulationOverview();
+                setData(data);
             } catch (err) {
                 console.error("Leaderboard fetch failed", err);
             } finally {

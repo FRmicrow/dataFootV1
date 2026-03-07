@@ -19,9 +19,9 @@ const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 /**
  * Helper to get the list of leagues monitored for Live Bet intelligence (US_131)
  */
-const getTrackedLeagues = () => {
+const getTrackedLeagues = async () => {
     try {
-        const row = db.get("SELECT tracked_leagues FROM V3_System_Preferences LIMIT 1");
+        const row = await db.get("SELECT tracked_leagues FROM V3_System_Preferences LIMIT 1");
         if (!row || !row.tracked_leagues) return [];
         return JSON.parse(row.tracked_leagues);
     } catch (e) {
@@ -76,11 +76,11 @@ export const getDailyFixturesService = async (targetDate) => {
         if (hasTracking) {
             // Tracked leagues are stored by internal ID. We need to map them to api_ids.
             const placeholders = trackedLeagues.map(() => '?').join(',');
-            const rows = db.all(`SELECT api_id FROM V3_Leagues WHERE league_id IN (${placeholders})`, trackedLeagues);
+            const rows = await db.all(`SELECT api_id FROM V3_Leagues WHERE league_id IN (${placeholders})`, trackedLeagues);
             allowedApiIds = rows.map(r => r.api_id);
         } else {
             // Fallback: Top 5 most important leagues
-            const top5 = db.all(`
+            const top5 = await db.all(`
                 SELECT l.api_id 
                 FROM V3_Leagues l 
                 JOIN V3_Countries c ON l.country_id = c.country_id 
@@ -122,7 +122,7 @@ export const getDailyFixturesService = async (targetDate) => {
         const predictionsMap = {};
         if (fixtureIds.length > 0) {
             const placeholders = fixtureIds.map(() => '?').join(',');
-            const preds = db.all(`SELECT * FROM V3_Predictions WHERE fixture_id IN (${placeholders})`, fixtureIds);
+            const preds = await db.all(`SELECT * FROM V3_Predictions WHERE fixture_id IN (${placeholders})`, fixtureIds);
             preds.forEach(p => { predictionsMap[p.fixture_id] = p; });
         }
 
@@ -201,11 +201,11 @@ export const getDailyFixturesService = async (targetDate) => {
             };
         });
 
-        const countries = db.all("SELECT name, importance_rank FROM V3_Countries");
+        const countries = await db.all("SELECT name, importance_rank FROM V3_Countries");
         const countryRankMap = {};
         countries.forEach(c => countryRankMap[c.name] = c.importance_rank);
 
-        const leagues = db.all("SELECT api_id, importance_rank FROM V3_Leagues");
+        const leagues = await db.all("SELECT api_id, importance_rank FROM V3_Leagues");
         const leagueRankMap = {};
         leagues.forEach(l => leagueRankMap[l.api_id] = l.importance_rank);
 
@@ -260,7 +260,7 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
     // Internal league_id and api_id (API-Football external id) are DIFFERENT
     let allDbLeagues = [];
     try {
-        allDbLeagues = db.all(
+        allDbLeagues = await db.all(
             "SELECT l.league_id, l.api_id, l.name, l.logo_url as logo, c.name as country, c.importance_rank FROM V3_Leagues l JOIN V3_Countries c ON l.country_id = c.country_id ORDER BY c.importance_rank ASC"
         );
         console.log(`   🏛️ Loaded ${allDbLeagues.length} leagues from local DB for enrichment`);
@@ -371,7 +371,7 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
     if (allFixtureIds.length > 0) {
         const placeholders = allFixtureIds.map(() => '?').join(',');
         try {
-            const preds = db.all(`SELECT * FROM V3_Predictions WHERE fixture_id IN (${placeholders})`, allFixtureIds);
+            const preds = await db.all(`SELECT * FROM V3_Predictions WHERE fixture_id IN (${placeholders})`, allFixtureIds);
             preds.forEach(p => { predictionsMap[p.fixture_id] = p; });
         } catch (e) {
             console.error("⚠️ Failed to fetch predictions for upcoming dashboard:", e.message);
@@ -548,7 +548,7 @@ export const getMatchDetailsService = async (fixtureId) => {
             // Actually, frontend expects a specific structure: { fixture: { date, id }, teams: { home: { name... }, away: { ... } }, goals: { home, away }, league: { name } }
             // To do this properly, we need names.
 
-            const matches = db.all(sql, [hId, aId, aId, hId, fixtureData.fixture.date]);
+            const matches = await db.all(sql, [hId, aId, aId, hId, fixtureData.fixture.date]);
 
             if (matches.length > 0) {
                 // We need team names. Use current fixture names as proxy if IDs match? 
@@ -607,8 +607,8 @@ export const getMatchDetailsService = async (fixtureId) => {
         const fixtureDate = new Date(fixtureData.fixture.date);
 
         // Feature 1: Fatigue Index (AC 1)
-        const getFatigue = (teamId) => {
-            const row = db.get(`
+        const getFatigue = async teamId => {
+            const row = await db.get(`
                 SELECT date FROM V3_Fixtures 
                 WHERE (home_team_id = ? OR away_team_id = ?) 
                 AND status_short IN ('FT', 'AET', 'PEN') 
@@ -692,7 +692,7 @@ export const getMatchDetailsService = async (fixtureId) => {
         market_movement: MarketVolatilityService.getVolatilityReport(fixtureId, 1), // Standard: analyze Match Winner
         ml_prediction: mlPrediction,
         narrative: await NarrativeService.encodeContext(fixtureId),
-        investment_value: (() => {
+        investment_value: (async () => {
             const market1X2 = detailedOdds.find(m => m.id === 1);
             if (!market1X2 || !mlPrediction?.probabilities) return null;
 
@@ -706,7 +706,7 @@ export const getMatchDetailsService = async (fixtureId) => {
             if (!fairMarket) return null;
 
             // Fetch League Accuracy Context (US_160)
-            const leagueStats = db.get(`
+            const leagueStats = await db.get(`
                 SELECT brier_score, total_bets
                 FROM V3_Backtest_Results
                 WHERE league_id = ?
@@ -726,7 +726,7 @@ export const getMatchDetailsService = async (fixtureId) => {
 
             // Persist to DB (US_160)
             try {
-                db.run(`
+                await db.run(`
                     INSERT INTO V3_Predictions (fixture_id, league_id, prob_home, prob_draw, prob_away, edge_value, confidence_score, risk_level)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(fixture_id) DO UPDATE SET
@@ -773,7 +773,7 @@ export const saveMatchOddsService = async (fixtureId) => {
     console.log(`💾 Saving odds for fixture ${fixtureId}...`);
 
     // US_131: Check if this fixture belongs to a monitored league
-    const fixtureLeague = db.get("SELECT league_id FROM V3_Fixtures WHERE fixture_id = ?", [fixtureId]);
+    const fixtureLeague = await db.get("SELECT league_id FROM V3_Fixtures WHERE fixture_id = ?", [fixtureId]);
     if (fixtureLeague) {
         const trackedLeagues = getTrackedLeagues();
         let isMonitored = false;
@@ -781,7 +781,7 @@ export const saveMatchOddsService = async (fixtureId) => {
             isMonitored = trackedLeagues.includes(fixtureLeague.league_id);
         } else {
             // Check if it's in top 5
-            const top5 = db.all(`
+            const top5 = await db.all(`
                 SELECT l.league_id 
                 FROM V3_Leagues l 
                 JOIN V3_Countries c ON l.country_id = c.country_id 
@@ -843,11 +843,17 @@ export const saveMatchOddsService = async (fixtureId) => {
     */
 
     const sql = `
-        REPLACE INTO V3_Odds (
+        INSERT INTO V3_Odds (
             fixture_id, bookmaker_id, market_id, 
             value_home_over, value_draw, value_away_under, 
             handicap_value, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+        ON CONFLICT (fixture_id, bookmaker_id, market_id, handicap_value) 
+        DO UPDATE SET 
+            value_home_over = EXCLUDED.value_home_over,
+            value_draw = EXCLUDED.value_draw,
+            value_away_under = EXCLUDED.value_away_under,
+            updated_at = CURRENT_TIMESTAMP
     `;
 
     let count = 0;
@@ -874,7 +880,7 @@ export const saveMatchOddsService = async (fixtureId) => {
             }
 
             if (val1 || val2 || val3) {
-                db.run(sql, [fixtureId, bookmakerId, market.id, val1, val2, val3, handicap]);
+                await db.run(sql, [fixtureId, bookmakerId, market.id, val1, val2, val3, handicap]);
                 count++;
             }
         }
@@ -887,7 +893,7 @@ export const saveMatchOddsService = async (fixtureId) => {
 
     // Update V3_Fixtures has_odds flag
     try {
-        db.run("UPDATE V3_Fixtures SET has_odds = 1 WHERE fixture_id = ?", [fixtureId]);
+        await db.run("UPDATE V3_Fixtures SET has_odds = 1 WHERE fixture_id = ?", [fixtureId]);
     } catch (e) {
         // Ignore if V3_Fixtures row doesn't exist yet
     }
@@ -913,18 +919,18 @@ export const saveMatchOddsService = async (fixtureId) => {
 
             // SQUAD Snapshot
             if (matchData.lineups?.home) {
-                db.run(snapSql, [fixtureId, homeTeamId, 'SQUAD', JSON.stringify(matchData.lineups.home)]);
+                await db.run(snapSql, [fixtureId, homeTeamId, 'SQUAD', JSON.stringify(matchData.lineups.home)]);
             }
             if (matchData.lineups?.away) {
-                db.run(snapSql, [fixtureId, awayTeamId, 'SQUAD', JSON.stringify(matchData.lineups.away)]);
+                await db.run(snapSql, [fixtureId, awayTeamId, 'SQUAD', JSON.stringify(matchData.lineups.away)]);
             }
 
             // FORM Snapshot
             if (matchData.stats?.form?.home) {
-                db.run(snapSql, [fixtureId, homeTeamId, 'FORM', JSON.stringify(matchData.stats.form.home)]);
+                await db.run(snapSql, [fixtureId, homeTeamId, 'FORM', JSON.stringify(matchData.stats.form.home)]);
             }
             if (matchData.stats?.form?.away) {
-                db.run(snapSql, [fixtureId, awayTeamId, 'FORM', JSON.stringify(matchData.stats.form.away)]);
+                await db.run(snapSql, [fixtureId, awayTeamId, 'FORM', JSON.stringify(matchData.stats.form.away)]);
             }
 
             // Additional features like STANDINGS_POINTS or INJURIES could be added here by extending getMatchDetailsService

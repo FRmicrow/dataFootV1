@@ -1,12 +1,11 @@
 import os
 import json
-import sqlite3
+from db_config import get_connection
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-DB_PATH = os.path.join(BASE_DIR, 'backend', 'data', 'database.sqlite')
 
 def get_db_connection():
-    return sqlite3.connect(DB_PATH)
+    return get_connection()
 
 def extract_and_save_fair_odds(fixture_id):
     """
@@ -22,7 +21,7 @@ def extract_and_save_fair_odds(fixture_id):
         insert_query = """
             INSERT INTO V3_Risk_Analysis 
             (fixture_id, market_type, selection, ml_probability, fair_odd, analyzed_at)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
             ON CONFLICT(fixture_id, market_type, selection) 
             DO UPDATE SET 
                 ml_probability=excluded.ml_probability, 

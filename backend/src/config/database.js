@@ -1,89 +1,165 @@
-import Database from 'better-sqlite3';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { existsSync } from 'fs';
+import pkg from 'pg';
+const { Pool, types } = pkg;
 import { cleanParams } from '../utils/sqlHelpers.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Configure type parsers to mimic SQLite behavior for backward compatibility
+// 16 is the OID for 'bool' in Postgres. Return 1 for true, 0 for false.
+types.setTypeParser(16, val => (val === 't' || val === true) ? 1 : 0);
+// 20 is the OID for 'int8' (BIGINT). Return as Number to avoid string scientific notation.
+types.setTypeParser(20, val => parseInt(val, 10));
 
-let db;
+let pool;
+
 /**
- * Initialize database connection using better-sqlite3
- * This replaces sql.js to handle large databases (>2GB) and prevent memory leaks.
+ * Initialize database connection using node-postgres (pg)
+ * This replaces better-sqlite3 to connect to the PostgreSQL Docker container.
  */
 async function initDatabase() {
     try {
-        const defaultDbPath = join(__dirname, '..', '..', 'database.sqlite');
-        let dbPath = process.env.DATABASE_PATH || defaultDbPath;
+        const connectionString = process.env.DATABASE_URL || 'postgres://statfoot_user:statfoot_password@localhost:5432/statfoot';
 
-        // If the path is relative, resolve it from the backend root (one level up from src)
-        if (process.env.DATABASE_PATH && !process.env.DATABASE_PATH.startsWith('/')) {
-            dbPath = join(__dirname, '..', '..', process.env.DATABASE_PATH);
-        }
+        console.log('🧪 Connecting to PostgreSQL:', connectionString.replace(/:[^:@]+@/, ':***@'));
 
-        console.log('🧪 Connecting to SQLite (Native):', dbPath);
-
-        // Open the database file
-        db = new Database(dbPath, {
-            // verbose: console.log, // Enable for debugging queries
-            fileMustExist: false
+        pool = new Pool({
+            connectionString,
+            max: 20,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 2000,
         });
 
-        // Optimize performance for high-volume imports
-        db.pragma('journal_mode = WAL');
-        db.pragma('synchronous = NORMAL');
-        db.pragma('temp_store = MEMORY');
-        db.pragma('cache_size = -1048576'); // 1GB cache for performance
-        db.pragma('foreign_keys = ON');
+        // Test the connection
+        const client = await pool.connect();
+        const res = await client.query('SELECT NOW()');
+        client.release();
 
-        console.log('🔒 Database connected & optimized (WAL Mode Enabled)');
+        console.log('🔒 Database connected successfully to PostgreSQL at', res.rows[0].now);
 
-        return db;
+        return pool;
     } catch (err) {
-        console.error("❌ Failed to connect to native SQLite:", err);
+        console.error("❌ Failed to connect to PostgreSQL:", err);
         throw err;
     }
 }
 
 /**
- * Wrapper for the legacy sql.js 'run' method
+ * Helper to convert standard SQL queries with ? to PostgreSQL $1, $2 format
  */
-function run(sql, params = []) {
-    if (!db) throw new Error('Database not initialized');
-    const sanitized = Array.isArray(params) ? cleanParams(params) : params;
-    const info = db.prepare(sql).run(sanitized);
-    return { lastInsertRowid: info.lastInsertRowid, changes: info.changes };
+function convertToDollarParams(text) {
+    let index = 1;
+    return text.replace(/\?/g, () => `$${index++}`);
 }
 
 /**
- * Wrapper for the legacy sql.js 'get' method
+ * Async wrapper for the legacy 'run' method
+ * For INSERT/UPDATE/DELETE
  */
-function get(sql, params = []) {
-    if (!db) throw new Error('Database not initialized');
+async function run(sql, params = []) {
+    if (!pool) throw new Error('Database not initialized');
     const sanitized = Array.isArray(params) ? cleanParams(params) : params;
-    return db.prepare(sql).get(sanitized);
+    const pgSql = convertToDollarParams(sql);
+    const result = await pool.query(pgSql, sanitized);
+
+    // Attempt to mimic better-sqlite3 return object
+    let lastInsertRowid = null;
+    if (result.command === 'INSERT' && result.rows.length > 0) {
+        // Postgres returns values only if RETURNING is in the query.
+        // We take the value of the first column of the first row as the ID.
+        const firstRow = result.rows[0];
+        const firstColName = Object.keys(firstRow)[0];
+        lastInsertRowid = firstRow[firstColName] || null;
+    }
+
+    return {
+        lastInsertRowid,
+        changes: result.rowCount
+    };
 }
 
 /**
- * Wrapper for the legacy sql.js 'all' method
+ * Async wrapper for the legacy 'get' method
+ * For SELECT LIMIT 1
  */
-function all(sql, params = []) {
-    if (!db) throw new Error('Database not initialized');
+async function get(sql, params = []) {
+    if (!pool) throw new Error('Database not initialized');
     const sanitized = Array.isArray(params) ? cleanParams(params) : params;
-    return db.prepare(sql).all(sanitized);
+    const pgSql = convertToDollarParams(sql);
+    const result = await pool.query(pgSql, sanitized);
+    return result.rows.length > 0 ? result.rows[0] : undefined;
 }
 
 /**
- * Wrapper for querying multiple results
+ * Async wrapper for the legacy 'all' method
+ * For SELECT multiple rows
  */
-function query(sql, params = []) {
+async function all(sql, params = []) {
+    if (!pool) throw new Error('Database not initialized');
+    const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+    const pgSql = convertToDollarParams(sql);
+    const result = await pool.query(pgSql, sanitized);
+    return result.rows;
+}
+
+/**
+ * Async wrapper for querying multiple results
+ */
+async function query(sql, params = []) {
     return all(sql, params);
 }
 
 /**
+ * Wraps a pg Client with the same run/get/all interface
+ */
+function createWrapper(client) {
+    return {
+        run: async (sql, params = []) => {
+            const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+            const pgSql = convertToDollarParams(sql);
+            const result = await client.query(pgSql, sanitized);
+            let lastInsertRowid = null;
+            if (result.command === 'INSERT' && result.rows.length > 0) {
+                const firstRow = result.rows[0];
+                const firstColName = Object.keys(firstRow)[0];
+                lastInsertRowid = firstRow[firstColName] || null;
+            }
+            return { lastInsertRowid, changes: result.rowCount };
+        },
+        get: async (sql, params = []) => {
+            const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+            const pgSql = convertToDollarParams(sql);
+            const result = await client.query(pgSql, sanitized);
+            return result.rows.length > 0 ? result.rows[0] : undefined;
+        },
+        all: async (sql, params = []) => {
+            const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+            const pgSql = convertToDollarParams(sql);
+            const result = await client.query(pgSql, sanitized);
+            return result.rows;
+        },
+        exec: async (sql) => {
+            return client.query(sql);
+        }
+    };
+}
+
+/**
+ * Returns a wrapper that uses a dedicated client from the pool.
+ * Must call release() when done.
+ */
+async function getTransactionClient() {
+    if (!pool) throw new Error('Database not initialized');
+    const client = await pool.connect();
+    const wrapper = createWrapper(client);
+    return {
+        ...wrapper,
+        release: () => client.release(),
+        beginTransaction: () => client.query('BEGIN'),
+        commit: () => client.query('COMMIT'),
+        rollback: () => client.query('ROLLBACK')
+    };
+}
+
+/**
  * Empty 'save' method for backward compatibility.
- * better-sqlite3 persist data on disk automatically.
  */
 function saveDatabase() {
     // No-op
@@ -96,6 +172,7 @@ export default {
     get,
     all,
     query,
-    get db() { return db; }
+    getTransactionClient,
+    get db() { return pool; }
 };
 

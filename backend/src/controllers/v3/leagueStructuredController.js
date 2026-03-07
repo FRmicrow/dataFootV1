@@ -16,11 +16,11 @@ export const getStructuredLeagues = async (req, res) => {
     try {
         const now = Date.now();
         if (cache.data && (now - cache.timestamp < CACHE_TTL)) {
-            return res.json(cache.data);
+            return res.json({ success: true, data: cache.data });
         }
 
         // Fetch all leagues that have at least one imported season
-        const rows = LeagueRepository.getStructuredLeaguesData();
+        const rows = await LeagueRepository.getStructuredLeaguesData();
 
 
         const structured = {
@@ -88,10 +88,10 @@ export const getStructuredLeagues = async (req, res) => {
             timestamp: now
         };
 
-        res.json(structured);
+        res.json({ success: true, data: structured });
 
     } catch (error) {
         console.error("Error in getStructuredLeagues:", error);
-        res.status(500).json({ error: "Failed to aggregate structured leagues" });
+        res.status(500).json({ success: false, message: "Failed to aggregate structured leagues" });
     }
 };

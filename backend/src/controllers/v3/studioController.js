@@ -30,7 +30,7 @@ export const getStudioStats = (req, res) => {
  * GET /api/v3/studio/meta/nationalities
  * Returns distinct nationalities for the Country Dropdown
  */
-export const getStudioNationalities = (req, res) => {
+export const getStudioNationalities = async (req, res) => {
     try {
         // US_121: Sort by Top 10 nations by database weight (player count) first, then alphabetical
         const sql = `
@@ -48,7 +48,7 @@ export const getStudioNationalities = (req, res) => {
             FROM Stats
             ORDER BY group_rank ASC, nationality ASC
         `;
-        const rows = db.all(sql);
+        const rows = await db.all(sql);
         res.json(rows.map(r => r.nationality));
     } catch (error) {
         console.error('Error fetching nationalities:', error);
@@ -60,7 +60,7 @@ export const getStudioNationalities = (req, res) => {
  * GET /api/v3/studio/meta/leagues
  * Returns Leagues with valid data in V3_Player_Stats, grouped by Country
  */
-export const getStudioLeagues = (req, res) => {
+export const getStudioLeagues = async (req, res) => {
     try {
         const sql = `
             SELECT DISTINCT 
@@ -78,7 +78,7 @@ export const getStudioLeagues = (req, res) => {
             JOIN V3_Player_Stats s ON l.league_id = s.league_id
             ORDER BY c.importance_rank ASC, c.name ASC, l.importance_rank ASC, l.name ASC
         `;
-        const rows = db.all(sql);
+        const rows = await db.all(sql);
 
         // Group by country
         const grouped = rows.reduce((acc, row) => {
@@ -109,7 +109,7 @@ export const getStudioLeagues = (req, res) => {
  * GET /api/v3/studio/meta/players
  * Search endpoint for manual selection - Enhanced for Uniqueness
  */
-export const searchStudioPlayers = (req, res) => {
+export const searchStudioPlayers = async (req, res) => {
     const { search, league_id, season } = req.query;
 
     if (!search || search.length < 3) {
@@ -147,8 +147,7 @@ export const searchStudioPlayers = (req, res) => {
         }
 
         sql += ` GROUP BY p.player_id ORDER BY COALESCE(p.scout_rank, 0) DESC, last_season DESC, p.name ASC LIMIT 20`;
-
-        const rows = db.all(sql, params);
+        const rows = await db.all(sql, params);
         res.json(rows);
     } catch (error) {
         console.error('Error searching studio players:', error);
@@ -160,7 +159,7 @@ export const searchStudioPlayers = (req, res) => {
  * GET /api/v3/studio/meta/teams
  * Search endpoint for Club selection
  */
-export const searchStudioTeams = (req, res) => {
+export const searchStudioTeams = async (req, res) => {
     const { search } = req.query;
 
     if (!search || search.length < 2) {
@@ -177,7 +176,7 @@ export const searchStudioTeams = (req, res) => {
             LIMIT 20
         `;
         const params = [`%${search}%`];
-        const rows = db.all(sql, params);
+        const rows = await db.all(sql, params);
         res.json(rows);
     } catch (error) {
         console.error('Error searching studio teams:', error);
@@ -189,7 +188,7 @@ export const searchStudioTeams = (req, res) => {
  * POST /api/v3/studio/query
  * The Data Aggregation Engine - Strict Contract Implementation
  */
-export const queryStudioData = (req, res) => {
+export const queryStudioData = async (req, res) => {
     const { stat, filters, selection, options } = req.body;
 
     // 1. Validation
@@ -270,7 +269,7 @@ export const queryStudioData = (req, res) => {
             ORDER BY s.season_year ASC
         `;
 
-        const rows = db.all(sql, params);
+        const rows = await db.all(sql, params);
 
         // 3. Process Data (Aggregation & Normalization)
 
@@ -426,7 +425,7 @@ export const queryStudioData = (req, res) => {
  * Specialized engine for "Racing Standings" animation
  * Calculates cumulative points, GD, and ranking matchday by matchday
  */
-export const queryLeagueRankings = (req, res) => {
+export const queryLeagueRankings = async (req, res) => {
     const { league_id, season } = req.body;
 
     if (!league_id || !season) {
@@ -454,11 +453,11 @@ export const queryLeagueRankings = (req, res) => {
             WHERE f.league_id = ? AND f.season_year = ? AND f.status_short = 'FT'
             ORDER BY f.date ASC
         `;
-        const fixtures = db.all(fixturesSql, [league_id, season]);
+        const fixtures = await db.all(fixturesSql, [league_id, season]);
 
         // Fetch League Details for Metadata (Name, Logo)
         const leagueSql = `SELECT name, logo_url FROM V3_Leagues WHERE league_id = ?`;
-        const leagueRow = db.get(leagueSql, [league_id]);
+        const leagueRow = await db.get(leagueSql, [league_id]);
         const leagueLogo = leagueRow ? leagueRow.logo_url : null;
         const leagueName = leagueRow ? leagueRow.name : null;
 

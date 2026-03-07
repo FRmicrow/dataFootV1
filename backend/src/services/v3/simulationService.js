@@ -12,10 +12,10 @@ export class SimulationService {
      * Validates that a league/season has enough data to run a simulation.
      * NO ODDS REQUIRED — purely based on fixture and feature store data.
      */
-    static checkSimulationReadiness(leagueId, seasonYear) {
+    static async checkSimulationReadiness(leagueId, seasonYear) {
         try {
             // 1. Check total finished fixtures for this league/season
-            const fixtureCount = db.get(`
+            const fixtureCount = await db.get(`
                 SELECT COUNT(*) as count 
                 FROM V3_Fixtures 
                 WHERE league_id = ? AND season_year = ? 
@@ -33,7 +33,7 @@ export class SimulationService {
             }
 
             // 2. Check feature store coverage (do we have ML features?)
-            const featureCount = db.get(`
+            const featureCount = await db.get(`
                 SELECT COUNT(*) as count 
                 FROM V3_ML_Feature_Store fs
                 JOIN V3_Fixtures f ON fs.fixture_id = f.fixture_id
@@ -45,7 +45,7 @@ export class SimulationService {
             const featureCoverage = totalFixtures > 0 ? (totalFeatures / totalFixtures) * 100 : 0;
 
             // 3. Check if an active model exists for this league
-            const modelExists = db.get(`
+            const modelExists = await db.get(`
                 SELECT id, accuracy, horizon_type, trained_at
                 FROM V3_Model_Registry
                 WHERE (league_id = ? OR league_id IS NULL) AND is_active = 1
@@ -88,9 +88,9 @@ export class SimulationService {
      * Get Simulation Results (Match-level predictions vs actuals)
      * Returns the prediction tape for a given simulation.
      */
-    static getSimulationResults(simId) {
+    static async getSimulationResults(simId) {
         try {
-            const results = db.all(`
+            const results = await db.all(`
                 SELECT 
                     r.fixture_id, r.prob_home, r.prob_draw, r.prob_away,
                     r.predicted_score, r.actual_winner, r.is_correct,

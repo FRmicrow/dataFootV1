@@ -16,6 +16,8 @@ const PlayerProfilePageV3 = () => {
     const [syncStatus, setSyncStatus] = useState('idle');
     const [syncProgress, setSyncProgress] = useState(0);
     const [trophies, setTrophies] = useState([]);
+    const [yearFilter, setYearFilter] = useState('all');
+    const [leagueFilter, setLeagueFilter] = useState('all');
 
     useEffect(() => {
         const fetchPlayerProfile = async () => {
@@ -72,13 +74,30 @@ const PlayerProfilePageV3 = () => {
 
     const [careerView, setCareerView] = useState('year');
 
-    const { clubCareer, internationalCareer } = React.useMemo(() => {
+    const { clubCareer, internationalCareer, availableYears, availableLeagues } = React.useMemo(() => {
         const full = (data && Array.isArray(data.career)) ? data.career : [];
+
+        const years = [...new Set(full.map(s => s.season_year))].sort((a, b) => b - a);
+        const leagues = full.reduce((acc, curr) => {
+            if (!acc.find(l => l.id === curr.league_id)) {
+                acc.push({ id: curr.league_id, name: curr.league_name });
+            }
+            return acc;
+        }, []).sort((a, b) => a.name.localeCompare(b.name));
+
+        const filtered = full.filter(s => {
+            const matchYear = yearFilter === 'all' || s.season_year === parseInt(yearFilter);
+            const matchLeague = leagueFilter === 'all' || s.league_id === parseInt(leagueFilter);
+            return matchYear && matchLeague;
+        });
+
         return {
-            clubCareer: full.filter(s => !s.is_national_team),
-            internationalCareer: full.filter(s => !!s.is_national_team).sort((a, b) => b.season_year - a.season_year)
+            clubCareer: filtered.filter(s => !s.is_national_team),
+            internationalCareer: filtered.filter(s => !!s.is_national_team).sort((a, b) => b.season_year - a.season_year),
+            availableYears: years,
+            availableLeagues: leagues
         };
-    }, [data]);
+    }, [data, yearFilter, leagueFilter]);
 
     const { groupedCareer, sortedKeys } = React.useMemo(() => {
         let grouped = {};
@@ -228,8 +247,28 @@ const PlayerProfilePageV3 = () => {
                         />
                     </Card>
 
-                    <Stack direction="row" justify="space-between" align="center">
-                        <h2 style={{ fontSize: 'var(--font-size-xl)' }}>Professional Timeline</h2>
+                    <Stack direction="row" justify="space-between" align="center" className="timeline-controls">
+                        <Stack direction="row" gap="var(--spacing-md)" align="center">
+                            <h2 style={{ fontSize: 'var(--font-size-xl)', margin: 0 }}>Professional Timeline</h2>
+                            <Stack direction="row" gap="var(--spacing-xs)" align="center">
+                                <select
+                                    className="ds-select-sm"
+                                    value={yearFilter}
+                                    onChange={(e) => setYearFilter(e.target.value)}
+                                >
+                                    <option value="all">All Years</option>
+                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <select
+                                    className="ds-select-sm"
+                                    value={leagueFilter}
+                                    onChange={(e) => setLeagueFilter(e.target.value)}
+                                >
+                                    <option value="all">All Competitions</option>
+                                    {availableLeagues.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                </select>
+                            </Stack>
+                        </Stack>
                         <Stack direction="row" gap="var(--spacing-2xs)" dense>
                             <Button size="xs" variant={careerView === 'year' ? 'primary' : 'secondary'} onClick={() => setCareerView('year')}>Annual</Button>
                             <Button size="xs" variant={careerView === 'club' ? 'primary' : 'secondary'} onClick={() => setCareerView('club')}>Club View</Button>

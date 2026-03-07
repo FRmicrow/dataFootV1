@@ -1,16 +1,16 @@
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import pandas as pd
 import numpy as np
 import json
 import os
 import time
 
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'database.sqlite'))
 
 def run_bulk_forge_backfill():
     print(f"🚀 Starting High-Speed Bulk Forge Backfill...")
     start_time = time.time()
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     
     # Standardized Sequence Order
     feature_columns = [

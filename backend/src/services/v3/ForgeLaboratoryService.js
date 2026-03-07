@@ -61,7 +61,7 @@ class ForgeLaboratoryService {
             cycle.logs.push("✅ Models built successfully.");
 
             // 2. Identify available years for simulations (US_217 Fix)
-            const seasons = db.all("SELECT season_year FROM V3_League_Seasons WHERE league_id = ? AND imported_fixtures = 1", cleanParams([leagueId]));
+            const seasons = await db.all("SELECT season_year FROM V3_League_Seasons WHERE league_id = ? AND imported_fixtures = 1", cleanParams([leagueId]));
             const yearsImported = seasons.map(s => s.season_year).sort((a, b) => b - a);
 
             if (yearsImported.length === 0) throw new Error("No imported seasons with fixtures found for this league.");

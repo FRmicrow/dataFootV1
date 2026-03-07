@@ -16,11 +16,11 @@ class OddsCrawlerService {
 
         // 1. Find fixtures finished in the last 7 days that don't have normalized odds yet
         // and have not been synced in the last 30 days (idempotence)
-        const fixtures = db.all(`
+        const fixtures = await db.all(`
             SELECT fixture_id, api_id, date
             FROM V3_Fixtures
             WHERE status_short IN ('FT', 'AET', 'PEN')
-              AND date > datetime('now', '-7 days')
+              AND date > (CURRENT_TIMESTAMP - INTERVAL '7 days')::text
               AND odds_last_sync IS NULL
             ORDER BY date DESC
         `);
@@ -57,12 +57,12 @@ class OddsCrawlerService {
 
         // Find upcoming matches in the next 14 days
         // We allow multiple syncs for trend tracking, but we limit to once every 6h per fixture
-        const fixtures = db.all(`
+        const fixtures = await db.all(`
             SELECT fixture_id, api_id, date
             FROM V3_Fixtures
             WHERE status_short = 'NS'
-              AND date BETWEEN datetime('now') AND datetime('now', '+14 days')
-              AND (odds_last_sync IS NULL OR odds_last_sync < datetime('now', '-6 hours'))
+              AND date BETWEEN CURRENT_TIMESTAMP::text AND (CURRENT_TIMESTAMP + INTERVAL '14 days')::text
+              AND (odds_last_sync IS NULL OR odds_last_sync < CURRENT_TIMESTAMP - INTERVAL '6 hours')
             ORDER BY date ASC
         `);
 
@@ -95,14 +95,14 @@ class OddsCrawlerService {
             const records = response.response?.[0]; // API-football returns an array with one element for fixture query
 
             if (records) {
-                const count = OddsRefineryService.refineAndStore(fixtureId, records);
+                const count = await OddsRefineryService.refineAndStore(fixtureId, records);
                 // Mark as synced with timestamp to respect idempotence/frequency
-                db.run("UPDATE V3_Fixtures SET odds_last_sync = CURRENT_TIMESTAMP WHERE fixture_id = ?", [fixtureId]);
+                await db.run("UPDATE V3_Fixtures SET odds_last_sync = CURRENT_TIMESTAMP WHERE fixture_id = $1", [fixtureId]);
                 return count > 0;
             } else {
                 // If API returns no odds (common for very minor leagues or far in future)
                 // We still mark it as "attempted" to avoid hammering the API
-                db.run("UPDATE V3_Fixtures SET odds_last_sync = CURRENT_TIMESTAMP WHERE fixture_id = ?", [fixtureId]);
+                await db.run("UPDATE V3_Fixtures SET odds_last_sync = CURRENT_TIMESTAMP WHERE fixture_id = $1", [fixtureId]);
                 return false;
             }
         } catch (err) {

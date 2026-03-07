@@ -26,7 +26,7 @@ COPY . .
 # --- Stage 2: Runtime ---
 FROM node:20-bookworm-slim
 
-# Install runtime dependencies for better-sqlite3 and canvas (Debian versions)
+# Install runtime dependencies for canvas
 RUN apt-get update && apt-get install -y \
     libcairo2 \
     libpango-1.0-0 \
@@ -37,12 +37,10 @@ RUN apt-get update && apt-get install -y \
     libpng16-16 \
     libfreetype6 \
     libharfbuzz0b \
-    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 ENV PORT=3001
-ENV DATABASE_PATH=/app/data/database.sqlite
 
 WORKDIR /app
 
@@ -50,6 +48,8 @@ WORKDIR /app
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/src ./src
+COPY --from=build /app/sql ./sql
+COPY --from=build /app/scripts ./scripts
 
 # Create directories and set permissions
 RUN mkdir -p /app/data && \

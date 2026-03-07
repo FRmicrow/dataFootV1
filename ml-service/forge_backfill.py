@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg2
 import pandas as pd
 import json
 import os
@@ -6,17 +6,16 @@ import sys
 import time
 import concurrent.futures
 from time_travel import TemporalFeatureFactory
-
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'database.sqlite'))
+from db_config import get_connection
 
 # Global worker state for multiprocessing
 _worker_conn = None
 _worker_factory = None
 
-def _init_worker(db_path):
+def _init_worker():
     global _worker_conn, _worker_factory
-    _worker_conn = sqlite3.connect(db_path)
-    _worker_factory = TemporalFeatureFactory(db_path)
+    _worker_conn = get_connection()
+    _worker_factory = TemporalFeatureFactory()
 
 def _process_fixture(payload):
     fid, lid = payload
@@ -33,8 +32,8 @@ def run_forge_backfill(league_id=None, limit=50000):
     Step 1.4: Forge-Certified Feature Backfill.
     """
     print(f"🚀 Starting Forge Feature Backfill (League: {league_id if league_id else 'All'}, Limit: {limit})...")
-    conn = sqlite3.connect(DB_PATH)
-    factory = TemporalFeatureFactory(DB_PATH)
+    conn = get_connection()
+    factory = TemporalFeatureFactory()
     
     # Fetch fixtures that need features
     query = """
@@ -47,12 +46,12 @@ def run_forge_backfill(league_id=None, limit=50000):
     params = []
 
     if league_id:
-        query += " AND f.league_id = ?"
+        query += " AND f.league_id = %s"
         params.append(league_id)
     else:
         query += " AND fs.fixture_id IS NULL"
 
-    query += " ORDER BY f.date ASC LIMIT ?"
+    query += " ORDER BY f.date ASC LIMIT %s"
     params.append(limit)
 
     fixtures = pd.read_sql_query(query, conn, params=params)
@@ -70,7 +69,7 @@ def run_forge_backfill(league_id=None, limit=50000):
     total_fixtures = len(payloads)
     
     processed = 0
-    with concurrent.futures.ProcessPoolExecutor(max_workers=6, initializer=_init_worker, initargs=(DB_PATH,)) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=6, initializer=_init_worker, initargs=()) as executor:
         for is_success, fid, lid, result_data in executor.map(_process_fixture, payloads, chunksize=50):
             processed += 1
             
@@ -86,7 +85,13 @@ def run_forge_backfill(league_id=None, limit=50000):
                 sys.stdout.flush()
 
             if len(batch) >= 200:
-                conn.executemany("REPLACE INTO V3_ML_Feature_Store (fixture_id, league_id, feature_vector) VALUES (?, ?, ?)", batch)
+                cur = conn.cursor()
+                cur.executemany("""
+                    INSERT INTO V3_ML_Feature_Store (fixture_id, league_id, feature_vector)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (fixture_id) DO UPDATE SET feature_vector = EXCLUDED.feature_vector
+                """, batch)
+                cur.close()
                 conn.commit()
                 elapsed = time.time() - start_time
                 print(f"   ✅ Saved {processed} features... ({int(processed/elapsed)} feat/sec)")
@@ -94,7 +99,13 @@ def run_forge_backfill(league_id=None, limit=50000):
                 batch = []
 
     if batch:
-        conn.executemany("REPLACE INTO V3_ML_Feature_Store (fixture_id, league_id, feature_vector) VALUES (?, ?, ?)", batch)
+        cur = conn.cursor()
+        cur.executemany("""
+            INSERT INTO V3_ML_Feature_Store (fixture_id, league_id, feature_vector)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (fixture_id) DO UPDATE SET feature_vector = EXCLUDED.feature_vector
+        """, batch)
+        cur.close()
         conn.commit()
 
     conn.close()

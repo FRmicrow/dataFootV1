@@ -128,7 +128,7 @@ export class NarrativeService {
             WHERE f.fixture_id = ?
         `;
 
-        const fixture = db.get(sql, [fixtureId]);
+        const fixture = await db.get(sql, [fixtureId]);
         if (!fixture) return null;
 
         const homeTeam = { api_id: fixture.home_team_id, city: fixture.home_city };

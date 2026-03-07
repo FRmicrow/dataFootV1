@@ -52,8 +52,8 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
         </div>
     );
 
-    let homeLineup = lineups.find(l => l.team_id === homeTeamId);
-    let awayLineup = lineups.find(l => l.team_id === awayTeamId);
+    let homeLineup = lineups.find(l => Number(l.team_id) === Number(homeTeamId));
+    let awayLineup = lineups.find(l => Number(l.team_id) === Number(awayTeamId));
 
     if (!homeLineup && lineups.length > 0) homeLineup = lineups[0];
     if (!awayLineup && lineups.length > 1) awayLineup = lineups[1];
@@ -74,7 +74,7 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
         const subs = getParsed(lineup.substitutes);
 
         const handlePlayerClick = (pApiId) => {
-            const fullStat = playerStats.find(s => s.player_api_id === pApiId);
+            const fullStat = playerStats.find(s => s.player_id === pApiId || s.player_api_id === pApiId);
             if (fullStat) {
                 setSelectedPlayer(fullStat);
                 setActiveTab('player_intel');
@@ -83,7 +83,7 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
 
         const PlayerRow = ({ entry }) => {
             const p = entry.player || {};
-            const isSelected = selectedPlayer?.player_api_id === p.id;
+            const isSelected = selectedPlayer?.player_id === p.id || selectedPlayer?.player_api_id === p.id;
             return (
                 <div
                     className={`ds-inline-player-row ${isSelected ? 'active' : ''}`}

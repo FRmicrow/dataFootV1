@@ -1,9 +1,9 @@
-import sqlite3
+import psycopg2
+from db_config import get_connection
 import os
 import time
 
 # Resolve the database path relative to the script location
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'backend', 'data', 'database.sqlite'))
 
 def parse_pct(text):
     """Parses a percentage string like '55%' into an integer."""
@@ -22,7 +22,7 @@ def backfill_possession_pct():
         print(f"❌ Database not found at {DB_PATH}")
         return
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
 
     # Pass 1: Direct Parsing
@@ -49,8 +49,8 @@ def backfill_possession_pct():
     if updates:
         cursor.executemany("""
             UPDATE V3_Fixture_Stats
-            SET ball_possession_pct = ?
-            WHERE fixture_stats_id = ?
+            SET ball_possession_pct = %s
+            WHERE fixture_stats_id = %s
         """, updates)
         conn.commit()
     
@@ -82,8 +82,8 @@ def backfill_possession_pct():
     if inf_updates:
         cursor.executemany("""
             UPDATE V3_Fixture_Stats
-            SET ball_possession_pct = ?
-            WHERE fixture_stats_id = ?
+            SET ball_possession_pct = %s
+            WHERE fixture_stats_id = %s
         """, inf_updates)
         conn.commit()
         
