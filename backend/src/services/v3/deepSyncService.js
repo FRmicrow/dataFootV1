@@ -41,29 +41,38 @@ const syncSingleSeason = async (leagueId, season_year, sendLog, inference) => {
 };
 
 const syncTacticalPillar = async (leagueId, season_year, sendLog, inference) => {
-    const { fsInfer, psInfer, fsStreak, psStreak } = inference;
+    const { fsInfer, psInfer } = inference;
 
     if (fsInfer) await ImportStatusService.setStatus(leagueId, season_year, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
     if (psInfer) await ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
 
     if (!fsInfer || !psInfer) {
-        const start = Date.now();
-        await syncLeagueTacticalStatsService(leagueId, season_year, 2000, sendLog, { includeFS: !fsInfer, includePS: !psInfer });
-        const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-
-        if (!fsInfer) {
-            const fsStatus = await ImportStatusService.getStatus(leagueId, season_year, 'fs');
-            inference.fsStreak = (fsStatus.status === IMPORT_STATUS.NO_DATA) ? fsStreak + 1 : 0;
-            if (inference.fsStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) inference.fsInfer = true;
-        }
-        if (!psInfer) {
-            const psStatus = await ImportStatusService.getStatus(leagueId, season_year, 'ps');
-            inference.psStreak = (psStatus.status === IMPORT_STATUS.NO_DATA) ? psStreak + 1 : 0;
-            if (inference.psStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) inference.psInfer = true;
-        }
-        sendLog(`   [Tactical] FS+PS ✅ — Done in ${elapsed}s`, 'success');
+        await runTacticalSync(leagueId, season_year, sendLog, inference);
     } else {
         sendLog(`   [Tactical] Skip — Cascade "No Data" ⏩`, 'warning');
+    }
+};
+
+const runTacticalSync = async (leagueId, season_year, sendLog, inference) => {
+    const { fsInfer, psInfer } = inference;
+    const start = Date.now();
+    await syncLeagueTacticalStatsService(leagueId, season_year, 2000, sendLog, { includeFS: !fsInfer, includePS: !psInfer });
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+
+    if (!fsInfer) await updateInferenceStreak(leagueId, season_year, 'fs', inference);
+    if (!psInfer) await updateInferenceStreak(leagueId, season_year, 'ps', inference);
+
+    sendLog(`   [Tactical] FS+PS ✅ — Done in ${elapsed}s`, 'success');
+};
+
+const updateInferenceStreak = async (leagueId, season_year, pillar, inference) => {
+    const stat = await ImportStatusService.getStatus(leagueId, season_year, pillar);
+    const streakKey = `${pillar}Streak`;
+    const inferKey = `${pillar}Infer`;
+
+    inference[streakKey] = (stat.status === IMPORT_STATUS.NO_DATA) ? (inference[streakKey] || 0) + 1 : 0;
+    if (inference[streakKey] >= HISTORICAL_NO_DATA_STREAK_LIMIT) {
+        inference[inferKey] = true;
     }
 };
 
@@ -207,14 +216,14 @@ export async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
     if (targets.length === 0) return { success: 0, failed: 0 };
 
     let success = 0; let failed = 0;
-    for (let i = 0; i < targets.length; i++) {
+    for (const t of targets) {
         await ImportControl.checkAbortOrPause(sendLog);
         try {
-            const response = await footballApi.getFixtureLineups(targets[i].api_id);
+            const response = await footballApi.getFixtureLineups(t.api_id);
             if (response.response?.length) {
                 for (const l of response.response) {
                     await db.run("INSERT INTO V3_Fixture_Lineups (fixture_id, team_id, formation) VALUES (?,?,?)",
-                        cleanParams([targets[i].fixture_id, l.team.id, l.formation]));
+                        cleanParams([t.fixture_id, l.team.id, l.formation]));
                 }
                 success++;
             } else {

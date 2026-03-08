@@ -5,7 +5,7 @@ import { runDeepSyncLeague } from '../../services/v3/deepSyncService.js';
 import { runImportJob } from '../../services/v3/leagueImportService.js';
 import * as ImportControl from '../../services/v3/importControlService.js';
 import ImportStatusService from '../../services/v3/importStatusService.js';
-import { IMPORT_STATUS, STATUS_LABELS, PILLARS } from '../../services/v3/importStatusConstants.js';
+import { IMPORT_STATUS } from '../../services/v3/importStatusConstants.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 
 import { buildStatusIndex, mapMatrixRow } from '../../utils/v3Helpers.js';
@@ -322,5 +322,4 @@ export const triggerDiscoveryBatchImport = async (req, res) => {
         sendLog(`❌ Critical Batch Failure: ${error.message}`, 'error');
         res.end();
     }
-}
 };

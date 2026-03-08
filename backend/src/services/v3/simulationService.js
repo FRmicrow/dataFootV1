@@ -126,8 +126,8 @@ export class SimulationService {
                     prob_home: r.prob_home ? (r.prob_home * 100).toFixed(1) + '%' : '-',
                     prob_draw: r.prob_draw ? (r.prob_draw * 100).toFixed(1) + '%' : '-',
                     prob_away: r.prob_away ? (r.prob_away * 100).toFixed(1) + '%' : '-',
-                    score: r.goals_home !== null ? `${r.goals_home}-${r.goals_away}` : '-',
-                    predicted_outcome: mapResult(r.actual_winner), // FIXME: should be predicted_winner if column exists
+                    score: r.goals_home === null ? '-' : `${r.goals_home}-${r.goals_away}`,
+                    predicted_outcome: mapResult(r.actual_winner), // Use actual_winner as fallback if predicted column missing
                     actual_result: mapResult(r.actual_winner),
                     is_correct: r.is_correct
                 };
