@@ -1,8 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '../../../../../services/api';
 import GameCard from './GameCard';
 import LeagueSelector from './LeagueSelector';
 import './LiveBet.css';
+
+const flattenLeagues = (grouped) => {
+    return grouped.flatMap((group, idx) =>
+        (group.leagues || []).map(l => ({
+            id: l.id,
+            name: l.name,
+            logo: l.logo,
+            country: group.country,
+            importance_rank: idx
+        }))
+    );
+};
 
 const LiveBetDashboard = () => {
     const [mode, setMode] = useState('upcoming'); // 'upcoming' | 'daily'
@@ -32,26 +44,10 @@ const LiveBetDashboard = () => {
                 const prefs = prefsRes.data || prefsRes || { favorite_leagues: [], favorite_teams: [], tracked_leagues: [] };
                 setPreferences(prefs);
 
-                // Fetch available leagues for the selector
-                // getStudioLeagues returns grouped: [{ country, flag, leagues: [{id, name, logo}] }]
-                // We also need importance_rank — join with country data from the service
-                // Use a dedicated endpoint instead: get all leagues from local DB with rank
                 const leaguesRes = await api.getStudioLeagues();
                 const grouped = leaguesRes.data || leaguesRes || [];
-                // Flatten: each item in grouped has { country, flag, importance_rank(?), leagues: [{id, name, logo}] }
-                // The studio endpoint doesn't include importance_rank in the group, but the order is already by importance_rank ASC
-                const leagueList = grouped.flatMap((group, idx) =>
-                    (group.leagues || []).map(l => ({
-                        id: l.id,
-                        name: l.name,
-                        logo: l.logo,
-                        country: group.country,
-                        importance_rank: idx // use group order as proxy for rank
-                    }))
-                );
-                setAvailableLeagues(leagueList);
+                setAvailableLeagues(flattenLeagues(grouped));
 
-                // Fetch upcoming by tracked leagues
                 const upcomingRes = await api.getUpcomingFixtures(prefs.tracked_leagues || []);
                 setUpcomingGroups((upcomingRes.data?.groups || upcomingRes?.groups) ?? []);
             } catch (err) {
@@ -94,7 +90,7 @@ const LiveBetDashboard = () => {
         fetchDaily();
     }, [mode, selectedDate]);
 
-    // ── Toggle tracked league (AC 4: persist to backend) ──
+    // ── Toggle tracked league ──
     const toggleTrackedLeague = async (leagueId) => {
         const current = preferences.tracked_leagues || [];
         const updated = current.includes(leagueId)
@@ -112,7 +108,7 @@ const LiveBetDashboard = () => {
         }
     };
 
-    // ── Toggle favorite (teams / favorite leagues) ──
+    // ── Toggle favorite ──
     const toggleFavorite = async (type, id) => {
         const key = type === 'league' ? 'favorite_leagues' : 'favorite_teams';
         const current = preferences[key] || [];
@@ -122,7 +118,7 @@ const LiveBetDashboard = () => {
         try { await api.updatePreferences(updatedPrefs); } catch (_) { }
     };
 
-    // ── Filtered daily fixtures (search + country/league filters) ──
+    // ── Filtered daily fixtures ──
     const filteredFixtures = useMemo(() => {
         const term = searchTerm.toLowerCase();
         return fixtures.filter(f => {
@@ -133,7 +129,7 @@ const LiveBetDashboard = () => {
         });
     }, [fixtures, searchTerm]);
 
-    // ── Filtered upcoming groups (search) ──
+    // ── Filtered upcoming groups ──
     const filteredGroups = useMemo(() => {
         const term = searchTerm.toLowerCase();
         if (!term) return upcomingGroups;
@@ -148,14 +144,104 @@ const LiveBetDashboard = () => {
     }, [upcomingGroups, searchTerm]);
 
     const trackedIds = preferences.tracked_leagues || [];
-
-    // Helper to check if league is Tier 1 (England, Spain, Germany, Italy, France, CL, EL)
     const TIER_1_IDS = [39, 140, 78, 135, 61, 2, 3];
     const isTier1 = (leagueId) => TIER_1_IDS.includes(Number(leagueId));
 
+    const renderContent = () => {
+        if (loading) {
+            return (
+                <div className="loading-state">
+                    <div className="spinner"></div>
+                    <p>Scanning Matches...</p>
+                </div>
+            );
+        }
+
+        if (mode === 'upcoming') {
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                    {filteredGroups.length === 0 && (
+                        <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>⚽</div>
+                            <div style={{ color: '#94a3b8', fontSize: '1rem' }}>
+                                {trackedIds.length === 0
+                                    ? 'Click ⚙️ Competitions to select leagues to track.'
+                                    : 'No upcoming matches found for your selected leagues.'}
+                            </div>
+                        </div>
+                    )}
+
+                    {filteredGroups.map(group => {
+                        const featured = isTier1(group.league.api_id);
+                        return (
+                            <div key={group.league.id} className={featured ? 'featured-group' : ''}>
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '10px',
+                                    padding: '10px 0', marginBottom: '12px',
+                                    borderBottom: featured ? '2px solid #6366f1' : '2px solid rgba(99,102,241,0.3)',
+                                    position: 'relative'
+                                }}>
+                                    {featured && <span style={{ position: 'absolute', top: '-10px', left: '0', fontSize: '0.65rem', color: '#6366f1', fontWeight: '900', letterSpacing: '1px' }}>PREMIUM DATA</span>}
+                                    {group.league.logo && (
+                                        <img src={group.league.logo} alt="" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                                    )}
+                                    <div>
+                                        <div style={{ fontWeight: '800', fontSize: '1rem', color: featured ? '#fff' : '#f1f5f9' }}>
+                                            {group.league.name}
+                                            {featured && <span style={{ marginLeft: '6px' }}>⭐</span>}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{group.league.country}</div>
+                                    </div>
+                                    <span style={{
+                                        marginLeft: 'auto', fontSize: '0.75rem', color: '#6366f1',
+                                        background: 'rgba(99,102,241,0.1)', padding: '3px 10px', borderRadius: '20px', fontWeight: '600'
+                                    }}>
+                                        {group.fixtures.length} matches
+                                    </span>
+                                </div>
+                                <div className="lb-game-feed">
+                                    {group.fixtures.map(f => (
+                                        <GameCard
+                                            key={f.fixture.id}
+                                            fixture={f}
+                                            preferences={preferences}
+                                            onToggleFavorite={toggleFavorite}
+                                            isFeatured={featured}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        return (
+            <div className="lb-game-feed">
+                {filteredFixtures.length === 0 && (
+                    <div className="empty-state">
+                        <p>No matches found for {selectedDate || 'today'}.</p>
+                    </div>
+                )}
+                {filteredFixtures.map(f => {
+                    const featured = isTier1(f.league.id);
+                    return (
+                        <GameCard
+                            key={f.fixture.id}
+                            fixture={f}
+                            preferences={preferences}
+                            onToggleFavorite={toggleFavorite}
+                            isFeatured={featured}
+                        />
+                    );
+                })}
+            </div>
+        );
+    };
+
     return (
         <div className="lb-dashboard animate-slide-up">
-            {/* ── Title Bar ── */}
             <div className="lb-title-bar">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -165,7 +251,6 @@ const LiveBetDashboard = () => {
                         <h1 style={{ margin: 0 }}>Live Bet Central</h1>
                     </div>
 
-                    {/* Mode Toggle */}
                     <div style={{ display: 'flex', background: '#1e293b', borderRadius: '8px', padding: '4px', gap: '4px' }}>
                         <button
                             onClick={() => setMode('upcoming')}
@@ -188,7 +273,6 @@ const LiveBetDashboard = () => {
                     </div>
                 </div>
 
-                {/* Controls Row */}
                 <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <input
                         type="text"
@@ -248,7 +332,6 @@ const LiveBetDashboard = () => {
                 </div>
             </div>
 
-            {/* ── League Selector Panel (US_022 AC 1) ── */}
             {mode === 'upcoming' && showSelector && (
                 <LeagueSelector
                     availableLeagues={availableLeagues}
@@ -258,94 +341,7 @@ const LiveBetDashboard = () => {
                 />
             )}
 
-            {/* ── Feed ── */}
-            {loading ? (
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Scanning Matches...</p>
-                </div>
-            ) : mode === 'upcoming' ? (
-                /* ── Upcoming: Grouped by Competition (AC 3) ── */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                    {filteredGroups.length === 0 && (
-                        <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
-                            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>⚽</div>
-                            <div style={{ color: '#94a3b8', fontSize: '1rem' }}>
-                                {trackedIds.length === 0
-                                    ? 'Click ⚙️ Competitions to select leagues to track.'
-                                    : 'No upcoming matches found for your selected leagues.'}
-                            </div>
-                        </div>
-                    )}
-
-                    {filteredGroups.map(group => {
-                        const featured = isTier1(group.league.api_id);
-                        return (
-                            <div key={group.league.id} className={featured ? 'featured-group' : ''}>
-                                {/* Competition header */}
-                                <div style={{
-                                    display: 'flex', alignItems: 'center', gap: '10px',
-                                    padding: '10px 0', marginBottom: '12px',
-                                    borderBottom: featured ? '2px solid #6366f1' : '2px solid rgba(99,102,241,0.3)',
-                                    position: 'relative'
-                                }}>
-                                    {featured && <span style={{ position: 'absolute', top: '-10px', left: '0', fontSize: '0.65rem', color: '#6366f1', fontWeight: '900', letterSpacing: '1px' }}>PREMIUM DATA</span>}
-                                    {group.league.logo && (
-                                        <img src={group.league.logo} alt="" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-                                    )}
-                                    <div>
-                                        <div style={{ fontWeight: '800', fontSize: '1rem', color: featured ? '#fff' : '#f1f5f9' }}>
-                                            {group.league.name}
-                                            {featured && <span style={{ marginLeft: '6px' }}>⭐</span>}
-                                        </div>
-                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{group.league.country}</div>
-                                    </div>
-                                    <span style={{
-                                        marginLeft: 'auto', fontSize: '0.75rem', color: '#6366f1',
-                                        background: 'rgba(99,102,241,0.1)', padding: '3px 10px', borderRadius: '20px', fontWeight: '600'
-                                    }}>
-                                        {group.fixtures.length} matches
-                                    </span>
-                                </div>
-
-                                {/* Fixtures in this group */}
-                                <div className="lb-game-feed">
-                                    {group.fixtures.map(f => (
-                                        <GameCard
-                                            key={f.fixture.id}
-                                            fixture={f}
-                                            preferences={preferences}
-                                            onToggleFavorite={toggleFavorite}
-                                            isFeatured={featured}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                /* ── Daily Mode: Flat list ── */
-                <div className="lb-game-feed">
-                    {filteredFixtures.length === 0 && (
-                        <div className="empty-state">
-                            <p>No matches found for {selectedDate || 'today'}.</p>
-                        </div>
-                    )}
-                    {filteredFixtures.map(f => {
-                        const featured = isTier1(f.league.id);
-                        return (
-                            <GameCard
-                                key={f.fixture.id}
-                                fixture={f}
-                                preferences={preferences}
-                                onToggleFavorite={toggleFavorite}
-                                isFeatured={featured}
-                            />
-                        );
-                    })}
-                </div>
-            )}
+            {renderContent()}
         </div>
     );
 };

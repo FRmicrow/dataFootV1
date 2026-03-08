@@ -22,13 +22,61 @@ export const ImportProvider = ({ children }) => {
         setLogs(prev => [...prev, { ...log, id: Date.now() + Math.random(), timestamp: new Date() }].slice(-1000));
     }, []);
 
-    const startImport = useCallback((url, method = 'POST', body = null) => {
-        if (isImporting) {
-            console.warn('⚠️ Import already in progress, ignoring request:', url);
-            return;
+    const processDataChunk = useCallback((chunk, decoder) => {
+        const text = decoder.decode(chunk, { stream: true });
+        const lines = text.split('\n');
+
+        for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+                const data = JSON.parse(line.substring(6));
+                handleServerEvent(data);
+            } catch (e) {
+                // Ignore malformed JSON
+            }
+        }
+    }, []);
+
+    const handleServerEvent = useCallback((data) => {
+        if (data.message) {
+            addLog({ text: data.message, type: data.type || 'info' });
         }
 
-        console.log('🚀 [ImportContext] Starting import stream:', url, body);
+        if (data.type === 'progress') {
+            updateProgress(data);
+        }
+
+        if (data.type === 'complete') {
+            terminateImport('✅ Import process completed.', 'complete');
+        }
+
+        if (data.type === 'error') {
+            addLog({ text: `❌ ${data.message}`, type: 'error' });
+        }
+    }, [addLog]);
+
+    const updateProgress = (data) => {
+        if (data.step === 'overall') {
+            setProgress(prev => ({ ...prev, overall: { current: data.current, total: data.total } }));
+        } else {
+            setProgress(prev => ({
+                ...prev,
+                currentStep: data.label || data.step,
+                stepProgress: { current: data.current, total: data.total }
+            }));
+        }
+    };
+
+    const terminateImport = (msg, type) => {
+        setIsImporting(false);
+        setIsPaused(false);
+        if (msg) addLog({ text: msg, type });
+        readerRef.current = null;
+    };
+
+    const startImport = useCallback(async (url, method = 'POST', body = null) => {
+        if (isImporting) return;
+
         setIsImporting(true);
         setIsPaused(false);
         setLogs([]);
@@ -41,83 +89,33 @@ export const ImportProvider = ({ children }) => {
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
-        // Use relative path to leverage Vite proxy consistently with other API calls
-        fetch(`/api${url}`, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: body ? JSON.stringify(body) : null,
-            signal: controller.signal
-        }).then(response => {
-            console.log('📡 [ImportContext] Stream headers received:', response.status);
+        try {
+            const response = await fetch(`/api${url}`, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: body ? JSON.stringify(body) : null,
+                signal: controller.signal
+            });
+
             if (!response.body) throw new Error('Response body is null');
 
             const reader = response.body.getReader();
             readerRef.current = reader;
             const decoder = new TextDecoder();
 
-            function read() {
-                reader.read().then(({ done, value }) => {
-                    if (done) {
-                        setIsImporting(false);
-                        setIsPaused(false);
-                        readerRef.current = null;
-                        return;
-                    }
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
-
-                    lines.forEach(line => {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-
-                                if (data.message) {
-                                    addLog({ text: data.message, type: data.type || 'info' });
-                                }
-
-                                if (data.type === 'progress') {
-                                    if (data.step === 'overall') {
-                                        setProgress(prev => ({ ...prev, overall: { current: data.current, total: data.total } }));
-                                    } else {
-                                        setProgress(prev => ({
-                                            ...prev,
-                                            currentStep: data.label || data.step,
-                                            stepProgress: { current: data.current, total: data.total }
-                                        }));
-                                    }
-                                }
-
-                                if (data.type === 'complete') {
-                                    setIsImporting(false);
-                                    setIsPaused(false);
-                                    addLog({ text: '✅ Import process completed.', type: 'complete' });
-                                }
-
-                                if (data.type === 'error') {
-                                    // Don't stop on error — let the batch continue
-                                    addLog({ text: `❌ ${data.message}`, type: 'error' });
-                                }
-                            } catch (e) { }
-                        }
-                    });
-                    read();
-                }).catch(err => {
-                    if (err.name !== 'AbortError') {
-                        addLog({ text: `Stream error: ${err.message}`, type: 'error' });
-                    }
-                    setIsImporting(false);
-                    setIsPaused(false);
-                });
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                processDataChunk(value, decoder);
             }
-            read();
-        }).catch(err => {
+            terminateImport();
+
+        } catch (err) {
             if (err.name !== 'AbortError') {
-                setIsImporting(false);
-                setIsPaused(false);
-                addLog({ text: `Critical Error: ${err.message}`, type: 'error' });
+                terminateImport(`Critical Error: ${err.message}`, 'error');
             }
-        });
-    }, [addLog]); // Removed isImporting from dependencies to prevent re-creation while running
+        }
+    }, [isImporting, addLog, processDataChunk]);
 
     const stopImport = useCallback(async () => {
         try {

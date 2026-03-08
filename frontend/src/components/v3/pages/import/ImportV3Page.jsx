@@ -104,6 +104,21 @@ const ImportV3Page = () => {
 
     // --- Handlers ---
 
+    const filterSeasonsRange = (start, end, skipExisting, syncStatus) => {
+        const selected = [];
+        for (let y = start; y <= end; y++) {
+            if (skipExisting) {
+                const statusObj = syncStatus.find(s => s.year === y);
+                if (statusObj?.status !== 'FULL') {
+                    selected.push(y);
+                }
+            } else {
+                selected.push(y);
+            }
+        }
+        return selected;
+    };
+
     const handleAddToQueue = () => {
         if (!selectedLeague || !selectedCountry) {
             alert("Please select a country and a league.");
@@ -113,36 +128,17 @@ const ImportV3Page = () => {
         const leagueObj = leagues.find(l => l.league.id === parseInt(selectedLeague));
         if (!leagueObj) return;
 
-        const start = parseInt(fromYear);
-        const end = parseInt(toYear);
-
-        if (start > end) {
-            alert("Start year cannot be after end year.");
-            return;
-        }
-
-        const selectedSeasons = [];
-        for (let y = start; y <= end; y++) {
-            if (skipExisting) {
-                const statusObj = leagueSyncStatus.find(s => s.year === y);
-                // statusObj has { status: 'FULL' | 'PARTIAL' | 'NOT_IMPORTED' }
-                const isFullyImported = statusObj && statusObj.status === 'FULL';
-
-                if (!isFullyImported) {
-                    selectedSeasons.push(y);
-                }
-            } else {
-                selectedSeasons.push(y);
-            }
-        }
+        const selectedSeasons = filterSeasonsRange(
+            parseInt(fromYear),
+            parseInt(toYear),
+            skipExisting,
+            leagueSyncStatus
+        );
 
         if (selectedSeasons.length === 0) {
             alert("No new seasons to add (all already imported or skipped).");
             return;
         }
-
-        // Find league name for display
-        const leagueName = leagueObj ? leagueObj.league.name : 'Unknown League';
 
         const queueSeasons = selectedSeasons.map(y => {
             const statusObj = leagueSyncStatus.find(s => s.year === y);
@@ -158,7 +154,7 @@ const ImportV3Page = () => {
             id: Date.now(),
             country: selectedCountry,
             leagueId: parseInt(selectedLeague),
-            leagueName: leagueName,
+            leagueName: leagueObj.league.name || 'Unknown League',
             seasons: queueSeasons
         };
 
