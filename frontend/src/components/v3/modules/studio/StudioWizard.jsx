@@ -26,22 +26,46 @@ const StudioWizard = () => {
         <div className="studio-container">
             {/* Wizard Header / Stepper */}
             <div className="studio-stepper">
-                <div className={`step-item ${step === 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`} onClick={() => step > 1 && goToStep(1)}>
+                <div
+                    className={`step-item ${step === 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}
+                    onClick={() => step > 1 && goToStep(1)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && step > 1 && goToStep(1)}
+                    role="button"
+                    tabIndex={step > 1 ? 0 : -1}
+                >
                     <span className="step-num">1</span>
                     <span className="step-label">Data Source</span>
                 </div>
                 <div className="step-line"></div>
-                <div className={`step-item ${step === 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`} onClick={() => step > 2 && goToStep(2)}>
+                <div
+                    className={`step-item ${step === 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}
+                    onClick={() => step > 2 && goToStep(2)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && step > 2 && goToStep(2)}
+                    role="button"
+                    tabIndex={step > 2 ? 0 : -1}
+                >
                     <span className="step-num">2</span>
                     <span className="step-label">Configuration</span>
                 </div>
                 <div className="step-line"></div>
-                <div className={`step-item ${step === 3 ? 'active' : ''} ${step > 3 ? 'completed' : ''}`} onClick={() => step > 3 && goToStep(3)}>
+                <div
+                    className={`step-item ${step === 3 ? 'active' : ''} ${step > 3 ? 'completed' : ''}`}
+                    onClick={() => step > 3 && goToStep(3)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && step > 3 && goToStep(3)}
+                    role="button"
+                    tabIndex={step > 3 ? 0 : -1}
+                >
                     <span className="step-num">3</span>
                     <span className="step-label">Animation</span>
                 </div>
                 <div className="step-line"></div>
-                <div className={`step-item ${step === 4 ? 'active' : ''}`} onClick={() => step > 4 && goToStep(4)}>
+                <div
+                    className={`step-item ${step === 4 ? 'active' : ''}`}
+                    onClick={() => step > 4 && goToStep(4)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && step > 4 && goToStep(4)}
+                    role="button"
+                    tabIndex={step > 4 ? 0 : -1}
+                >
                     <span className="step-num">4</span>
                     <span className="step-label">Export</span>
                 </div>

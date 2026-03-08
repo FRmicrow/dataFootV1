@@ -61,6 +61,50 @@ const buildFixtureQuery = (skipFS, skipPS) => {
 };
 
 /**
+ * Process a single fixture for FS (Fixture Stats)
+ */
+const processFixtureFS = async (fixture, stats, leagueId, seasonYear, fsThreshold, psThreshold, skipPS) => {
+    if (!fixture.needs_fs || stats.fsBlack) return psThreshold;
+
+    const ok = await fetchAndStoreFixtureStats(fixture.fixture_id, fixture.api_id);
+    if (ok) {
+        stats.fsSuccess++;
+        stats.fsConsec = 0;
+        await ImportStatusService.resetFailures(leagueId, seasonYear, 'fs');
+    } else {
+        stats.fsFailed++;
+        stats.fsConsec++;
+        if (stats.fsConsec >= fsThreshold) {
+            await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Auto-blacklisted' });
+            stats.fsBlack = true;
+            if (!stats.psBlack && !skipPS) return CROSS_PILLAR_REDUCED_THRESHOLD;
+        }
+    }
+    return psThreshold;
+};
+
+/**
+ * Process a single fixture for PS (Player Stats)
+ */
+const processFixturePS = async (fixture, stats, leagueId, seasonYear, psThreshold) => {
+    if (!fixture.needs_ps || stats.psBlack) return;
+
+    const ok = await fetchAndStorePlayerStats(fixture.fixture_id, fixture.api_id);
+    if (ok) {
+        stats.psSuccess++;
+        stats.psConsec = 0;
+        await ImportStatusService.resetFailures(leagueId, seasonYear, 'ps');
+    } else {
+        stats.psFailed++;
+        stats.psConsec++;
+        if (stats.psConsec >= psThreshold) {
+            await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Auto-blacklisted' });
+            stats.psBlack = true;
+        }
+    }
+};
+
+/**
  * US_265: Combined FS+PS Single-Pass Import
  */
 export const syncLeagueTacticalStatsService = async (leagueId, seasonYear, limit = 2000, sendLog = null, options = { includeFS: true, includePS: true }) => {
@@ -88,31 +132,11 @@ export const syncLeagueTacticalStatsService = async (leagueId, seasonYear, limit
         await ImportControl.checkAbortOrPause(sendLog);
 
         // Process FS
-        if (fixture.needs_fs && !skipFS && !stats.fsBlack) {
-            const ok = await fetchAndStoreFixtureStats(fixture.fixture_id, fixture.api_id);
-            if (ok) { stats.fsSuccess++; stats.fsConsec = 0; await ImportStatusService.resetFailures(leagueId, seasonYear, 'fs'); }
-            else {
-                stats.fsFailed++; stats.fsConsec++;
-                if (stats.fsConsec >= fsThreshold) {
-                    await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Auto-blacklisted' });
-                    stats.fsBlack = true;
-                    if (!stats.psBlack && !skipPS) psThreshold = CROSS_PILLAR_REDUCED_THRESHOLD;
-                }
-            }
-        }
+        psThreshold = await processFixtureFS(fixture, stats, leagueId, seasonYear, fsThreshold, psThreshold, skipPS);
 
         // Process PS
-        if (fixture.needs_ps && !skipPS && !stats.psBlack) {
-            const ok = await fetchAndStorePlayerStats(fixture.fixture_id, fixture.api_id);
-            if (ok) { stats.psSuccess++; stats.psConsec = 0; await ImportStatusService.resetFailures(leagueId, seasonYear, 'ps'); }
-            else {
-                stats.psFailed++; stats.psConsec++;
-                if (stats.psConsec >= psThreshold) {
-                    await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Auto-blacklisted' });
-                    stats.psBlack = true;
-                }
-            }
-        }
+        await processFixturePS(fixture, stats, leagueId, seasonYear, psThreshold);
+
         if ((stats.fsBlack || skipFS) && (stats.psBlack || skipPS)) break;
         await delay(50);
     }
@@ -166,7 +190,6 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
         return false;
     }
 
-    await db.run('BEGIN TRANSACTION');
     try {
         for (const teamContainer of res.response) {
             const teamApiId = teamContainer.team.id;
@@ -193,10 +216,9 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
                 await DB.upsertFixtureStats(Mappers.fixtureStats(localFixtureId, localTeamId, '2H', h2Stats));
             }
         }
-        await db.run('COMMIT');
         return true;
     } catch (err) {
-        try { await db.run('ROLLBACK'); } catch (e) { }
+        console.error(`      Error storing statistics for fixture ${localFixtureId}:`, err.message);
         throw err;
     }
 }
@@ -214,7 +236,6 @@ export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
         return false;
     }
 
-    await db.run('BEGIN TRANSACTION');
     try {
         for (const teamContainer of res.response) {
             const teamApiId = teamContainer.team.id;
@@ -227,13 +248,78 @@ export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
                 await DB.upsertFixturePlayerStats(Mappers.fixturePlayerStats(localFixtureId, localTeamId, playerStats));
             }
         }
-        await db.run('COMMIT');
         return true;
     } catch (err) {
-        try { await db.run('ROLLBACK'); } catch (e) { }
+        console.error(`      Error storing player stats for fixture ${localFixtureId}:`, err.message);
         throw err;
     }
 }
+
+/**
+ * US_233: Analytical layer for seasonal normalization
+ */
+/**
+ * Computes and inserts normalization data for a single player
+ */
+const computeSinglePlayerNormalization = async (p, leagueId, seasonYear) => {
+    const sums = await db.get(`
+        SELECT 
+            COUNT(*) as appearances,
+            SUM(minutes_played) as total_minutes,
+            SUM(goals_total) as goals,
+            SUM(goals_conceded) as conceded,
+            SUM(goals_assists) as assists,
+            SUM(shots_total) as shots,
+            SUM(shots_on) as shots_on,
+            SUM(passes_total) as passes,
+            SUM(passes_key) as key_passes,
+            SUM(tackles_total) as tackles,
+            SUM(tackles_interceptions) as interceptions,
+            SUM(duels_won) as duels_won,
+            SUM(dribbles_success) as dribbles_success
+        FROM V3_Fixture_Player_Stats
+        WHERE player_id = ? AND team_id = ? 
+        AND fixture_id IN (SELECT fixture_id FROM V3_Fixtures WHERE league_id = ? AND season_year = ?)
+    `, cleanParams([p.player_id, p.team_id, leagueId, seasonYear]));
+
+    if (!sums || !sums.total_minutes) return;
+
+    const mins = sums.total_minutes || 1;
+    const factor = 90 / mins;
+
+    await db.run(`
+        INSERT INTO V3_Player_Season_Stats (
+            player_id, team_id, league_id, season_year,
+            appearances, minutes_played, goals_total, goals_conceded, goals_assists,
+            goals_per_90, assists_per_90, shots_per_90, shots_on_target_per_90,
+            passes_per_90, key_passes_per_90, tackles_per_90, interceptions_per_90,
+            duels_won_per_90, dribbles_success_per_90
+        ) VALUES (?,?,?,?, ?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(player_id, team_id, league_id, season_year) DO UPDATE SET
+            appearances=excluded.appearances,
+            minutes_played=excluded.minutes_played,
+            goals_total=excluded.goals_total,
+            goals_conceded=excluded.goals_conceded,
+            goals_assists=excluded.goals_assists,
+            goals_per_90=excluded.goals_per_90,
+            assists_per_90=excluded.assists_per_90,
+            shots_per_90=excluded.shots_per_90,
+            shots_on_target_per_90=excluded.shots_on_target_per_90,
+            passes_per_90=excluded.passes_per_90,
+            key_passes_per_90=excluded.key_passes_per_90,
+            tackles_per_90=excluded.tackles_per_90,
+            interceptions_per_90=excluded.interceptions_per_90,
+            duels_won_per_90=excluded.duels_won_per_90,
+            dribbles_success_per_90=excluded.dribbles_success_per_90,
+            updated_at=CURRENT_TIMESTAMP
+    `, cleanParams([
+        p.player_id, p.team_id, leagueId, seasonYear,
+        sums.appearances, sums.total_minutes, sums.goals, sums.conceded, sums.assists,
+        sums.goals * factor, sums.assists * factor, sums.shots * factor, sums.shots_on * factor,
+        sums.passes * factor, sums.key_passes * factor, sums.tackles * factor, sums.interceptions * factor,
+        sums.duels_won * factor, sums.dribbles_success * factor
+    ]));
+};
 
 /**
  * US_233: Analytical layer for seasonal normalization
@@ -248,69 +334,10 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
 
         if (players.length === 0) return;
 
-        await db.run('BEGIN TRANSACTION');
         for (const p of players) {
-            const sums = await db.get(`
-                SELECT 
-                    COUNT(*) as appearances,
-                    SUM(minutes_played) as total_minutes,
-                    SUM(goals_total) as goals,
-                    SUM(goals_conceded) as conceded,
-                    SUM(goals_assists) as assists,
-                    SUM(shots_total) as shots,
-                    SUM(shots_on) as shots_on,
-                    SUM(passes_total) as passes,
-                    SUM(passes_key) as key_passes,
-                    SUM(tackles_total) as tackles,
-                    SUM(tackles_interceptions) as interceptions,
-                    SUM(duels_won) as duels_won,
-                    SUM(dribbles_success) as dribbles_success
-                FROM V3_Fixture_Player_Stats
-                WHERE player_id = ? AND team_id = ? 
-                AND fixture_id IN (SELECT fixture_id FROM V3_Fixtures WHERE league_id = ? AND season_year = ?)
-            `, cleanParams([p.player_id, p.team_id, leagueId, seasonYear]));
-
-            if (!sums || !sums.total_minutes) continue;
-
-            const mins = sums.total_minutes || 1;
-            const factor = 90 / mins;
-
-            await db.run(`
-                INSERT INTO V3_Player_Season_Stats (
-                    player_id, team_id, league_id, season_year,
-                    appearances, minutes_played, goals_total, goals_conceded, goals_assists,
-                    goals_per_90, assists_per_90, shots_per_90, shots_on_target_per_90,
-                    passes_per_90, key_passes_per_90, tackles_per_90, interceptions_per_90,
-                    duels_won_per_90, dribbles_success_per_90
-                ) VALUES (?,?,?,?, ?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?)
-                ON CONFLICT(player_id, team_id, league_id, season_year) DO UPDATE SET
-                    appearances=excluded.appearances,
-                    minutes_played=excluded.minutes_played,
-                    goals_total=excluded.goals_total,
-                    goals_conceded=excluded.goals_conceded,
-                    goals_assists=excluded.goals_assists,
-                    goals_per_90=excluded.goals_per_90,
-                    assists_per_90=excluded.assists_per_90,
-                    shots_per_90=excluded.shots_per_90,
-                    shots_on_target_per_90=excluded.shots_on_target_per_90,
-                    passes_per_90=excluded.passes_per_90,
-                    key_passes_per_90=excluded.key_passes_per_90,
-                    tackles_per_90=excluded.tackles_per_90,
-                    interceptions_per_90=excluded.interceptions_per_90,
-                    duels_won_per_90=excluded.duels_won_per_90,
-                    dribbles_success_per_90=excluded.dribbles_success_per_90,
-                    updated_at=CURRENT_TIMESTAMP
-            `, cleanParams([
-                p.player_id, p.team_id, leagueId, seasonYear,
-                sums.appearances, sums.total_minutes, sums.goals, sums.conceded, sums.assists,
-                sums.goals * factor, sums.assists * factor, sums.shots * factor, sums.shots_on * factor,
-                sums.passes * factor, sums.key_passes * factor, sums.tackles * factor, sums.interceptions * factor,
-                sums.duels_won * factor, sums.dribbles_success * factor
-            ]));
+            await computeSinglePlayerNormalization(p, leagueId, seasonYear);
         }
-        await db.run('COMMIT');
     } catch (err) {
-        try { await db.run('ROLLBACK'); } catch (e) { }
         console.error('Normalization Error:', err);
     }
 }

@@ -24,6 +24,82 @@ const TOOLTIP_MESSAGES = {
     [STATUS.LOCKED]: 'Season locked — No further imports'
 };
 
+const StatusIndicator = React.memo(({ pillar, code, isQueued, onClick, tooltipText, label }) => (
+    <div
+        className={`indicator indicator-${code === 4 ? 'locked' : (code === 3 ? 'nodata' : (code === 2 ? 'complete' : (code === 1 ? 'partial' : 'none')))} ${isQueued ? 'queued' : ''} tooltip`}
+        onClick={onClick}
+    >
+        {code === 4 ? '🔒' : label}
+        <span className="tooltiptext">{pillar.toUpperCase()}: {tooltipText}</span>
+    </div>
+));
+
+const SeasonCell = React.memo(({ leagueId, year, season, batchQueue, onIndicatorClick }) => {
+    if (!season) return <td></td>;
+
+    const pillars = ['core', 'events', 'lineups', 'fs', 'ps', 'trophies'];
+    const pillarLabels = { core: 'C', events: 'E', lineups: 'L', fs: 'FS', ps: 'PS', trophies: 'T' };
+
+    return (
+        <td className="season-cell">
+            <div className="status-box">
+                {pillars.map(pillar => {
+                    const s = season.status[pillar];
+                    const code = (typeof s === 'object' && s !== null) ? (s.code ?? STATUS.NONE) : (s === 1 ? STATUS.COMPLETE : (s === 0.5 ? STATUS.PARTIAL : STATUS.NONE));
+                    const isQueued = batchQueue.some(q => q.leagueId === leagueId && q.year === year && q.pillar === pillar);
+                    const tooltip = typeof TOOLTIP_MESSAGES[code] === 'function' ? TOOLTIP_MESSAGES[code](s) : TOOLTIP_MESSAGES[code];
+
+                    return (
+                        <StatusIndicator
+                            key={pillar}
+                            pillar={pillar}
+                            code={code}
+                            isQueued={isQueued}
+                            label={pillarLabels[pillar]}
+                            tooltipText={tooltip}
+                            onClick={() => onIndicatorClick(leagueId, year, pillar, code)}
+                        />
+                    );
+                })}
+            </div>
+        </td>
+    );
+});
+
+const MatrixRow = React.memo(({ league, years, isSelected, onSelect, batchQueue, onIndicatorClick }) => (
+    <tr className={isSelected ? 'selected' : ''}>
+        <td>
+            <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => onSelect(league.id)}
+            />
+        </td>
+        <td>
+            <div className="competition-cell">
+                <img src={league.logo} alt="" className="comp-logo" />
+                <div className="comp-info">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <img src={league.flag} alt="" className="comp-flag" />
+                        <span className="comp-name">{league.name}</span>
+                    </div>
+                    <span className="comp-country">{league.country}</span>
+                </div>
+            </div>
+        </td>
+        {years.map(year => (
+            <SeasonCell
+                key={year}
+                leagueId={league.id}
+                year={year}
+                season={league.seasons.find(s => s.year === year)}
+                batchQueue={batchQueue}
+                onIndicatorClick={onIndicatorClick}
+            />
+        ))}
+    </tr>
+));
+
 const ImportMatrixPage = () => {
     const [leagues, setLeagues] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -166,13 +242,6 @@ const ImportMatrixPage = () => {
         }
     };
 
-    const getStatusCode = (pillarStatus) => {
-        if (typeof pillarStatus === 'object' && pillarStatus !== null) return pillarStatus.code ?? STATUS.NONE;
-        if (pillarStatus === 1) return STATUS.COMPLETE;
-        if (pillarStatus === 0.5) return STATUS.PARTIAL;
-        return STATUS.NONE;
-    };
-
     const handleIndicatorClick = (leagueId, year, pillar, statusCode) => {
         if (statusCode === STATUS.LOCKED || statusCode === STATUS.NO_DATA) return;
         if (statusCode === STATUS.COMPLETE) {
@@ -193,6 +262,18 @@ const ImportMatrixPage = () => {
 
     const runBatch = () => {
         if (batchQueue.length === 0) return;
+
+        const consolidateQueue = (queue) => {
+            const map = {};
+            queue.forEach(item => {
+                if (!map[item.leagueId]) map[item.leagueId] = { leagueId: item.leagueId, seasons: [] };
+                let season = map[item.leagueId].seasons.find(s => s.year === item.year);
+                if (!season) { season = { year: item.year, pillars: [] }; map[item.leagueId].seasons.push(season); }
+                if (!season.pillars.includes(item.pillar)) season.pillars.push(item.pillar);
+            });
+            return Object.values(map);
+        };
+
         startImport('/import/batch', 'POST', { selection: consolidateQueue(batchQueue) });
         setBatchQueue([]);
     };
@@ -202,7 +283,8 @@ const ImportMatrixPage = () => {
         const newItems = [];
         leagues.filter(l => selectedLeagues.includes(l.id)).forEach(l => {
             l.seasons.forEach(s => {
-                const statusCode = getStatusCode(s.status[category]);
+                const sPillar = s.status[category];
+                const statusCode = (typeof sPillar === 'object' && sPillar !== null) ? (sPillar.code ?? STATUS.NONE) : (sPillar === 1 ? STATUS.COMPLETE : (sPillar === 0.5 ? STATUS.PARTIAL : STATUS.NONE));
                 if (statusCode === STATUS.NONE || statusCode === STATUS.PARTIAL) {
                     newItems.push({ leagueId: l.id, year: s.year, pillar: category });
                 }
@@ -218,15 +300,8 @@ const ImportMatrixPage = () => {
         setSelectedLeagues([]);
     };
 
-    const consolidateQueue = (queue) => {
-        const map = {};
-        queue.forEach(item => {
-            if (!map[item.leagueId]) map[item.leagueId] = { leagueId: item.leagueId, seasons: [] };
-            let season = map[item.leagueId].seasons.find(s => s.year === item.year);
-            if (!season) { season = { year: item.year, pillars: [] }; map[item.leagueId].seasons.push(season); }
-            if (!season.pillars.includes(item.pillar)) season.pillars.push(item.pillar);
-        });
-        return Object.values(map);
+    const toggleLeagueSelection = (leagueId) => {
+        setSelectedLeagues(prev => prev.includes(leagueId) ? prev.filter(id => id !== leagueId) : [...prev, leagueId]);
     };
 
     if (loading) return <div className="matrix-container"><h1>Loading Matrix...</h1></div>;
@@ -320,7 +395,11 @@ const ImportMatrixPage = () => {
                             <thead>
                                 <tr>
                                     <th style={{ width: '40px' }}>
-                                        <input type="checkbox" checked={selectedLeagues.length === leagues.length} onChange={() => setSelectedLeagues(selectedLeagues.length === leagues.length ? [] : leagues.map(l => l.id))} />
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedLeagues.length === leagues.length && leagues.length > 0}
+                                            onChange={() => setSelectedLeagues(selectedLeagues.length === leagues.length ? [] : leagues.map(l => l.id))}
+                                        />
                                     </th>
                                     <th>Competition</th>
                                     {years.map(y => <th key={y}>{y}</th>)}
@@ -328,44 +407,15 @@ const ImportMatrixPage = () => {
                             </thead>
                             <tbody>
                                 {leagues.map(league => (
-                                    <tr key={league.id} className={selectedLeagues.includes(league.id) ? 'selected' : ''}>
-                                        <td><input type="checkbox" checked={selectedLeagues.includes(league.id)} onChange={() => setSelectedLeagues(prev => prev.includes(league.id) ? prev.filter(id => id !== league.id) : [...prev, league.id])} /></td>
-                                        <td>
-                                            <div className="competition-cell">
-                                                <img src={league.logo} alt="" className="comp-logo" />
-                                                <div className="comp-info">
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                        <img src={league.flag} alt="" className="comp-flag" />
-                                                        <span className="comp-name">{league.name}</span>
-                                                    </div>
-                                                    <span className="comp-country">{league.country}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        {years.map(year => {
-                                            const season = league.seasons.find(s => s.year === year);
-                                            if (!season) return <td key={year}></td>;
-                                            const pillars = ['core', 'events', 'lineups', 'fs', 'ps', 'trophies'];
-                                            const pillarLabels = { core: 'C', events: 'E', lineups: 'L', fs: 'FS', ps: 'PS', trophies: 'T' };
-                                            return (
-                                                <td key={year} className="season-cell">
-                                                    <div className="status-box">
-                                                        {pillars.map(pillar => {
-                                                            const s = season.status[pillar];
-                                                            const code = getStatusCode(s);
-                                                            const isQueued = batchQueue.some(q => q.leagueId === league.id && q.year === year && q.pillar === pillar);
-                                                            return (
-                                                                <div key={pillar} className={`indicator indicator-${code === 4 ? 'locked' : (code === 3 ? 'nodata' : (code === 2 ? 'complete' : (code === 1 ? 'partial' : 'none')))} ${isQueued ? 'queued' : ''} tooltip`} onClick={() => handleIndicatorClick(league.id, year, pillar, code)}>
-                                                                    {code === 4 ? '🔒' : pillarLabels[pillar]}
-                                                                    <span className="tooltiptext">{pillar.toUpperCase()}: {typeof TOOLTIP_MESSAGES[code] === 'function' ? TOOLTIP_MESSAGES[code](s) : TOOLTIP_MESSAGES[code]}</span>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
+                                    <MatrixRow
+                                        key={league.id}
+                                        league={league}
+                                        years={years}
+                                        isSelected={selectedLeagues.includes(league.id)}
+                                        onSelect={toggleLeagueSelection}
+                                        batchQueue={batchQueue}
+                                        onIndicatorClick={handleIndicatorClick}
+                                    />
                                 ))}
                             </tbody>
                         </table>

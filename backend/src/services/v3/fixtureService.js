@@ -136,9 +136,6 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
     }
 
     try {
-        // Run in transaction
-        await db.run('BEGIN TRANSACTION');
-
         // Clear existing events for this fixture just in case (e.g. re-sync)
         await db.run('DELETE FROM V3_Fixture_Events WHERE fixture_id = ?', cleanParams([localFixtureId]));
 
@@ -150,26 +147,24 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
 
         for (const ev of events) {
             // Must resolve TEAM ID to local ID, otherwise we store API ID which mismatches V3_Fixtures
-            const localTeamId = (await db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([ev.team.id])))?.team_id || ev.team.id; // Fallback to raw if not found, but should find
+            const localTeamId = (await db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([ev.team.id])))?.team_id || ev.team.id;
 
             await db.run(insertSql, cleanParams([
                 localFixtureId,
                 ev.time.elapsed,
-                ev.time.extra, // API field is usually 'extra', mapped to DB 'extra_minute'
+                ev.time.extra,
                 localTeamId,
-                ev.player.id,
-                ev.player.name,
-                ev.assist.id,
-                ev.assist.name,
+                ev.player.id || null,
+                ev.player.name || null,
+                ev.assist.id || null,
+                ev.assist.name || null,
                 ev.type,
                 ev.detail,
                 ev.comments
             ]));
         }
-
-        await db.run('COMMIT');
     } catch (err) {
-        try { await db.run('ROLLBACK'); } catch (e) { /* ignore rollback error */ }
+        console.error(`   ❌ Error storing events for fixture ${localFixtureId}:`, err.message);
         throw err;
     }
 }

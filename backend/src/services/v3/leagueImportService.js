@@ -71,23 +71,16 @@ const importTeamsAndVenues = async (targetApiId, seasonYear, sendLog) => {
     sendLog(`ℹ️ Found ${teams.length} teams. Importing...`, 'info');
 
     const localTeamMap = {};
-    await db.run('BEGIN TRANSACTION');
-    try {
-        for (let i = 0; i < teams.length; i++) {
-            const t = teams[i];
-            await ImportControl.checkAbortOrPause(sendLog);
-            if (sendLog.emit) {
-                sendLog.emit({ type: 'progress', step: 'teams', current: i + 1, total: teams.length, label: `Importing ${t.team.name}` });
-            }
-            let venueId = t.venue?.id ? await DB.getOrInsertVenue(Mappers.venue(t.venue)) : null;
-            localTeamMap[t.team.id] = await DB.upsertTeam(Mappers.team(t.team), venueId);
+    for (let i = 0; i < teams.length; i++) {
+        const t = teams[i];
+        await ImportControl.checkAbortOrPause(sendLog);
+        if (sendLog.emit) {
+            sendLog.emit({ type: 'progress', step: 'teams', current: i + 1, total: teams.length, label: `Importing ${t.team.name}` });
         }
-        await db.run('COMMIT');
-        return { teams, localTeamMap };
-    } catch (err) {
-        await db.run('ROLLBACK');
-        throw err;
+        let venueId = t.venue?.id ? await DB.getOrInsertVenue(Mappers.venue(t.venue)) : null;
+        localTeamMap[t.team.id] = await DB.upsertTeam(Mappers.team(t.team), venueId);
     }
+    return { teams, localTeamMap };
 };
 
 /**
@@ -110,7 +103,6 @@ const importPlayersAndStats = async (teams, seasonYear, targetApiId, localLeague
                     if (!playersRes.response?.length) break;
                     totalPages = playersRes.paging.total;
 
-                    await db.run('BEGIN TRANSACTION');
                     for (const p of playersRes.response) {
                         const localPlayerId = await DB.upsertPlayer(Mappers.player(p.player));
                         const leagueStats = p.statistics.filter(s => s.league.id === targetApiId);
@@ -122,9 +114,7 @@ const importPlayersAndStats = async (teams, seasonYear, targetApiId, localLeague
                         }
                         totalPlayers++;
                     }
-                    await db.run('COMMIT');
                 } catch (err) {
-                    try { await db.run('ROLLBACK'); } catch (e) { }
                     sendLog(`      ⚠️ Error fetching players for ${t.team.name}: ${err.message}`, 'error');
                 }
                 page++;
@@ -137,6 +127,40 @@ const importPlayersAndStats = async (teams, seasonYear, targetApiId, localLeague
         await new Promise(r => setTimeout(r, 1000));
     }
     return totalPlayers;
+};
+
+const importStandings = async (targetApiId, seasonYear, localLeagueId, localTeamMap, sendLog) => {
+    try {
+        const standingsRes = await footballApi.getStandings(targetApiId, seasonYear);
+        if (standingsRes.response?.[0]?.league?.standings) {
+            for (const group of standingsRes.response[0].league.standings) {
+                for (const row of group) {
+                    let teamId = localTeamMap[row.team.id] || (await db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([row.team.id])))?.team_id;
+                    if (teamId) await DB.upsertStanding(Mappers.standings(row, localLeagueId, teamId, seasonYear));
+                }
+            }
+            await db.run("UPDATE V3_League_Seasons SET imported_standings = true WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+        }
+    } catch (err) {
+        sendLog(`⚠️ Standings import failed: ${err.message}`, 'error');
+    }
+};
+
+const importFixtures = async (targetApiId, seasonYear, localLeagueId, localTeamMap, sendLog) => {
+    try {
+        const fixturesRes = await footballApi.getFixtures(targetApiId, seasonYear);
+        if (fixturesRes.response?.length) {
+            for (const f of fixturesRes.response) {
+                let hId = localTeamMap[f.teams.home.id] || (await db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([f.teams.home.id])))?.team_id;
+                let aId = localTeamMap[f.teams.away.id] || (await db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([f.teams.away.id])))?.team_id;
+                const venueId = f.fixture.venue.id ? await DB.getOrInsertVenue(Mappers.venue(f.fixture.venue)) : null;
+                if (hId && aId) await DB.upsertFixture(Mappers.fixture(f, localLeagueId, venueId, hId, aId, seasonYear));
+            }
+            await db.run("UPDATE V3_League_Seasons SET imported_fixtures = true, sync_status = 'FULL' WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+        }
+    } catch (err) {
+        sendLog(`⚠️ Fixtures import failed: ${err.message}`, 'error');
+    }
 };
 
 /**
@@ -160,37 +184,8 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) 
     await db.run("UPDATE V3_League_Seasons SET imported_players = true, last_imported_at = CURRENT_TIMESTAMP, last_sync_core = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
     sendLog(`Processed ${totalPlayers} players.`, 'success');
 
-    // Standings
-    try {
-        const standingsRes = await footballApi.getStandings(targetApiId, seasonYear);
-        if (standingsRes.response?.[0]?.league?.standings) {
-            await db.run('BEGIN TRANSACTION');
-            for (const group of standingsRes.response[0].league.standings) {
-                for (const row of group) {
-                    let teamId = localTeamMap[row.team.id] || (await db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([row.team.id])))?.team_id;
-                    if (teamId) await DB.upsertStanding(Mappers.standings(row, localLeagueId, teamId, seasonYear));
-                }
-            }
-            await db.run('COMMIT');
-            await db.run("UPDATE V3_League_Seasons SET imported_standings = true WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
-        }
-    } catch (err) { sendLog(`⚠️ Standings import failed: ${err.message}`, 'error'); }
-
-    // Fixtures & Promotion
-    try {
-        const fixturesRes = await footballApi.getFixtures(targetApiId, seasonYear);
-        if (fixturesRes.response?.length) {
-            await db.run('BEGIN TRANSACTION');
-            for (const f of fixturesRes.response) {
-                let hId = localTeamMap[f.teams.home.id] || (await db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([f.teams.home.id])))?.team_id;
-                let aId = localTeamMap[f.teams.away.id] || (await db.get("SELECT team_id FROM V3_Teams WHERE api_id=?", cleanParams([f.teams.away.id])))?.team_id;
-                const venueId = f.fixture.venue.id ? await DB.getOrInsertVenue(Mappers.venue(f.fixture.venue)) : null;
-                if (hId && aId) await DB.upsertFixture(Mappers.fixture(f, localLeagueId, venueId, hId, aId, seasonYear));
-            }
-            await db.run('COMMIT');
-            await db.run("UPDATE V3_League_Seasons SET imported_fixtures = true, sync_status = 'FULL' WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
-        }
-    } catch (err) { sendLog(`⚠️ Fixtures import failed: ${err.message}`, 'error'); }
+    await importStandings(targetApiId, seasonYear, localLeagueId, localTeamMap, sendLog);
+    await importFixtures(targetApiId, seasonYear, localLeagueId, localTeamMap, sendLog);
 
     const disc = await db.get("SELECT is_discovered FROM V3_Leagues WHERE league_id = ?", cleanParams([localLeagueId]));
     if (disc?.is_discovered) await db.run("UPDATE V3_Leagues SET is_discovered = false WHERE league_id = ?", cleanParams([localLeagueId]));
@@ -201,6 +196,37 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) 
 };
 
 // --- Player Career Sync ---
+
+const syncPlayerYearStats = async (playerApiId, playerId, year, sendLog) => {
+    try {
+        const statsRes = await footballApi.getPlayerStatistics(playerApiId, year);
+        if (!statsRes.response?.length) return 0;
+
+        let discoveredInYear = 0;
+        for (const item of statsRes.response) {
+            for (const stat of (item.statistics || [])) {
+                const countryName = stat.league.country || 'World';
+                const countryId = await DB.getOrInsertCountry(Mappers.country({ name: countryName, code: null, flag: stat.league.flag }));
+                const preLeague = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([stat.league.id]));
+                const localLeagueId = await DB.upsertLeague(Mappers.league(stat), countryId, countryName);
+                if (!preLeague) {
+                    discoveredInYear++;
+                    sendLog(`✨ discovered: ${stat.league.name}`, 'info');
+                }
+                const localTeamId = await DB.upsertTeam(Mappers.team(stat.team), null);
+                const seasonId = await DB.upsertLeagueSeason(Mappers.leagueSeason(localLeagueId, year));
+
+                const mapped = Mappers.stats(stat, playerId, localTeamId, localLeagueId, year);
+                await DB.upsertPlayerStats(mapped);
+                await db.run("UPDATE V3_League_Seasons SET sync_status = 'PARTIAL' WHERE league_season_id = ? AND sync_status = 'NONE'", cleanParams([seasonId]));
+            }
+        }
+        return discoveredInYear;
+    } catch (err) {
+        sendLog(`   ❌ Error Year ${year}: ${err.message}`, 'error');
+        return 0;
+    }
+};
 
 export const syncPlayerCareerService = async (playerId, sendLog) => {
     const player = await db.get("SELECT api_id, name FROM V3_Players WHERE player_id = ?", cleanParams([playerId]));
@@ -220,34 +246,7 @@ export const syncPlayerCareerService = async (playerId, sendLog) => {
         await ImportControl.checkAbortOrPause(sendLog);
         if (sendLog.emit) sendLog.emit({ type: 'fetching', year, current: i + 1, total: yearsToProcess.length });
 
-        try {
-            const statsRes = await footballApi.getPlayerStatistics(player.api_id, year);
-            if (!statsRes.response?.length) continue;
-
-            await db.run('BEGIN TRANSACTION');
-            for (const item of statsRes.response) {
-                for (const stat of (item.statistics || [])) {
-                    const countryName = stat.league.country || 'World';
-                    const countryId = await DB.getOrInsertCountry(Mappers.country({ name: countryName, code: null, flag: stat.league.flag }));
-                    const preLeague = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([stat.league.id]));
-                    const localLeagueId = await DB.upsertLeague(Mappers.league(stat), countryId, countryName);
-                    if (!preLeague) {
-                        discoveredCount++;
-                        sendLog(`✨ discovered: ${stat.league.name}`, 'info');
-                    }
-                    const localTeamId = await DB.upsertTeam(Mappers.team(stat.team), null);
-                    const seasonId = await DB.upsertLeagueSeason(Mappers.leagueSeason(localLeagueId, year));
-
-                    const mapped = Mappers.stats(stat, playerId, localTeamId, localLeagueId, year);
-                    await DB.upsertPlayerStats(mapped);
-                    await db.run("UPDATE V3_League_Seasons SET sync_status = 'PARTIAL' WHERE league_season_id = ? AND sync_status = 'NONE'", cleanParams([seasonId]));
-                }
-            }
-            await db.run('COMMIT');
-        } catch (err) {
-            try { await db.run('ROLLBACK'); } catch (e) { }
-            sendLog(`   ❌ Error Year ${year}: ${err.message}`, 'error');
-        }
+        discoveredCount += await syncPlayerYearStats(player.api_id, playerId, year, sendLog);
     }
     return { discovered: discoveredCount, years: yearsToProcess };
 };

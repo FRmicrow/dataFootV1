@@ -10,19 +10,10 @@ export class SimulationService {
     /**
      * US_201: Pre-Flight Readiness Check
      * Validates that a league/season has enough data to run a simulation.
-     * NO ODDS REQUIRED — purely based on fixture and feature store data.
      */
     static async checkSimulationReadiness(leagueId, seasonYear) {
         try {
-            // 1. Check total finished fixtures for this league/season
-            const fixtureCount = await db.get(`
-                SELECT COUNT(*) as count 
-                FROM V3_Fixtures 
-                WHERE league_id = ? AND season_year = ? 
-                  AND status_short IN ('FT', 'AET', 'PEN')
-            `, cleanParams([leagueId, seasonYear]));
-
-            const totalFixtures = fixtureCount?.count || 0;
+            const totalFixtures = await this.#getFixtureCount(leagueId, seasonYear);
 
             if (totalFixtures === 0) {
                 return {
@@ -32,28 +23,10 @@ export class SimulationService {
                 };
             }
 
-            // 2. Check feature store coverage (do we have ML features?)
-            const featureCount = await db.get(`
-                SELECT COUNT(*) as count 
-                FROM V3_ML_Feature_Store fs
-                JOIN V3_Fixtures f ON fs.fixture_id = f.fixture_id
-                WHERE f.league_id = ? AND f.season_year = ?
-                  AND f.status_short IN ('FT', 'AET', 'PEN')
-            `, cleanParams([leagueId, seasonYear]));
+            const totalFeatures = await this.#getFeatureCount(leagueId, seasonYear);
+            const featureCoverage = (totalFeatures / totalFixtures) * 100;
+            const modelExists = await this.#getActiveModel(leagueId);
 
-            const totalFeatures = featureCount?.count || 0;
-            const featureCoverage = totalFixtures > 0 ? (totalFeatures / totalFixtures) * 100 : 0;
-
-            // 3. Check if an active model exists for this league
-            const modelExists = await db.get(`
-                SELECT id, accuracy, horizon_type, trained_at
-                FROM V3_Model_Registry
-                WHERE (league_id = ? OR league_id IS NULL) AND is_active = 1
-                ORDER BY league_id DESC, id DESC LIMIT 1
-            `, cleanParams([leagueId]));
-
-            // 4. Readiness Decision
-            // We need at least 30 finished fixtures and some feature coverage
             if (totalFixtures < 30) {
                 return {
                     status: 'PARTIAL',
@@ -64,7 +37,6 @@ export class SimulationService {
                 };
             }
 
-            // Ready — even without pre-computed features (the Forge will compute them on-the-fly)
             return {
                 status: 'READY',
                 total_fixtures: totalFixtures,
@@ -84,9 +56,38 @@ export class SimulationService {
         }
     }
 
+    static async #getFixtureCount(leagueId, seasonYear) {
+        const res = await db.get(`
+            SELECT COUNT(*) as count 
+            FROM V3_Fixtures 
+            WHERE league_id = ? AND season_year = ? 
+              AND status_short IN ('FT', 'AET', 'PEN')
+        `, cleanParams([leagueId, seasonYear]));
+        return res?.count || 0;
+    }
+
+    static async #getFeatureCount(leagueId, seasonYear) {
+        const res = await db.get(`
+            SELECT COUNT(*) as count 
+            FROM V3_ML_Feature_Store fs
+            JOIN V3_Fixtures f ON fs.fixture_id = f.fixture_id
+            WHERE f.league_id = ? AND f.season_year = ?
+              AND f.status_short IN ('FT', 'AET', 'PEN')
+        `, cleanParams([leagueId, seasonYear]));
+        return res?.count || 0;
+    }
+
+    static async #getActiveModel(leagueId) {
+        return await db.get(`
+            SELECT id, accuracy, horizon_type, trained_at
+            FROM V3_Model_Registry
+            WHERE (league_id = ? OR league_id IS NULL) AND is_active = 1
+            ORDER BY league_id DESC, id DESC LIMIT 1
+        `, cleanParams([leagueId]));
+    }
+
     /**
      * Get Simulation Results (Match-level predictions vs actuals)
-     * Returns the prediction tape for a given simulation.
      */
     static async getSimulationResults(simId) {
         try {
@@ -106,20 +107,26 @@ export class SimulationService {
                 ORDER BY f.date ASC, f.fixture_id ASC
             `, cleanParams([simId]));
 
-            // Format for frontend consumption
-            return results.map(r => ({
-                fixture_id: r.fixture_id,
-                round_name: r.round_name,
-                home_team_name: r.home_team_name || 'Home',
-                away_team_name: r.away_team_name || 'Away',
-                prob_home: r.prob_home ? (r.prob_home * 100).toFixed(1) + '%' : '-',
-                prob_draw: r.prob_draw ? (r.prob_draw * 100).toFixed(1) + '%' : '-',
-                prob_away: r.prob_away ? (r.prob_away * 100).toFixed(1) + '%' : '-',
-                score: r.goals_home !== null ? `${r.goals_home}-${r.goals_away}` : '-',
-                predicted_outcome: r.actual_winner !== null ? ['X', '1', '2'][r.actual_winner === 1 ? 1 : (r.actual_winner === 2 ? 2 : 0)] : '-',
-                actual_result: r.actual_winner !== null ? ['X', '1', '2'][r.actual_winner === 1 ? 1 : (r.actual_winner === 2 ? 2 : 0)] : '-',
-                is_correct: r.is_correct
-            }));
+            return results.map(r => {
+                const mapResult = (val) => {
+                    if (val === null) return '-';
+                    return ['X', '1', '2'][val === 1 ? 1 : (val === 2 ? 2 : 0)];
+                };
+
+                return {
+                    fixture_id: r.fixture_id,
+                    round_name: r.round_name,
+                    home_team_name: r.home_team_name || 'Home',
+                    away_team_name: r.away_team_name || 'Away',
+                    prob_home: r.prob_home ? (r.prob_home * 100).toFixed(1) + '%' : '-',
+                    prob_draw: r.prob_draw ? (r.prob_draw * 100).toFixed(1) + '%' : '-',
+                    prob_away: r.prob_away ? (r.prob_away * 100).toFixed(1) + '%' : '-',
+                    score: r.goals_home !== null ? `${r.goals_home}-${r.goals_away}` : '-',
+                    predicted_outcome: mapResult(r.actual_winner), // FIXME: should be predicted_winner if column exists
+                    actual_result: mapResult(r.actual_winner),
+                    is_correct: r.is_correct
+                };
+            });
 
         } catch (err) {
             console.error('getSimulationResults error:', err);

@@ -23,6 +23,29 @@ export class CompetitionRanker {
         const isPlayoff = name.includes('play-off') || name.includes('relegation') || name.includes('promotion');
 
         // 1. International National
+        const nationalRank = this.#rankInternationalNational(name, country);
+        if (nationalRank) return nationalRank;
+
+        // 2. International Club
+        const clubRank = this.#rankInternationalClub(name, country);
+        if (clubRank) return clubRank;
+
+        // 3. Domestic Competitions (Leagues)
+        const leagueRank = this.#rankDomesticLeague(name, isPlayoff);
+        if (leagueRank) return leagueRank;
+
+        if (type === 'league' || !type) {
+            return isQualification || isPlayoff ? 4 : 3;
+        }
+
+        if (type === 'cup') {
+            return this.#rankDomesticCup(name);
+        }
+
+        return 3; // Fallback
+    }
+
+    static #rankInternationalNational(name, country) {
         if (country === 'world' && !name.includes('club')) {
             if (name.includes('world cup') || name.includes('euro') || name.includes('copa america') ||
                 name.includes('africa cup') || name.includes('asian cup') || name.includes('olympics')) {
@@ -31,16 +54,20 @@ export class CompetitionRanker {
             if (name.includes('nations league')) return 2;
             return 3;
         }
+        return null;
+    }
 
-        // 2. International Club
+    static #rankInternationalClub(name, country) {
         if (country === 'world' || name.includes('champions league') || name.includes('europa') || name.includes('conference league')) {
             if (name.includes('champions league') || name.includes('libertadores')) return 1;
             if (name.includes('europa league') || name.includes('sudamericana')) return 2;
             if (name.includes('conference league')) return 3;
             if (name.includes('championships') || name.includes('club world cup')) return 1;
         }
+        return null;
+    }
 
-        // 3. Domestic Competitions (Leagues)
+    static #rankDomesticLeague(name, isPlayoff) {
         const isTier1 = name.startsWith('premier league') || name.startsWith('ligue 1') || name.startsWith('serie a') ||
             name.startsWith('bundesliga') || name.startsWith('la liga') || name.startsWith('eredivisie') ||
             name.startsWith('primeira liga') || name === 'mls' || name.startsWith('pro league') ||
@@ -48,37 +75,26 @@ export class CompetitionRanker {
             name.includes('division 1') || name.includes('1. division') || name.includes('1. liga') ||
             name.startsWith('first division');
 
-        if (isTier1) {
-            return isPlayoff ? 2 : 1;
-        }
+        if (isTier1) return isPlayoff ? 2 : 1;
 
         const isTier2 = name.includes('championship') || name.startsWith('ligue 2') || name.startsWith('serie b') ||
             name.includes('2. bundesliga') || name.includes('segunda') ||
             name.includes('2. division') || name.includes('2. liga') || name.startsWith('second division');
 
-        if (isTier2) {
-            return isPlayoff ? 3 : 2;
-        }
+        if (isTier2) return isPlayoff ? 3 : 2;
 
-        if (type === 'league' || !type) {
-            // Default to Tier 3 for other leagues or unknown types that don't match Tier 1/2
-            return isQualification || isPlayoff ? 4 : 3;
-        }
+        return null;
+    }
 
-        if (type === 'cup') {
-            // Primary National Cups
-            if (name.includes('fa cup') || name.includes('copa del rey') || name.includes('dfb pokal') ||
-                name.includes('coupe de france') || name.includes('coppa italia') || name.includes('knvb beker') ||
-                name.includes('taca de portugal') || name.includes('us open cup') || name === 'cup') {
-                return 1;
-            }
-            // Secondary or specialized cups (League Cup, Super Cup)
-            if (name.includes('league cup') || name.includes('super cup') || name.includes('trophy') || name.includes('shield')) {
-                return 2;
-            }
+    static #rankDomesticCup(name) {
+        if (name.includes('fa cup') || name.includes('copa del rey') || name.includes('dfb pokal') ||
+            name.includes('coupe de france') || name.includes('coppa italia') || name.includes('knvb beker') ||
+            name.includes('taca de portugal') || name.includes('us open cup') || name === 'cup') {
+            return 1;
+        }
+        if (name.includes('league cup') || name.includes('super cup') || name.includes('trophy') || name.includes('shield')) {
             return 2;
         }
-
-        return 3; // Fallback
+        return 2;
     }
 }

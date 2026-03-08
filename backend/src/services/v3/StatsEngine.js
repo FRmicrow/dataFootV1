@@ -177,8 +177,7 @@ class StatsEngine {
         );
         teams.forEach(t => teamsMap.set(t.api_id, t.team_id));
 
-        // 4. Insert Transaction
-        await db.run('BEGIN TRANSACTION');
+        // 4. Insert Data
         try {
             for (const teamLineup of lineups) {
                 const apiTeamId = teamLineup.team.id;
@@ -192,7 +191,7 @@ class StatsEngine {
                 // Prepare Data
                 const coach = teamLineup.coach || {};
                 const formation = teamLineup.formation;
-                const startingXI = JSON.stringify(teamLineup.startXI); // API: startXI
+                const startingXI = JSON.stringify(teamLineup.startXI);
                 const subs = JSON.stringify(teamLineup.substitutes);
 
                 // Upsert
@@ -206,7 +205,7 @@ class StatsEngine {
                         formation = excluded.formation,
                         starting_xi = excluded.starting_xi,
                         substitutes = excluded.substitutes,
-                        created_at = CURRENT_TIMESTAMP
+                        updated_at = CURRENT_TIMESTAMP
                 `, [
                     fixtureId,
                     localTeamId,
@@ -217,9 +216,8 @@ class StatsEngine {
                     subs
                 ]);
             }
-            await db.run('COMMIT');
         } catch (e) {
-            await db.run('ROLLBACK');
+            console.error(`[Sync] Error inserting lineups for fixture ${fixtureId}:`, e.message);
             throw e;
         }
 

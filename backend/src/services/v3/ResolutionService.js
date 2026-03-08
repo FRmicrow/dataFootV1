@@ -72,13 +72,7 @@ export class ResolutionService {
 
         console.log(`🔄 Merging Ghost Player ${ghostId} into Master ${masterId}...`);
 
-        await db.run("BEGIN TRANSACTION");
         try {
-            // Remap Player Stats
-            // Handle unique constraint (player_id, team_id, league_id, season_year)
-            // If master already has stats for the same context, we should probably aggregate or keep master's.
-            // AC says "remap", let's be careful about unique conflicts.
-
             const ghostStats = await db.all("SELECT * FROM V3_Player_Stats WHERE player_id = ?", cleanParams([ghostId]));
             for (const stat of ghostStats) {
                 const conflict = await db.get(`
@@ -87,9 +81,6 @@ export class ResolutionService {
                 `, cleanParams([masterId, stat.team_id, stat.league_id, stat.season_year]));
 
                 if (conflict) {
-                    // Conflict: Master already has stats here. 
-                    // To keep it simple and safe for now: delete ghost stat (no remap)
-                    // Or we could sum them up. Given it's stats, summing is logical.
                     await db.run(`
                         UPDATE V3_Player_Stats SET 
                         games_appearences = games_appearences + ?,
@@ -99,7 +90,6 @@ export class ResolutionService {
                     `, cleanParams([stat.games_appearences, stat.goals_total, stat.goals_assists, conflict.stat_id]));
                     await db.run("DELETE FROM V3_Player_Stats WHERE stat_id = ?", cleanParams([stat.stat_id]));
                 } else {
-                    // No conflict: remap
                     await db.run("UPDATE V3_Player_Stats SET player_id = ? WHERE stat_id = ?", cleanParams([masterId, stat.stat_id]));
                 }
             }
@@ -114,16 +104,14 @@ export class ResolutionService {
                     AND t2.trophy_id = V3_Trophies.trophy_id
                 )
             `, cleanParams([masterId, ghostId, masterId]));
-            await db.run("DELETE FROM V3_Trophies WHERE player_id = ?", cleanParams([ghostId])); // Clean up ignored conflicts
+            await db.run("DELETE FROM V3_Trophies WHERE player_id = ?", cleanParams([ghostId]));
 
             // Delete Ghost Record
             await db.run("DELETE FROM V3_Players WHERE player_id = ?", cleanParams([ghostId]));
 
-            await db.run("COMMIT");
             console.log(`✅ Merge complete. Ghost record ${ghostId} removed.`);
             return { success: true, masterId, ghostId };
         } catch (err) {
-            await db.run("ROLLBACK");
             console.error("❌ Merge failed:", err.message);
             throw err;
         }
