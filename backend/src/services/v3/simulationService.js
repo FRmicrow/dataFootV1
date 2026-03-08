@@ -109,8 +109,13 @@ export class SimulationService {
 
             return results.map(r => {
                 const mapResult = (val) => {
-                    if (val === null) return '-';
-                    return ['X', '1', '2'][val === 1 ? 1 : (val === 2 ? 2 : 0)];
+                    const statusMap = {
+                        null: '-',
+                        0: 'X',
+                        1: '1',
+                        2: '2'
+                    };
+                    return statusMap[val] || (val === null ? '-' : 'X');
                 };
 
                 return {

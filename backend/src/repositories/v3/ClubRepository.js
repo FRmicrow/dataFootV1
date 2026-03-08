@@ -54,103 +54,100 @@ class ClubRepository extends BaseRepository {
     async getClubTacticalSummary(teamId, options = {}) {
         const { year, competition } = options;
 
-        const fetchStats = async (venueCondition = '') => {
-            let sql = `
-                SELECT 
-                    COUNT(DISTINCT fs.fixture_id) as matches,
-                    AVG(CAST(NULLIF(REPLACE(fs.ball_possession, '%', ''), '') AS FLOAT)) as possession,
-                    AVG(fs.pass_accuracy_pct) as pass_accuracy,
-                    AVG(fs.shots_total) as shots_per_match,
-                    AVG(fs.shots_on_goal) as shots_on_target_per_match,
-                    AVG(fs.corner_kicks) as corners_per_match,
-                    AVG(fs.goalkeeper_saves) as saves_per_match,
-                    AVG(fs.yellow_cards) as yellow_cards_per_match,
-                    AVG(f.goals_home) as goals_home,
-                    AVG(f.goals_away) as goals_away
-                FROM V3_Fixture_Stats fs
-                JOIN V3_Fixtures f ON fs.fixture_id = f.fixture_id
-                WHERE fs.team_id = $1
-            `;
-            const params = [teamId];
-            let paramIdx = 2;
-
-            if (year) {
-                sql += ` AND f.season_year = $${paramIdx++}`;
-                params.push(year);
-            }
-            if (competition && competition !== 'all') {
-                sql += ` AND f.league_id = $${paramIdx++}`;
-                params.push(competition);
-            }
-            if (venueCondition === 'home') {
-                sql += ` AND f.home_team_id = $${paramIdx++}`;
-                params.push(teamId);
-            } else if (venueCondition === 'away') {
-                sql += ` AND f.away_team_id = $${paramIdx++}`;
-                params.push(teamId);
-            }
-
-            const row = await this.db.get(sql, cleanParams(params));
-
-            if (row) {
-                row.possession = row.possession ? Number.parseFloat(row.possession.toFixed(1)) : 0;
-                row.pass_accuracy = row.pass_accuracy ? Number.parseFloat(row.pass_accuracy.toFixed(1)) : 0;
-                row.shots_per_match = row.shots_per_match ? Number.parseFloat(row.shots_per_match.toFixed(1)) : 0;
-                row.shots_on_target_per_match = row.shots_on_target_per_match ? Number.parseFloat(row.shots_on_target_per_match.toFixed(1)) : 0;
-                row.corners_per_match = row.corners_per_match ? Number.parseFloat(row.corners_per_match.toFixed(1)) : 0;
-                row.saves_per_match = row.saves_per_match ? Number.parseFloat(row.saves_per_match.toFixed(1)) : 0;
-                row.yellow_cards_per_match = row.yellow_cards_per_match ? Number.parseFloat(row.yellow_cards_per_match.toFixed(1)) : 0;
-            }
-            return row;
-        };
-
         const [all, home, away] = await Promise.all([
-            fetchStats('all'),
-            fetchStats('home'),
-            fetchStats('away')
+            this.#fetchTacticalStats(teamId, 'all', year, competition),
+            this.#fetchTacticalStats(teamId, 'home', year, competition),
+            this.#fetchTacticalStats(teamId, 'away', year, competition)
         ]);
 
-        const finalize = async (s, venue) => {
-            if (!s) return null;
-
-            let goalsSql = `
-                SELECT 
-                    SUM(CASE WHEN home_team_id = $1 THEN goals_home ELSE goals_away END) as scored,
-                    SUM(CASE WHEN home_team_id = $1 THEN goals_away ELSE goals_home END) as conceded,
-                    SUM(CASE WHEN home_team_id = $1 AND goals_away = 0 THEN 1 WHEN away_team_id = $1 AND goals_home = 0 THEN 1 ELSE 0 END) as clean_sheets,
-                    SUM(CASE WHEN (home_team_id = $1 AND goals_home > goals_away) OR (away_team_id = $1 AND goals_away > goals_home) THEN 1 ELSE 0 END) as wins,
-                    COUNT(fixture_id) as played
-                FROM V3_Fixtures
-                WHERE (home_team_id = $1 OR away_team_id = $1) AND status_short IN ('FT', 'AET', 'PEN')
-            `;
-            let goalsParams = [teamId];
-            let gIdx = 2;
-
-            if (year) { goalsSql += ` AND season_year = $${gIdx++}`; goalsParams.push(year); }
-            if (competition && competition !== 'all') { goalsSql += ` AND league_id = $${gIdx++}`; goalsParams.push(competition); }
-            if (venue === 'home') { goalsSql += ` AND home_team_id = $${gIdx++}`; goalsParams.push(teamId); }
-            if (venue === 'away') { goalsSql += ` AND away_team_id = $${gIdx++}`; goalsParams.push(teamId); }
-
-            const g = await this.db.get(goalsSql, cleanParams(goalsParams));
-
-            const matchesPlayed = Number.parseInt(g.played, 10) || 0;
-            s.goals_scored_per_match = matchesPlayed > 0 ? Number.parseFloat((g.scored / matchesPlayed).toFixed(2)) : 0;
-            s.goals_conceded_per_match = matchesPlayed > 0 ? Number.parseFloat((g.conceded / matchesPlayed).toFixed(2)) : 0;
-            s.clean_sheet_pct = matchesPlayed > 0 ? Number.parseFloat(((g.clean_sheets / matchesPlayed) * 100).toFixed(1)) : 0;
-            s.win_rate = matchesPlayed > 0 ? Math.min(100, Number.parseFloat(((g.wins / matchesPlayed) * 100).toFixed(1))) : 0;
-            s.shot_conversion = s.shots_per_match > 0 ? Number.parseFloat(((s.goals_scored_per_match / s.shots_per_match) * 100).toFixed(1)) : 0;
-
-            s.touches_per_match = "-";
-            s.big_chances_per_match = "-";
-
-            return s;
-        };
-
         return {
-            all: await finalize(all, 'all'),
-            home: await finalize(home, 'home'),
-            away: await finalize(away, 'away')
+            all: await this.#finalizeTacticalStats(teamId, all, 'all', year, competition),
+            home: await this.#finalizeTacticalStats(teamId, home, 'home', year, competition),
+            away: await this.#finalizeTacticalStats(teamId, away, 'away', year, competition)
         };
+    }
+
+    async #fetchTacticalStats(teamId, venueCondition, year, competition) {
+        let sql = `
+            SELECT 
+                COUNT(DISTINCT fs.fixture_id) as matches,
+                AVG(CAST(NULLIF(REPLACE(fs.ball_possession, '%', ''), '') AS FLOAT)) as possession,
+                AVG(fs.pass_accuracy_pct) as pass_accuracy,
+                AVG(fs.shots_total) as shots_per_match,
+                AVG(fs.shots_on_goal) as shots_on_target_per_match,
+                AVG(fs.corner_kicks) as corners_per_match,
+                AVG(fs.goalkeeper_saves) as saves_per_match,
+                AVG(fs.yellow_cards) as yellow_cards_per_match,
+                AVG(f.goals_home) as goals_home,
+                AVG(f.goals_away) as goals_away
+            FROM V3_Fixture_Stats fs
+            JOIN V3_Fixtures f ON fs.fixture_id = f.fixture_id
+            WHERE fs.team_id = $1
+        `;
+        const params = [teamId];
+        let paramIdx = 2;
+
+        if (year) {
+            sql += ` AND f.season_year = $${paramIdx++}`;
+            params.push(year);
+        }
+        if (competition && competition !== 'all') {
+            sql += ` AND f.league_id = $${paramIdx++}`;
+            params.push(competition);
+        }
+        if (venueCondition === 'home') {
+            sql += ` AND f.home_team_id = $${paramIdx++}`;
+            params.push(teamId);
+        } else if (venueCondition === 'away') {
+            sql += ` AND f.away_team_id = $${paramIdx++}`;
+            params.push(teamId);
+        }
+
+        const row = await this.db.get(sql, cleanParams(params));
+
+        if (row) {
+            const keys = ['possession', 'pass_accuracy', 'shots_per_match', 'shots_on_target_per_match', 'corners_per_match', 'saves_per_match', 'yellow_cards_per_match'];
+            keys.forEach(k => {
+                row[k] = row[k] ? Number.parseFloat(row[k].toFixed(1)) : 0;
+            });
+        }
+        return row;
+    }
+
+    async #finalizeTacticalStats(teamId, s, venue, year, competition) {
+        if (!s) return null;
+
+        let goalsSql = `
+            SELECT 
+                SUM(CASE WHEN home_team_id = $1 THEN goals_home ELSE goals_away END) as scored,
+                SUM(CASE WHEN home_team_id = $1 THEN goals_away ELSE goals_home END) as conceded,
+                SUM(CASE WHEN home_team_id = $1 AND goals_away = 0 THEN 1 WHEN away_team_id = $1 AND goals_home = 0 THEN 1 ELSE 0 END) as clean_sheets,
+                SUM(CASE WHEN (home_team_id = $1 AND goals_home > goals_away) OR (away_team_id = $1 AND goals_away > goals_home) THEN 1 ELSE 0 END) as wins,
+                COUNT(fixture_id) as played
+            FROM V3_Fixtures
+            WHERE (home_team_id = $1 OR away_team_id = $1) AND status_short IN ('FT', 'AET', 'PEN')
+        `;
+        let goalsParams = [teamId];
+        let gIdx = 2;
+
+        if (year) { goalsSql += ` AND season_year = $${gIdx++}`; goalsParams.push(year); }
+        if (competition && competition !== 'all') { goalsSql += ` AND league_id = $${gIdx++}`; goalsParams.push(competition); }
+        if (venue === 'home') { goalsSql += ` AND home_team_id = $${gIdx++}`; goalsParams.push(teamId); }
+        if (venue === 'away') { goalsSql += ` AND away_team_id = $${gIdx++}`; goalsParams.push(teamId); }
+
+        const g = await this.db.get(goalsSql, cleanParams(goalsParams));
+
+        const matchesPlayed = Number.parseInt(g.played, 10) || 0;
+        s.goals_scored_per_match = matchesPlayed > 0 ? Number.parseFloat((g.scored / matchesPlayed).toFixed(2)) : 0;
+        s.goals_conceded_per_match = matchesPlayed > 0 ? Number.parseFloat((g.conceded / matchesPlayed).toFixed(2)) : 0;
+        s.clean_sheet_pct = matchesPlayed > 0 ? Number.parseFloat(((g.clean_sheets / matchesPlayed) * 100).toFixed(1)) : 0;
+        s.win_rate = matchesPlayed > 0 ? Math.min(100, Number.parseFloat(((g.wins / matchesPlayed) * 100).toFixed(1))) : 0;
+        s.shot_conversion = s.shots_per_match > 0 ? Number.parseFloat(((s.goals_scored_per_match / s.shots_per_match) * 100).toFixed(1)) : 0;
+
+        s.touches_per_match = "-";
+        s.big_chances_per_match = "-";
+
+        return s;
     }
 
     async getClubSeasons(teamId) {

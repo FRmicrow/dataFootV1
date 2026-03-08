@@ -62,26 +62,32 @@ export function getImportState() {
  */
 export async function checkAbortOrPause(sendLog = null) {
     if (abortFlag) {
-        const msg = '🛑 Import STOPPED by user request.';
-        if (sendLog && typeof sendLog === 'function') sendLog(msg, 'warning');
-        throw new Error('IMPORT_ABORTED');
+        handleAbort(sendLog);
     }
 
     if (paused) {
-        const msg = '⏸️ Import PAUSED — waiting for resume...';
-        if (sendLog && typeof sendLog === 'function') sendLog(msg, 'warning');
-
-        await new Promise(resolve => {
-            pausePromiseResolve = resolve;
-        });
-
-        if (abortFlag) {
-            const msgAbort = '🛑 Import STOPPED during pause.';
-            if (sendLog && typeof sendLog === 'function') sendLog(msgAbort, 'warning');
-            throw new Error('IMPORT_ABORTED');
-        }
-
-        const msgResume = '▶️ Import RESUMED.';
-        if (sendLog && typeof sendLog === 'function') sendLog(msgResume, 'info');
+        await handlePause(sendLog);
     }
+}
+
+function handleAbort(sendLog) {
+    const msg = '🛑 Import STOPPED by user request.';
+    if (sendLog && typeof sendLog === 'function') sendLog(msg, 'warning');
+    throw new Error('IMPORT_ABORTED');
+}
+
+async function handlePause(sendLog) {
+    const msg = '⏸️ Import PAUSED — waiting for resume...';
+    if (sendLog && typeof sendLog === 'function') sendLog(msg, 'warning');
+
+    await new Promise(resolve => {
+        pausePromiseResolve = resolve;
+    });
+
+    if (abortFlag) {
+        handleAbort(sendLog);
+    }
+
+    const msgResume = '▶️ Import RESUMED.';
+    if (sendLog && typeof sendLog === 'function') sendLog(msgResume, 'info');
 }

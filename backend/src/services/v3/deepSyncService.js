@@ -18,6 +18,52 @@ import { syncAllV3Sequences } from '../../utils/v3/dbMaintenance.js';
 
 // --- Private Sync Helpers ---
 
+const calculateActionableCount = (seasons, allStatuses) => {
+    return seasons.filter(season => {
+        const seasonStatuses = allStatuses.filter(s => s.season_year === season.season_year);
+        return !(seasonStatuses.length >= PILLARS.length && seasonStatuses.every(s => s.status === IMPORT_STATUS.LOCKED));
+    }).length;
+};
+
+const syncSingleSeason = async (leagueId, season_year, sendLog, inference) => {
+    sendLog(``, 'info');
+    sendLog(`━━━ Season ${season_year} ━━━`, 'info');
+
+    try {
+        await syncCorePillar(leagueId, season_year, sendLog);
+        await syncEventsPillar(leagueId, season_year, sendLog);
+        await syncLineupsPillar(leagueId, season_year, sendLog);
+
+        const { fsInfer, psInfer, fsStreak, psStreak } = inference;
+
+        if (fsInfer) await ImportStatusService.setStatus(leagueId, season_year, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
+        if (psInfer) await ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
+
+        if (!fsInfer || !psInfer) {
+            const start = Date.now();
+            await syncLeagueTacticalStatsService(leagueId, season_year, 2000, sendLog, { includeFS: !fsInfer, includePS: !psInfer });
+            const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+
+            if (!fsInfer) {
+                const fsStatus = await ImportStatusService.getStatus(leagueId, season_year, 'fs');
+                inference.fsStreak = (fsStatus.status === IMPORT_STATUS.NO_DATA) ? fsStreak + 1 : 0;
+                if (inference.fsStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) inference.fsInfer = true;
+            }
+            if (!psInfer) {
+                const psStatus = await ImportStatusService.getStatus(leagueId, season_year, 'ps');
+                inference.psStreak = (psStatus.status === IMPORT_STATUS.NO_DATA) ? psStreak + 1 : 0;
+                if (inference.psStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) inference.psInfer = true;
+            }
+            sendLog(`   [Tactical] FS+PS ✅ — Done in ${elapsed}s`, 'success');
+        } else {
+            sendLog(`   [Tactical] Skip — Cascade "No Data" ⏩`, 'warning');
+        }
+    } catch (err) {
+        if (err.message === 'IMPORT_ABORTED') throw err;
+        sendLog(`   ❌ Failed: ${err.message}`, 'error');
+    }
+};
+
 const initializeSeasonsFromApi = async (leagueId, apiId, leagueName, sendLog) => {
     try {
         if (!apiId) return;
@@ -80,18 +126,16 @@ const syncLineupsPillar = async (leagueId, season_year, sendLog) => {
     const start = Date.now();
     const res = await syncSeasonLineups(leagueId, season_year, sendLog);
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-    await ImportStatusService.setStatus(leagueId, season_year, 'lineups', res.success > 0 ? IMPORT_STATUS.COMPLETE : (res.failed > 0 ? IMPORT_STATUS.PARTIAL : IMPORT_STATUS.NONE));
+    const getStatus = (res) => {
+        if (res.success > 0) return IMPORT_STATUS.COMPLETE;
+        return res.failed > 0 ? IMPORT_STATUS.PARTIAL : IMPORT_STATUS.NONE;
+    };
+    await ImportStatusService.setStatus(leagueId, season_year, 'lineups', getStatus(res));
     sendLog(`   [L] Lineups ✅ — ${res.success} synced | ${elapsed}s`, 'success');
 };
 
 /**
  * US_269: Status-Aware Deep Sync Orchestration
- * - Skips LOCKED seasons entirely
- * - Per-pillar skip checks
- * - Combined FS+PS single-pass (US_265)
- * - Historical range inference (US_264)
- * - Trophies EXCLUDED from full import
- * - Improved logging with timing & details
  */
 export const runDeepSyncLeague = async (leagueId, sendLog) => {
     const leagueStart = Date.now();
@@ -99,12 +143,7 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
     const leagueName = leagueInfo ? leagueInfo.name : `ID ${leagueId}`;
 
     sendLog(`🚀 Deep Sync: ${leagueName} (ID: ${leagueId})`, 'info');
-
-    // 0. Ensure sequences are in sync (Prevent duplicate key errors)
     await syncAllV3Sequences((msg) => sendLog(msg, 'info'));
-
-    // US-208: Initialize all available seasons from API before starting the loop
-    // This restores the "Full Career" behavior for discovered leagues.
     await initializeSeasonsFromApi(leagueId, leagueInfo?.api_id, leagueName, sendLog);
 
     const seasons = await db.all(
@@ -118,20 +157,13 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
     }
 
     const allStatuses = await ImportStatusService.getLeagueMatrix(leagueId);
-    let actionableSeasons = seasons.filter(season => {
-        const seasonStatuses = allStatuses.filter(s => s.season_year === season.season_year);
-        return !(seasonStatuses.length >= PILLARS.length && seasonStatuses.every(s => s.status === IMPORT_STATUS.LOCKED));
-    }).length;
+    const actionableSeasons = calculateActionableCount(seasons, allStatuses);
 
     sendLog(`📅 ${leagueName}: ${seasons.length} seasons | Actionable: ${actionableSeasons}`, 'info');
 
     let completedTasks = 0;
-    const totalTasks = actionableSeasons * 4; // Core, Events, Lineups, FS+PS (Combined)
-
-    let fsStreak = 0;
-    let psStreak = 0;
-    let fsInfer = false;
-    let psInfer = false;
+    const totalTasks = actionableSeasons * 4;
+    const inference = { fsStreak: 0, psStreak: 0, fsInfer: false, psInfer: false };
 
     for (const season of seasons) {
         const { season_year } = season;
@@ -145,51 +177,9 @@ export const runDeepSyncLeague = async (leagueId, sendLog) => {
             continue;
         }
 
-        sendLog(``, 'info');
-        sendLog(`━━━ Season ${season_year} ━━━`, 'info');
-        const seasonStart = Date.now();
+        await syncSingleSeason(leagueId, season_year, sendLog, inference);
 
-        try {
-            // 1. Core
-            await syncCorePillar(leagueId, season_year, sendLog);
-
-            // 2. Events
-            await syncEventsPillar(leagueId, season_year, sendLog);
-
-            // 3. Lineups
-            await syncLineupsPillar(leagueId, season_year, sendLog);
-
-            // 4. Tactical (FS+PS)
-            if (fsInfer) await ImportStatusService.setStatus(leagueId, season_year, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
-            if (psInfer) await ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
-
-            if (!fsInfer || !psInfer) {
-                const start = Date.now();
-                const res = await syncLeagueTacticalStatsService(leagueId, season_year, 2000, sendLog, { includeFS: !fsInfer, includePS: !psInfer });
-                const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-
-                if (!fsInfer) {
-                    const fsStatus = await ImportStatusService.getStatus(leagueId, season_year, 'fs');
-                    if (fsStatus.status === IMPORT_STATUS.NO_DATA) fsStreak++;
-                    else fsStreak = 0;
-                    if (fsStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) fsInfer = true;
-                }
-                if (!psInfer) {
-                    const psStatus = await ImportStatusService.getStatus(leagueId, season_year, 'ps');
-                    if (psStatus.status === IMPORT_STATUS.NO_DATA) psStreak++;
-                    else psStreak = 0;
-                    if (psStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) psInfer = true;
-                }
-                sendLog(`   [Tactical] FS+PS ✅ — Done in ${elapsed}s`, 'success');
-            } else {
-                sendLog(`   [Tactical] Skip — Cascade "No Data" ⏩`, 'warning');
-            }
-        } catch (err) {
-            if (err.message === 'IMPORT_ABORTED') throw err;
-            sendLog(`   ❌ Failed: ${err.message}`, 'error');
-        }
-
-        completedTasks += 4; // Each pillar (Core, Events, Lineups, Tactical) counts as a task
+        completedTasks += 4;
         await ImportStatusService.checkAutoLock(leagueId, season_year);
         if (sendLog.emit) {
             sendLog.emit({ type: 'progress', step: 'overall', current: completedTasks, total: totalTasks, label: `${leagueName}: Season ${season_year} complete` });
