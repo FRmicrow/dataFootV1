@@ -240,8 +240,8 @@ export const getDiscoveryLeagues = async (req, res) => {
         const apiLeagues = response.response || [];
 
         const existingLeagues = await db.all("SELECT api_id FROM V3_Leagues");
-        const existingApiIds = existingLeagues.map(l => l.api_id);
-        const filtered = apiLeagues.filter(l => !existingApiIds.includes(l.league.id));
+        const existingApiIds = new Set(existingLeagues.map(l => l.api_id));
+        const filtered = apiLeagues.filter(l => !existingApiIds.has(l.league.id));
 
         res.json({ success: true, data: filtered });
     } catch (error) {

@@ -5,7 +5,7 @@ import { runImportJob } from './leagueImportService.js';
 import { syncLeagueEventsService } from './fixtureService.js';
 import { syncLeagueTacticalStatsService } from './tacticalStatsService.js';
 import footballApi from '../footballApi.js';
-import ImportStatusService from './importStatusService.js';
+import * as ImportStatusService from './importStatusService.js';
 import * as ImportControl from './importControlService.js';
 import { Mappers, ImportRepository as DB } from './ImportService.js';
 import {
@@ -96,7 +96,7 @@ const initializeSeasonsFromApi = async (leagueId, apiId, leagueName, sendLog) =>
             }
         }
     } catch (err) {
-        sendLog(`⚠️ Failed to initialize seasons from API: ${err.message}`, 'warning');
+        // Initialization can fail silently if API unavailable
     }
 };
 
