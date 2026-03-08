@@ -10,7 +10,7 @@ export const triggerSimulation = (req, res) => {
         }
 
         // US_201: Pre-Flight Readiness Lock
-        const readiness = SimulationService.checkSimulationReadiness(parseInt(leagueId), parseInt(seasonYear));
+        const readiness = SimulationService.checkSimulationReadiness(Number.parseInt(leagueId), Number.parseInt(seasonYear));
         if (readiness.status !== 'READY') {
             return res.status(400).json({
                 error: 'FORGE_DATA_VOID',
@@ -113,7 +113,7 @@ export const checkSimulationReadiness = (req, res) => {
             return res.status(400).json({ error: 'Missing leagueId or seasonYear' });
         }
 
-        const readiness = SimulationService.checkSimulationReadiness(parseInt(leagueId), parseInt(seasonYear));
+        const readiness = SimulationService.checkSimulationReadiness(Number.parseInt(leagueId), Number.parseInt(seasonYear));
         res.json(readiness);
     } catch (err) {
         console.error('checkSimulationReadiness error:', err);

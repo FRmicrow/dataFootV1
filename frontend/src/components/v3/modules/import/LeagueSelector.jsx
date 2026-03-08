@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const LeagueSelector = ({
     countries,
@@ -64,6 +65,24 @@ const LeagueSelector = ({
             </div>
         </div>
     );
+};
+
+LeagueSelector.propTypes = {
+    countries: PropTypes.arrayOf(PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        code: PropTypes.string
+    })).isRequired,
+    selectedCountry: PropTypes.string.isRequired,
+    setSelectedCountry: PropTypes.func.isRequired,
+    leagues: PropTypes.arrayOf(PropTypes.shape({
+        league: PropTypes.shape({
+            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+            name: PropTypes.string.isRequired
+        }).isRequired
+    })).isRequired,
+    selectedLeague: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    setSelectedLeague: PropTypes.func.isRequired,
+    disabled: PropTypes.bool
 };
 
 export default LeagueSelector;

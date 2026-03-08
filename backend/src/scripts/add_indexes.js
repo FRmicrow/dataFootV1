@@ -8,7 +8,7 @@
  */
 import initSqlJs from 'sql.js';
 import { readFileSync, writeFileSync } from 'fs';
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);

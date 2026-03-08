@@ -103,7 +103,7 @@ app.use((req, res) => {
 import MarketVolatilityService from './services/v3/MarketVolatilityService.js';
 
 // Start server
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
     console.log('⚽ Football Player Database API');
     console.log('================================');
     console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -117,17 +117,15 @@ const server = app.listen(PORT, () => {
     }, 4 * 60 * 60 * 1000);
 
     // US_174: Retraining Trigger System - Weekly Cycle (Every Monday at 04:00 AM)
-    import('./services/v3/mlService.js').then(module => {
-        const mlService = module.default;
-        setInterval(() => {
-            const now = new Date();
-            // Monday search: day 1, hour 4
-            if (now.getDay() === 1 && now.getHours() === 4 && now.getMinutes() < 10) {
-                console.log("⏰ [US_174] Weekly retraining cycle triggered automatically.");
-                mlService.triggerRetraining().catch(err => console.error("❌ Weekly Training Error:", err));
-            }
-        }, 10 * 60 * 1000); // Check every 10 minutes
-    });
+    const { default: mlService } = await import('./services/v3/mlService.js');
+    setInterval(() => {
+        const now = new Date();
+        // Monday search: day 1, hour 4
+        if (now.getDay() === 1 && now.getHours() === 4 && now.getMinutes() < 10) {
+            console.log("⏰ [US_174] Weekly retraining cycle triggered automatically.");
+            mlService.triggerRetraining().catch(err => console.error("❌ Weekly Training Error:", err));
+        }
+    }, 10 * 60 * 1000); // Check every 10 minutes
 });
 
 server.on('error', (e) => {

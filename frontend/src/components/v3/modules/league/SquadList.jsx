@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import {
     Stack, Grid, Badge, Button,
     MetricCard, PlayerCard, TeamSelector
@@ -161,6 +162,14 @@ const SquadList = ({
             </main>
         </div>
     );
+};
+
+SquadList.propTypes = {
+    teams: PropTypes.array.isRequired,
+    selectedTeamId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    setSelectedTeamId: PropTypes.func.isRequired,
+    squadLoading: PropTypes.bool,
+    teamSquad: PropTypes.array.isRequired
 };
 
 export default SquadList;

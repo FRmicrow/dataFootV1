@@ -63,7 +63,7 @@ const mapToOddsRow = (fixtureId, bookmakerId, marketId, marketValues) => {
                 awayUnder = awayAH.odd;
                 // Extract handicap from "Home -0.5" -> -0.5
                 const hVal = homeAH.value.split(' ')[1];
-                handicap = parseFloat(hVal);
+                handicap = Number.parseFloat(hVal);
             }
             break;
 

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import db from '../config/database.js';
 import OddsService from '../services/odds/OddsService.js';
 

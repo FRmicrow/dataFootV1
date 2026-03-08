@@ -25,7 +25,7 @@ export const getFixtureOdds = async (req, res) => {
 
         res.json({
             success: true,
-            fixtureId: parseInt(fixtureId),
+            fixtureId: Number.parseInt(fixtureId),
             count: odds.length,
             data: odds
         });

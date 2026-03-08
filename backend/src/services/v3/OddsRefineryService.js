@@ -43,7 +43,7 @@ class OddsRefineryService {
                         targetBookmakerId,
                         marketName,
                         val.value,
-                        parseFloat(val.odd),
+                        Number.parseFloat(val.odd),
                         handicap
                     ]);
                     totalSaved++;
@@ -65,7 +65,7 @@ class OddsRefineryService {
         // Regex to find numbers including decimals and signs
         // We look for patterns like " +1.5", " -0.5", " 2.5"
         const match = label.match(/[-+]?\d*\.?\d+/);
-        return match ? parseFloat(match[0]) : null;
+        return match ? Number.parseFloat(match[0]) : null;
     }
 }
 

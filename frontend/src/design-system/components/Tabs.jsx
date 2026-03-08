@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import './Tabs.css';
 
 /**
@@ -27,6 +28,20 @@ const Tabs = ({ items = [], activeId, onChange, className = '', variant = 'line'
             </div>
         </div>
     );
+};
+
+Tabs.propTypes = {
+    items: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        label: PropTypes.string.isRequired,
+        icon: PropTypes.node,
+        hidden: PropTypes.bool,
+        disabled: PropTypes.bool
+    })),
+    activeId: PropTypes.string,
+    onChange: PropTypes.func,
+    className: PropTypes.string,
+    variant: PropTypes.oneOf(['line', 'pills'])
 };
 
 export default Tabs;

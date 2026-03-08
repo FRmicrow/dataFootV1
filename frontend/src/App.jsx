@@ -10,8 +10,6 @@ import PlayerProfilePageV3 from './components/v3/pages/profile/PlayerProfilePage
 import SearchPageV3 from './components/v3/pages/search/SearchPageV3';
 import ClubProfilePageV3 from './components/v3/pages/profile/ClubProfilePageV3';
 import ContentStudioV3 from './components/v3/pages/studio/ContentStudioV3';
-import HealthCenterPage from './components/v3/pages/system/HealthCenterPage';
-import ImportTrophiesPage from './components/v3/pages/import/ImportTrophiesPage';
 import ImportEventsPage from './components/v3/pages/import/ImportEventsPage';
 import ImportLineupsPage from './components/v3/pages/import/ImportLineupsPage';
 import MatchDetailPage from './components/v3/pages/match/MatchDetailPage';
@@ -24,7 +22,6 @@ import LiveBetDashboard from './components/v3/pages/match/live/LiveBetDashboard'
 import LiveBetMatchDetails from './components/v3/pages/match/live/LiveBetMatchDetails';
 import MonitoringConsole from './components/v3/pages/match/live/MonitoringConsole';
 import SimulationDashboard from './components/v3/pages/match/live/SimulationDashboard';
-import ForgeLaboratory from './components/v3/pages/system/ForgeLaboratory';
 import { ImportProvider } from './context/ImportContext.jsx';
 import { Navbar } from './design-system';
 import './design-system/tokens.css';
@@ -54,9 +51,6 @@ function App() {
                             <Route path="/search" element={<SearchPageV3 />} />
                             <Route path="/club/:id" element={<ClubProfilePageV3 />} />
                             <Route path="/studio" element={<ContentStudioV3 />} />
-                            <Route path="/forge/lab" element={<ForgeLaboratory />} />
-                            <Route path="/health" element={<HealthCenterPage />} />
-                            <Route path="/trophies" element={<ImportTrophiesPage />} />
                             <Route path="/events" element={<ImportEventsPage />} />
                             <Route path="/lineups-import" element={<ImportLineupsPage />} />
                             <Route path="/live-bet" element={<LiveBetHub />} />

@@ -330,6 +330,7 @@ const ImportV3Page = () => {
                                             onClick={() => handleRemoveFromQueue(item.id)}
                                             disabled={isImporting}
                                             className="text-slate-500 hover:text-rose-500 transition-colors p-1"
+                                            aria-label={`Remove ${item.leagueName} from queue`}
                                         >
                                             ✕
                                         </button>

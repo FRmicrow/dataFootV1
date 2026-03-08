@@ -39,8 +39,8 @@ class StatsEngine {
             if (!r || typeof r !== 'string') return 999;
             const parts = r.split('-');
             const lastPart = parts[parts.length - 1].trim();
-            const num = parseInt(lastPart);
-            return isNaN(num) ? 999 : num;
+            const num = Number.parseInt(lastPart);
+            return Number.isNaN(num) ? 999 : num;
         };
 
         // 3. Aggregate Stats

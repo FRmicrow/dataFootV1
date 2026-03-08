@@ -16,8 +16,8 @@ export const getClubProfile = async (req, res) => {
         const seasons = await ClubRepository.getClubSeasons(id);
         const availableYears = [...new Set(seasons.map(s => s.season_year))].sort((a, b) => b - a);
 
-        const rosterYear = year ? parseInt(year) : (availableYears[0] || null);
-        const activeLeagueId = leagueId ? parseInt(leagueId) : null;
+        const rosterYear = year ? Number.parseInt(year) : (availableYears[0] || null);
+        const activeLeagueId = leagueId ? Number.parseInt(leagueId) : null;
 
         const roster = rosterYear ? await ClubRepository.getClubRoster(id, rosterYear, activeLeagueId) : [];
         const summary = rosterYear ? await ClubRepository.getClubSummary(id, rosterYear, activeLeagueId) : null;
@@ -43,7 +43,7 @@ export const getClubTacticalSummary = async (req, res) => {
         const { id } = req.params;
         const { year, competition } = req.query;
         const summary = await ClubRepository.getClubTacticalSummary(id, {
-            year: year ? parseInt(year) : null,
+            year: year ? Number.parseInt(year) : null,
             competition: competition
         });
         res.json(summary);
@@ -57,13 +57,14 @@ export const getClubMatches = async (req, res) => {
         const { id } = req.params;
         const { year, competition, limit } = req.query;
         const matches = await ClubRepository.getClubMatches(id, {
-            year: year ? parseInt(year) : null,
+            year: year ? Number.parseInt(year) : null,
             competition: competition,
-            limit: limit ? parseInt(limit) : 20
+            limit: limit ? Number.parseInt(limit) : 20
         });
         res.json(matches);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
 

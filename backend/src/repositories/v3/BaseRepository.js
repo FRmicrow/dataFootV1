@@ -88,7 +88,7 @@ class BaseRepository {
         const params = Object.values(criteria);
 
         const result = await this.db.get(`SELECT COUNT(*) as count FROM ${this.tableName} ${whereClause}`, cleanParams(params));
-        return result ? parseInt(result.count, 10) : 0;
+        return result ? Number.parseInt(result.count, 10) : 0;
     }
 }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Stack, Grid, Badge } from '../index';
 import './FixtureRow.css';
 
@@ -30,6 +31,15 @@ const FixtureRow = ({
         <div
             className={`ds-fixture-row ${active ? 'is-active' : ''}`}
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onClick(e);
+                }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={active}
         >
             <Grid columns="1fr 120px 1fr" gap="var(--spacing-md)" align="center">
                 {/* Home Team */}
@@ -73,6 +83,25 @@ const FixtureRow = ({
             )}
         </div>
     );
+};
+
+FixtureRow.propTypes = {
+    homeTeam: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        logo: PropTypes.string
+    }).isRequired,
+    awayTeam: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        logo: PropTypes.string
+    }).isRequired,
+    scoreHome: PropTypes.number,
+    scoreAway: PropTypes.number,
+    status: PropTypes.string,
+    date: PropTypes.string,
+    active: PropTypes.bool,
+    onClick: PropTypes.func,
+    aggregate: PropTypes.string,
+    winner: PropTypes.string
 };
 
 export default FixtureRow;

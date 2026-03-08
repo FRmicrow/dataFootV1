@@ -12,250 +12,123 @@ import {
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// --- Private Helpers for Tactical Sync ---
+
 /**
- * US_265: Combined FS+PS Single-Pass Import
- * Iterates fixtures once, fetching both FS and PS as needed.
- * Tracks consecutive failures independently per pillar.
- * Uses US_263 auto-blacklisting logic.
+ * Resolves thresholds for FS and PS based on status and options.
  */
-export const syncLeagueTacticalStatsService = async (
-    leagueId, seasonYear, limit = 2000, sendLog = null,
-    options = { includeFS: true, includePS: true }
-) => {
-    const log = (msg, type = 'info') => {
-        console.log(msg);
-        if (sendLog && typeof sendLog === 'function') sendLog(msg, type);
-    };
-
-    const { includeFS, includePS } = options;
-
-    // US_262/263: Pre-check — should we skip?
-    const skipFS = !includeFS || await ImportStatusService.shouldSkip(leagueId, seasonYear, 'fs');
-    const skipPS = !includePS || await ImportStatusService.shouldSkip(leagueId, seasonYear, 'ps');
-
-    if (skipFS && skipPS) {
-        const fsStatus = await ImportStatusService.getStatus(leagueId, seasonYear, 'fs');
-        const psStatus = await ImportStatusService.getStatus(leagueId, seasonYear, 'ps');
-        log(`   ⏩ [FS+PS] Both pillars skipped — FS: ${fsStatus.status}, PS: ${psStatus.status}`, 'success');
-        return { fs: { total: 0, success: 0, failed: 0, skipped: true }, ps: { total: 0, success: 0, failed: 0, skipped: true } };
-    }
-
-    log(`📡 US_265: Combined Tactical Stats for League ${leagueId}/${seasonYear} [FS:${!skipFS}, PS:${!skipPS}]`);
-
-    // US_264: Cross-pillar inference — reduce PS threshold if FS is NO_DATA
+const resolvePillarThresholds = async (leagueId, seasonYear, skipFS, skipPS) => {
     let fsThreshold = CONSECUTIVE_FAILURE_THRESHOLD;
     let psThreshold = CONSECUTIVE_FAILURE_THRESHOLD;
 
-    if (!skipPS && !skipFS) {
-        // Will adjust dynamically during processing
-    } else if (!skipPS && skipFS) {
+    if (!skipPS && skipFS) {
         const fsStatus = await ImportStatusService.getStatus(leagueId, seasonYear, 'fs');
         if (fsStatus.status === IMPORT_STATUS.NO_DATA) {
             psThreshold = CROSS_PILLAR_REDUCED_THRESHOLD;
-            log(`   ℹ️ Cross-pillar: FS is NO_DATA, PS threshold reduced to ${psThreshold}`, 'info');
         }
     }
+    return { fsThreshold, psThreshold };
+};
 
-    // Build the unified fixture target set
-    let targetFixtures = [];
+/**
+ * Builds the SQL query to find fixtures missing tactical data.
+ */
+const buildFixtureQuery = (skipFS, skipPS) => {
+    let whereClause = "";
+    let selectClause = "f.fixture_id, f.api_id, ";
 
     if (!skipFS && !skipPS) {
-        // Get fixtures missing EITHER FS or PS
-        const sql = `
-            SELECT f.fixture_id, f.api_id,
-                   CASE WHEN fs.fixture_id IS NULL THEN 1 ELSE 0 END as needs_fs,
-                   CASE WHEN fps.fixture_id IS NULL THEN 1 ELSE 0 END as needs_ps
-            FROM V3_Fixtures f
-            LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Stats) fs ON f.fixture_id = fs.fixture_id
-            LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Player_Stats) fps ON f.fixture_id = fps.fixture_id
-            WHERE f.league_id = ? AND f.season_year = ?
-            AND f.status_short IN ('FT', 'AET', 'PEN')
-            AND (fs.fixture_id IS NULL OR fps.fixture_id IS NULL)
-            LIMIT ?
-        `;
-        targetFixtures = await db.all(sql, cleanParams([leagueId, seasonYear, limit]));
+        selectClause += "CASE WHEN fs.fixture_id IS NULL THEN 1 ELSE 0 END as needs_fs, CASE WHEN fps.fixture_id IS NULL THEN 1 ELSE 0 END as needs_ps";
+        whereClause = "AND (fs.fixture_id IS NULL OR fps.fixture_id IS NULL)";
     } else if (!skipFS) {
-        const sql = `
-            SELECT f.fixture_id, f.api_id, 1 as needs_fs, 0 as needs_ps
-            FROM V3_Fixtures f
-            LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Stats) fs ON f.fixture_id = fs.fixture_id
-            WHERE f.league_id = ? AND f.season_year = ?
-            AND f.status_short IN ('FT', 'AET', 'PEN')
-            AND fs.fixture_id IS NULL
-            LIMIT ?
-        `;
-        targetFixtures = await db.all(sql, cleanParams([leagueId, seasonYear, limit]));
-    } else if (!skipPS) {
-        const sql = `
-            SELECT f.fixture_id, f.api_id, 0 as needs_fs, 1 as needs_ps
-            FROM V3_Fixtures f
-            LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Player_Stats) fps ON f.fixture_id = fps.fixture_id
-            WHERE f.league_id = ? AND f.season_year = ?
-            AND f.status_short IN ('FT', 'AET', 'PEN')
-            AND fps.fixture_id IS NULL
-            LIMIT ?
-        `;
-        targetFixtures = await db.all(sql, cleanParams([leagueId, seasonYear, limit]));
+        selectClause += "1 as needs_fs, 0 as needs_ps";
+        whereClause = "AND fs.fixture_id IS NULL";
+    } else {
+        selectClause += "0 as needs_fs, 1 as needs_ps";
+        whereClause = "AND fps.fixture_id IS NULL";
     }
 
+    return `
+        SELECT ${selectClause}
+        FROM V3_Fixtures f
+        LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Stats) fs ON f.fixture_id = fs.fixture_id
+        LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Player_Stats) fps ON f.fixture_id = fps.fixture_id
+        WHERE f.league_id = ? AND f.season_year = ?
+        AND f.status_short IN ('FT', 'AET', 'PEN')
+        ${whereClause}
+        LIMIT ?
+    `;
+};
+
+/**
+ * US_265: Combined FS+PS Single-Pass Import
+ */
+export const syncLeagueTacticalStatsService = async (leagueId, seasonYear, limit = 2000, sendLog = null, options = { includeFS: true, includePS: true }) => {
+    const { includeFS, includePS } = options;
+    const skipFS = !includeFS || await ImportStatusService.shouldSkip(leagueId, seasonYear, 'fs');
+    const skipPS = !includePS || await ImportStatusService.shouldSkip(leagueId, seasonYear, 'ps');
+
+    if (skipFS && skipPS) return { fs: { skipped: true }, ps: { skipped: true } };
+
+    const { fsThreshold, psThreshold: initialPsThreshold } = await resolvePillarThresholds(leagueId, seasonYear, skipFS, skipPS);
+    let psThreshold = initialPsThreshold;
+
+    const sql = buildFixtureQuery(skipFS, skipPS);
+    const targetFixtures = await db.all(sql, cleanParams([leagueId, seasonYear, limit]));
     if (targetFixtures.length === 0) {
-        log('   ✅ No missing tactical stats found.', 'success');
-
-        // Mark as COMPLETE if no missing data
-        if (!skipFS) {
-            await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
-        }
-        if (!skipPS) {
-            await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
-        }
-
-        return {
-            fs: { total: 0, success: 0, failed: 0, skipped: skipFS },
-            ps: { total: 0, success: 0, failed: 0, skipped: skipPS }
-        };
+        if (!skipFS) await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
+        if (!skipPS) await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
+        return { fs: { success: 0, skipped: skipFS }, ps: { success: 0, skipped: skipPS } };
     }
 
-    log(`   Found ${targetFixtures.length} fixtures in unified target set.`);
-
-    let fsSuccess = 0, fsFailed = 0, fsConsecutiveFailures = 0, fsBlacklisted = false;
-    let psSuccess = 0, psFailed = 0, psConsecutiveFailures = 0, psBlacklisted = false;
+    let stats = { fsSuccess: 0, fsFailed: 0, fsConsec: 0, fsBlack: false, psSuccess: 0, psFailed: 0, psConsec: 0, psBlack: false };
 
     for (let i = 0; i < targetFixtures.length; i++) {
         const fixture = targetFixtures[i];
-
-        // US_270: Check if we should abort or pause
         await ImportControl.checkAbortOrPause(sendLog);
 
-        // Fetch team names for better logging
-        const fixtureInfo = await db.get(`
-            SELECT h.name as home, a.name as away 
-            FROM V3_Fixtures f
-            JOIN V3_Teams h ON f.home_team_id = h.team_id
-            JOIN V3_Teams a ON f.away_team_id = a.team_id
-            WHERE f.fixture_id = ?
-        `, cleanParams([fixture.fixture_id]));
-
-        const matchup = fixtureInfo ? `${fixtureInfo.home} vs ${fixtureInfo.away}` : `Fixture ${fixture.fixture_id}`;
-
-        // Emit progress
-        if (sendLog && sendLog.emit && (i % 5 === 0 || targetFixtures.length < 10)) {
-            sendLog.emit({
-                type: 'progress',
-                step: 'tactical_stats',
-                current: i + 1,
-                total: targetFixtures.length,
-                label: `Syncing stats for: ${matchup}`
-            });
-        }
-
-        if (i % 20 === 0) log(`   [${i + 1}/${targetFixtures.length}] Syncing stats for: ${matchup}...`);
-
-        // FS processing
-        if (fixture.needs_fs && !skipFS && !fsBlacklisted) {
-            try {
-                const hasData = await fetchAndStoreFixtureStats(fixture.fixture_id, fixture.api_id);
-                if (hasData) {
-                    fsConsecutiveFailures = 0;
-                    await ImportStatusService.resetFailures(leagueId, seasonYear, 'fs');
-                    fsSuccess++;
-                } else {
-                    fsConsecutiveFailures++;
-                    if (fsConsecutiveFailures >= fsThreshold) {
-                        // US_263: Auto-blacklist
-                        const hasAnyData = fsSuccess > 0;
-                        await ImportStatusService.setStatus(
-                            leagueId, seasonYear, 'fs',
-                            IMPORT_STATUS.NO_DATA,
-                            { failure_reason: `${fsThreshold} consecutive fixtures returned no data (auto-blacklisted)` }
-                        );
-                        log(`   ⛔ Auto-Blacklisted: FS for League ${leagueId} / Season ${seasonYear}`, 'warning');
-                        fsBlacklisted = true;
-
-                        // Cross-pillar: if FS just got blacklisted, reduce PS threshold
-                        if (!psBlacklisted && !skipPS) {
-                            psThreshold = CROSS_PILLAR_REDUCED_THRESHOLD;
-                            log(`   ℹ️ Cross-pillar: FS blacklisted mid-run, PS threshold reduced to ${psThreshold}`, 'info');
-                        }
-                    }
-                    fsFailed++;
+        // Process FS
+        if (fixture.needs_fs && !skipFS && !stats.fsBlack) {
+            const ok = await fetchAndStoreFixtureStats(fixture.fixture_id, fixture.api_id);
+            if (ok) { stats.fsSuccess++; stats.fsConsec = 0; await ImportStatusService.resetFailures(leagueId, seasonYear, 'fs'); }
+            else {
+                stats.fsFailed++; stats.fsConsec++;
+                if (stats.fsConsec >= fsThreshold) {
+                    await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Auto-blacklisted' });
+                    stats.fsBlack = true;
+                    if (!stats.psBlack && !skipPS) psThreshold = CROSS_PILLAR_REDUCED_THRESHOLD;
                 }
-            } catch (err) {
-                console.error(`   ❌ FS Failed fixture ${fixture.fixture_id}: ${err.message}`);
-                fsFailed++;
             }
         }
 
-        // PS processing
-        if (fixture.needs_ps && !skipPS && !psBlacklisted) {
-            try {
-                const hasData = await fetchAndStorePlayerStats(fixture.fixture_id, fixture.api_id);
-                if (hasData) {
-                    psConsecutiveFailures = 0;
-                    await ImportStatusService.resetFailures(leagueId, seasonYear, 'ps');
-                    psSuccess++;
-                } else {
-                    psConsecutiveFailures++;
-                    if (psConsecutiveFailures >= psThreshold) {
-                        await ImportStatusService.setStatus(
-                            leagueId, seasonYear, 'ps',
-                            IMPORT_STATUS.NO_DATA,
-                            { failure_reason: `${psThreshold} consecutive fixtures returned no data (auto-blacklisted)` }
-                        );
-                        log(`   ⛔ Auto-Blacklisted: PS for League ${leagueId} / Season ${seasonYear}`, 'warning');
-                        psBlacklisted = true;
-                    }
-                    psFailed++;
+        // Process PS
+        if (fixture.needs_ps && !skipPS && !stats.psBlack) {
+            const ok = await fetchAndStorePlayerStats(fixture.fixture_id, fixture.api_id);
+            if (ok) { stats.psSuccess++; stats.psConsec = 0; await ImportStatusService.resetFailures(leagueId, seasonYear, 'ps'); }
+            else {
+                stats.psFailed++; stats.psConsec++;
+                if (stats.psConsec >= psThreshold) {
+                    await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Auto-blacklisted' });
+                    stats.psBlack = true;
                 }
-            } catch (err) {
-                console.error(`   ❌ PS Failed fixture ${fixture.fixture_id}: ${err.message}`);
-                psFailed++;
             }
         }
-
-        // If both are blacklisted, stop processing
-        if ((fsBlacklisted || skipFS) && (psBlacklisted || skipPS)) {
-            log(`   ⛔ Both FS and PS blacklisted/skipped. Stopping fixture iteration.`, 'warning');
-            break;
-        }
-
-        // Rate limiting
+        if ((stats.fsBlack || skipFS) && (stats.psBlack || skipPS)) break;
         await delay(50);
     }
 
-    // Post-loop: Update statuses for non-blacklisted pillars
-    if (!skipFS && !fsBlacklisted) {
-        if (fsSuccess > 0) {
-            await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
-            // Backward compat
-            await db.run(
-                "UPDATE V3_League_Seasons SET imported_fixture_stats = 1 WHERE league_id = ? AND season_year = ?",
-                cleanParams([leagueId, seasonYear])
-            );
-        } else if (fsFailed > 0) {
-            await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.PARTIAL);
-        }
+    // Wrap up
+    if (!skipFS && !stats.fsBlack && stats.fsSuccess > 0) {
+        await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
+        await db.run("UPDATE V3_League_Seasons SET imported_fixture_stats = 1 WHERE league_id = ? AND season_year = ?", [leagueId, seasonYear]);
+    }
+    if (!skipPS && !stats.psBlack && stats.psSuccess > 0) {
+        await ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.COMPLETE);
+        await db.run("UPDATE V3_League_Seasons SET imported_player_stats = 1 WHERE league_id = ? AND season_year = ?", [leagueId, seasonYear]);
+        await computePlayerSeasonNormalization(leagueId, seasonYear);
     }
 
-    if (!skipPS && !psBlacklisted) {
-        if (psSuccess > 0) {
-            await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
-            await db.run(
-                "UPDATE V3_League_Seasons SET imported_player_stats = 1, last_sync_player_stats = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?",
-                cleanParams([leagueId, seasonYear])
-            );
-            // Trigger normalization
-            log('🔄 Triggering seasonal player normalization (Per-90 metrics)...');
-            await computePlayerSeasonNormalization(leagueId, seasonYear);
-            log('✅ Normalization complete.');
-        } else if (psFailed > 0) {
-            await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.PARTIAL);
-        }
-    }
-
-    return {
-        fs: { total: targetFixtures.length, success: fsSuccess, failed: fsFailed, skipped: skipFS, blacklisted: fsBlacklisted },
-        ps: { total: targetFixtures.length, success: psSuccess, failed: psFailed, skipped: skipPS, blacklisted: psBlacklisted }
-    };
+    return { fs: { success: stats.fsSuccess, blacklisted: stats.fsBlack }, ps: { success: stats.psSuccess, blacklisted: stats.psBlack } };
 };
 
 /**

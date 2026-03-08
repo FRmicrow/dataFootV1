@@ -1,5 +1,5 @@
 import sqlite3 from 'sqlite3';
-import path from 'path';
+import path from 'node:path';
 
 const dbPath = path.resolve('backend/database.sqlite');
 const db = new sqlite3.Database(dbPath);

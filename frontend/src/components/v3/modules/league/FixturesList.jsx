@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { Card, Stack, Badge, Grid, Button, FixtureRow } from '../../../../design-system';
 import InlineFixtureDetails from '../match/InlineFixtureDetails';
 
@@ -92,6 +93,10 @@ const FixturesList = ({
                 >
                     <div
                         onClick={() => setSelectedRound('ALL')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedRound('ALL'); }}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={selectedRound === 'ALL'}
                         style={{
                             flexShrink: 0,
                             padding: '6px 16px',
@@ -117,6 +122,10 @@ const FixturesList = ({
                             <div
                                 key={round}
                                 onClick={() => setSelectedRound(round)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedRound(round); }}
+                                role="button"
+                                tabIndex={0}
+                                aria-pressed={isSelected}
                                 style={{
                                     flexShrink: 0,
                                     padding: '6px 16px',
@@ -184,6 +193,15 @@ const FixturesList = ({
             </Card>
         </Stack>
     );
+};
+
+FixturesList.propTypes = {
+    fixturesData: PropTypes.shape({
+        fixtures: PropTypes.array,
+        rounds: PropTypes.array
+    }).isRequired,
+    selectedRound: PropTypes.string,
+    setSelectedRound: PropTypes.func.isRequired
 };
 
 export default FixturesList;

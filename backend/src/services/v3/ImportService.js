@@ -166,7 +166,7 @@ export const Mappers = {
             goalkeeper_saves: s.goalkeeper_saves || 0,
             passes_total: s.total_passes || 0,
             passes_accurate: s.passes_accurate || 0,
-            pass_accuracy_pct: parseInt(s['passes_%'] || 0)
+            pass_accuracy_pct: Number.parseInt(s['passes_%'] || 0)
         };
     },
     fixturePlayerStats: (fixtureId, teamId, playerApiData) => {
@@ -192,7 +192,7 @@ export const Mappers = {
 
             passes_total: s.passes?.total || 0,
             passes_key: s.passes?.key || 0,
-            passes_accuracy: parseInt(s.passes?.accuracy || 0),
+            passes_accuracy: Number.parseInt(s.passes?.accuracy || 0),
 
             tackles_total: s.tackles?.total || 0,
             tackles_blocks: s.tackles?.blocks || 0,

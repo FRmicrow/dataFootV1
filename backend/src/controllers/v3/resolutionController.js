@@ -8,7 +8,7 @@ import { ResolutionService } from '../../services/v3/ResolutionService.js';
 export const getPotentialDuplicates = async (req, res) => {
     try {
         const { threshold = 85 } = req.query;
-        const duplicates = ResolutionService.findGlobalDuplicates(parseInt(threshold));
+        const duplicates = ResolutionService.findGlobalDuplicates(Number.parseInt(threshold));
         res.json(duplicates);
     } catch (error) {
         console.error("Error finding duplicates:", error);

@@ -6,7 +6,7 @@ import { cleanParams } from '../utils/sqlHelpers.js';
 // 16 is the OID for 'bool' in Postgres. Return 1 for true, 0 for false.
 types.setTypeParser(16, val => (val === 't' || val === true) ? 1 : 0);
 // 20 is the OID for 'int8' (BIGINT). Return as Number to avoid string scientific notation.
-types.setTypeParser(20, val => parseInt(val, 10));
+types.setTypeParser(20, val => Number.parseInt(val, 10));
 
 let pool;
 

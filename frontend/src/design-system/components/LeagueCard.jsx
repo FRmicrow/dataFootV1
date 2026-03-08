@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Card, Badge, Stack } from '../index';
 import './LeagueCard.css';
 
@@ -85,6 +86,25 @@ const LeagueCard = ({
             </Stack>
         </Card>
     );
+};
+
+LeagueCard.propTypes = {
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    logo: PropTypes.string,
+    rank: PropTypes.number,
+    seasonsCount: PropTypes.number,
+    isCup: PropTypes.bool,
+    onClick: PropTypes.func,
+    countryName: PropTypes.string,
+    countryFlag: PropTypes.string,
+    tier: PropTypes.number,
+    leaderName: PropTypes.string,
+    leaderLogo: PropTypes.string,
+    currentMatchday: PropTypes.number,
+    currentRound: PropTypes.string,
+    interactive: PropTypes.bool,
+    featured: PropTypes.bool
 };
 
 export default LeagueCard;

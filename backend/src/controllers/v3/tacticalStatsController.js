@@ -6,9 +6,9 @@ import {
 } from '../../services/v3/tacticalStatsService.js';
 
 const syncSchema = z.object({
-    leagueId: z.union([z.string(), z.number()]).transform(v => parseInt(v)),
-    season: z.union([z.string(), z.number()]).transform(v => parseInt(v)),
-    limit: z.union([z.string(), z.number()]).optional().transform(v => v ? parseInt(v) : 50)
+    leagueId: z.union([z.string(), z.number()]).transform(v => Number.parseInt(v)),
+    season: z.union([z.string(), z.number()]).transform(v => Number.parseInt(v)),
+    limit: z.union([z.string(), z.number()]).optional().transform(v => v ? Number.parseInt(v) : 50)
 });
 
 /**
@@ -83,7 +83,7 @@ export const triggerPlayerStatsSync = async (req, res) => {
 export const triggerNormalization = async (req, res) => {
     const { leagueId, season } = req.body;
     try {
-        await computePlayerSeasonNormalization(parseInt(leagueId), parseInt(season));
+        await computePlayerSeasonNormalization(Number.parseInt(leagueId), Number.parseInt(season));
         res.json({ success: true, message: "Normalization completed." });
     } catch (error) {
         res.status(500).json({ error: error.message });

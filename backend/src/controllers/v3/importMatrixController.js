@@ -8,6 +8,25 @@ import ImportStatusService from '../../services/v3/importStatusService.js';
 import { IMPORT_STATUS, STATUS_LABELS, PILLARS } from '../../services/v3/importStatusConstants.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 
+import { buildStatusIndex, mapMatrixRow } from '../../utils/v3Helpers.js';
+
+/**
+ * Calculates data ranges for each league/pillar based on completed imports
+ */
+const calculateDataRanges = (statuses) => {
+    const ranges = {};
+    for (const s of statuses) {
+        if (!ranges[s.league_id]) ranges[s.league_id] = {};
+        if (!ranges[s.league_id][s.pillar]) ranges[s.league_id][s.pillar] = { start: null, end: null };
+        if (s.status === IMPORT_STATUS.COMPLETE || s.status === IMPORT_STATUS.LOCKED) {
+            const range = ranges[s.league_id][s.pillar];
+            if (!range.start || s.season_year < range.start) range.start = s.season_year;
+            if (!range.end || s.season_year > range.end) range.end = s.season_year;
+        }
+    }
+    return ranges;
+};
+
 /**
  * US_266: Matrix API — Status-Aware Endpoint
  */
@@ -17,12 +36,7 @@ export const getImportMatrixStatus = async (req, res) => {
             SELECT 
                 l.league_id, l.api_id, l.name as league_name, l.logo_url as league_logo,
                 c.name as country_name, c.flag_url as country_flag, c.importance_rank,
-                s.league_season_id, s.season_year,
-                s.imported_standings, s.imported_fixtures, s.imported_players,
-                s.imported_events, s.imported_lineups, s.imported_trophies,
-                s.imported_fixture_stats, s.imported_player_stats,
-                s.last_sync_core, s.last_sync_events, s.last_sync_lineups,
-                s.last_sync_trophies, s.last_sync_fixture_stats, s.last_sync_player_stats
+                s.league_season_id, s.season_year, s.is_current
             FROM V3_Leagues l
             JOIN V3_Countries c ON l.country_id = c.country_id
             LEFT JOIN V3_League_Seasons s ON l.league_id = s.league_id
@@ -31,24 +45,8 @@ export const getImportMatrixStatus = async (req, res) => {
 
         const rows = await db.all(leaguesSql);
         const allStatuses = await db.all(`SELECT * FROM V3_Import_Status`);
-
-        const statusIndex = {};
-        for (const s of allStatuses) {
-            const key = `${s.league_id}-${s.season_year}`;
-            if (!statusIndex[key]) statusIndex[key] = {};
-            statusIndex[key][s.pillar] = s;
-        }
-
-        const dataRanges = {};
-        for (const s of allStatuses) {
-            if (!dataRanges[s.league_id]) dataRanges[s.league_id] = {};
-            if (!dataRanges[s.league_id][s.pillar]) dataRanges[s.league_id][s.pillar] = { start: null, end: null };
-            if (s.status === IMPORT_STATUS.COMPLETE || s.status === IMPORT_STATUS.LOCKED) {
-                const range = dataRanges[s.league_id][s.pillar];
-                if (!range.start || s.season_year < range.start) range.start = s.season_year;
-                if (!range.end || s.season_year > range.end) range.end = s.season_year;
-            }
-        }
+        const statusIndex = buildStatusIndex(allStatuses);
+        const dataRanges = calculateDataRanges(allStatuses);
 
         const matrixMap = {};
         rows.forEach(row => {
@@ -60,38 +58,12 @@ export const getImportMatrixStatus = async (req, res) => {
                 };
             }
             if (row.season_year) {
-                const key = `${row.league_id}-${row.season_year}`;
-                const statusMap = statusIndex[key] || {};
-
-                const buildPillarStatus = (pillar, legacyValue, legacySync) => {
-                    const s = statusMap[pillar];
-                    if (s) return {
-                        code: s.status, label: STATUS_LABELS[s.status],
-                        lastSync: s.last_success_at || s.last_checked_at || null,
-                        consecutiveFailures: s.consecutive_failures || 0,
-                        reason: s.failure_reason || null,
-                        itemsExpected: s.total_items_expected, itemsImported: s.total_items_imported
-                    };
-                    return {
-                        code: legacyValue === 1 ? IMPORT_STATUS.COMPLETE : (legacyValue === 0.5 ? IMPORT_STATUS.PARTIAL : IMPORT_STATUS.NONE),
-                        label: legacyValue === 1 ? 'COMPLETE' : (legacyValue === 0.5 ? 'PARTIAL' : 'NONE'),
-                        lastSync: legacySync || null, consecutiveFailures: 0, reason: null
-                    };
-                };
-
-                const coreValue = (row.imported_standings && row.imported_fixtures) ? 1 : (row.imported_fixtures ? 0.5 : 0);
-                const status = {
-                    core: buildPillarStatus('core', coreValue, row.last_sync_core),
-                    events: buildPillarStatus('events', row.imported_events || 0, row.last_sync_events),
-                    lineups: buildPillarStatus('lineups', row.imported_lineups || 0, row.last_sync_lineups),
-                    trophies: buildPillarStatus('trophies', row.imported_trophies || 0, row.last_sync_trophies),
-                    fs: buildPillarStatus('fs', row.imported_fixture_stats || 0, row.last_sync_fixture_stats),
-                    ps: buildPillarStatus('ps', row.imported_player_stats || 0, row.last_sync_player_stats)
-                };
-
+                const mappedSeasons = mapMatrixRow(row, statusIndex);
                 matrixMap[row.league_id].seasons.push({
-                    id: row.league_season_id, year: row.season_year,
-                    status, seasonLocked: Object.values(status).every(s => s.code === IMPORT_STATUS.LOCKED)
+                    id: row.league_season_id,
+                    year: row.season_year,
+                    status: mappedSeasons.pillars,
+                    seasonLocked: Object.values(mappedSeasons.pillars).every(p => p.status === IMPORT_STATUS.LOCKED)
                 });
             }
         });
@@ -342,7 +314,7 @@ export const triggerDiscoveryImport = async (req, res) => {
         sendLog(`🚀 Initializing Discovery Core Import for League ${leagueId}/${seasonYear}...`, 'info');
 
         // This only fetches Core data by default (Teams, Season, Standings, Fixtures)
-        const sanitizedSeason = parseInt(seasonYear);
+        const sanitizedSeason = Number.parseInt(seasonYear);
         if (!sanitizedSeason) throw new Error("Invalid seasonYear provided.");
 
         await runImportJob(leagueId, sanitizedSeason, sendLog, { forceApiId: true });
@@ -409,7 +381,7 @@ export const triggerDiscoveryBatchImport = async (req, res) => {
 
             try {
                 sendLog(`\n[${successCount + failCount + 1}/${selection.length}] Processing League ID ${leagueId} (${seasonYear})...`, 'info');
-                await runImportJob(leagueId, parseInt(seasonYear), sendLog, { forceApiId: true });
+                await runImportJob(leagueId, Number.parseInt(seasonYear), sendLog, { forceApiId: true });
 
                 const localLeague = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([leagueId]));
                 if (localLeague) {

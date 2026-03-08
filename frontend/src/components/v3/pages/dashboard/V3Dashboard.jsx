@@ -175,7 +175,15 @@ const V3Dashboard = () => {
                             { title: 'Scout Explorer', desc: 'Browse hierarchies and entity analysis', path: '/leagues' },
                             { title: 'Integrity Matrix', desc: 'Resolve orphan dependencies', path: '/import/matrix-status' }
                         ].map((action, i) => (
-                            <div key={i} className="action-row" onClick={() => navigate(action.path)}>
+                            <div
+                                key={i}
+                                className="action-row"
+                                onClick={() => navigate(action.path)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(action.path); }}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={action.title}
+                            >
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ margin: 0 }}>{action.title}</h4>
                                     <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{action.desc}</p>

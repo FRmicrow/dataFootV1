@@ -10,7 +10,7 @@ const Step2_Config = () => {
 
     const handleTypeChange = (type) => setVisual(prev => ({ ...prev, type }));
     const handleFormatChange = (format) => setVisual(prev => ({ ...prev, format }));
-    const handleSpeedChange = (e) => setVisual(prev => ({ ...prev, speed: parseFloat(e.target.value) }));
+    const handleSpeedChange = (e) => setVisual(prev => ({ ...prev, speed: Number.parseFloat(e.target.value) }));
     const handleThemeChange = (theme) => setVisual(prev => ({ ...prev, theme }));
 
     return (

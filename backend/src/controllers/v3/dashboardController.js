@@ -57,7 +57,7 @@ export const getImportedLeagues = async (req, res) => {
             country_name: row.country_name,
             country_rank: row.importance_rank || 999,
             flag_url: row.flag_url,
-            years_imported: row.years_csv ? [...new Set(row.years_csv.split(','))].map(y => parseInt(y)).sort((a, b) => b - a) : []
+            years_imported: row.years_csv ? [...new Set(row.years_csv.split(','))].map(y => Number.parseInt(y)).sort((a, b) => b - a) : []
         }));
 
         res.json({ success: true, data: leagues });
@@ -90,7 +90,7 @@ export const getDiscoveredLeagues = async (req, res) => {
                 api_id: row.api_id,
                 name: row.name,
                 logo_url: row.logo_url,
-                seasons: row.years_csv ? [...new Set(row.years_csv.split(','))].map(y => parseInt(y)).sort((a, b) => b - a) : []
+                seasons: row.years_csv ? [...new Set(row.years_csv.split(','))].map(y => Number.parseInt(y)).sort((a, b) => b - a) : []
             });
         });
 

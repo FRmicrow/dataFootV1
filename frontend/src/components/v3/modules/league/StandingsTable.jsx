@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Card, Table, Badge, Stack, Button, Grid, Input } from '../../../../design-system';
 
@@ -106,7 +107,9 @@ const StandingsTable = ({
                                 color: 'white',
                                 background: char === 'W' ? 'var(--color-success-500)' : char === 'D' ? 'var(--color-accent-500)' : char === 'L' ? 'var(--color-danger-500)' : 'rgba(255,255,255,0.05)'
                             }}
-                            title={char}
+                            role="img"
+                            aria-label={char === 'W' ? 'Win' : char === 'D' ? 'Draw' : char === 'L' ? 'Loss' : 'Unknown'}
+                            title={char === 'W' ? 'Win' : char === 'D' ? 'Draw' : char === 'L' ? 'Loss' : 'Unknown'}
                         >
                             {char}
                         </div>
@@ -169,6 +172,32 @@ const StandingsTable = ({
             ))}
         </Stack>
     );
+};
+
+StandingsTable.propTypes = {
+    standings: PropTypes.arrayOf(PropTypes.shape({
+        team_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        team_name: PropTypes.string.isRequired,
+        team_logo: PropTypes.string,
+        rank: PropTypes.number,
+        played: PropTypes.number,
+        win: PropTypes.number,
+        draw: PropTypes.number,
+        lose: PropTypes.number,
+        goals_for: PropTypes.number,
+        goals_against: PropTypes.number,
+        goals_diff: PropTypes.number,
+        points: PropTypes.number,
+        form: PropTypes.string,
+        group_name: PropTypes.string
+    })),
+    rangeStart: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    setRangeStart: PropTypes.func,
+    rangeEnd: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    setRangeEnd: PropTypes.func,
+    handleRangeUpdate: PropTypes.func,
+    isDynamicMode: PropTypes.bool,
+    loading: PropTypes.bool
 };
 
 export default StandingsTable;

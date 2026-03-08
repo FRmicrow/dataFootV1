@@ -67,8 +67,8 @@ export const saveMatchOdds = async (req, res) => {
     if (!id) return res.status(400).json({ error: "Fixture ID is required" });
 
     try {
-        const numericId = parseInt(id, 10);
-        if (isNaN(numericId)) return res.status(400).json({ error: "Invalid Fixture ID" });
+        const numericId = Number.parseInt(id, 10);
+        if (Number.isNaN(numericId)) return res.status(400).json({ error: "Invalid Fixture ID" });
 
         const result = await saveMatchOddsService(numericId);
         res.json(result);
@@ -120,8 +120,8 @@ export const getMatchDetails = async (req, res) => {
     if (!id) return res.status(400).json({ error: "Fixture ID is required" });
 
     try {
-        const numericId = parseInt(id, 10);
-        if (isNaN(numericId)) return res.status(400).json({ error: "Invalid Fixture ID" });
+        const numericId = Number.parseInt(id, 10);
+        if (Number.isNaN(numericId)) return res.status(400).json({ error: "Invalid Fixture ID" });
 
         const matchDetails = await getMatchDetailsService(numericId);
         res.json(matchDetails);

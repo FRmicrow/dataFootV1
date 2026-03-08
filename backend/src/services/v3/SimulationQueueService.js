@@ -1,7 +1,7 @@
 
 import { spawn } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 
@@ -89,10 +89,9 @@ class SimulationQueueService {
         const allowedModes = ['STATIC', 'WALK_FORWARD'];
         const allowedHorizons = ['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING'];
 
-        const safeLeagueId = parseInt(leagueId);
-        const safeSeasonYear = parseInt(seasonYear);
-
-        if (isNaN(safeLeagueId) || isNaN(safeSeasonYear)) throw new Error("League ID and Season Year must be valid numbers");
+        const safeLeagueId = Number.parseInt(leagueId);
+        const safeSeasonYear = Number.parseInt(seasonYear);
+        if (Number.isNaN(safeLeagueId) || Number.isNaN(safeSeasonYear)) throw new Error("League ID and Season Year must be valid numbers");
         if (!allowedModes.includes(mode)) throw new Error(`Invalid simulation mode: ${mode}`);
         if (!allowedHorizons.includes(horizon)) throw new Error(`Invalid horizon type: ${horizon}`);
 
@@ -139,7 +138,7 @@ class SimulationQueueService {
             if (line.includes('PROGRESS:')) {
                 const match = line.match(/PROGRESS:\s*(\d+)%/);
                 if (match) {
-                    const progress = parseInt(match[1]);
+                    const progress = Number.parseInt(match[1]);
                     await db.run("UPDATE V3_Forge_Simulations SET completed_months = ?, status = 'RUNNING' WHERE id = ?",
                         cleanParams([progress, simId]));
                 }

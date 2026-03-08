@@ -23,7 +23,7 @@ export const getLineups = async (req, res) => {
             // Sort Home First
             const fixture = await db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
             if (fixture) {
-                data.sort((a, b) => a.team_id == fixture.home_team_id ? -1 : 1);
+                data.sort((a, b) => a.team_id === fixture.home_team_id ? -1 : 1);
             }
 
             return res.json({ source: 'db', lineups: data });
@@ -54,7 +54,7 @@ export const getLineups = async (req, res) => {
         // Sort Home First
         const fixture = await db.get("SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?", [id]);
         if (fixture) {
-            data.sort((a, b) => a.team_id == fixture.home_team_id ? -1 : 1);
+            data.sort((a, b) => a.team_id === fixture.home_team_id ? -1 : 1);
         }
 
         res.json({ source: 'api_synced', lineups: data });
@@ -231,7 +231,7 @@ export const getTypicalLineup = async (req, res) => {
             });
 
             // Win Rate calculation
-            const isHome = m.home_team_id == teamId;
+            const isHome = m.home_team_id === teamId;
             const scoreOwn = isHome ? m.goals_home : m.goals_away;
             const scoreOpp = isHome ? m.goals_away : m.goals_home;
             if (scoreOwn > scoreOpp) wins++;
@@ -245,7 +245,7 @@ export const getTypicalLineup = async (req, res) => {
         res.json({
             formation: topFormation.formation,
             usage: topFormation.usage_count,
-            win_rate: matches.length > 0 ? parseFloat(((wins / matches.length) * 100).toFixed(1)) : 0,
+            win_rate: matches.length > 0 ? Number.parseFloat(((wins / matches.length) * 100).toFixed(1)) : 0,
             roster: typicalXI,
             total_matches: matches.length
         });

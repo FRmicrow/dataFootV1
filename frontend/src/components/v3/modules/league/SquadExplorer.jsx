@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 
 import api from '../../../../services/api';
@@ -119,6 +120,10 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                         title: (
                             <div
                                 onClick={() => handleSort(col.key)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSort(col.key); }}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Sort by ${col.title}`}
                                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: col.align === 'center' ? 'center' : 'flex-start' }}
                             >
                                 {col.title}
@@ -144,6 +149,12 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
             </footer>
         </Card>
     );
+};
+
+SquadExplorer.propTypes = {
+    leagueId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    season: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    teams: PropTypes.array.isRequired
 };
 
 export default SquadExplorer;

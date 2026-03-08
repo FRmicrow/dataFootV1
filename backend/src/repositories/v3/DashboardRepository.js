@@ -17,11 +17,11 @@ class DashboardRepository extends BaseRepository {
         ]);
 
         return {
-            total_leagues: parseInt(leagues.count, 10),
-            total_players: parseInt(players.count, 10),
-            total_clubs: parseInt(clubs.count, 10),
-            total_fixtures: parseInt(fixtures.count, 10),
-            imported_seasons: parseInt(seasons.count, 10)
+            total_leagues: Number.parseInt(leagues.count, 10),
+            total_players: Number.parseInt(players.count, 10),
+            total_clubs: Number.parseInt(clubs.count, 10),
+            total_fixtures: Number.parseInt(fixtures.count, 10),
+            imported_seasons: Number.parseInt(seasons.count, 10)
         };
     }
 

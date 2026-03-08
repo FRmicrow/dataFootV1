@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const SeasonSelector = ({
     availableSeasons,
@@ -130,6 +131,22 @@ const SeasonSelector = ({
 
         </div>
     );
+};
+
+SeasonSelector.propTypes = {
+    availableSeasons: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])).isRequired,
+    fromYear: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    setFromYear: PropTypes.func.isRequired,
+    toYear: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    setToYear: PropTypes.func.isRequired,
+    skipExisting: PropTypes.bool.isRequired,
+    setSkipExisting: PropTypes.func.isRequired,
+    leagueSyncStatus: PropTypes.arrayOf(PropTypes.shape({
+        year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        status: PropTypes.string.isRequired,
+        is_current: PropTypes.oneOfType([PropTypes.bool, PropTypes.number])
+    })).isRequired,
+    disabled: PropTypes.bool
 };
 
 export default SeasonSelector;

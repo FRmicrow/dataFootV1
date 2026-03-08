@@ -184,409 +184,145 @@ export const searchStudioTeams = async (req, res) => {
     }
 };
 
-/**
- * POST /api/v3/studio/query
- * The Data Aggregation Engine - Strict Contract Implementation
- */
-export const queryStudioData = async (req, res) => {
-    const { stat, filters, selection, options } = req.body;
+// --- Private Studio Helpers ---
 
-    // 1. Validation
-    if (!stat) return res.status(400).json({ error: 'Stat key is required' });
-    if (!filters || !filters.years || filters.years.length !== 2) {
-        return res.status(400).json({ error: 'Years range [min, max] is required' });
-    }
+const getRoundNumber = (roundStr) => {
+    if (!roundStr || typeof roundStr !== 'string') return 0;
+    const parts = roundStr.split('-');
+    const lastPart = parts[parts.length - 1].trim();
+    const num = Number.parseInt(lastPart);
+    return Number.isNaN(num) ? 0 : num;
+};
 
-    // Security check for stat column
-    const allowedStats = [
-        'goals_total', 'goals_assists', 'shots_total', 'shots_on',
-        'dribbles_success', 'passes_key', 'tackles_total', 'duels_won', 'duels_total', // Added duels_total
-        'cards_yellow', 'cards_red', 'games_minutes', 'games_appearences', 'games_rating', 'passes_accuracy'
-    ];
-    if (!allowedStats.includes(stat)) {
-        return res.status(400).json({ error: 'Invalid stat key requested' });
-    }
+const buildStudioWhereClause = (filters, selection, stat) => {
+    const [minYear, maxYear] = filters.years;
+    let whereClauses = [`s.season_year BETWEEN ? AND ?`];
+    let params = [minYear, maxYear];
 
-    try {
-        const [minYear, maxYear] = filters.years;
-        const cumulative = options?.cumulative === true;
-        const topN = selection?.mode === 'top_n' ? (selection.value || 10) : 1000;
-        const manualPlayers = selection?.mode === 'manual' ? selection.players : [];
-
-        // 2. Build Query
-        let whereClauses = [`s.season_year BETWEEN ? AND ?`];
-        let params = [minYear, maxYear];
-
-        // League Filter
-        if (filters.leagues && filters.leagues.length > 0) {
-            const placeholders = filters.leagues.map(() => '?').join(',');
-            whereClauses.push(`s.league_id IN (${placeholders})`);
-            params.push(...filters.leagues);
+    const addInClause = (items, column) => {
+        if (items && items.length > 0) {
+            whereClauses.push(`${column} IN (${items.map(() => '?').join(',')})`);
+            params.push(...items);
         }
+    };
 
-        // Country Filter (Nationality)
-        // User requested: "If i select 'nationality' get the data when V3_player.nationality = selected country"
-        if (filters.countries && filters.countries.length > 0) {
-            const placeholders = filters.countries.map(() => '?').join(',');
-            whereClauses.push(`p.nationality IN (${placeholders})`);
-            params.push(...filters.countries);
-        }
+    addInClause(filters.leagues, 's.league_id');
+    addInClause(filters.countries, 'p.nationality');
+    addInClause(filters.teams, 's.team_id');
 
-        // Team Filter (Club)
-        if (filters.teams && filters.teams.length > 0) {
-            const placeholders = filters.teams.map(() => '?').join(',');
-            whereClauses.push(`s.team_id IN (${placeholders})`);
-            params.push(...filters.teams);
-        }
+    const manualPlayers = selection?.mode === 'manual' ? selection.players : [];
+    addInClause(manualPlayers, 's.player_id');
 
-        // Manual Players Filter
-        if (manualPlayers.length > 0) {
-            const placeholders = manualPlayers.map(() => '?').join(',');
-            whereClauses.push(`s.player_id IN (${placeholders})`);
-            params.push(...manualPlayers);
-        }
-
-        // We fetch Raw Data: Player | Year | Team | Value
-        // We do NOT sum by player yet if we want year-by-year granularity for the timeline.
-        // But we DO sum if a player played for multiple teams in the SAME year?
-        // Usually simpler to take the max or sum. Let's SUM for the year.
-        const sql = `
-            SELECT 
-                s.season_year,
-                s.player_id,
-                p.name as player_name,
-                p.photo_url,
-                t.name as team_name,
-                t.logo_url as team_logo,
-                SUM(s.${stat}) as value
+    return {
+        sql: `
+            SELECT s.season_year, s.player_id, p.name as player_name, p.photo_url, t.name as team_name, t.logo_url as team_logo, SUM(s.${stat}) as value
             FROM V3_Player_Stats s
             JOIN V3_Players p ON s.player_id = p.player_id
             JOIN V3_Teams t ON s.team_id = t.team_id
-            JOIN V3_Leagues l ON s.league_id = l.league_id 
-            JOIN V3_Countries c ON l.country_id = c.country_id
             WHERE ${whereClauses.join(' AND ')}
             GROUP BY s.season_year, s.player_id
             ORDER BY s.season_year ASC
-        `;
+        `,
+        params
+    };
+};
 
+/**
+ * POST /api/v3/studio/query
+ */
+export const queryStudioData = async (req, res) => {
+    const { stat, filters, selection, options } = req.body;
+    if (!stat || !filters?.years || filters.years.length !== 2) return res.status(400).json({ error: 'Stat key and Years range required' });
+
+    const allowedStats = ['goals_total', 'goals_assists', 'shots_total', 'shots_on', 'dribbles_success', 'passes_key', 'tackles_total', 'duels_won', 'duels_total', 'cards_yellow', 'cards_red', 'games_minutes', 'games_appearences', 'games_rating', 'passes_accuracy'];
+    if (!allowedStats.includes(stat)) return res.status(400).json({ error: 'Invalid stat key' });
+
+    try {
+        const { sql, params } = buildStudioWhereClause(filters, selection, stat);
         const rows = await db.all(sql, params);
 
-        // 3. Process Data (Aggregation & Normalization)
-
-        // Map to store cumulative totals: { player_id: total }
         const runningTotals = {};
-
-        // Map to store static player info: { player_id: { name, photo, team... } }
         const playerMeta = {};
-
-        // Prepare timeline buckets
-        const timeline = [];
-
-        // Populate player meta and process rows
         rows.forEach(row => {
-            // Update meta (last seen team will overwrite, which is usually desired behavior for "current team")
-            playerMeta[row.player_id] = {
-                id: row.player_id,
-                label: row.player_name,
-                subLabel: row.team_name,
-                image: row.photo_url,
-                team_logo: row.team_logo
-            };
+            playerMeta[row.player_id] = { id: row.player_id, label: row.player_name, subLabel: row.team_name, image: row.photo_url, team_logo: row.team_logo };
         });
 
-        // If Manual Mode, fetch meta for players even if they have 0 stats in range?
-        // Query only returns rows matching WHERE clause. 
-        // If a manually selected player has NO stats in range, they won't appear.
-        // We might want to inject them with 0s if they exist in DB?
-        // For now, assume if selected, they appear if they played.
+        const cumulative = options?.cumulative === true;
+        const topN = selection?.mode === 'top_n' ? (selection.value || 10) : 1000;
+        const timeline = [];
+        const yearsSet = new Set(rows.map(r => r.season_year));
+        const sortedYears = Array.from(yearsSet).sort((a, b) => a - b);
 
-        // ADD INITIAL ZERO FRAME (Year - 1)
-        // This is crucial for smooth start animation from 0
-        const startFrameRecords = Object.values(playerMeta).map(p => ({
-            ...p,
-            value: 0,
-            rank: 999 // Start off-screen
-        }));
-
-        // Only include if manual mode? Or always?
-        // Always good to have a "start" frame.
-        // But for optimization, keep it minimal.
-
-        timeline.push({
-            season: minYear - 1,
-            records: selection.mode === 'manual' ? startFrameRecords : [] // Only force 0s for manual? or top N?
-        });
-
-
-        // 4. Build Frames
-        // We iterate year by year to handle cumulative logic correctly
-        for (let y = minYear; y <= maxYear; y++) {
-            const currentYear = y;
-
-            // Get rows for this year
-            const yearRows = rows.filter(r => r.season_year === currentYear);
-
-            // Update totals
-            yearRows.forEach(row => {
-                if (cumulative) {
-                    runningTotals[row.player_id] = (runningTotals[row.player_id] || 0) + row.value;
-                } else {
-                    runningTotals[row.player_id] = row.value;
-                }
-
-                // Update team specifically for this year (so the bar shows the correct team at that time)
-                if (playerMeta[row.player_id]) {
-                    playerMeta[row.player_id].subLabel = row.team_name;
-                    playerMeta[row.player_id].team_logo = row.team_logo;
-                }
-            });
-
-            // If cumulative, we need to include ALL players who have a running total > 0 (even if they didn't play this year)
-            // If not cumulative, we only include players who played this year (yearRows)
-
-            let activePlayerIds = [];
-            if (cumulative) {
-                activePlayerIds = Object.keys(runningTotals);
-            } else {
-                activePlayerIds = yearRows.map(r => r.player_id);
-            }
-
-            // For Manual Mode: Ensure ALL selected players are included, even if 0
-            if (selection.mode === 'manual') {
-                const manualIds = selection.players.map(String); // ensure string key match
-                manualIds.forEach(mid => {
-                    if (!runningTotals[mid]) runningTotals[mid] = 0;
-                    if (!activePlayerIds.includes(mid)) activePlayerIds.push(mid);
-                });
-            }
-
-            // Build records for this frame
-            let frameRecords = activePlayerIds.map(pid => {
-                const val = runningTotals[pid] || 0;
-                const meta = playerMeta[pid];
-                if (!meta) return null; // Should not happen
-                return {
-                    id: parseInt(pid),
-                    label: meta.label,
-                    subLabel: meta.subLabel, // Team name
-                    image: meta.image,
-                    value: val
-                };
-            }).filter(Boolean);
-
-            // Filter out zero values if desired? Usually yes.
-            if (selection.mode !== 'manual') {
-                frameRecords = frameRecords.filter(r => r.value > 0);
-            }
-
-            // Sort DESC
-            frameRecords.sort((a, b) => b.value - a.value);
-
-            // Apply Top N (only keep top N for the frame)
-            // Note: In Bar Chart Race, we usually want to keep a few more for smooth enter/exit animations
-            // But strict Top N is safer for performance.
-            // Let's keep Top N + 5 for buffer if needed, but contract says "rank" is final.
-            // Let's just return Top N as requested strictly.
-
-            // Assign Ranks
-            frameRecords.forEach((r, idx) => {
-                r.rank = idx + 1;
-            });
-
-            // Slice
-            if (selection?.mode === 'top_n') {
-                frameRecords = frameRecords.slice(0, topN);
-            }
-
-            timeline.push({ season: y, records: frameRecords });
-
-            // Note: If timeline has no records for a year, frontend handles empty lists gracefully?
+        if (sortedYears.length > 0) {
+            timeline.push({ year: sortedYears[0] - 1, records: Object.values(playerMeta).map(m => ({ ...m, value: 0 })) });
         }
 
-        // 5. Final Response Construction
-        const response = {
-            meta: {
-                stat_key: stat,
-                stat_label: allowedStats.find(s => s === stat) || stat, // Could map to pretty label if we had the map handy
-                unit: (stat.includes('rating') || stat.includes('ratio')) ? 'decimal' : 'integer'
-            },
-            timeline: timeline
-        };
+        sortedYears.forEach(year => {
+            const yearRows = rows.filter(r => r.season_year === year);
+            yearRows.forEach(row => {
+                runningTotals[row.player_id] = (cumulative ? (runningTotals[row.player_id] || 0) : 0) + row.value;
+            });
+            const frameRecords = Object.entries(runningTotals).map(([pid, val]) => ({ ...playerMeta[pid], value: Number.parseFloat(val.toFixed(2)) }));
+            frameRecords.sort((a, b) => b.value - a.value);
+            timeline.push({ year, records: frameRecords.slice(0, topN) });
+        });
 
-        res.json(response);
-
+        res.json({ meta: { stat, cumulative, count: rows.length }, timeline });
     } catch (error) {
-        console.error('Error in queryStudioData:', error);
-        res.status(500).json({ error: error.message });
+        console.error("Error in queryStudioData:", error);
+        res.status(500).json({ error: 'Data aggregation failed' });
     }
 };
+
 /**
  * POST /api/v3/studio/query/league-rankings
- * Specialized engine for "Racing Standings" animation
- * Calculates cumulative points, GD, and ranking matchday by matchday
  */
 export const queryLeagueRankings = async (req, res) => {
     const { league_id, season } = req.body;
-
-    if (!league_id || !season) {
-        return res.status(400).json({ error: 'league_id and season are required' });
-    }
+    if (!league_id || !season) return res.status(400).json({ error: 'league_id and season required' });
 
     try {
-        // 1. Fetch all finished fixtures
-        const fixturesSql = `
-            SELECT 
-                f.fixture_id,
-                f.round,
-                f.date,
-                f.home_team_id,
-                f.away_team_id,
-                f.goals_home,
-                f.goals_away,
-                t1.name as home_team_name,
-                t1.logo_url as home_team_logo,
-                t2.name as away_team_name,
-                t2.logo_url as away_team_logo
-            FROM V3_Fixtures f
-            JOIN V3_Teams t1 ON f.home_team_id = t1.team_id
-            JOIN V3_Teams t2 ON f.away_team_id = t2.team_id
-            WHERE f.league_id = ? AND f.season_year = ? AND f.status_short = 'FT'
-            ORDER BY f.date ASC
-        `;
-        const fixtures = await db.all(fixturesSql, [league_id, season]);
+        const fixtures = await db.all(`
+            SELECT f.*, t1.name as home_team_name, t1.logo_url as home_team_logo, t2.name as away_team_name, t2.logo_url as away_team_logo
+            FROM V3_Fixtures f JOIN V3_Teams t1 ON f.home_team_id = t1.team_id JOIN V3_Teams t2 ON f.away_team_id = t2.team_id
+            WHERE f.league_id = ? AND f.season_year = ? AND f.status_short = 'FT' ORDER BY f.date ASC
+        `, [league_id, season]);
 
-        // Fetch League Details for Metadata (Name, Logo)
-        const leagueSql = `SELECT name, logo_url FROM V3_Leagues WHERE league_id = ?`;
-        const leagueRow = await db.get(leagueSql, [league_id]);
-        const leagueLogo = leagueRow ? leagueRow.logo_url : null;
-        const leagueName = leagueRow ? leagueRow.name : null;
+        const league = await db.get(`SELECT name, logo_url FROM V3_Leagues WHERE league_id = ?`, [league_id]);
+        if (fixtures.length === 0) return res.json({ meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline: [] });
 
-        if (fixtures.length === 0) {
-            return res.json({
-                meta: {
-                    type: 'league_rankings',
-                    league_logo: leagueLogo,
-                    league_name: leagueName
-                },
-                timeline: []
-            });
-        }
-
-        // 2. Helper to parse round number from string (e.g. "Regular Season - 18")
-        const getRoundNumber = (roundStr) => {
-            if (!roundStr || typeof roundStr !== 'string') return 0;
-            const parts = roundStr.split('-');
-            const lastPart = parts[parts.length - 1].trim();
-            const num = parseInt(lastPart);
-            return isNaN(num) ? 0 : num;
-        };
-
-        // 3. Process data into Rounds
-        // Map to store current state of each team
         const teamsStats = {};
         const roundsData = {};
-
         fixtures.forEach(f => {
             const rd = getRoundNumber(f.round);
             if (rd === 0) return;
-
             if (!roundsData[rd]) roundsData[rd] = [];
             roundsData[rd].push(f);
-
-            // Initialize teams if not present
             [f.home_team_id, f.away_team_id].forEach((tid, idx) => {
-                if (!teamsStats[tid]) {
-                    teamsStats[tid] = {
-                        id: tid,
-                        label: idx === 0 ? f.home_team_name : f.away_team_name,
-                        image: idx === 0 ? f.home_team_logo : f.away_team_logo,
-                        points: 0,
-                        gd: 0,
-                        gf: 0
-                    };
-                }
+                if (!teamsStats[tid]) teamsStats[tid] = { id: tid, label: idx === 0 ? f.home_team_name : f.away_team_name, image: idx === 0 ? f.home_team_logo : f.away_team_logo, points: 0, gd: 0, gf: 0 };
             });
         });
 
-        const timeline = [];
+        const timeline = [{ round: 0, records: Object.values(teamsStats).map((t, idx) => ({ ...t, value: 0, rank: idx + 1 })) }];
         const sortedRounds = Object.keys(roundsData).map(Number).sort((a, b) => a - b);
 
-        // Add Day 0 (Start state)
-        timeline.push({
-            round: 0,
-            records: Object.values(teamsStats).map((t, idx) => ({
-                ...t,
-                value: 0,
-                rank: idx + 1
-            }))
-        });
-
-        // 4. Cumulative Tally Round by Round
         sortedRounds.forEach(rd => {
-            const matches = roundsData[rd];
-
-            matches.forEach(m => {
-                const home = teamsStats[m.home_team_id];
-                const away = teamsStats[m.away_team_id];
-
-                // Points & GD
-                home.gf += (m.goals_home || 0);
-                away.gf += (m.goals_away || 0);
-                home.gd += ((m.goals_home || 0) - (m.goals_away || 0));
-                away.gd += ((m.goals_away || 0) - (m.goals_home || 0));
-
-                if (m.goals_home > m.goals_away) {
-                    home.points += 3;
-                } else if (m.goals_home < m.goals_away) {
-                    away.points += 3;
-                } else if (m.goals_home !== null && m.goals_away !== null) {
-                    home.points += 1;
-                    away.points += 1;
-                }
+            roundsData[rd].forEach(m => {
+                const home = teamsStats[m.home_team_id], away = teamsStats[m.away_team_id];
+                const gh = m.goals_home || 0, ga = m.goals_away || 0;
+                home.gf += gh; away.gf += ga; home.gd += (gh - ga); away.gd += (ga - gh);
+                if (gh > ga) home.points += 3; else if (ga > gh) away.points += 3; else { home.points += 1; away.points += 1; }
             });
 
-            // Calculate Ranking for this Round
-            const frameRecords = Object.values(teamsStats).map(t => ({
-                id: t.id,
-                label: t.label,
-                image: t.image,
-                team_logo: t.image, // Using the same logo for color extraction
-                value: t.points,
-                gd: t.gd,
-                gf: t.gf
-            }));
+            const frameRecords = Object.values(teamsStats).map(t => ({ id: t.id, label: t.label, image: t.image, team_logo: t.image, value: t.points, gd: t.gd, gf: t.gf }))
+                .sort((a, b) => b.value - a.value || b.gd - a.gd || b.gf - a.gf);
 
-            // Tie-breaking: Points -> GD -> GF
-            frameRecords.sort((a, b) => {
-                if (b.value !== a.value) return b.value - a.value;
-                if (b.gd !== a.gd) return b.gd - a.gd;
-                return b.gf - a.gf;
-            });
-
-            // Assign Ranks
-            frameRecords.forEach((r, idx) => {
-                r.rank = idx + 1;
-            });
-
-            timeline.push({ round: rd, records: frameRecords });
+            timeline.push({ round: rd, records: frameRecords.map((r, idx) => ({ ...r, rank: idx + 1 })) });
         });
 
-        // 5. Response
-        res.json({
-            meta: {
-                type: 'league_rankings',
-                league_id,
-                league_name: leagueName,
-                league_logo: leagueLogo,
-                season,
-                total_rounds: sortedRounds.length
-            },
-            timeline
-        });
-
+        res.json({ meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline });
     } catch (error) {
-        console.error('Error in queryLeagueRankings:', error);
-        res.status(500).json({ error: error.message });
+        console.error("Error in queryLeagueRankings:", error);
+        res.status(500).json({ error: 'League processing failed' });
     }
 };
-

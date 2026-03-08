@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Stack } from './Grid';
 import './TeamSelector.css';
 
@@ -43,7 +44,7 @@ const TeamSelector = ({
                                 className={`ds-team-selector-item ${isSelected ? 'is-active' : ''}`}
                             >
                                 <div className="ds-team-selector-logo-wrap">
-                                    <img src={team.team_logo} alt="" loading="lazy" />
+                                    <img src={team.team_logo} alt={team.team_name} loading="lazy" />
                                 </div>
                                 <div className="ds-team-selector-info">
                                     <span className="name">{team.team_name}</span>
@@ -57,6 +58,20 @@ const TeamSelector = ({
             </div>
         </aside>
     );
+};
+
+TeamSelector.propTypes = {
+    teams: PropTypes.arrayOf(PropTypes.shape({
+        team_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        team_name: PropTypes.string.isRequired,
+        team_logo: PropTypes.string,
+        rank: PropTypes.number
+    })),
+    selectedTeamId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    onSelect: PropTypes.func.isRequired,
+    searchTerm: PropTypes.string,
+    onSearchChange: PropTypes.func.isRequired,
+    loading: PropTypes.bool
 };
 
 export default TeamSelector;

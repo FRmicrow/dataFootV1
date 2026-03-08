@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Card, Stack, Badge, Grid } from '../../../../design-system';
 
@@ -94,6 +95,13 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
             <Section title="MVP Candidates" data={topRated || []} playerLabel="Rating" dataKey="games_rating" />
         </Grid>
     );
+};
+
+LeagueLeaders.propTypes = {
+    topScorers: PropTypes.array.isRequired,
+    topAssists: PropTypes.array.isRequired,
+    topRated: PropTypes.array,
+    layout: PropTypes.oneOf(['grid', 'vertical'])
 };
 
 export default LeagueLeaders;

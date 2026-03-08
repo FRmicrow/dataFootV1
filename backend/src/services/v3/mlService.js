@@ -31,7 +31,7 @@ export const getPredictionForFixture = async (fixtureId) => {
         console.log(`🤖 [US_154] Requesting ML prediction from FastAPI for fixture ${fixtureId}...`);
 
         const response = await axios.post(`${ML_SERVICE_URL}/predict`, {
-            fixture_id: parseInt(fixtureId)
+            fixture_id: Number.parseInt(fixtureId)
         }, { timeout: 1000 }); // Fast timeout for responsiveness
 
         return response.data;
@@ -50,7 +50,7 @@ export const getPredictionForFixture = async (fixtureId) => {
 export const getBatchPredictions = async (fixtureIds) => {
     try {
         const response = await axios.post(`${ML_SERVICE_URL}/batch_predict`, {
-            fixture_ids: fixtureIds.map(id => parseInt(id))
+            fixture_ids: fixtureIds.map(id => Number.parseInt(id))
         });
         return response.data;
     } catch (err) {
@@ -90,8 +90,8 @@ export const getTrainingStatus = async () => {
 export const buildForgeModels = async (leagueId, seasonYear = null) => {
     try {
         const response = await axios.post(`${ML_SERVICE_URL}/forge/build-models`, {
-            league_id: parseInt(leagueId),
-            season_year: seasonYear ? parseInt(seasonYear) : null
+            league_id: Number.parseInt(leagueId),
+            season_year: seasonYear ? Number.parseInt(seasonYear) : null
         });
         return response.data;
     } catch (err) {
@@ -133,8 +133,8 @@ export const getForgeModels = async () => {
 export const retrainFromSimulation = async (modelId, simulationId) => {
     try {
         const response = await axios.post(`${ML_SERVICE_URL}/forge/retrain`, {
-            model_id: parseInt(modelId),
-            simulation_id: parseInt(simulationId)
+            model_id: Number.parseInt(modelId),
+            simulation_id: Number.parseInt(simulationId)
         }, { timeout: 300000 }); // 5min timeout for retraining
         return response.data;
     } catch (err) {
@@ -156,8 +156,8 @@ export const getEligibleHorizons = async (leagueId, seasonYear) => {
     try {
         const response = await axios.get(`${ML_SERVICE_URL}/forge/eligible-horizons`, {
             params: {
-                league_id: parseInt(leagueId),
-                season_year: parseInt(seasonYear)
+                league_id: Number.parseInt(leagueId),
+                season_year: Number.parseInt(seasonYear)
             }
         });
         return response.data;
@@ -168,7 +168,7 @@ export const getEligibleHorizons = async (leagueId, seasonYear) => {
 
 export const getLeagueModels = async (leagueId) => {
     try {
-        const sanitizedLeagueId = parseInt(leagueId);
+        const sanitizedLeagueId = Number.parseInt(leagueId);
         const response = await axios.get(`${ML_SERVICE_URL}/forge/league-models/${sanitizedLeagueId}`);
         return response.data;
     } catch (err) {

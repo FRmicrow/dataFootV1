@@ -3,9 +3,7 @@ import { validateRequest } from '../../middleware/validateRequest.js';
 import {
     mlTrainSchema,
     leagueIdV3ParamSchema,
-    simulationStatusSchema,
-    breedingSchema,
-    breedingStatusSchema
+    simulationStatusSchema
 } from '../../schemas/v3Schemas.js';
 import {
     triggerModelRetrain,
@@ -38,8 +36,6 @@ import {
     checkBulkJobStatus,
     getLeagueSimulations
 } from '../../controllers/v3/simulationController.js';
-import { startBreeding, getBreedingStatus } from '../../controllers/v3/forgeLaboratoryController.js';
-
 const router = express.Router();
 
 // ML Management
@@ -64,10 +60,6 @@ router.post('/ml-platform/odds/sync', syncUpcomingOdds);
 router.post('/ml-platform/odds/advanced-sync', syncAdvancedOdds);
 router.post('/ml-platform/odds/catchup', runOddsCatchup);
 router.get('/predict/fixture/:id', predictFixtureAll);
-
-// Forge Laboratory
-router.post('/forge/breed', validateRequest(breedingSchema), startBreeding);
-router.get('/forge/breed-status', validateRequest(breedingStatusSchema), getBreedingStatus);
 
 // Simulation Engine
 router.post('/simulation/start', triggerSimulation);

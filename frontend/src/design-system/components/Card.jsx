@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import './Card.css';
 
 const Card = ({
@@ -17,6 +18,14 @@ const Card = ({
         <div
             className={`ds-card ${ghost ? 'ds-card--ghost' : ''} ${onClick ? 'ds-card--interactive' : ''} ${className}`}
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onClick(e);
+                }
+            }}
+            role={onClick ? "button" : undefined}
+            tabIndex={onClick ? 0 : undefined}
             style={style}
         >
             {(title || extra) && (
@@ -37,6 +46,19 @@ const Card = ({
             {footer && <div className="ds-card-footer">{footer}</div>}
         </div>
     );
+};
+
+Card.propTypes = {
+    children: PropTypes.node,
+    title: PropTypes.string,
+    subtitle: PropTypes.string,
+    titleLogo: PropTypes.node,
+    footer: PropTypes.node,
+    extra: PropTypes.node,
+    onClick: PropTypes.func,
+    className: PropTypes.string,
+    style: PropTypes.object,
+    ghost: PropTypes.bool
 };
 
 export default Card;

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Card, Stack, Badge } from '../index';
 import './PlayerCard.css';
 
@@ -63,6 +64,18 @@ const PlayerCard = ({
             </Stack>
         </Card>
     );
+};
+
+PlayerCard.propTypes = {
+    photo: PropTypes.string,
+    name: PropTypes.string.isRequired,
+    position: PropTypes.string,
+    number: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    appearances: PropTypes.number,
+    goals: PropTypes.number,
+    rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    onClick: PropTypes.func,
+    variant: PropTypes.oneOf(['default', 'featured'])
 };
 
 export default PlayerCard;

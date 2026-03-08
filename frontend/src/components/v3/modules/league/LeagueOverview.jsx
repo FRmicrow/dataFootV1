@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import SquadExplorer from './SquadExplorer';
 import LeagueLeaders from './LeagueLeaders';
 import { Grid, Stack } from '../../../../design-system';
@@ -32,6 +33,15 @@ const LeagueOverview = ({
             </Grid>
         </Stack>
     );
+};
+
+LeagueOverview.propTypes = {
+    leagueId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    season: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    standings: PropTypes.array.isRequired,
+    topScorers: PropTypes.array,
+    topAssists: PropTypes.array,
+    topRated: PropTypes.array
 };
 
 export default LeagueOverview;

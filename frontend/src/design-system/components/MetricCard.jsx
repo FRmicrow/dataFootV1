@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Card, Stack } from '../index';
 import './MetricCard.css';
 
@@ -41,6 +42,16 @@ const MetricCard = ({
             </Stack>
         </Card>
     );
+};
+
+MetricCard.propTypes = {
+    label: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    subValue: PropTypes.string,
+    trend: PropTypes.number,
+    icon: PropTypes.node,
+    variant: PropTypes.oneOf(['default', 'featured']),
+    loading: PropTypes.bool
 };
 
 export default MetricCard;

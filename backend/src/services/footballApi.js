@@ -1,7 +1,7 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import apiQueue from './apiQueue.js';
 
 const __filename = fileURLToPath(import.meta.url);
