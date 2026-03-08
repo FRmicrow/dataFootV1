@@ -121,6 +121,7 @@ const auditTacticalPillar = async (pillar, league_id, season_year, totalFixtures
 
 /**
  * US_268: Audit Service Upgrade — Smart Discovery Scan
+ * @returns {Promise<Object>} scan results
  */
 export const performDiscoveryScan = async () => {
     console.log('🔍 Starting Database Discovery Scan (US_268)...');

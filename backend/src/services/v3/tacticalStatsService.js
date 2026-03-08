@@ -106,6 +106,12 @@ const processFixturePS = async (fixture, stats, leagueId, seasonYear, psThreshol
 
 /**
  * US_265: Combined FS+PS Single-Pass Import
+ * @param {number} leagueId
+ * @param {number} seasonYear
+ * @param {number} limit
+ * @param {Function|null} sendLog
+ * @param {Object} options
+ * @returns {Promise<Object>} stats
  */
 export const syncLeagueTacticalStatsService = async (leagueId, seasonYear, limit = 2000, sendLog = null, options = { includeFS: true, includePS: true }) => {
     const { includeFS, includePS } = options;
@@ -180,7 +186,9 @@ export const syncLeaguePlayerStatsService = async (leagueId, seasonYear, limit =
 /**
  * Fetch and store team statistics (with half splits if available)
  * US_263: Now returns boolean indicating if data was found.
- * @returns {boolean} true if data was found and stored
+ * @param {number} localFixtureId
+ * @param {number} apiFixtureId
+ * @returns {Promise<boolean>} true if data was found and stored
  */
 export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
     const res = await footballApi.getFixtureStatistics(apiFixtureId, { half: true });
@@ -226,7 +234,9 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
 /**
  * Fetch and store granular player statistics
  * US_263: Now returns boolean indicating if data was found.
- * @returns {boolean} true if data was found and stored
+ * @param {number} localFixtureId
+ * @param {number} apiFixtureId
+ * @returns {Promise<boolean>} true if data was found and stored
  */
 export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
     const res = await footballApi.getFixturePlayerStatistics(apiFixtureId);

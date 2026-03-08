@@ -52,6 +52,9 @@ function convertToDollarParams(text) {
 /**
  * Async wrapper for the legacy 'run' method
  * For INSERT/UPDATE/DELETE
+ * @param {string} sql
+ * @param {any[]} params
+ * @returns {Promise<{lastInsertRowid: number|null, changes: number}>}
  */
 async function run(sql, params = []) {
     if (!pool) throw new Error('Database not initialized');
@@ -78,6 +81,9 @@ async function run(sql, params = []) {
 /**
  * Async wrapper for the legacy 'get' method
  * For SELECT LIMIT 1
+ * @param {string} sql
+ * @param {any[]} params
+ * @returns {Promise<any>}
  */
 async function get(sql, params = []) {
     if (!pool) throw new Error('Database not initialized');
@@ -90,6 +96,9 @@ async function get(sql, params = []) {
 /**
  * Async wrapper for the legacy 'all' method
  * For SELECT multiple rows
+ * @param {string} sql
+ * @param {any[]} params
+ * @returns {Promise<any[]>}
  */
 async function all(sql, params = []) {
     if (!pool) throw new Error('Database not initialized');

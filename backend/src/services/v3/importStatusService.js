@@ -25,7 +25,7 @@ import {
  * @param {number} leagueId
  * @param {number} seasonYear
  * @param {string} pillar
- * @returns {Object} status row
+ * @returns {Promise<Object>} status row
  */
 export async function getStatus(leagueId, seasonYear, pillar) {
     let row = await db.get(
@@ -52,9 +52,12 @@ export async function getStatus(leagueId, seasonYear, pillar) {
 
 /**
  * Check if a pillar should be skipped (COMPLETE, LOCKED, or NO_DATA).
- * @returns {boolean}
+ * @param {number} leagueId
+ * @param {number} seasonYear
+ * @param {string} pillar
+ * @returns {Promise<boolean>}
  */
-export async function shouldSkip(leagueId, seasonYear, pillar) {
+export async function shouldSkip(leagueId, seasonId, pillar) {
     const row = await getStatus(leagueId, seasonYear, pillar);
     return [IMPORT_STATUS.COMPLETE, IMPORT_STATUS.LOCKED, IMPORT_STATUS.NO_DATA].includes(row.status);
 }
@@ -77,6 +80,7 @@ export async function getDataRange(leagueId, pillar) {
  * Get full matrix data for one or all leagues.
  * Returns enriched status objects per pillar.
  * @param {number|null} leagueId - null for all leagues
+ * @returns {Promise<Object[]>}
  */
 export async function getLeagueMatrix(leagueId = null) {
     let sql = `SELECT * FROM V3_Import_Status`;
@@ -93,7 +97,9 @@ export async function getLeagueMatrix(leagueId = null) {
 
 /**
  * Get all statuses for a specific league/season (all 6 pillars).
- * @returns {Object[]}
+ * @param {number} leagueId
+ * @param {number} seasonYear
+ * @returns {Promise<Object[]>}
  */
 export async function getSeasonStatuses(leagueId, seasonYear) {
     return await db.all(
@@ -137,6 +143,12 @@ const insertNewStatus = async (leagueId, seasonYear, pillar, status, isSuccess, 
 
 /**
  * Set status for a pillar with optional metadata.
+ * @param {number} leagueId
+ * @param {number} seasonYear
+ * @param {string} pillar
+ * @param {string} status
+ * @param {Object} metadata
+ * @returns {Promise<void>}
  */
 export async function setStatus(leagueId, seasonYear, pillar, status, metadata = {}) {
     const existing = await db.get("SELECT id FROM V3_Import_Status WHERE league_id = ? AND season_year = ? AND pillar = ?", cleanParams([leagueId, seasonYear, pillar]));
