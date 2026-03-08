@@ -6,13 +6,22 @@ const Accordion = ({ title, headerRight, defaultExpanded = false, children, maxH
 
     return (
         <div className={`ds-accordion ${isExpanded ? 'expanded' : ''}`}>
-            <div className="ds-accordion-header" onClick={() => setIsExpanded(!isExpanded)}>
-                <div className="ds-accordion-title">
+            <div className="ds-accordion-header">
+                <button
+                    className="ds-accordion-toggle"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    aria-expanded={isExpanded}
+                    type="button"
+                >
                     <span className="ds-accordion-icon">{isExpanded ? '▼' : '▶'}</span>
-                    <h3>{title}</h3>
-                </div>
+                    {typeof title === 'string' ? (
+                        <h3 className="ds-accordion-title-text">{title}</h3>
+                    ) : (
+                        <div className="ds-accordion-title-custom">{title}</div>
+                    )}
+                </button>
                 {headerRight && (
-                    <div className="ds-accordion-header-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="ds-accordion-header-right">
                         {headerRight}
                     </div>
                 )}

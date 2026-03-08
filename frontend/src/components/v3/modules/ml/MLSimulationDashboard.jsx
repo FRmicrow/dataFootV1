@@ -269,9 +269,26 @@ const MLSimulationDashboard = () => {
     ].map(col => ({
         ...col,
         title: col.key !== 'action' ? (
-            <div
+            <button
+                className="ds-table-header-button"
                 onClick={(e) => { e.stopPropagation(); handleSort(col.key); }}
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: col.align === 'center' ? 'center' : col.align === 'right' ? 'flex-end' : 'flex-start' }}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    justifyContent: col.align === 'center' ? 'center' : col.align === 'right' ? 'flex-end' : 'flex-start',
+                    width: '100%',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'inherit',
+                    fontFamily: 'inherit',
+                    fontSize: 'inherit',
+                    fontWeight: 'inherit',
+                    cursor: 'pointer',
+                    padding: 0
+                }}
+                type="button"
+                aria-label={`Sort by ${col.title}`}
             >
                 {col.title}
                 {sortConfig.key === col.key && (
@@ -279,7 +296,7 @@ const MLSimulationDashboard = () => {
                         {sortConfig.direction === 'DESC' ? '▼' : '▲'}
                     </span>
                 )}
-            </div>
+            </button>
         ) : col.title
     }));
 

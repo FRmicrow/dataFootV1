@@ -10,10 +10,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
     background: rgba(255, 255, 255, 0.02);
-    cursor: pointer;
-    user-select: none;
     transition: background 0.2s;
 }
 
@@ -21,13 +18,21 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
-.ds-accordion-title {
+.ds-accordion-toggle {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    outline: none;
 }
 
-.ds-accordion-title h3 {
+.ds-accordion-title-text {
     margin: 0;
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);

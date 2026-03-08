@@ -150,26 +150,16 @@ const MLOddsPage = () => {
                     ) : (
                         <div className="ds-fixtures-list ds-flex ds-flex-col ds-gap-sm">
                             {upcoming.map(fix => (
-                                <div
+                                <FixtureRow
                                     key={fix.fixture_id}
+                                    date={fix.event_date}
+                                    homeTeam={{ name: fix.home_name, logo: null }}
+                                    awayTeam={{ name: fix.away_name, logo: null }}
+                                    league={fix.league_name}
+                                    status="NS"
+                                    active={selectedFixture === fix.fixture_id}
                                     onClick={() => handleFixtureClick(fix.fixture_id)}
-                                    style={{
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        borderRadius: 'var(--radius-md)',
-                                        border: selectedFixture === fix.fixture_id ? '1px solid var(--color-primary-500)' : '1px solid transparent',
-                                        background: selectedFixture === fix.fixture_id ? 'var(--color-surface-800)' : 'transparent'
-                                    }}
-                                    className="hover:ds-bg-surface-800"
-                                >
-                                    <FixtureRow
-                                        date={fix.event_date}
-                                        homeTeam={fix.home_name}
-                                        awayTeam={fix.away_name}
-                                        league={fix.league_name}
-                                        status="NS"
-                                    />
-                                </div>
+                                />
                             ))}
                         </div>
                     )}

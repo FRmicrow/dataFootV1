@@ -3,6 +3,52 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Card, Table, Badge, Stack, Button, Grid, Input } from '../../../../design-system';
 
+const RankBadge = ({ rank }) => (
+    <div
+        style={{
+            width: '28px',
+            height: '28px',
+            borderRadius: 'var(--radius-sm)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            background: rank <= 4 ? 'var(--color-primary-600)' : rank >= 18 ? 'var(--color-danger-500)' : 'var(--glass-bg)',
+            color: rank <= 4 || rank >= 18 ? 'white' : 'var(--color-text-main)'
+        }}
+    >
+        {rank}
+    </div>
+);
+
+const FormIndicator = ({ form }) => (
+    <Stack direction="row" gap="4px" justify="center">
+        {form?.split('').map((char, i) => (
+            <div
+                key={i}
+                style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    fontWeight: '900',
+                    color: 'white',
+                    background: char === 'W' ? 'var(--color-success-500)' : char === 'D' ? 'var(--color-accent-500)' : char === 'L' ? 'var(--color-danger-500)' : 'rgba(255,255,255,0.05)'
+                }}
+                role="img"
+                aria-label={char === 'W' ? 'Win' : char === 'D' ? 'Draw' : char === 'L' ? 'Loss' : 'Unknown'}
+                title={char === 'W' ? 'Win' : char === 'D' ? 'Draw' : char === 'L' ? 'Loss' : 'Unknown'}
+            >
+                {char}
+            </div>
+        ))}
+    </Stack>
+);
+
 const StandingsTable = ({
     standings = [],
     rangeStart,
@@ -29,24 +75,7 @@ const StandingsTable = ({
             key: 'rank',
             align: 'center',
             width: '60px',
-            render: (rank) => (
-                <div
-                    style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: 'var(--radius-sm)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '11px',
-                        fontWeight: 'bold',
-                        background: rank <= 4 ? 'var(--color-primary-600)' : rank >= 18 ? 'var(--color-danger-500)' : 'var(--glass-bg)',
-                        color: rank <= 4 || rank >= 18 ? 'white' : 'var(--color-text-main)'
-                    }}
-                >
-                    {rank}
-                </div>
-            )
+            render: (rank) => <RankBadge rank={rank} />
         },
         {
             title: 'Club',
@@ -90,32 +119,7 @@ const StandingsTable = ({
             key: 'form',
             align: 'center',
             width: '120px',
-            render: (form) => (
-                <Stack direction="row" gap="4px" justify="center">
-                    {form?.split('').map((char, i) => (
-                        <div
-                            key={i}
-                            style={{
-                                width: '18px',
-                                height: '18px',
-                                borderRadius: '4px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '10px',
-                                fontWeight: '900',
-                                color: 'white',
-                                background: char === 'W' ? 'var(--color-success-500)' : char === 'D' ? 'var(--color-accent-500)' : char === 'L' ? 'var(--color-danger-500)' : 'rgba(255,255,255,0.05)'
-                            }}
-                            role="img"
-                            aria-label={char === 'W' ? 'Win' : char === 'D' ? 'Draw' : char === 'L' ? 'Loss' : 'Unknown'}
-                            title={char === 'W' ? 'Win' : char === 'D' ? 'Draw' : char === 'L' ? 'Loss' : 'Unknown'}
-                        >
-                            {char}
-                        </div>
-                    ))}
-                </Stack>
-            )
+            render: (form) => <FormIndicator form={form} />
         }
     ];
 

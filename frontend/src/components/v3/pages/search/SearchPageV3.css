@@ -99,6 +99,16 @@
     align-items: center;
     gap: 12px;
     font-size: var(--font-size-sm);
+    width: 100%;
+    color: inherit;
+    font-family: inherit;
+    outline: none;
+    text-align: left;
+}
+
+.ds-selector-trigger:focus-visible {
+    border-color: var(--color-primary-500);
+    box-shadow: var(--focus-ring);
 }
 
 .ds-selector-menu {
@@ -123,10 +133,18 @@
     align-items: center;
     gap: 12px;
     font-size: var(--font-size-sm);
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
 }
 
-.ds-menu-item:hover {
+.ds-menu-item:hover,
+.ds-menu-item:focus-visible {
     background: rgba(255, 255, 255, 0.05);
+    outline: none;
 }
 
 .ds-menu-group {

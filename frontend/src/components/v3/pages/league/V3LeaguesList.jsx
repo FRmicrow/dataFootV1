@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../../services/api';
 import {
     Grid, Stack, Badge, Button,
-    Tabs, LeagueCard
+    Tabs, LeagueCard, Accordion
 } from '../../../../design-system';
 import { PageLayout, PageHeader, PageContent } from '../../layouts';
 import './V3LeaguesList.css';
@@ -187,51 +187,46 @@ const V3LeaguesList = () => {
 
                     {activeTab === 'NATIONAL' && (
                         <Stack gap="var(--spacing-md)">
-                            {structuredData.national.map(country => {
-                                const isExpanded = expandedCountries?.includes(country.name);
-
-                                return (
-                                    <div key={country.name} className={`v3-country-accordion ${isExpanded ? 'active' : ''}`}>
-                                        <div className="v3-country-header" onClick={() => toggleCountry(country.name)}>
-                                            <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1 }}>
-                                                <div className="v3-flag-circle">
-                                                    {country.flag ? <img src={country.flag} alt="" /> : '🏳️'}
-                                                </div>
-                                                <div style={{ flex: 1 }}>
-                                                    <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>{country.name}</h3>
-                                                    <span style={{ fontSize: '10px', color: 'var(--color-text-dim)' }}>
-                                                        {country.leagues.length} {country.leagues.length > 1 ? 'Competitions' : 'Competition'}
-                                                    </span>
-                                                </div>
-                                                <Badge variant="neutral" size="sm">Tier {country.rank}</Badge>
-                                            </Stack>
-                                            <span className={`v3-chevron ${isExpanded ? 'up' : 'down'}`}>▼</span>
-                                        </div>
-
-                                        {isExpanded && (
-                                            <div className="v3-country-body animate-slide-down">
-                                                <Grid columns="repeat(auto-fill, minmax(240px, 1fr))" gap="var(--spacing-md)">
-                                                    {country.leagues.map(league => (
-                                                        <LeagueCard
-                                                            key={league.id}
-                                                            name={league.name}
-                                                            logo={league.logo}
-                                                            isCup={league.is_cup}
-                                                            countryName={league.country_name}
-                                                            countryFlag={country.flag}
-                                                            leaderName={league.leader_name}
-                                                            leaderLogo={league.leader_logo}
-                                                            currentMatchday={league.current_matchday}
-                                                            currentRound={league.current_round}
-                                                            onClick={() => handleCardClick(league)}
-                                                        />
-                                                    ))}
-                                                </Grid>
+                            {structuredData.national.map(country => (
+                                <Accordion
+                                    key={country.name}
+                                    title={
+                                        <Stack direction="row" align="center" gap="var(--spacing-md)">
+                                            <div className="v3-flag-circle">
+                                                {country.flag ? <img src={country.flag} alt="" /> : '🏳️'}
                                             </div>
-                                        )}
+                                            <div>
+                                                <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>{country.name}</h3>
+                                                <span style={{ fontSize: '10px', color: 'var(--color-text-dim)' }}>
+                                                    {country.leagues.length} {country.leagues.length > 1 ? 'Competitions' : 'Competition'}
+                                                </span>
+                                            </div>
+                                        </Stack>
+                                    }
+                                    headerRight={<Badge variant="neutral" size="sm">Tier {country.rank}</Badge>}
+                                    defaultExpanded={expandedCountries?.includes(country.name)}
+                                >
+                                    <div className="v3-country-body animate-slide-down">
+                                        <Grid columns="repeat(auto-fill, minmax(240px, 1fr))" gap="var(--spacing-md)">
+                                            {country.leagues.map(league => (
+                                                <LeagueCard
+                                                    key={league.id}
+                                                    name={league.name}
+                                                    logo={league.logo}
+                                                    isCup={league.is_cup}
+                                                    countryName={league.country_name}
+                                                    countryFlag={country.flag}
+                                                    leaderName={league.leader_name}
+                                                    leaderLogo={league.leader_logo}
+                                                    currentMatchday={league.current_matchday}
+                                                    currentRound={league.current_round}
+                                                    onClick={() => handleCardClick(league)}
+                                                />
+                                            ))}
+                                        </Grid>
                                     </div>
-                                );
-                            })}
+                                </Accordion>
+                            ))}
                         </Stack>
                     )}
                 </div>

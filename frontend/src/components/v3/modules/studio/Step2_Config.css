@@ -21,6 +21,9 @@
     gap: var(--spacing-2xs);
     position: relative;
     overflow: hidden;
+    color: inherit;
+    font-family: inherit;
+    width: 100%;
 }
 
 .config-card-v2:hover {
@@ -132,6 +135,8 @@
     gap: 0.5rem;
     cursor: pointer;
     transition: all 0.2s;
+    font-family: inherit;
+    width: 100%;
 }
 
 .format-btn-v2:hover {

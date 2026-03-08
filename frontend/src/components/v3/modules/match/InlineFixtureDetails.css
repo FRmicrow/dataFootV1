@@ -56,6 +56,11 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: var(--transition-fast);
+    background: transparent;
+    border: 1px solid transparent;
+    color: inherit;
+    font-family: inherit;
+    width: 100%;
 }
 
 .ds-inline-player-row:hover {

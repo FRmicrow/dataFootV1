@@ -91,11 +91,9 @@ const FixturesList = ({
                     }}
                     className="hide-scrollbar"
                 >
-                    <div
+                    <button
                         onClick={() => setSelectedRound('ALL')}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedRound('ALL'); }}
-                        role="button"
-                        tabIndex={0}
+                        type="button"
                         aria-pressed={selectedRound === 'ALL'}
                         style={{
                             flexShrink: 0,
@@ -108,23 +106,23 @@ const FixturesList = ({
                             color: selectedRound === 'ALL' ? 'white' : 'var(--color-primary-400)',
                             border: `1px solid ${selectedRound === 'ALL' ? 'var(--color-primary-400)' : 'var(--color-primary-900)'}`,
                             transition: 'var(--transition-fast)',
-                            whiteSpace: 'nowrap'
+                            whiteSpace: 'nowrap',
+                            fontFamily: 'inherit',
+                            outline: 'none'
                         }}
                     >
                         ALL ROUNDS
-                    </div>
+                    </button>
                     {(fixturesData.rounds || []).map(round => {
                         const isCurrent = round === currentRound;
                         const isSelected = round === selectedRound;
                         const shortLabel = round.replace('Regular Season - ', 'MD ').replace('Group ', 'GP ').replace('Round of ', 'R');
 
                         return (
-                            <div
+                            <button
                                 key={round}
                                 onClick={() => setSelectedRound(round)}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedRound(round); }}
-                                role="button"
-                                tabIndex={0}
+                                type="button"
                                 aria-pressed={isSelected}
                                 style={{
                                     flexShrink: 0,
@@ -137,12 +135,14 @@ const FixturesList = ({
                                     color: isSelected ? 'white' : isCurrent ? 'var(--color-primary-400)' : 'var(--color-text-dim)',
                                     border: `1px solid ${isSelected ? 'var(--color-primary-400)' : isCurrent ? 'var(--color-primary-900)' : 'transparent'}`,
                                     transition: 'var(--transition-fast)',
-                                    whiteSpace: 'nowrap'
+                                    whiteSpace: 'nowrap',
+                                    fontFamily: 'inherit',
+                                    outline: 'none'
                                 }}
                                 title={round}
                             >
                                 {shortLabel}
-                            </div>
+                            </button>
                         );
                     })}
                 </div>

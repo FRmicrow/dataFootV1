@@ -28,7 +28,7 @@ const V3Layout = () => {
             </header>
 
             {/* Backdrop for mobile */}
-            {isSidebarOpen && <div className="v3-sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
+            {isSidebarOpen && <button className="v3-sidebar-overlay" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar" />}
 
             <aside className={`v3-sidebar ${isSidebarOpen ? 'open' : ''}`}>
                 <div className="v3-sidebar-header">

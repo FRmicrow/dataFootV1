@@ -85,14 +85,15 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
             const p = entry.player || {};
             const isSelected = selectedPlayer?.player_id === p.id || selectedPlayer?.player_api_id === p.id;
             return (
-                <div
+                <button
                     className={`ds-inline-player-row ${isSelected ? 'active' : ''}`}
                     onClick={() => handlePlayerClick(p.id)}
+                    type="button"
                 >
                     <span className="ds-inline-player-num">{p.number}</span>
                     <span className="ds-inline-player-name">{p.name}</span>
-                    <Badge variant="neutral" size="sm">{getRole(p.pos)}</Badge>
-                </div>
+                    <Badge variant="neutral" size="sm" style={{ pointerEvents: 'none' }}>{getRole(p.pos)}</Badge>
+                </button>
             );
         };
 

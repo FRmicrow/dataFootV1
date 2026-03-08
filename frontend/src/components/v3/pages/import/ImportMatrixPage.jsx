@@ -2,18 +2,26 @@ import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
 import { useImport } from '../../../../context/ImportContext.jsx';
 import { PageLayout, PageHeader, PageContent } from '../../layouts';
-import { Badge, Stack, Button } from '../../../../design-system';
+import { Badge, Stack, Button, Select as CustomSelect } from '../../../../design-system';
 import '../../modules/import/ImportMatrix.css';
 
-/**
- * Import Status Constants (mirror backend)
- */
 const STATUS = {
     NONE: 0,
     PARTIAL: 1,
     COMPLETE: 2,
     NO_DATA: 3,
     LOCKED: 4
+};
+
+const consolidateQueue = (queue) => {
+    const map = {};
+    queue.forEach(item => {
+        if (!map[item.leagueId]) map[item.leagueId] = { leagueId: item.leagueId, seasons: [] };
+        let season = map[item.leagueId].seasons.find(s => s.year === item.year);
+        if (!season) { season = { year: item.year, pillars: [] }; map[item.leagueId].seasons.push(season); }
+        if (!season.pillars.includes(item.pillar)) season.pillars.push(item.pillar);
+    });
+    return Object.values(map);
 };
 
 const TOOLTIP_MESSAGES = {
@@ -24,15 +32,22 @@ const TOOLTIP_MESSAGES = {
     [STATUS.LOCKED]: 'Season locked — No further imports'
 };
 
-const StatusIndicator = React.memo(({ pillar, code, isQueued, onClick, tooltipText, label }) => (
-    <div
-        className={`indicator indicator-${code === 4 ? 'locked' : (code === 3 ? 'nodata' : (code === 2 ? 'complete' : (code === 1 ? 'partial' : 'none')))} ${isQueued ? 'queued' : ''} tooltip`}
-        onClick={onClick}
-    >
-        {code === 4 ? '🔒' : label}
-        <span className="tooltiptext">{pillar.toUpperCase()}: {tooltipText}</span>
-    </div>
-));
+const StatusIndicator = React.memo(({ pillar, code, isQueued, onClick, tooltipText, label }) => {
+    const statusType = code === 4 ? 'locked' : (code === 3 ? 'nodata' : (code === 2 ? 'complete' : (code === 1 ? 'partial' : 'none')));
+
+    return (
+        <Button
+            className={`indicator indicator-${statusType} ${isQueued ? 'queued' : ''} tooltip`}
+            onClick={onClick}
+            variant="ghost"
+            size="xs"
+            aria-label={`${pillar.toUpperCase()}: ${tooltipText}`}
+        >
+            {code === 4 ? '🔒' : label}
+            <span className="tooltiptext">{pillar.toUpperCase()}: {tooltipText}</span>
+        </Button>
+    );
+});
 
 const SeasonCell = React.memo(({ leagueId, year, season, batchQueue, onIndicatorClick }) => {
     if (!season) return <td></td>;
@@ -262,34 +277,25 @@ const ImportMatrixPage = () => {
 
     const runBatch = () => {
         if (batchQueue.length === 0) return;
-
-        const consolidateQueue = (queue) => {
-            const map = {};
-            queue.forEach(item => {
-                if (!map[item.leagueId]) map[item.leagueId] = { leagueId: item.leagueId, seasons: [] };
-                let season = map[item.leagueId].seasons.find(s => s.year === item.year);
-                if (!season) { season = { year: item.year, pillars: [] }; map[item.leagueId].seasons.push(season); }
-                if (!season.pillars.includes(item.pillar)) season.pillars.push(item.pillar);
-            });
-            return Object.values(map);
-        };
-
         startImport('/import/batch', 'POST', { selection: consolidateQueue(batchQueue) });
         setBatchQueue([]);
     };
 
     const runCategoryBatch = (category) => {
         if (selectedLeagues.length === 0) return;
-        const newItems = [];
-        leagues.filter(l => selectedLeagues.includes(l.id)).forEach(l => {
-            l.seasons.forEach(s => {
-                const sPillar = s.status[category];
-                const statusCode = (typeof sPillar === 'object' && sPillar !== null) ? (sPillar.code ?? STATUS.NONE) : (sPillar === 1 ? STATUS.COMPLETE : (sPillar === 0.5 ? STATUS.PARTIAL : STATUS.NONE));
-                if (statusCode === STATUS.NONE || statusCode === STATUS.PARTIAL) {
-                    newItems.push({ leagueId: l.id, year: s.year, pillar: category });
-                }
-            });
-        });
+
+        const newItems = leagues
+            .filter(l => selectedLeagues.includes(l.id))
+            .flatMap(l => l.seasons.map(s => ({ leagueId: l.id, season: s, year: s.year })))
+            .filter(({ season }) => {
+                const sPillar = season.status[category];
+                const statusCode = (typeof sPillar === 'object' && sPillar !== null)
+                    ? (sPillar.code ?? STATUS.NONE)
+                    : (sPillar === 1 ? STATUS.COMPLETE : (sPillar === 0.5 ? STATUS.PARTIAL : STATUS.NONE));
+                return statusCode === STATUS.NONE || statusCode === STATUS.PARTIAL;
+            })
+            .map(({ leagueId, year }) => ({ leagueId, year, pillar: category }));
+
         setBatchQueue([...batchQueue, ...newItems]);
     };
 
@@ -329,39 +335,42 @@ const ImportMatrixPage = () => {
                         </div>
                         <div className="matrix-actions">
                             <div className="discovery-group">
-                                <select
-                                    className="discover-select"
-                                    value={selectedCountry}
-                                    onChange={(e) => handleCountryChange(e.target.value)}
-                                >
-                                    <option value="">-- Select Country --</option>
-                                    {countries.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                                </select>
-                                <select
-                                    className="discover-select"
-                                    value={selectedDiscoveryLeague}
-                                    onChange={(e) => setSelectedDiscoveryLeague(e.target.value)}
+                                <CustomSelect
+                                    placeholder="Select Country"
+                                    options={countries.map(c => ({ value: c.name, label: c.name }))}
+                                    value={selectedCountry ? { value: selectedCountry, label: selectedCountry } : null}
+                                    onChange={(opt) => handleCountryChange(opt?.value || '')}
+                                    className="discover-select-wrapper"
+                                />
+                                <CustomSelect
+                                    placeholder="Select New League"
+                                    options={availableLeagues.map(l => ({ value: l.league.id.toString(), label: l.league.name }))}
+                                    value={selectedDiscoveryLeague ? {
+                                        value: selectedDiscoveryLeague,
+                                        label: availableLeagues.find(l => l.league.id.toString() === selectedDiscoveryLeague)?.league.name || selectedDiscoveryLeague
+                                    } : null}
+                                    onChange={(opt) => setSelectedDiscoveryLeague(opt?.value || '')}
                                     disabled={!selectedCountry || availableLeagues.length === 0}
-                                >
-                                    <option value="">-- Select New League --</option>
-                                    {availableLeagues.map(l => (
-                                        <option key={l.league.id} value={l.league.id}>{l.league.name}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    className="btn-discover-import"
+                                    className="discover-select-wrapper"
+                                />
+                                <Button
+                                    variant="primary"
+                                    size="sm"
                                     onClick={handleDiscoveryImport}
                                     disabled={!selectedDiscoveryLeague || isImporting || isDiscovering}
+                                    loading={isDiscovering}
                                 >
-                                    {isDiscovering ? '⏳ Importing...' : '📥 Import'}
-                                </button>
-                                <button
-                                    className="btn-discover-add"
+                                    Import
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
                                     onClick={addToDiscoveryBatch}
                                     disabled={!selectedDiscoveryLeague}
+                                    icon="➕"
                                 >
-                                    ➕ Add
-                                </button>
+                                    Add
+                                </Button>
                             </div>
 
                             {discoveryBatch.length > 0 && (
@@ -381,12 +390,23 @@ const ImportMatrixPage = () => {
                                 </div>
                             )}
 
-                            <button className="btn-audit" onClick={handleAudit} disabled={isAuditing}>
-                                {isAuditing ? '🔍 Auditing...' : '🛠️ Discovery Scan'}
-                            </button>
-                            <button className="btn-normalize" onClick={() => api.triggerNormalization()} disabled={selectedLeagues.length === 0}>
-                                🧮 Compute Per-90 Metrics
-                            </button>
+                            <Button
+                                variant="secondary"
+                                onClick={handleAudit}
+                                disabled={isAuditing}
+                                loading={isAuditing}
+                                icon="🔍"
+                            >
+                                Discovery Scan
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                onClick={() => api.triggerNormalization()}
+                                disabled={selectedLeagues.length === 0}
+                                icon="🧮"
+                            >
+                                Compute Per-90 Metrics
+                            </Button>
                         </div>
                     </header>
 
@@ -426,15 +446,15 @@ const ImportMatrixPage = () => {
                             <div className="staging-text">Staged: <span className="staging-count">{batchQueue.length || selectedLeagues.length}</span></div>
                             {selectedLeagues.length > 0 ? (
                                 <>
-                                    <button className="btn-batch-deep" onClick={runBatchDeepSync}>⚡ Deep Sync</button>
-                                    <button className="btn-cat" onClick={() => runCategoryBatch('fs')}>FS</button>
-                                    <button className="btn-cat" onClick={() => runCategoryBatch('ps')}>PS</button>
-                                    <button className="btn-cat" onClick={() => runCategoryBatch('core')}>Core</button>
+                                    <Button variant="primary" onClick={runBatchDeepSync}>⚡ Deep Sync</Button>
+                                    <Button variant="secondary" size="sm" onClick={() => runCategoryBatch('fs')}>FS</Button>
+                                    <Button variant="secondary" size="sm" onClick={() => runCategoryBatch('ps')}>PS</Button>
+                                    <Button variant="secondary" size="sm" onClick={() => runCategoryBatch('core')}>Core</Button>
                                 </>
                             ) : (
-                                <button className="btn-batch" onClick={runBatch}>Execute Batch</button>
+                                <Button variant="primary" onClick={runBatch}>Execute Batch</Button>
                             )}
-                            <button className="btn-clear" onClick={() => { setBatchQueue([]); setSelectedLeagues([]); }}>Clear</button>
+                            <Button variant="ghost" size="sm" onClick={() => { setBatchQueue([]); setSelectedLeagues([]); }}>Clear</Button>
                         </div>
                     )}
                 </div>

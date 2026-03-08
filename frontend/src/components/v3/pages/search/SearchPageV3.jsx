@@ -25,9 +25,12 @@ const CountrySelector = ({ countries, selected, onSelect }) => {
 
     return (
         <div className="ds-country-selector" ref={containerRef}>
-            <div
+            <button
                 className={`ds-selector-trigger ${isOpen ? 'active' : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
             >
                 {selected ? (
                     <Stack direction="row" align="center" gap="8px">
@@ -41,22 +44,23 @@ const CountrySelector = ({ countries, selected, onSelect }) => {
                     </Stack>
                 )}
                 <span style={{ fontSize: '10px' }}>{isOpen ? '▲' : '▼'}</span>
-            </div>
+            </button>
 
             {isOpen && (
                 <div className="ds-selector-menu">
-                    <div className="ds-menu-item" onClick={() => { onSelect(''); setIsOpen(false); }}>
+                    <button className="ds-menu-item" onClick={() => { onSelect(''); setIsOpen(false); }} type="button">
                         🌍 All Regions
-                    </div>
+                    </button>
 
                     {top10.length > 0 && (
                         <div className="ds-menu-group">
                             <div className="ds-group-label">Top Nations</div>
                             {top10.map(c => (
-                                <div
+                                <button
                                     key={c.name}
                                     className={`ds-menu-item ${selected === c.name ? 'active' : ''}`}
                                     onClick={() => { onSelect(c.name); setIsOpen(false); }}
+                                    type="button"
                                 >
                                     <Stack direction="row" align="center" gap="8px" justify="space-between" style={{ width: '100%' }}>
                                         <Stack direction="row" align="center" gap="8px">
@@ -65,7 +69,7 @@ const CountrySelector = ({ countries, selected, onSelect }) => {
                                         </Stack>
                                         <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>#{c.importance_rank}</span>
                                     </Stack>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}
@@ -74,16 +78,17 @@ const CountrySelector = ({ countries, selected, onSelect }) => {
                         <div className="ds-menu-group">
                             <div className="ds-group-label">Others</div>
                             {others.map(c => (
-                                <div
+                                <button
                                     key={c.name}
                                     className={`ds-menu-item ${selected === c.name ? 'active' : ''}`}
                                     onClick={() => { onSelect(c.name); setIsOpen(false); }}
+                                    type="button"
                                 >
                                     <Stack direction="row" align="center" gap="8px">
                                         <img src={c.flag_url} alt="" style={{ width: '16px' }} />
                                         <span>{c.name}</span>
                                     </Stack>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}
@@ -211,7 +216,15 @@ const SearchPageV3 = () => {
                                     <Card title="Clubs" extra={<Badge variant="primary">{results.clubs?.length || 0}</Badge>}>
                                         <Stack gap="var(--spacing-xs)">
                                             {results.clubs?.map(c => (
-                                                <div key={c.team_id} className="ds-result-row" onClick={() => navigate(`/club/${c.team_id}`)}>
+                                                <div
+                                                    key={c.team_id}
+                                                    className="ds-result-row"
+                                                    onClick={() => navigate(`/club/${c.team_id}`)}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/club/${c.team_id}`); }}
+                                                    aria-label={`View ${c.name} profile`}
+                                                >
                                                     <Stack direction="row" align="center" gap="var(--spacing-md)">
                                                         <div className="ds-result-image">
                                                             <img src={c.logo_url} alt="" onError={(e) => { e.target.src = 'https://media.api-sports.io/football/teams/0.png'; }} />
@@ -237,7 +250,15 @@ const SearchPageV3 = () => {
                                     <Card title="Players" extra={<Badge variant="primary">{results.players?.length || 0}</Badge>}>
                                         <Stack gap="var(--spacing-xs)">
                                             {results.players?.map(p => (
-                                                <div key={p.player_id} className="ds-result-row" onClick={() => navigate(`/player/${p.player_id}`)}>
+                                                <div
+                                                    key={p.player_id}
+                                                    className="ds-result-row"
+                                                    onClick={() => navigate(`/player/${p.player_id}`)}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/player/${p.player_id}`); }}
+                                                    aria-label={`View ${p.name} profile`}
+                                                >
                                                     <Stack direction="row" align="center" gap="var(--spacing-md)">
                                                         <div className="ds-result-image ds-round">
                                                             <img src={p.photo_url} alt="" onError={(e) => { e.target.src = 'https://media.api-sports.io/football/players/0.png'; }} />

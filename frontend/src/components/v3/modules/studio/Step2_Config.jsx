@@ -1,5 +1,6 @@
 import React from 'react';
 import { useStudio } from './StudioContext';
+import { Button, Select, Grid, Stack } from '../../../../design-system';
 import './Step2_Config.css';
 
 const Step2_Config = () => {
@@ -18,82 +19,93 @@ const Step2_Config = () => {
             <h2 className="step-title-v2">Chart & Animation Settings</h2>
 
             {/* Chart Type Selection */}
-            <div className="form-group-v2">
+            <Stack gap="md" className="form-group-v2">
                 <label className="form-label-v2">Chart Layout</label>
-                <div className="config-grid-v2">
-                    <div
+                <Grid columns="repeat(auto-fit, minmax(220px, 1fr))" gap="md" className="config-grid-v2">
+                    <button
                         className={`config-card-v2 ${visual.type === 'bar_race' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('bar_race')}
+                        type="button"
                     >
                         <div className="card-icon-v2">📊</div>
                         <h4 className="card-title-v2">Ranking bar chart</h4>
                         <p className="card-desc-v2">Ordered comparison of totals evolving over time.</p>
-                    </div>
+                    </button>
 
-                    <div
+                    <button
                         className={`config-card-v2 ${visual.type === 'line' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('line')}
+                        type="button"
                     >
                         <div className="card-icon-v2">📈</div>
                         <h4 className="card-title-v2">Trend line</h4>
                         <p className="card-desc-v2">Comparative progress analysis across multiple periods.</p>
-                    </div>
+                    </button>
 
-                    <div
+                    <button
                         className={`config-card-v2 ${visual.type === 'league_race' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('league_race')}
+                        type="button"
                     >
                         <div className="card-icon-v2">🏁</div>
                         <h4 className="card-title-v2">Standing bar race</h4>
                         <p className="card-desc-v2">Animated ranking of clubs over specific matchdays.</p>
-                    </div>
+                    </button>
 
-                    <div
+                    <button
                         className={`config-card-v2 ${visual.type === 'bump' ? 'active' : ''}`}
                         onClick={() => handleTypeChange('bump')}
+                        type="button"
                     >
                         <div className="card-icon-v2">🎢</div>
                         <h4 className="card-title-v2">Bump chart</h4>
                         <p className="card-desc-v2">Visualizes ranking changes and position fluctuations.</p>
-                    </div>
-                </div>
-            </div>
+                    </button>
+                </Grid>
+            </Stack>
 
             {/* Row Options: Theme & Format */}
-            <div className="options-row-v2">
-                <div className="form-group-v2">
+            <Grid columns="1fr 1fr" gap="2rem" className="options-row-v2">
+                <Stack gap="sm" className="form-group-v2">
                     <label className="form-label-v2">Visual Theme</label>
-                    <select value={visual.theme} onChange={(e) => handleThemeChange(e.target.value)} className="input-v2">
-                        <option value="v3_dark">V3 Obsidian (Signature)</option>
-                        <option value="light">Clinical White</option>
-                        <option value="neon">Electric Cyber</option>
-                    </select>
-                </div>
+                    <Select
+                        options={[
+                            { value: 'v3_dark', label: 'V3 Obsidian (Signature)' },
+                            { value: 'light', label: 'Clinical White' },
+                            { value: 'neon', label: 'Electric Cyber' }
+                        ]}
+                        value={visual.theme}
+                        onChange={handleThemeChange}
+                    />
+                </Stack>
 
-                <div className="form-group-v2">
+                <Stack gap="sm" className="form-group-v2">
                     <label className="form-label-v2">Output Aspect Ratio</label>
-                    <div className="format-grid-v2">
-                        <div
+                    <Grid columns="repeat(3, 1fr)" gap="0.75rem" className="format-grid-v2">
+                        <button
                             className={`format-btn-v2 ${visual.format === '9:16' ? 'active' : ''}`}
                             onClick={() => handleFormatChange('9:16')}
+                            type="button"
                         >
                             <span className="format-icon-v2">📱</span> <span>9:16</span>
-                        </div>
-                        <div
+                        </button>
+                        <button
                             className={`format-btn-v2 ${visual.format === '1:1' ? 'active' : ''}`}
                             onClick={() => handleFormatChange('1:1')}
+                            type="button"
                         >
                             <span className="format-icon-v2">📷</span> <span>1:1</span>
-                        </div>
-                        <div
+                        </button>
+                        <button
                             className={`format-btn-v2 ${visual.format === '16:9' ? 'active' : ''}`}
                             onClick={() => handleFormatChange('16:9')}
+                            type="button"
                         >
                             <span className="format-icon-v2">💻</span> <span>16:9</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        </button>
+                    </Grid>
+                </Stack>
+            </Grid>
 
             <div className="form-group-v2">
                 <label className="form-label-v2">Animation Speed</label>
@@ -115,12 +127,12 @@ const Step2_Config = () => {
             </div>
 
             {/* Navigation */}
-            <div className="nav-actions-v2">
-                <button className="btn-secondary-v2" onClick={prevStep}>← Adjust Registry</button>
-                <button className="btn-primary-v2" onClick={() => goToStep(3)}>
+            <Stack direction="row" gap="md" className="nav-actions-v2">
+                <Button variant="secondary" onClick={prevStep} style={{ flex: 0.4 }}>← Adjust Registry</Button>
+                <Button variant="primary" onClick={() => goToStep(3)} style={{ flex: 1 }}>
                     Synchronize Preview →
-                </button>
-            </div>
+                </Button>
+            </Stack>
         </div>
     );
 };
