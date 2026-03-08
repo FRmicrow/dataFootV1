@@ -33,34 +33,37 @@ const syncSingleSeason = async (leagueId, season_year, sendLog, inference) => {
         await syncCorePillar(leagueId, season_year, sendLog);
         await syncEventsPillar(leagueId, season_year, sendLog);
         await syncLineupsPillar(leagueId, season_year, sendLog);
-
-        const { fsInfer, psInfer, fsStreak, psStreak } = inference;
-
-        if (fsInfer) await ImportStatusService.setStatus(leagueId, season_year, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
-        if (psInfer) await ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
-
-        if (!fsInfer || !psInfer) {
-            const start = Date.now();
-            await syncLeagueTacticalStatsService(leagueId, season_year, 2000, sendLog, { includeFS: !fsInfer, includePS: !psInfer });
-            const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-
-            if (!fsInfer) {
-                const fsStatus = await ImportStatusService.getStatus(leagueId, season_year, 'fs');
-                inference.fsStreak = (fsStatus.status === IMPORT_STATUS.NO_DATA) ? fsStreak + 1 : 0;
-                if (inference.fsStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) inference.fsInfer = true;
-            }
-            if (!psInfer) {
-                const psStatus = await ImportStatusService.getStatus(leagueId, season_year, 'ps');
-                inference.psStreak = (psStatus.status === IMPORT_STATUS.NO_DATA) ? psStreak + 1 : 0;
-                if (inference.psStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) inference.psInfer = true;
-            }
-            sendLog(`   [Tactical] FS+PS ✅ — Done in ${elapsed}s`, 'success');
-        } else {
-            sendLog(`   [Tactical] Skip — Cascade "No Data" ⏩`, 'warning');
-        }
+        await syncTacticalPillar(leagueId, season_year, sendLog, inference);
     } catch (err) {
         if (err.message === 'IMPORT_ABORTED') throw err;
         sendLog(`   ❌ Failed: ${err.message}`, 'error');
+    }
+};
+
+const syncTacticalPillar = async (leagueId, season_year, sendLog, inference) => {
+    const { fsInfer, psInfer, fsStreak, psStreak } = inference;
+
+    if (fsInfer) await ImportStatusService.setStatus(leagueId, season_year, 'fs', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
+    if (psInfer) await ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.NO_DATA, { failure_reason: 'Historical range inference' });
+
+    if (!fsInfer || !psInfer) {
+        const start = Date.now();
+        await syncLeagueTacticalStatsService(leagueId, season_year, 2000, sendLog, { includeFS: !fsInfer, includePS: !psInfer });
+        const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+
+        if (!fsInfer) {
+            const fsStatus = await ImportStatusService.getStatus(leagueId, season_year, 'fs');
+            inference.fsStreak = (fsStatus.status === IMPORT_STATUS.NO_DATA) ? fsStreak + 1 : 0;
+            if (inference.fsStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) inference.fsInfer = true;
+        }
+        if (!psInfer) {
+            const psStatus = await ImportStatusService.getStatus(leagueId, season_year, 'ps');
+            inference.psStreak = (psStatus.status === IMPORT_STATUS.NO_DATA) ? psStreak + 1 : 0;
+            if (inference.psStreak >= HISTORICAL_NO_DATA_STREAK_LIMIT) inference.psInfer = true;
+        }
+        sendLog(`   [Tactical] FS+PS ✅ — Done in ${elapsed}s`, 'success');
+    } else {
+        sendLog(`   [Tactical] Skip — Cascade "No Data" ⏩`, 'warning');
     }
 };
 
