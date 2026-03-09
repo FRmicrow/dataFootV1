@@ -156,6 +156,40 @@ const Step1_Data = () => {
 
     const searchResults = useStudioSearch(mode, queries);
 
+    const fetchLeagueRankings = async () => {
+        const res = await fetch('/api/studio/query/league-rankings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ league_id: selected.leagues[0].id, season: filters.years[1] })
+        });
+        const data = await res.json();
+        setVisual(prev => ({ ...prev, type: 'league_race' }));
+        return data;
+    };
+
+    const fetchStandardQuery = async () => {
+        const res = await fetch('/api/studio/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                stat: filters.stat,
+                filters: {
+                    years: filters.years,
+                    leagues: selected.leagues.map(l => l.id),
+                    countries: selected.countries,
+                    teams: selected.teams.map(t => t.id)
+                },
+                selection: {
+                    mode: mode === 'specific' ? 'manual' : 'top_n',
+                    value: 100,
+                    players: selected.players.map(p => p.player_id)
+                },
+                options: { cumulative: filters.cumulative }
+            })
+        });
+        return await res.json();
+    };
+
     const handleNext = async () => {
         setIsLoading(true);
         setError(null);
@@ -164,41 +198,8 @@ const Step1_Data = () => {
                 ? (selected.players.length === 1 ? selected.players[0].name : `${selected.players.length} Players`)
                 : (selected.leagues.length === 1 ? selected.leagues[0].name : 'Leagues');
 
-            if (mode === 'standings') {
-                const res = await fetch('/api/studio/query/league-rankings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ league_id: selected.leagues[0].id, season: filters.years[1] })
-                });
-                const data = await res.json();
-                setVisual(prev => ({ ...prev, type: 'league_race' }));
-                setChartData(data);
-                setFilters(prev => ({ ...prev, contextLabel, contextType: mode }));
-                setIsLoading(false);
-                goToStep(2);
-                return;
-            }
+            const data = mode === 'standings' ? await fetchLeagueRankings() : await fetchStandardQuery();
 
-            const res = await fetch('/api/studio/query', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    stat: filters.stat,
-                    filters: {
-                        years: filters.years,
-                        leagues: selected.leagues.map(l => l.id),
-                        countries: selected.countries,
-                        teams: selected.teams.map(t => t.id)
-                    },
-                    selection: {
-                        mode: mode === 'specific' ? 'manual' : 'top_n',
-                        value: 100,
-                        players: selected.players.map(p => p.player_id)
-                    },
-                    options: { cumulative: filters.cumulative }
-                })
-            });
-            const data = await res.json();
             setChartData(data);
             setFilters(prev => ({ ...prev, contextLabel, contextType: mode }));
             setIsLoading(false);
@@ -214,6 +215,34 @@ const Step1_Data = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
         </div>
     );
+
+    const renderSearchResults = () => {
+        if (mode === 'specific' && searchResults.players.length > 0) {
+            return <PlayerResults players={searchResults.players} onSelect={p => {
+                setSelected({ ...selected, players: [...selected.players, p] });
+                setQueries({ ...queries, player: '' });
+            }} />;
+        }
+        if ((mode === 'league' || mode === 'standings') && queries.league.length > 0) {
+            return <LeagueResults query={queries.league} leaguesMeta={leaguesMeta} onSelect={l => {
+                setSelected({ ...selected, leagues: [l] });
+                setQueries({ ...queries, league: '' });
+            }} />;
+        }
+        if (mode === 'country' && queries.country.length > 0) {
+            return <CountryResults query={queries.country} nationalities={nationalities} onSelect={n => {
+                setSelected({ ...selected, countries: [n] });
+                setQueries({ ...queries, country: '' });
+            }} />;
+        }
+        if (mode === 'club' && searchResults.teams.length > 0) {
+            return <TeamResults teams={searchResults.teams} onSelect={t => {
+                setSelected({ ...selected, teams: [{ id: t.team_id, name: t.name, logo: t.logo_url }] });
+                setQueries({ ...queries, team: '' });
+            }} />;
+        }
+        return null;
+    };
 
     return (
         <div className="step-container animate-fade-in">
@@ -253,124 +282,7 @@ const Step1_Data = () => {
                             onChange={e => setQueries({ ...queries, team: e.target.value })} className="input-v2" />
                     )}
 
-                    {/* Search Results */}
-                    {mode === 'specific' && searchResults.players.length > 0 && (
-                        <div className="search-results-v2">
-                            {searchResults.players.map(p => (
-                                <div
-                                    key={p.player_id}
-                                    className="result-item-v2"
-                                    onClick={() => {
-                                        setSelected({ ...selected, players: [...selected.players, p] });
-                                        setQueries({ ...queries, player: '' });
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            setSelected({ ...selected, players: [...selected.players, p] });
-                                            setQueries({ ...queries, player: '' });
-                                        }
-                                    }}
-                                    role="button"
-                                    tabIndex={0}
-                                >
-                                    <img src={p.photo_url} alt="" />
-                                    <div className="result-info-v2">
-                                        <span className="result-name-v2">{p.name}</span>
-                                        <span className="result-meta-v2">{p.team_name}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {(mode === 'league' || mode === 'standings') && queries.league.length > 0 && (
-                        <div className="search-results-v2">
-                            {leaguesMeta.flatMap(g =>
-                                g.leagues.filter(l => l.name.toLowerCase().includes(queries.league.toLowerCase()))
-                                    .map(l => ({ ...l, country: g.country }))
-                            ).slice(0, 10).map(l => (
-                                <div
-                                    key={l.id}
-                                    className="result-item-v2"
-                                    onClick={() => {
-                                        setSelected({ ...selected, leagues: [l] });
-                                        setQueries({ ...queries, league: '' });
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            setSelected({ ...selected, leagues: [l] });
-                                            setQueries({ ...queries, league: '' });
-                                        }
-                                    }}
-                                    role="button"
-                                    tabIndex={0}
-                                >
-                                    <img src={l.logo} alt="" />
-                                    <div className="result-info-v2">
-                                        <span className="result-name-v2">{l.name}</span>
-                                        <span className="result-meta-v2">{l.country}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {mode === 'country' && queries.country.length > 0 && (
-                        <div className="search-results-v2">
-                            {nationalities.filter(n => n.toLowerCase().includes(queries.country.toLowerCase()))
-                                .slice(0, 10).map(n => (
-                                    <div
-                                        key={n}
-                                        className="result-item-v2"
-                                        onClick={() => {
-                                            setSelected({ ...selected, countries: [n] });
-                                            setQueries({ ...queries, country: '' });
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                                setSelected({ ...selected, countries: [n] });
-                                                setQueries({ ...queries, country: '' });
-                                            }
-                                        }}
-                                        role="button"
-                                        tabIndex={0}
-                                    >
-                                        <div className="result-info-v2">
-                                            <span className="result-name-v2">{n}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                        </div>
-                    )}
-
-                    {mode === 'club' && searchResults.teams.length > 0 && (
-                        <div className="search-results-v2">
-                            {searchResults.teams.map(t => (
-                                <div
-                                    key={t.team_id}
-                                    className="result-item-v2"
-                                    onClick={() => {
-                                        setSelected({ ...selected, teams: [{ id: t.team_id, name: t.name, logo: t.logo_url }] });
-                                        setQueries({ ...queries, team: '' });
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            setSelected({ ...selected, teams: [{ id: t.team_id, name: t.name, logo: t.logo_url }] });
-                                            setQueries({ ...queries, team: '' });
-                                        }
-                                    }}
-                                    role="button"
-                                    tabIndex={0}
-                                >
-                                    <img src={t.logo_url} alt="" />
-                                    <div className="result-info-v2">
-                                        <span className="result-name-v2">{t.name}</span>
-                                        <span className="result-meta-v2">{t.country_name}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    {renderSearchResults()}
 
                     <SelectionTags
                         mode={mode}

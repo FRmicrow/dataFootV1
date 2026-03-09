@@ -199,8 +199,189 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 
     }, [data, barCount, leagueLogo]);
 
+    // --- Drawing Helpers ---
+
+    const drawBackground = (ctx, t, isRoundData) => {
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+        bgGradient.addColorStop(0, '#121216');
+        bgGradient.addColorStop(1, '#000000');
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(0, 0, width, height);
+
+        const watermarkSize = width / 3;
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.08;
+        ctx.font = `bold ${watermarkSize}px 'Inter', sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(isRoundData ? `Day ${Math.floor(t)}` : Math.floor(t), width * 0.95, height * 0.95);
+        ctx.restore();
+    };
+
+    const drawHeader = (ctx, t, isRoundData, minTime, maxTime) => {
+        const headerY = height * 0.06;
+        let titleSize = Math.min(width, height) * 0.06;
+        ctx.font = `700 ${titleSize}px 'Inter', sans-serif`;
+        const titleWidth = ctx.measureText(title).width;
+        if (titleWidth > width * 0.9) titleSize *= (width * 0.9 / titleWidth);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.font = `700 ${titleSize}px 'Inter', sans-serif`;
+
+        if (leagueLogo) {
+            const logoSize = titleSize * 1.5;
+            const logoX = (width / 2) - (titleWidth / 2) - logoSize - 20;
+            const logoY = headerY - (logoSize * 0.7);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,1)';
+            ctx.fill();
+            if (leagueLogoRef.current.loaded) ctx.drawImage(leagueLogoRef.current.img, logoX, logoY, logoSize, logoSize);
+            ctx.restore();
+        }
+        ctx.fillText(title, width / 2, headerY);
+
+        ctx.fillStyle = '#aaa';
+        ctx.font = `600 ${height * 0.025}px 'Inter', sans-serif`;
+        ctx.fillText(isRoundData ? `Matchday ${Math.floor(t)}` : Math.floor(t), width / 2, headerY + (height * 0.035));
+
+        const progress = (t - minTime) / (maxTime - minTime);
+        const progressW = width * 0.8;
+        const progressX = (width - progressW) / 2;
+        const progressY = headerY + (height * 0.05);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(progressX, progressY, progressW, Math.max(4, height * 0.005));
+        ctx.fillStyle = '#4facfe';
+        ctx.fillRect(progressX, progressY, progressW * Math.min(1, Math.max(0, progress)), Math.max(4, height * 0.005));
+    };
+
+    const drawAxes = (ctx, xScale, yScale, isRoundData, globalMax) => {
+        const [dMin, dMax] = yScale.domain();
+        let yTicks = isBump ? (globalMax <= 25 ? Array.from({ length: globalMax }, (_, i) => i + 1) : yScale.ticks(10)) : [];
+        if (!isBump) {
+            for (let v = Math.floor(Math.min(dMin, dMax) / 10) * 10; v <= Math.ceil(Math.max(dMin, dMax) / 10) * 10; v += 10) yTicks.push(v);
+        }
+
+        yTicks.forEach(tick => {
+            const y = yScale(tick);
+            if (y < margin.top - 10 || y > height - margin.bottom + 10) return;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, y);
+            ctx.lineTo(width - margin.right, y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${height * 0.022}px Inter`;
+            ctx.textAlign = 'right';
+            ctx.fillText(tick, margin.left - 15, y + (height * 0.008));
+        });
+
+        const [xMin, xMax] = xScale.domain();
+        const xTicks = isRoundData ? Array.from({ length: Math.floor((xMax - Math.ceil(xMin / 5) * 5) / 5) + 1 }, (_, i) => Math.ceil(xMin / 5) * 5 + i * 5) : xScale.ticks(5);
+        ctx.beginPath();
+        xTicks.filter(t => Number.isInteger(t)).forEach(tick => {
+            const x = xScale(tick);
+            ctx.moveTo(x, height - margin.bottom);
+            ctx.lineTo(x, height - margin.bottom + 10);
+            ctx.fillStyle = '#fff';
+            ctx.font = `600 ${height * 0.018}px Inter`;
+            ctx.textAlign = 'center';
+            ctx.fillText(tick, x, height - margin.bottom + 25);
+        });
+        ctx.stroke();
+    };
+
+    const drawPlayer = (ctx, p, t, xScale, yScale, visualY, isRoundData, isBump) => {
+        let color = adjustColorVisibility(teamColorsRef.current[p.id]?.color || `hsl(${(p.id * 137.5) % 360}, 70%, 55%)`);
+        const tipX = xScale(t);
+        const trueTipY = yScale(p.value);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(margin.left, margin.top, width - margin.left - margin.right, height - margin.top - margin.bottom);
+        ctx.clip();
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = height * 0.003;
+        let started = false;
+        p.hist.forEach(h => {
+            if (h.season > t) return;
+            const x = xScale(h.season), y = yScale((isRoundData && isBump) ? h.rank : h.value);
+            if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+        });
+        ctx.lineTo(tipX, trueTipY);
+        ctx.stroke();
+        ctx.restore();
+
+        if (Math.abs(visualY - trueTipY) > 2) {
+            ctx.beginPath(); ctx.moveTo(tipX, trueTipY); ctx.lineTo(tipX + 10, visualY);
+            ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
+        }
+
+        const imgSize = height * 0.03;
+        const displayX = (Math.abs(visualY - trueTipY) > 2) ? tipX + 10 : tipX;
+        ctx.save();
+        ctx.beginPath(); ctx.arc(displayX, visualY, imgSize / 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#121212'; ctx.fill();
+        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+        ctx.clip();
+        if (imagesRef.current[p.id]?.loaded) ctx.drawImage(imagesRef.current[p.id].img, displayX - imgSize / 2, visualY - imgSize / 2, imgSize, imgSize);
+        ctx.restore();
+
+        const baseFontSize = height * 0.018;
+        ctx.font = `600 ${baseFontSize}px 'Inter', sans-serif`;
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        const displayPoints = isBump ? (p.subLabel || "") : `${Math.floor(p.value)} pts`;
+        const textX = displayX + imgSize / 2 + 10;
+
+        if (ctx.measureText(p.label).width < margin.right - (imgSize / 2) - 20) {
+            ctx.fillText(p.label, textX, visualY);
+            ctx.fillStyle = '#ccc'; ctx.fillText(displayPoints, textX + ctx.measureText(p.label).width + 10, visualY);
+        } else {
+            ctx.font = `600 ${baseFontSize * 0.8}px 'Inter', sans-serif`;
+            ctx.fillText(p.label, textX, visualY - baseFontSize * 0.4);
+            ctx.fillStyle = '#ccc'; ctx.fillText(displayPoints, textX, visualY + baseFontSize * 0.5);
+        }
+    };
+
+    const renderFrame = (ctx, t, data, historyMap, globalMax, minTime, maxTime) => {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, width, height);
+        const isRoundData = data[0].round !== undefined;
+        drawBackground(ctx, t, isRoundData);
+        drawHeader(ctx, t, isRoundData, minTime, maxTime);
+
+        const interpolated = getInterpolatedPoints(t, maxTime, historyMap, isRoundData, isBump);
+        interpolated.sort((a, b) => (isRoundData && isBump) ? b.value - a.value : a.value - b.value);
+
+        let yDomain = isBump ? [globalMax, 1] : yDomainRef.current;
+        if (!isBump && interpolated.length > 0) {
+            let dMin = Math.min(...interpolated.map(p => p.value)), dMax = Math.max(...interpolated.map(p => p.value));
+            const tMin = Math.floor(dMin / 10) * 10, tMax = Math.ceil(dMax / 10) * 10 + (dMin === dMax ? 10 : 0);
+            yDomainRef.current = [yDomainRef.current[0] + (tMin - yDomainRef.current[0]) * 0.02, yDomainRef.current[1] + (tMax - yDomainRef.current[1]) * 0.02];
+            yDomain = yDomainRef.current;
+        }
+
+        const yScale = d3.scaleLinear().domain(yDomain).range([height - margin.bottom, margin.top]);
+        let xStart = Math.max(minTime, t - 10), xEnd = xStart + 10;
+        if (zoomOutProgress.current > 0) {
+            const p = Math.min(1, Math.pow(zoomOutProgress.current, 0.5));
+            xStart = xStart + (minTime - xStart) * p; xEnd = xEnd + (maxTime - xEnd) * p;
+        }
+        const xScale = d3.scaleLinear().domain([xStart, xEnd]).range([margin.left, width - margin.right]);
+
+        drawAxes(ctx, xScale, yScale, isRoundData, globalMax);
+        const tickPoints = resolveLabelCollisions(interpolated, yScale, height * 0.04, zoomOutProgress.current, t, maxTime);
+        const pointMap = new Map(tickPoints.map(p => [p.id, p.y]));
+
+        interpolated.forEach(p => drawPlayer(ctx, p, t, xScale, yScale, (zoomOutProgress.current === 0 && t < maxTime) ? yScale(p.value) : pointMap.get(p.id), isRoundData, isBump));
+    };
+
     useEffect(() => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         const context = canvas.getContext('2d');
         const dpr = window.devicePixelRatio || 1;
         canvas.width = width * dpr;
@@ -213,7 +394,6 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
         const minTime = getTime(data[0]);
         const maxTime = getTime(data[data.length - 1]);
 
-        // Build Full History Map
         const historyMap = new Map();
         if (topPlayers.length > 0) {
             topPlayers.forEach(pid => historyMap.set(pid, []));
@@ -221,57 +401,26 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
                 const t = getTime(frame);
                 frame.records.forEach(r => {
                     if (historyMap.has(r.id)) {
-                        historyMap.get(r.id).push({
-                            season: t,
-                            value: r.value, // Points
-                            rank: r.rank,   // Rank
-                            ...r
-                        });
+                        historyMap.get(r.id).push({ season: t, value: r.value, rank: r.rank, ...r });
                     }
                 });
             });
         }
 
-        // Calculate Global Max/Min
-        // If Round Data: Min=1, Max=NumTeams (e.g. 20)
-        // If Points Data: Min=0, Max=MaxPoints
-        let globalMax = 10;
-        let globalMin = 0;
-
-        const isRoundData = data[0].round !== undefined;
-
+        let globalMax = 20;
         if (isBump) {
-            // Rank Logic: 1 to MaxRank (e.g. 20)
-            // Fix: Should be total teams in league, not just top N
-            globalMax = 20;
-            // Scan for exact max rank
             topPlayers.forEach(pid => {
                 const hist = historyMap.get(pid);
-                if (hist) {
-                    hist.forEach(h => {
-                        if (h.rank > globalMax) globalMax = h.rank;
-                    });
-                }
+                hist?.forEach(h => { if (h.rank > globalMax) globalMax = h.rank; });
             });
-            // Ensure we show at least 20 for league tables usually
             if (globalMax < 20) globalMax = 20;
-            globalMin = 1;
-
         } else {
-            // Points Logic (Standard Line Evolution)
-            globalMin = 0;
-            // Scan for max points
             topPlayers.forEach(pid => {
                 const hist = historyMap.get(pid);
-                if (hist) {
-                    hist.forEach(h => {
-                        if (h.value > globalMax) globalMax = h.value;
-                    });
-                }
+                hist?.forEach(h => { if (h.value > globalMax) globalMax = h.value; });
             });
-            globalMax *= 1.1; // Add breathing room
+            globalMax *= 1.1;
         }
-
 
         const draw = (timestamp) => {
             if (!lastTimestamp) lastTimestamp = timestamp;
@@ -284,14 +433,9 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
                     timeRef.current += (deltaTime / duration);
                     if (timeRef.current > maxTime) timeRef.current = maxTime;
                 } else {
-                    // Reached end. 
-                    // 1. Wait 2 seconds
-                    if (waitProgress.current < 2000) {
-                        waitProgress.current += deltaTime;
-                    } else {
-                        // 2. Zoom Out Phase
-                        zoomOutProgress.current += (deltaTime / 2000); // 2 seconds zoom
-
+                    if (waitProgress.current < 2000) waitProgress.current += deltaTime;
+                    else {
+                        zoomOutProgress.current += (deltaTime / 2000);
                         if (zoomOutProgress.current > 1) {
                             zoomOutProgress.current = 1;
                             if (onComplete) onComplete();
@@ -300,209 +444,27 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
                 }
             } else if (manualTime !== null) {
                 timeRef.current = manualTime;
-                // Handle zoom logic if manualTime is beyond maxTime
                 if (manualTime > maxTime) {
                     const extra = manualTime - maxTime;
-                    if (extra < 2) { // 2s wait
-                        waitProgress.current = extra * 1000;
-                    } else {
+                    if (extra < 2) waitProgress.current = extra * 1000;
+                    else {
                         waitProgress.current = 2000;
-                        zoomOutProgress.current = (extra - 2) / 2; // 2s zoom
+                        zoomOutProgress.current = (extra - 2) / 2;
                     }
                 }
             }
 
-            renderFrame(timeRef.current);
-
+            renderFrame(context, timeRef.current, data, historyMap, globalMax, minTime, maxTime);
             if (isPlaying && zoomOutProgress.current < 1.05) {
                 animationRef.current = requestAnimationFrame(draw);
             }
         };
 
-        const drawBackground = (t, isRoundData) => {
-            const bgGradient = context.createLinearGradient(0, 0, 0, height);
-            bgGradient.addColorStop(0, '#121216');
-            bgGradient.addColorStop(1, '#000000');
-            context.fillStyle = bgGradient;
-            context.fillRect(0, 0, width, height);
-
-            const watermarkSize = width / 3;
-            context.save();
-            context.fillStyle = '#ffffff';
-            context.globalAlpha = 0.08;
-            context.font = `bold ${watermarkSize}px 'Inter', sans-serif`;
-            context.textAlign = 'right';
-            context.textBaseline = 'bottom';
-            context.fillText(isRoundData ? `Day ${Math.floor(t)}` : Math.floor(t), width * 0.95, height * 0.95);
-            context.restore();
-        };
-
-        const drawHeader = (t, isRoundData) => {
-            const headerY = height * 0.06;
-            let titleSize = Math.min(width, height) * 0.06;
-            context.font = `700 ${titleSize}px 'Inter', sans-serif`;
-            const titleWidth = context.measureText(title).width;
-            if (titleWidth > width * 0.9) titleSize *= (width * 0.9 / titleWidth);
-            context.fillStyle = '#fff';
-            context.textAlign = 'center';
-            context.font = `700 ${titleSize}px 'Inter', sans-serif`;
-
-            if (leagueLogo) {
-                const logoSize = titleSize * 1.5;
-                const logoX = (width / 2) - (titleWidth / 2) - logoSize - 20;
-                const logoY = headerY - (logoSize * 0.7);
-                context.save();
-                context.beginPath();
-                context.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 2, 0, Math.PI * 2);
-                context.fillStyle = 'rgba(255,255,255,1)';
-                context.fill();
-                if (leagueLogoRef.current.loaded) context.drawImage(leagueLogoRef.current.img, logoX, logoY, logoSize, logoSize);
-                context.restore();
-            }
-            context.fillText(title, width / 2, headerY);
-
-            context.fillStyle = '#aaa';
-            context.font = `600 ${height * 0.025}px 'Inter', sans-serif`;
-            context.fillText(isRoundData ? `Matchday ${Math.floor(t)}` : Math.floor(t), width / 2, headerY + (height * 0.035));
-
-            const progress = (t - minTime) / (maxTime - minTime);
-            const progressW = width * 0.8;
-            const progressX = (width - progressW) / 2;
-            const progressY = headerY + (height * 0.05);
-            context.fillStyle = 'rgba(255,255,255,0.1)';
-            context.fillRect(progressX, progressY, progressW, Math.max(4, height * 0.005));
-            context.fillStyle = '#4facfe';
-            context.fillRect(progressX, progressY, progressW * Math.min(1, Math.max(0, progress)), Math.max(4, height * 0.005));
-        };
-
-        const drawAxes = (xScale, yScale) => {
-            const [dMin, dMax] = yScale.domain();
-            let yTicks = isBump ? (globalMax <= 25 ? Array.from({ length: globalMax }, (_, i) => i + 1) : yScale.ticks(10)) : [];
-            if (!isBump) {
-                for (let v = Math.floor(Math.min(dMin, dMax) / 10) * 10; v <= Math.ceil(Math.max(dMin, dMax) / 10) * 10; v += 10) yTicks.push(v);
-            }
-
-            yTicks.forEach(tick => {
-                const y = yScale(tick);
-                if (y < margin.top - 10 || y > height - margin.bottom + 10) return;
-                context.beginPath();
-                context.moveTo(margin.left, y);
-                context.lineTo(width - margin.right, y);
-                context.strokeStyle = 'rgba(255,255,255,0.1)';
-                context.stroke();
-                context.fillStyle = '#fff';
-                context.font = `bold ${height * 0.022}px Inter`;
-                context.textAlign = 'right';
-                context.fillText(tick, margin.left - 15, y + (height * 0.008));
-            });
-
-            context.beginPath();
-            const [xMin, xMax] = xScale.domain();
-            const xTicks = isRoundData ? Array.from({ length: Math.floor((xMax - Math.ceil(xMin / 5) * 5) / 5) + 1 }, (_, i) => Math.ceil(xMin / 5) * 5 + i * 5) : xScale.ticks(5);
-            xTicks.filter(t => Number.isInteger(t)).forEach(tick => {
-                const x = xScale(tick);
-                context.moveTo(x, height - margin.bottom);
-                context.lineTo(x, height - margin.bottom + 10);
-                context.fillStyle = '#fff';
-                context.font = `600 ${height * 0.018}px Inter`;
-                context.textAlign = 'center';
-                context.fillText(tick, x, height - margin.bottom + 25);
-            });
-            context.stroke();
-        };
-
-        const drawPlayer = (p, t, xScale, yScale, visualY) => {
-            let color = adjustColorVisibility(teamColorsRef.current[p.id]?.color || `hsl(${(p.id * 137.5) % 360}, 70%, 55%)`);
-            const tipX = xScale(t);
-            const trueTipY = yScale(p.value);
-
-            context.save();
-            context.beginPath();
-            context.rect(margin.left, margin.top, width - margin.left - margin.right, height - margin.top - margin.bottom);
-            context.clip();
-            context.beginPath();
-            context.strokeStyle = color;
-            context.lineWidth = height * 0.003;
-            let started = false;
-            p.hist.forEach(h => {
-                if (h.season > t) return;
-                const x = xScale(h.season), y = yScale((isRoundData && isBump) ? h.rank : h.value);
-                if (!started) { context.moveTo(x, y); started = true; } else context.lineTo(x, y);
-            });
-            context.lineTo(tipX, trueTipY);
-            context.stroke();
-            context.restore();
-
-            if (Math.abs(visualY - trueTipY) > 2) {
-                context.beginPath(); context.moveTo(tipX, trueTipY); context.lineTo(tipX + 10, visualY);
-                context.strokeStyle = color; context.lineWidth = 1; context.stroke();
-            }
-
-            const imgSize = height * 0.03;
-            const displayX = (Math.abs(visualY - trueTipY) > 2) ? tipX + 10 : tipX;
-            context.save();
-            context.beginPath(); context.arc(displayX, visualY, imgSize / 2, 0, Math.PI * 2);
-            context.fillStyle = '#121212'; context.fill();
-            context.strokeStyle = color; context.lineWidth = 2; context.stroke();
-            context.clip();
-            if (imagesRef.current[p.id]?.loaded) context.drawImage(imagesRef.current[p.id].img, displayX - imgSize / 2, visualY - imgSize / 2, imgSize, imgSize);
-            context.restore();
-
-            const baseFontSize = height * 0.018;
-            context.font = `600 ${baseFontSize}px 'Inter', sans-serif`;
-            context.fillStyle = '#fff'; context.textAlign = 'left'; context.textBaseline = 'middle';
-            const displayPoints = isBump ? (p.subLabel || "") : `${Math.floor(p.value)} pts`;
-            const textX = displayX + imgSize / 2 + 10;
-
-            if (context.measureText(p.label).width < margin.right - (imgSize / 2) - 20) {
-                context.fillText(p.label, textX, visualY);
-                context.fillStyle = '#ccc'; context.fillText(displayPoints, textX + context.measureText(p.label).width + 10, visualY);
-            } else {
-                context.font = `600 ${baseFontSize * 0.8}px 'Inter', sans-serif`;
-                context.fillText(p.label, textX, visualY - baseFontSize * 0.4);
-                context.fillStyle = '#ccc'; context.fillText(displayPoints, textX, visualY + baseFontSize * 0.5);
-            }
-        };
-
-        const renderFrame = (t) => {
-            context.clearRect(0, 0, width, height);
-            drawBackground(t, isRoundData);
-            drawHeader(t, isRoundData);
-
-            const interpolated = getInterpolatedPoints(t, maxTime, historyMap, isRoundData, isBump);
-            interpolated.sort((a, b) => (isRoundData && isBump) ? b.value - a.value : a.value - b.value);
-
-            let yDomain = isBump ? [globalMax, 1] : yDomainRef.current;
-            if (!isBump && interpolated.length > 0) {
-                let dMin = Math.min(...interpolated.map(p => p.value)), dMax = Math.max(...interpolated.map(p => p.value));
-                const tMin = Math.floor(dMin / 10) * 10, tMax = Math.ceil(dMax / 10) * 10 + (dMin === dMax ? 10 : 0);
-                yDomainRef.current = [yDomainRef.current[0] + (tMin - yDomainRef.current[0]) * 0.02, yDomainRef.current[1] + (tMax - yDomainRef.current[1]) * 0.02];
-                yDomain = yDomainRef.current;
-            }
-
-            const yScale = d3.scaleLinear().domain(yDomain).range([height - margin.bottom, margin.top]);
-            let xStart = Math.max(minTime, t - 10), xEnd = xStart + 10;
-            if (zoomOutProgress.current > 0) {
-                const p = Math.min(1, Math.pow(zoomOutProgress.current, 0.5));
-                xStart = xStart + (minTime - xStart) * p; xEnd = xEnd + (maxTime - xEnd) * p;
-            }
-            const xScale = d3.scaleLinear().domain([xStart, xEnd]).range([margin.left, width - margin.right]);
-
-            drawAxes(xScale, yScale);
-            const tickPoints = resolveLabelCollisions(interpolated, yScale, height * 0.04, zoomOutProgress.current, t, maxTime);
-            const pointMap = new Map(tickPoints.map(p => [p.id, p.y]));
-
-            interpolated.forEach(p => drawPlayer(p, t, xScale, yScale, (zoomOutProgress.current === 0 && t < maxTime) ? yScale(p.value) : pointMap.get(p.id)));
-        };
-
-        if (isPlaying && manualTime === null) {
-            animationRef.current = requestAnimationFrame(draw);
-        } else {
-            renderFrame(timeRef.current);
-        }
+        if (isPlaying && manualTime === null) animationRef.current = requestAnimationFrame(draw);
+        else renderFrame(context, timeRef.current, data, historyMap, globalMax, minTime, maxTime);
 
         return () => cancelAnimationFrame(animationRef.current);
-    }, [data, width, height, isPlaying, speed, topPlayers]);
+    }, [data, width, height, isPlaying, speed, topPlayers, manualTime]);
 
     return (
         <canvas
