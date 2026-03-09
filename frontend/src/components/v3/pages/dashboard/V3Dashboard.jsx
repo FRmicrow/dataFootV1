@@ -40,7 +40,7 @@ const V3Dashboard = () => {
                 <Skeleton width="300px" height="20px" />
             </header>
             <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-md)" style={{ marginBottom: 'var(--spacing-xl)' }}>
-                {[...new Array(4)].map((_, i) => <MetricCardSkeleton key={`skeleton-metric-${i}`} />)}
+                {Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={`skeleton-metric-${i}`} />)}
             </Grid>
             <Grid columns="repeat(2, 1fr)" gap="var(--spacing-lg)">
                 <CardSkeleton />
@@ -50,6 +50,12 @@ const V3Dashboard = () => {
     );
 
     const { volumetrics, health_summary, players_by_country, distribution, fixture_trends } = stats;
+
+    const getHealthVariant = (score) => {
+        if (score > 80) return 'success';
+        if (score > 50) return 'warning';
+        return 'danger';
+    };
 
     return (
         <div className="v3-dashboard-content animate-fade-in">
@@ -73,11 +79,7 @@ const V3Dashboard = () => {
                         <Progress
                             label="System Health"
                             value={health_summary.score}
-                            variant={(() => {
-                                if (health_summary.score > 80) return 'success';
-                                if (health_summary.score > 50) return 'warning';
-                                return 'danger';
-                            })()}
+                            variant={getHealthVariant(health_summary.score)}
                             showLabel
                             className="flex-1"
                         />

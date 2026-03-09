@@ -134,9 +134,13 @@ const StandingsTable = ({
                     if (v < 0) return 'var(--color-danger-500)';
                     return 'inherit';
                 };
+
+                let displayVal = val;
+                if (val > 0) displayVal = `+${val}`;
+
                 return (
                     <span style={{ color: getGDColor(val), fontWeight: 'bold' }}>
-                        {val > 0 ? `+${val}` : val}
+                        {displayVal}
                     </span>
                 );
             }
@@ -171,8 +175,8 @@ const StandingsTable = ({
                         Operational data for this temporal context hasn't been synchronized. The tactical hierarchy cannot be visualized without a full registry sync.
                     </p>
                     <Grid columns="1fr 1fr" gap="var(--spacing-md)">
-                        <Button variant="primary" onClick={() => window.location.reload()}>🔄 Sync Registry</Button>
-                        <Button variant="secondary" onClick={() => window.location.href = '/import'}>⚙️ System Config</Button>
+                        <Button variant="primary" onClick={() => globalThis.location.reload()}>🔄 Sync Registry</Button>
+                        <Button variant="secondary" onClick={() => globalThis.location.href = '/import'}>⚙️ System Config</Button>
                     </Grid>
                 </div>
             </Card>
@@ -238,7 +242,6 @@ StandingsTable.propTypes = {
     rangeEnd: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     setRangeEnd: PropTypes.func,
     handleRangeUpdate: PropTypes.func,
-    isDynamicMode: PropTypes.bool,
     loading: PropTypes.bool
 };
 

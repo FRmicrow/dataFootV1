@@ -54,16 +54,8 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
         </div>
     );
 
-    let homeLineup = lineups.find(l => Number(l.team_id) === Number(homeTeamId));
-    let awayLineup = lineups.find(l => Number(l.team_id) === Number(awayTeamId));
-
-    if (!homeLineup && lineups.length > 0) homeLineup = lineups[0];
-    if (!awayLineup && lineups.length > 1) awayLineup = lineups[1];
-
-    const getRole = (pos) => {
-        if (pos === 'F') return 'A';
-        return pos;
-    };
+    let homeLineup = lineups.find(l => Number(l.team_id) === Number(homeTeamId)) || lineups[0];
+    let awayLineup = lineups.find(l => Number(l.team_id) === Number(awayTeamId)) || lineups[1];
 
     const renderSquad = (lineup, title) => {
         if (!lineup) return (
@@ -94,7 +86,7 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
                 >
                     <span className="ds-inline-player-num">{p.number}</span>
                     <span className="ds-inline-player-name">{p.name}</span>
-                    <Badge variant="neutral" size="sm" style={{ pointerEvents: 'none' }}>{getRole(p.pos)}</Badge>
+                    <Badge variant="neutral" size="sm" style={{ pointerEvents: 'none' }}>{p.pos === 'F' ? 'A' : p.pos}</Badge>
                 </button>
             );
         };

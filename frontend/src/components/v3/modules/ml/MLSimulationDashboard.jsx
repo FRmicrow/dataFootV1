@@ -160,6 +160,32 @@ const MLSimulationDashboard = () => {
         return <Badge variant={variant} size="sm">{pct.toFixed(1)}%</Badge>;
     };
 
+    const sortData = (data, config) => {
+        return [...data].sort((a, b) => {
+            const { key, direction } = config;
+
+            if (key === 'importance_rank') {
+                const countryA = a.country_importance_rank ?? 999;
+                const countryB = b.country_importance_rank ?? 999;
+                if (countryA !== countryB) {
+                    return direction === 'ASC' ? countryA - countryB : countryB - countryA;
+                }
+                const leagueA = a.league_importance_rank ?? 999;
+                const leagueB = b.league_importance_rank ?? 999;
+                return direction === 'ASC' ? leagueA - leagueB : leagueB - leagueA;
+            }
+
+            const valA = a[key] ?? 0;
+            const valB = b[key] ?? 0;
+
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                return direction === 'ASC' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            }
+
+            return direction === 'ASC' ? valA - valB : valB - valA;
+        });
+    };
+
     const handleSort = (key) => {
         setSortConfig(prev => ({
             key,
@@ -174,34 +200,7 @@ const MLSimulationDashboard = () => {
         );
     };
 
-    const sortedData = [...overviewData].sort((a, b) => {
-        const key = sortConfig.key;
-
-        // Custom Nested Sort for importance_rank
-        if (key === 'importance_rank') {
-            const countryA = a.country_importance_rank ?? 999;
-            const countryB = b.country_importance_rank ?? 999;
-            if (countryA !== countryB) {
-                return sortConfig.direction === 'ASC' ? countryA - countryB : countryB - countryA;
-            }
-            const leagueA = a.league_importance_rank ?? 999;
-            const leagueB = b.league_importance_rank ?? 999;
-            return sortConfig.direction === 'ASC' ? leagueA - leagueB : leagueB - leagueA;
-        }
-
-        let valA = a[key] ?? 0;
-        let valB = b[key] ?? 0;
-
-        // String comparison
-        if (typeof valA === 'string' && typeof valB === 'string') {
-            return sortConfig.direction === 'ASC'
-                ? valA.localeCompare(valB)
-                : valB.localeCompare(valA);
-        }
-
-        // Numeric comparison
-        return sortConfig.direction === 'ASC' ? valA - valB : valB - valA;
-    });
+    const sortedData = sortData(overviewData, sortConfig);
 
     const columns = [
         {
@@ -278,39 +277,43 @@ const MLSimulationDashboard = () => {
                 );
             }
         }
-    ].map(col => ({
-        ...col,
-        title: col.key !== 'action' ? (
-            <button
-                className="ds-table-header-button"
-                onClick={(e) => { e.stopPropagation(); handleSort(col.key); }}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    justifyContent: getAlignment(col.align),
-                    width: '100%',
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'inherit',
-                    fontFamily: 'inherit',
-                    fontSize: 'inherit',
-                    fontWeight: 'inherit',
-                    cursor: 'pointer',
-                    padding: 0
-                }}
-                type="button"
-                aria-label={`Sort by ${col.title}`}
-            >
-                {col.title}
-                {sortConfig.key === col.key && (
-                    <span style={{ fontSize: '10px', color: 'var(--color-primary-400)' }}>
-                        {sortConfig.direction === 'DESC' ? '▼' : '▲'}
-                    </span>
-                )}
-            </button>
-        ) : col.title
-    }));
+    ].map(col => {
+        if (col.key === 'action') return col;
+
+        return {
+            ...col,
+            title: (
+                <button
+                    className="ds-table-header-button"
+                    onClick={(e) => { e.stopPropagation(); handleSort(col.key); }}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        justifyContent: getAlignment(col.align),
+                        width: '100%',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'inherit',
+                        fontFamily: 'inherit',
+                        fontSize: 'inherit',
+                        fontWeight: 'inherit',
+                        cursor: 'pointer',
+                        padding: 0
+                    }}
+                    type="button"
+                    aria-label={`Sort by ${col.title}`}
+                >
+                    {col.title}
+                    {sortConfig.key === col.key && (
+                        <span style={{ fontSize: '10px', color: 'var(--color-primary-400)' }}>
+                            {sortConfig.direction === 'DESC' ? '▼' : '▲'}
+                        </span>
+                    )}
+                </button>
+            )
+        };
+    });
 
     // Calculate Global Averages for Top Cards
     const avgHitRate = overviewData.length > 0

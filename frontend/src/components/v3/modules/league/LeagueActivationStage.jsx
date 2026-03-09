@@ -109,16 +109,8 @@ const LeagueActivationStage = ({ leagueId, onComplete, onCancel }) => {
                     display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
                     fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase',
                     letterSpacing: '0.5px',
-                    background: (() => {
-                        if (status === 'COMPLETE') return 'rgba(16,185,129,0.15)';
-                        if (status === 'FAILED') return 'rgba(239,68,68,0.15)';
-                        return 'rgba(59,130,246,0.15)';
-                    })(),
-                    color: (() => {
-                        if (status === 'COMPLETE') return '#10b981';
-                        if (status === 'FAILED') return '#ef4444';
-                        return '#3b82f6';
-                    })()
+                    background: status === 'COMPLETE' ? 'rgba(16,185,129,0.15)' : (status === 'FAILED' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)'),
+                    color: status === 'COMPLETE' ? '#10b981' : (status === 'FAILED' ? '#ef4444' : '#3b82f6')
                 }}>
                     {status}
                 </span>

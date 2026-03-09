@@ -23,7 +23,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
     const imagesRef = useRef({});
     const teamColorsRef = useRef({});
     const leagueLogoRef = useRef({ img: null, loaded: false });
-    const [renderCount, setRenderCount] = useState(0);
+    const [, setRenderCount] = useState(0);
     const triggerRender = () => setRenderCount(n => n + 1);
 
     // Layout Config
@@ -78,23 +78,20 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 
             if (!recA) return null;
 
+            // Compute values based on chart type
             const valA = (isRoundData && isBump) ? recA.rank : recA.value;
-            let valB = valA;
-            if (recB) {
-                valB = (isRoundData && isBump) ? recB.rank : recB.value;
-            }
+            const valB = recB ? ((isRoundData && isBump) ? recB.rank : recB.value) : valA;
             const curVal = valA + (valB - valA) * alpha;
 
             const pValA = recA.value;
             const pValB = recB ? recB.value : pValA;
             const curValPoints = pValA + (pValB - pValA) * alpha;
 
-            let mainLabel = recA.label;
             let subLabel = isBump ? `${Math.floor(curValPoints)} pts` : recA.subLabel;
 
             return {
                 id: pid,
-                label: mainLabel,
+                label: recA.label,
                 subLabel: subLabel,
                 value: curVal,
                 rank: recA.rank,

@@ -178,6 +178,13 @@ const FixturesList = ({
                                                 <div
                                                     className="ds-fixture-expansion-panel animate-fade-in"
                                                     onClick={e => e.stopPropagation()}
+                                                    onKeyDown={e => {
+                                                        if (e.key === 'Enter' || e.key === ' ') {
+                                                            e.stopPropagation();
+                                                        }
+                                                    }}
+                                                    tabIndex="0"
+                                                    role="button"
                                                 >
                                                     <InlineFixtureDetails
                                                         fixtureId={f.fixture_id}

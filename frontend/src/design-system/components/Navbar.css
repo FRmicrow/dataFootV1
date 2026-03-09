@@ -35,7 +35,6 @@
     align-items: center;
     padding: 0 var(--spacing-md);
     text-decoration: none;
-    color: var(--color-text-muted);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     transition: all 0.2s ease;

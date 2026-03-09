@@ -61,8 +61,8 @@ const ProfileHeader = ({
                     <div className="ds-profile-info">
                         <Stack gap="2px">
                             <div className="ds-profile-badges">
-                                {badges.map((b) => (
-                                    <Badge key={b.label} variant={b.variant || 'neutral'} size="xs">
+                                {badges.map((b, i) => (
+                                    <Badge key={`${b.label}-${i}`} variant={b.variant || 'neutral'} size="xs">
                                         {b.icon && <span className="ds-badge-icon-wrap">{b.icon}</span>}
                                         {b.label}
                                     </Badge>
@@ -72,7 +72,7 @@ const ProfileHeader = ({
 
                             <div className="ds-profile-subtitles">
                                 {subtitles.map((s, i) => (
-                                    <span key={s} className="ds-profile-subtitle">
+                                    <span key={`${s}-${i}`} className="ds-profile-subtitle">
                                         {i > 0 && <span className="ds-profile-separator">•</span>}
                                         {s}
                                     </span>

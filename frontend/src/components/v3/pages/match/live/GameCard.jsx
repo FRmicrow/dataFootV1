@@ -78,22 +78,15 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                 <div className="lb-league-info">
                     {league.flag && <img src={league.flag} alt="" className="lb-league-flag" />}
                     <span className="lb-league-name">{league.name}</span>
-                    <span
+                    <button
                         onClick={(e) => { e.stopPropagation(); onToggleFavorite('league', league.id); }}
-                        style={{ cursor: 'pointer', marginLeft: '4px', fontSize: '1.2rem' }}
+                        className="lb-favorite-toggle"
                         title="Toggle Favorite League"
-                        role="button"
-                        tabIndex="0"
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                onToggleFavorite('league', league.id);
-                            }
-                        }}
+                        aria-label={`Toggle Favorite for ${league.name}`}
+                        aria-pressed={isFavLeague}
                     >
                         {isFavLeague ? '⭐' : '☆'}
-                    </span>
+                    </button>
                     <span className="lb-country-code" style={{ marginLeft: '8px' }}>{league.country}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -133,24 +126,17 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                 {/* Home Team */}
                 <div className="lb-team-row">
                     <div className="lb-team-info">
-                        <img src={teams.home.logo} alt={teams.home.name} className="lb-team-logo" />
+                        <img src={teams.home.logo} alt="" className="lb-team-logo" />
                         <span className="lb-team-name">{teams.home.name}</span>
-                        <span
+                        <button
                             onClick={(e) => { e.stopPropagation(); onToggleFavorite('team', teams.home.id); }}
-                            style={{ cursor: 'pointer', marginLeft: '4px' }}
+                            className="lb-favorite-toggle"
                             title="Toggle Favorite Team"
-                            role="button"
-                            tabIndex="0"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    onToggleFavorite('team', teams.home.id);
-                                }
-                            }}
+                            aria-label={`Toggle Favorite for ${teams.home.name}`}
+                            aria-pressed={isFavHome}
                         >
                             {isFavHome ? '⭐' : '☆'}
-                        </span>
+                        </button>
                     </div>
                     <div className="lb-score">{goals.home ?? '-'}</div>
                 </div>
@@ -158,24 +144,17 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                 {/* Away Team */}
                 <div className="lb-team-row">
                     <div className="lb-team-info">
-                        <img src={teams.away.logo} alt={teams.away.name} className="lb-team-logo" />
+                        <img src={teams.away.logo} alt="" className="lb-team-logo" />
                         <span className="lb-team-name">{teams.away.name}</span>
-                        <span
+                        <button
                             onClick={(e) => { e.stopPropagation(); onToggleFavorite('team', teams.away.id); }}
-                            style={{ cursor: 'pointer', marginLeft: '4px' }}
+                            className="lb-favorite-toggle"
                             title="Toggle Favorite Team"
-                            role="button"
-                            tabIndex="0"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    onToggleFavorite('team', teams.away.id);
-                                }
-                            }}
+                            aria-label={`Toggle Favorite for ${teams.away.name}`}
+                            aria-pressed={isFavAway}
                         >
                             {isFavAway ? '⭐' : '☆'}
-                        </span>
+                        </button>
                     </div>
                     <div className="lb-score">{goals.away ?? '-'}</div>
                 </div>

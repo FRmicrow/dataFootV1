@@ -8,7 +8,7 @@ import api from '../../../../services/api';
  * Shows leagues that are already imported in the DB.
  * Supports multi-selection for batch operations.
  */
-const LeagueDiscovery = ({ onSelectBatch, onCancel, importedApiIds = [] }) => {
+const LeagueDiscovery = ({ onSelectBatch, onCancel }) => {
     const [leagues, setLeagues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -179,8 +179,7 @@ const LeagueDiscovery = ({ onSelectBatch, onCancel, importedApiIds = [] }) => {
 
 LeagueDiscovery.propTypes = {
     onSelectBatch: PropTypes.func.isRequired,
-    onCancel: PropTypes.func.isRequired,
-    importedApiIds: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number]))
+    onCancel: PropTypes.func.isRequired
 };
 
 export default LeagueDiscovery;

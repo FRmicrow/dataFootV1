@@ -313,7 +313,7 @@ const Step1_Data = () => {
                 <div className="range-grid-v2">
                     {mode === 'standings' ? (
                         <select id="time-range-start" value={filters.years[1]}
-                            onChange={e => setFilters({ ...filters, years: [filters.years[0], Number.parseInt(e.target.value)] })}
+                            onChange={e => setFilters({ ...filters, years: [filters.years[0], Number.parseFloat(e.target.value)] })}
                             className="input-v2" style={{ gridColumn: 'span 3' }}>
                             {Array.from({ length: 15 }, (_, i) => 2024 - i).map(y => (
                                 <option key={y} value={y}>{y}/{y + 1}</option>
@@ -322,11 +322,11 @@ const Step1_Data = () => {
                     ) : (
                         <>
                             <input id="time-range-start" type="number" value={filters.years[0]}
-                                onChange={e => setFilters({ ...filters, years: [Number.parseInt(e.target.value), filters.years[1]] })}
+                                onChange={e => setFilters({ ...filters, years: [Number.parseFloat(e.target.value), filters.years[1]] })}
                                 className="input-v2" />
                             <span>TO</span>
                             <input id="time-range-end" type="number" value={filters.years[1]}
-                                onChange={e => setFilters({ ...filters, years: [filters.years[0], Number.parseInt(e.target.value)] })}
+                                onChange={e => setFilters({ ...filters, years: [filters.years[0], Number.parseFloat(e.target.value)] })}
                                 className="input-v2" />
                         </>
                     )}

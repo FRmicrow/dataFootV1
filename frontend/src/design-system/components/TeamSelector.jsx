@@ -13,6 +13,31 @@ const TeamSelector = ({
     onSearchChange,
     loading = false
 }) => {
+    const renderList = () => {
+        if (loading) return <div className="ds-team-selector-loading">Syncing...</div>;
+        if (teams.length === 0) return <div className="ds-team-selector-empty">No results</div>;
+
+        return teams.map(team => {
+            const isSelected = String(team.team_id) === String(selectedTeamId);
+            return (
+                <button
+                    key={team.team_id}
+                    onClick={() => onSelect(team.team_id)}
+                    className={`ds-team-selector-item ${isSelected ? 'is-active' : ''}`}
+                >
+                    <div className="ds-team-selector-logo-wrap">
+                        <img src={team.team_logo} alt={team.team_name} loading="lazy" />
+                    </div>
+                    <div className="ds-team-selector-info">
+                        <span className="name">{team.team_name}</span>
+                        <span className="meta">Rank #{team.rank}</span>
+                    </div>
+                    {isSelected && <div className="ds-team-selector-indicator" />}
+                </button>
+            );
+        });
+    };
+
     return (
         <aside className="ds-team-selector">
             <div className="ds-team-selector-header">
@@ -29,29 +54,7 @@ const TeamSelector = ({
             </div>
 
             <div className="ds-team-selector-list scrollbar-custom">
-                {loading && <div className="ds-team-selector-loading">Syncing...</div>}
-                {!loading && teams.length === 0 && <div className="ds-team-selector-empty">No results</div>}
-                {!loading && teams.length > 0 && (
-                    teams.map(team => {
-                        const isSelected = String(team.team_id) === String(selectedTeamId);
-                        return (
-                            <button
-                                key={team.team_id}
-                                onClick={() => onSelect(team.team_id)}
-                                className={`ds-team-selector-item ${isSelected ? 'is-active' : ''}`}
-                            >
-                                <div className="ds-team-selector-logo-wrap">
-                                    <img src={team.team_logo} alt={team.team_name} loading="lazy" />
-                                </div>
-                                <div className="ds-team-selector-info">
-                                    <span className="name">{team.team_name}</span>
-                                    <span className="meta">Rank #{team.rank}</span>
-                                </div>
-                                {isSelected && <div className="ds-team-selector-indicator" />}
-                            </button>
-                        );
-                    })
-                )}
+                {renderList()}
             </div>
         </aside>
     );

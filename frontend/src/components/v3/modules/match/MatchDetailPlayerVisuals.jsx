@@ -41,12 +41,14 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
     const getRadarData = (p) => {
         if (!p) return [];
         const passAccuracyPct = p.passes_total > 0 ? (p.passes_accuracy / p.passes_total) * 100 : 0;
+        const duelsAccuracyPct = p.duels_total > 0 ? (p.duels_won / p.duels_total) * 100 : 0;
+
         return [
             { subject: 'Rating', A: (Number.parseFloat(p.rating) || 0) * 10, fullMark: 100 },
             { subject: 'Shots', A: Math.min((p.shots_total || 0) * 20, 100), fullMark: 100 },
             { subject: 'Passing', A: passAccuracyPct, fullMark: 100 },
             { subject: 'Defense', A: Math.min((p.tackles_interceptions || 0) * 15, 100), fullMark: 100 },
-            { subject: 'Duels', A: p.duels_total > 0 ? (p.duels_won / p.duels_total) * 100 : 0, fullMark: 100 },
+            { subject: 'Duels', A: duelsAccuracyPct, fullMark: 100 },
             { subject: 'Dribbles', A: Math.min((p.dribbles_success || 0) * 25, 100), fullMark: 100 },
         ];
     };
