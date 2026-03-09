@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../../../services/api';
-import { Card, Badge, Button, Table, Select, Grid } from '../../../../design-system';
+import { Card, Stack, Badge, Button, Table, Tabs, LeagueHeader, ControlBar, Select, Grid } from '../../../../design-system';
 import { PageLayout, PageContent } from '../../layouts';
 
 // Components
