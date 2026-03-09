@@ -7,12 +7,28 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 def get_db_connection():
     return get_connection()
 
+def save_risk_data(conn, query, fixture_id, market_type, data, key):
+    """Helper to parse probabilities and save to DB if data exists."""
+    if key in data:
+        for sel, prob in data[key].items():
+            if prob > 0:
+                conn.execute(query, (fixture_id, market_type, sel, float(prob), 1.0 / prob))
+
 def extract_and_save_fair_odds(fixture_id):
     """
     Reads submodel JSONs for a fixture_id, generates fair odds, 
     and saves them to V3_Risk_Analysis.
     """
     conn = get_db_connection()
+    
+    # Mapping model types to market identifiers and their corresponding JSON keys
+    MODEL_CONFIGS = {
+        'FT_RESULT': ('1N2_FT', 'probabilities_1n2'),
+        'HT_RESULT': ('1N2_HT', 'probabilities_1n2'),
+        'CORNERS_TOTAL': ('CORNERS_OU', 'over_under_probabilities'),
+        'CARDS_TOTAL': ('CARDS_OU', 'over_under_probabilities')
+    }
+
     try:
         # Fetch all submodel outputs for this fixture
         query = "SELECT model_type, prediction_json FROM V3_Submodel_Outputs WHERE fixture_id = ?"
@@ -30,36 +46,13 @@ def extract_and_save_fair_odds(fixture_id):
         """
         
         for model_type, json_str in rows:
+            if model_type not in MODEL_CONFIGS:
+                continue
+                
             data = json.loads(json_str)
+            market_type, data_key = MODEL_CONFIGS[model_type]
+            save_risk_data(conn, insert_query, fixture_id, market_type, data, data_key)
             
-            if model_type == 'FT_RESULT':
-                if 'probabilities_1n2' in data:
-                    probs = data['probabilities_1n2']
-                    for sel, prob in probs.items():
-                        if prob > 0:
-                            conn.execute(insert_query, (fixture_id, '1N2_FT', sel, float(prob), 1.0 / prob))
-                            
-            elif model_type == 'HT_RESULT':
-                 if 'probabilities_1n2' in data:
-                    probs = data['probabilities_1n2']
-                    for sel, prob in probs.items():
-                        if prob > 0:
-                            conn.execute(insert_query, (fixture_id, '1N2_HT', sel, float(prob), 1.0 / prob))
-                            
-            elif model_type == 'CORNERS_TOTAL':
-                if 'over_under_probabilities' in data:
-                    probs = data['over_under_probabilities']
-                    for sel, prob in probs.items():
-                        if prob > 0:
-                            conn.execute(insert_query, (fixture_id, 'CORNERS_OU', sel, float(prob), 1.0 / prob))
-                            
-            elif model_type == 'CARDS_TOTAL':
-                if 'over_under_probabilities' in data:
-                    probs = data['over_under_probabilities']
-                    for sel, prob in probs.items():
-                        if prob > 0:
-                            conn.execute(insert_query, (fixture_id, 'CARDS_OU', sel, float(prob), 1.0 / prob))
-                            
         conn.commit()
     except Exception as e:
         print(f"Error in risk engine for fixture {fixture_id}: {e}")
