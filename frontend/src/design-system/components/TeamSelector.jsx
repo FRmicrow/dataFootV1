@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Stack } from './Grid';
+import { Card, Table, Input, Badge, Button } from '../../../../design-system';
 import './TeamSelector.css';
 
 /**

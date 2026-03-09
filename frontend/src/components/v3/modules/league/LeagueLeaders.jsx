@@ -62,6 +62,13 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
         </Link>
     );
 
+    LeaderCard.propTypes = {
+        player: PropTypes.object.isRequired,
+        rank: PropTypes.number.isRequired,
+        label: PropTypes.string.isRequired,
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    };
+
     const Section = ({ title, subtitle, data, playerLabel, dataKey }) => (
         <Card title={title} subtitle={subtitle} ghost={layout === 'vertical'}>
             <Stack gap="var(--spacing-2xs)">
@@ -77,6 +84,14 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
             </Stack>
         </Card>
     );
+
+    Section.propTypes = {
+        title: PropTypes.string.isRequired,
+        subtitle: PropTypes.string,
+        data: PropTypes.array.isRequired,
+        playerLabel: PropTypes.string.isRequired,
+        dataKey: PropTypes.string.isRequired
+    };
 
     if (layout === 'vertical') {
         return (

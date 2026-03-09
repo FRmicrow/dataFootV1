@@ -56,17 +56,25 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
             (selectedPlayer?.fixture_player_stats_id && selectedPlayer.fixture_player_stats_id === p.fixture_player_stats_id);
 
         return (
-            <div
+            <button
                 key={key}
                 className={`player-mini-card ${isActive ? 'active' : ''}`}
                 onClick={() => setSelectedPlayer({ ...p })}
-                role="button"
-                tabIndex="0"
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         setSelectedPlayer({ ...p });
                     }
+                }}
+                style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    width: '100%',
+                    textAlign: 'left',
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
+                    display: 'block'
                 }}
             >
                 <div className="p-card-header">
@@ -78,7 +86,7 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
                 <div className="p-card-meta">
                     {p.minutes_played}' • {p.side?.toUpperCase()}
                 </div>
-            </div>
+            </button>
         );
     };
 

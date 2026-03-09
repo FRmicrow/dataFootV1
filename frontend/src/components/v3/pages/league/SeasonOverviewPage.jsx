@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../../../services/api';
-import {
-    Card, Stack, Button,
-    Tabs, LeagueHeader, ControlBar
-} from '../../../../design-system';
+import { Card, Badge, Button, Table, Select, Grid } from '../../../../design-system';
 import { PageLayout, PageContent } from '../../layouts';
 
 // Components

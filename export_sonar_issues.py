@@ -54,5 +54,5 @@ def export_to_csv(issues, filename):
 
 if __name__ == "__main__":
     issues = fetch_issues()
-    output_file = "/Users/dominiqueparsis/statFootV3/sonar_issues_report_v3.csv"
+    output_file = "/Users/dominiqueparsis/statFootV3/sonar_issues_report_v7.csv"
     export_to_csv(issues, output_file)

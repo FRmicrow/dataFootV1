@@ -27,7 +27,7 @@ const PageHeader = ({ title, subtitle, actions, breadcrumbs, badge, extra, class
                     marginBottom: 'var(--spacing-xs)'
                 }}>
                     {breadcrumbs.map((bc, idx) => (
-                        <React.Fragment key={idx}>
+                        <React.Fragment key={bc.path || bc.label}>
                             {idx > 0 && <span>/</span>}
                             {bc.path ? (
                                 <Link to={bc.path} style={{

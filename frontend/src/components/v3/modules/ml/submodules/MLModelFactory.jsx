@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Card, Grid, Stack, Badge, Button, Table, Progress, Input } from '../../../../../design-system';
+import { Card, Stack, Badge, Button, Table, Progress, Input } from '../../../../../design-system';
 
 import api from '../../../../../services/api';
 

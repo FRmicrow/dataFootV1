@@ -178,7 +178,6 @@ const FixturesList = ({
                                                 <div
                                                     className="ds-fixture-expansion-panel animate-fade-in"
                                                     onClick={e => e.stopPropagation()}
-                                                    role="presentation"
                                                 >
                                                     <InlineFixtureDetails
                                                         fixtureId={f.fixture_id}

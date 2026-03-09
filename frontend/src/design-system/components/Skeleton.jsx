@@ -57,10 +57,10 @@ export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
                 </tr>
             </thead>
             <tbody>
-                {new Array(rows).fill(0).map((_, i) => (
-                    <tr key={i}>
-                        {new Array(cols).fill(0).map((_, j) => (
-                            <td key={j}><Skeleton width={j === 0 ? "80%" : "60%"} height="12px" /></td>
+                {[...Array(rows)].map((_, i) => (
+                    <tr key={`row-${i}`}>
+                        {[...Array(cols)].map((_, j) => (
+                            <td key={`cell-${i}-${j}`}><Skeleton width={j === 0 ? "80%" : "60%"} height="12px" /></td>
                         ))}
                     </tr>
                 ))}
@@ -81,5 +81,11 @@ const Stack = ({ children, gap, direction = 'column' }) => (
         {children}
     </div>
 );
+
+Stack.propTypes = {
+    children: PropTypes.node,
+    gap: PropTypes.string,
+    direction: PropTypes.string
+};
 
 export default Skeleton;

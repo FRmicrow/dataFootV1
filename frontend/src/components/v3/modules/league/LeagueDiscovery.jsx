@@ -114,11 +114,9 @@ const LeagueDiscovery = ({ onSelectBatch, onCancel, importedApiIds = [] }) => {
                                 gap: '8px'
                             }}>
                                 {countryLeagues.map(league => (
-                                    <div
+                                    <button
                                         key={league.league_id}
                                         onClick={() => toggleStage(league)}
-                                        role="button"
-                                        tabIndex="0"
                                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStage(league); } }}
                                         style={{
                                             background: isStaged(league.league_id)
@@ -127,7 +125,10 @@ const LeagueDiscovery = ({ onSelectBatch, onCancel, importedApiIds = [] }) => {
                                             border: `1px solid ${isStaged(league.league_id) ? '#10b981' : '#334155'}`,
                                             borderRadius: '10px', padding: '10px 14px', cursor: 'pointer',
                                             display: 'flex', alignItems: 'center', gap: '10px',
-                                            transition: 'all 0.2s ease'
+                                            transition: 'all 0.2s ease',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            fontFamily: 'inherit'
                                         }}
                                     >
                                         {league.logo_url && (
@@ -142,7 +143,7 @@ const LeagueDiscovery = ({ onSelectBatch, onCancel, importedApiIds = [] }) => {
                                         {isStaged(league.league_id) && (
                                             <span style={{ color: '#10b981', fontWeight: 'bold' }}>✓</span>
                                         )}
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         </div>

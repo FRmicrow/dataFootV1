@@ -104,13 +104,15 @@ class ClubRepository extends BaseRepository {
         }
 
         const row = await this.db.get(sql, cleanParams(params));
+        return this._formatTacticalRow(row);
+    }
 
-        if (row) {
-            const keys = ['possession', 'pass_accuracy', 'shots_per_match', 'shots_on_target_per_match', 'corners_per_match', 'saves_per_match', 'yellow_cards_per_match'];
-            keys.forEach(k => {
-                row[k] = row[k] ? Number.parseFloat(Number(row[k]).toFixed(1)) : 0;
-            });
-        }
+    _formatTacticalRow(row) {
+        if (!row) return null;
+        const keys = ['possession', 'pass_accuracy', 'shots_per_match', 'shots_on_target_per_match', 'corners_per_match', 'saves_per_match', 'yellow_cards_per_match'];
+        keys.forEach(k => {
+            row[k] = row[k] ? Number.parseFloat(Number(row[k]).toFixed(1)) : 0;
+        });
         return row;
     }
 
