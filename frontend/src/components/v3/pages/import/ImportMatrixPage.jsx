@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../../../services/api';
 import { useImport } from '../../../../context/ImportContext.jsx';
 import { PageLayout, PageHeader, PageContent } from '../../layouts';
@@ -32,8 +33,27 @@ const TOOLTIP_MESSAGES = {
     [STATUS.LOCKED]: 'Season locked — No further imports'
 };
 
+const resolveStatus = (s) => {
+    if (typeof s === 'object' && s !== null) {
+        return s.code ?? STATUS.NONE;
+    }
+    if (s === 1) return STATUS.COMPLETE;
+    if (s === 0.5) return STATUS.PARTIAL;
+    return STATUS.NONE;
+};
+
+const getStatusType = (code) => {
+    switch (code) {
+        case STATUS.LOCKED: return 'locked';
+        case STATUS.NO_DATA: return 'nodata';
+        case STATUS.COMPLETE: return 'complete';
+        case STATUS.PARTIAL: return 'partial';
+        default: return 'none';
+    }
+};
+
 const StatusIndicator = React.memo(({ pillar, code, isQueued, onClick, tooltipText, label }) => {
-    const statusType = code === 4 ? 'locked' : (code === 3 ? 'nodata' : (code === 2 ? 'complete' : (code === 1 ? 'partial' : 'none')));
+    const statusType = getStatusType(code);
 
     return (
         <Button
@@ -43,11 +63,20 @@ const StatusIndicator = React.memo(({ pillar, code, isQueued, onClick, tooltipTe
             size="xs"
             aria-label={`${pillar.toUpperCase()}: ${tooltipText}`}
         >
-            {code === 4 ? '🔒' : label}
+            {code === STATUS.LOCKED ? '🔒' : label}
             <span className="tooltiptext">{pillar.toUpperCase()}: {tooltipText}</span>
         </Button>
     );
 });
+
+StatusIndicator.propTypes = {
+    pillar: PropTypes.string.isRequired,
+    code: PropTypes.number.isRequired,
+    isQueued: PropTypes.bool.isRequired,
+    onClick: PropTypes.func.isRequired,
+    tooltipText: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired
+};
 
 const SeasonCell = React.memo(({ leagueId, year, season, batchQueue, onIndicatorClick }) => {
     if (!season) return <td></td>;
@@ -60,7 +89,7 @@ const SeasonCell = React.memo(({ leagueId, year, season, batchQueue, onIndicator
             <div className="status-box">
                 {pillars.map(pillar => {
                     const s = season.status[pillar];
-                    const code = (typeof s === 'object' && s !== null) ? (s.code ?? STATUS.NONE) : (s === 1 ? STATUS.COMPLETE : (s === 0.5 ? STATUS.PARTIAL : STATUS.NONE));
+                    const code = resolveStatus(s);
                     const isQueued = batchQueue.some(q => q.leagueId === leagueId && q.year === year && q.pillar === pillar);
                     const tooltip = typeof TOOLTIP_MESSAGES[code] === 'function' ? TOOLTIP_MESSAGES[code](s) : TOOLTIP_MESSAGES[code];
 
@@ -80,6 +109,14 @@ const SeasonCell = React.memo(({ leagueId, year, season, batchQueue, onIndicator
         </td>
     );
 });
+
+SeasonCell.propTypes = {
+    leagueId: PropTypes.number.isRequired,
+    year: PropTypes.number.isRequired,
+    season: PropTypes.object,
+    batchQueue: PropTypes.array.isRequired,
+    onIndicatorClick: PropTypes.func.isRequired
+};
 
 const MatrixRow = React.memo(({ league, years, isSelected, onSelect, batchQueue, onIndicatorClick }) => (
     <tr className={isSelected ? 'selected' : ''}>
@@ -114,6 +151,15 @@ const MatrixRow = React.memo(({ league, years, isSelected, onSelect, batchQueue,
         ))}
     </tr>
 ));
+
+MatrixRow.propTypes = {
+    league: PropTypes.object.isRequired,
+    years: PropTypes.array.isRequired,
+    isSelected: PropTypes.bool.isRequired,
+    onSelect: PropTypes.func.isRequired,
+    batchQueue: PropTypes.array.isRequired,
+    onIndicatorClick: PropTypes.func.isRequired
+};
 
 const ImportMatrixPage = () => {
     const [leagues, setLeagues] = useState([]);
@@ -288,10 +334,7 @@ const ImportMatrixPage = () => {
             .filter(l => selectedLeagues.includes(l.id))
             .flatMap(l => l.seasons.map(s => ({ leagueId: l.id, season: s, year: s.year })))
             .filter(({ season }) => {
-                const sPillar = season.status[category];
-                const statusCode = (typeof sPillar === 'object' && sPillar !== null)
-                    ? (sPillar.code ?? STATUS.NONE)
-                    : (sPillar === 1 ? STATUS.COMPLETE : (sPillar === 0.5 ? STATUS.PARTIAL : STATUS.NONE));
+                const statusCode = resolveStatus(season.status[category]);
                 return statusCode === STATUS.NONE || statusCode === STATUS.PARTIAL;
             })
             .map(({ leagueId, year }) => ({ leagueId, year, pillar: category }));

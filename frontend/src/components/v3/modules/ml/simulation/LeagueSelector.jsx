@@ -5,13 +5,14 @@ const LeagueSelector = ({ leagues, selectedLeague, onLeagueChange, onRefreshLeag
     return (
         <div className="param-group">
             <div className="label-with-action">
-                <label>① League Target</label>
+                <label htmlFor="ml-league-selector">① League Target</label>
                 <div className="action-row">
                     <button className="text-action-btn" onClick={onRefreshLeagues} disabled={loading}>↻</button>
                     <button className="text-action-btn" onClick={onShowDiscovery}>🔭 Discovery</button>
                 </div>
             </div>
             <select
+                id="ml-league-selector"
                 value={selectedLeague}
                 onChange={(e) => onLeagueChange(e.target.value)}
                 disabled={loading}

@@ -34,14 +34,6 @@ const V3LeaguesList = () => {
         fetchStructuredLeagues();
     }, []);
 
-    const toggleCountry = (countryName) => {
-        setExpandedCountries(prev => {
-            const current = prev || [];
-            return current.includes(countryName)
-                ? current.filter(name => name !== countryName)
-                : [...current, countryName];
-        });
-    };
 
     const handleCardClick = (league) => {
         navigate(`/league/${league.id}`);

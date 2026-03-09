@@ -216,13 +216,11 @@ const SearchPageV3 = () => {
                                     <Card title="Clubs" extra={<Badge variant="primary">{results.clubs?.length || 0}</Badge>}>
                                         <Stack gap="var(--spacing-xs)">
                                             {results.clubs?.map(c => (
-                                                <div
+                                                <button
                                                     key={c.team_id}
+                                                    type="button"
                                                     className="ds-result-row"
                                                     onClick={() => navigate(`/club/${c.team_id}`)}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/club/${c.team_id}`); }}
                                                     aria-label={`View ${c.name} profile`}
                                                 >
                                                     <Stack direction="row" align="center" gap="var(--spacing-md)">
@@ -238,7 +236,7 @@ const SearchPageV3 = () => {
                                                         </div>
                                                     </Stack>
                                                     <span className="ds-arrow">→</span>
-                                                </div>
+                                                </button>
                                             ))}
                                             {results.clubs?.length === 0 && <div className="ds-empty-msg">No clubs found</div>}
                                         </Stack>
@@ -250,13 +248,11 @@ const SearchPageV3 = () => {
                                     <Card title="Players" extra={<Badge variant="primary">{results.players?.length || 0}</Badge>}>
                                         <Stack gap="var(--spacing-xs)">
                                             {results.players?.map(p => (
-                                                <div
+                                                <button
                                                     key={p.player_id}
+                                                    type="button"
                                                     className="ds-result-row"
                                                     onClick={() => navigate(`/player/${p.player_id}`)}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/player/${p.player_id}`); }}
                                                     aria-label={`View ${p.name} profile`}
                                                 >
                                                     <Stack direction="row" align="center" gap="var(--spacing-md)">
@@ -272,7 +268,7 @@ const SearchPageV3 = () => {
                                                         </div>
                                                     </Stack>
                                                     <span className="ds-arrow">→</span>
-                                                </div>
+                                                </button>
                                             ))}
                                             {results.players?.length === 0 && <div className="ds-empty-msg">No players found</div>}
                                         </Stack>
