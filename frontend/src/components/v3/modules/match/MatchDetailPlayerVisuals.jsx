@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../../../services/api';
 import {
     Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer
@@ -41,7 +42,7 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
         if (!p) return [];
         const passAccuracyPct = p.passes_total > 0 ? (p.passes_accuracy / p.passes_total) * 100 : 0;
         return [
-            { subject: 'Rating', A: (parseFloat(p.rating) || 0) * 10, fullMark: 100 },
+            { subject: 'Rating', A: (Number.parseFloat(p.rating) || 0) * 10, fullMark: 100 },
             { subject: 'Shots', A: Math.min((p.shots_total || 0) * 20, 100), fullMark: 100 },
             { subject: 'Passing', A: passAccuracyPct, fullMark: 100 },
             { subject: 'Defense', A: Math.min((p.tackles_interceptions || 0) * 15, 100), fullMark: 100 },
@@ -92,7 +93,7 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
 
     const getRatingColor = (r) => {
         if (!r || r === 'N/A') return '#475569';
-        const rating = parseFloat(r);
+        const rating = Number.parseFloat(r);
         if (rating >= 8) return '#10b981';
         if (rating >= 7) return '#14b8a6';
         if (rating >= 6.5) return '#f59e0b';
@@ -148,27 +149,27 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
 
                         <div className="stat-grid-modern">
                             <div className="stat-item">
-                                <label>Goals / Assists</label>
+                                <span>Goals / Assists</span>
                                 <span>{selectedPlayer.goals_total || 0} / {selectedPlayer.goals_assists || 0}</span>
                             </div>
                             <div className="stat-item">
-                                <label>Shots (On Goal)</label>
+                                <span>Shots (On Goal)</span>
                                 <span>{selectedPlayer.shots_total || 0} ({selectedPlayer.shots_on || 0})</span>
                             </div>
                             <div className="stat-item">
-                                <label>Key Passes</label>
+                                <span>Key Passes</span>
                                 <span>{selectedPlayer.passes_key || 0}</span>
                             </div>
                             <div className="stat-item">
-                                <label>Pass Accuracy</label>
+                                <span>Pass Accuracy</span>
                                 <span>{selectedPlayer.passes_total > 0 ? Math.round((selectedPlayer.passes_accuracy / selectedPlayer.passes_total) * 100) : 0}% ({selectedPlayer.passes_total || 0})</span>
                             </div>
                             <div className="stat-item">
-                                <label>Tackles / Int</label>
+                                <span>Tackles / Int</span>
                                 <span>{selectedPlayer.tackles_total || 0} / {selectedPlayer.tackles_interceptions || 0}</span>
                             </div>
                             <div className="stat-item">
-                                <label>Dribbles (Succ)</label>
+                                <span>Dribbles (Succ)</span>
                                 <span>{selectedPlayer.dribbles_attempts || 0} ({selectedPlayer.dribbles_success || 0})</span>
                             </div>
                         </div>
@@ -179,6 +180,10 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
             </div>
         </div>
     );
+};
+
+MatchDetailPlayerVisuals.propTypes = {
+    fixtureId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
 };
 
 export default MatchDetailPlayerVisuals;

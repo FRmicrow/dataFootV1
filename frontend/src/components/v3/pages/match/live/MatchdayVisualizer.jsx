@@ -60,7 +60,7 @@ const MatchdayVisualizer = () => {
     return (
         <div className="matchday-visualizer animate-fade-in">
             <header className="mv-header">
-                <button onClick={() => window.history.back()} className="back-link">
+                <button onClick={() => globalThis.history.back()} className="back-link">
                     ← Back to Hub
                 </button>
                 <div className="header-content">
@@ -72,8 +72,9 @@ const MatchdayVisualizer = () => {
 
             <div className="mv-controls">
                 <div className="control-group">
-                    <label>Operational Sector</label>
+                    <label htmlFor="operational-sector-select">Operational Sector</label>
                     <select
+                        id="operational-sector-select"
                         value={filters.leagueId}
                         onChange={(e) => setFilters({ ...filters, leagueId: e.target.value })}
                     >
@@ -84,8 +85,9 @@ const MatchdayVisualizer = () => {
                     </select>
                 </div>
                 <div className="control-group">
-                    <label>Matchday (Date)</label>
+                    <label htmlFor="matchday-date-input">Matchday (Date)</label>
                     <input
+                        id="matchday-date-input"
                         type="date"
                         value={filters.date}
                         onChange={(e) => setFilters({ ...filters, date: e.target.value })}
@@ -106,8 +108,8 @@ const MatchdayVisualizer = () => {
 
                 {!loading && matches.length > 0 && (
                     <div className="matches-grid">
-                        {matches.map((m, i) => (
-                            <div key={i} className={`visualizer-card ${m.result === 'WON' ? 'won' : 'lost'}`}>
+                        {matches.map((m) => (
+                            <div key={m.fixture_id} className={`visualizer-card ${m.result === 'WON' ? 'won' : 'lost'}`}>
                                 <div className="card-header">
                                     <span className="fixture-id">Ref: #{m.fixture_id}</span>
                                     <span className={`status-pill ${m.result.toLowerCase()}`}>
@@ -122,7 +124,7 @@ const MatchdayVisualizer = () => {
                                     <div className="info-row">
                                         <span className="lbl">Balance Delta:</span>
                                         <span className={`val delta ${m.result === 'WON' ? 'pos' : 'neg'}`}>
-                                            {m.result === 'WON' ? '+' : '-'} {Math.abs(m.balance - (matches[i - 1]?.balance || 0)).toFixed(2)}u
+                                            {m.result === 'WON' ? '+' : '-'} {Math.abs(m.balance - (matches.find(prevM => prevM.fixture_id < m.fixture_id)?.balance || 0)).toFixed(2)}u
                                         </span>
                                     </div>
                                 </div>

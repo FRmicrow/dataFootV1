@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../../../services/api';
 import { Badge } from '../../../../design-system';
 import './MatchDetailEvents.css';
@@ -47,12 +48,14 @@ const MatchDetailEvents = ({ fixtureId }) => {
 
     return (
         <div className="ds-match-events-list animate-fade-in">
-            {events.map((ev, idx) => {
+            {events.map((ev) => {
                 const isHome = Number(ev.is_home_team) === 1;
                 const timeStr = `${ev.time_elapsed}${ev.extra_minute ? `+${ev.extra_minute}` : ''}${ev.extra_minute ? '' : "'"}`;
+                // Use a combination of time, type and player as a resilient key if ID is missing
+                const eventKey = ev.id || `${ev.time_elapsed}-${ev.type}-${ev.player_id}`;
 
                 return (
-                    <div key={idx} className={`ds-ev-row ${isHome ? 'home' : 'away'}`}>
+                    <div key={eventKey} className={`ds-ev-row ${isHome ? 'home' : 'away'}`}>
                         {/* Home Spot (40%) */}
                         <div className="ds-ev-col-home">
                             {isHome && (
@@ -95,6 +98,10 @@ const MatchDetailEvents = ({ fixtureId }) => {
             })}
         </div>
     );
+};
+
+MatchDetailEvents.propTypes = {
+    fixtureId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
 };
 
 export default MatchDetailEvents;

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * OddsImportStage (Stub)
@@ -14,6 +15,12 @@ const OddsImportStage = ({ leagueId, onComplete, onCancel }) => {
             </button>
         </div>
     );
+};
+
+OddsImportStage.propTypes = {
+    leagueId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    onComplete: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired
 };
 
 export default OddsImportStage;

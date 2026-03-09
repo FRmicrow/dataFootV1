@@ -7,6 +7,9 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
     useImperativeHandle(ref, () => canvasRef.current);
 
     const animationRef = useRef(null);
+
+
+
     // Helper to get time key (season or round)
     const getTime = (frame) => frame.season ?? frame.round;
 
@@ -76,7 +79,10 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
             if (!recA) return null;
 
             const valA = (isRoundData && isBump) ? recA.rank : recA.value;
-            const valB = (isRoundData && isBump) ? (recB ? recB.rank : valA) : (recB ? recB.value : valA);
+            let valB = valA;
+            if (recB) {
+                valB = (isRoundData && isBump) ? recB.rank : recB.value;
+            }
             const curVal = valA + (valB - valA) * alpha;
 
             const pValA = recA.value;
@@ -154,7 +160,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
         uniquePlayers.forEach(json => {
             const { id, url, team_logo } = JSON.parse(json);
             if (url && !imagesRef.current[id]) {
-                const img = new Image();
+                const img = new globalThis.Image();
                 img.crossOrigin = "Anonymous";
                 imagesRef.current[id] = { img, loaded: false };
                 img.onload = () => {
@@ -165,7 +171,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
             }
             // Ensure team logo is loaded for valid color extraction even if we have player image
             if (team_logo && !teamColorsRef.current[id]) {
-                const logoImg = new Image();
+                const logoImg = new globalThis.Image();
                 logoImg.crossOrigin = "Anonymous";
                 teamColorsRef.current[id] = { color: null, img: logoImg, loaded: false };
                 logoImg.onload = () => {
@@ -182,7 +188,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 
         // 3. Preload League Logo
         if (leagueLogo && (!leagueLogoRef.current.img || leagueLogoRef.current.img.src !== leagueLogo)) {
-            const lImg = new Image();
+            const lImg = new globalThis.Image();
             lImg.crossOrigin = "Anonymous";
             leagueLogoRef.current = { img: lImg, loaded: false };
             lImg.onload = () => {
@@ -254,7 +260,10 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 
     const drawAxes = (ctx, xScale, yScale, isRoundData, globalMax) => {
         const [dMin, dMax] = yScale.domain();
-        let yTicks = isBump ? (globalMax <= 25 ? Array.from({ length: globalMax }, (_, i) => i + 1) : yScale.ticks(10)) : [];
+        let yTicks = [];
+        if (isBump) {
+            yTicks = globalMax <= 25 ? Array.from({ length: globalMax }, (_, i) => i + 1) : yScale.ticks(10);
+        }
         if (!isBump) {
             for (let v = Math.floor(Math.min(dMin, dMax) / 10) * 10; v <= Math.ceil(Math.max(dMin, dMax) / 10) * 10; v += 10) yTicks.push(v);
         }
@@ -388,7 +397,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
         const canvas = canvasRef.current;
         if (!canvas) return;
         const context = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = globalThis.devicePixelRatio || 1;
         canvas.width = width * dpr;
         canvas.height = height * dpr;
         context.scale(dpr, dpr);
@@ -468,14 +477,14 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 
             renderFrame(context, timeRef.current, data, historyMap, globalMax, minTime, maxTime);
             if (isPlaying && zoomOutProgress.current < 1.05) {
-                animationRef.current = requestAnimationFrame(draw);
+                animationRef.current = globalThis.requestAnimationFrame(draw);
             }
         };
 
-        if (isPlaying && manualTime === null) animationRef.current = requestAnimationFrame(draw);
+        if (isPlaying && manualTime === null) animationRef.current = globalThis.requestAnimationFrame(draw);
         else renderFrame(context, timeRef.current, data, historyMap, globalMax, minTime, maxTime);
 
-        return () => cancelAnimationFrame(animationRef.current);
+        return () => globalThis.cancelAnimationFrame(animationRef.current);
     }, [data, width, height, isPlaying, speed, topPlayers, manualTime]);
 
     return (

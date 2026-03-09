@@ -31,7 +31,7 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
             setPlayerStats(pStatsRes || []);
 
             if (pStatsRes && pStatsRes.length > 0) {
-                const best = [...pStatsRes].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))[0];
+                const best = [...pStatsRes].sort((a, b) => Number.parseFloat(b.rating) - Number.parseFloat(a.rating))[0];
                 setSelectedPlayer(best);
                 // setActiveTab('player_intel'); // Only if needed
             }
@@ -99,6 +99,10 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
             );
         };
 
+        PlayerRow.propTypes = {
+            entry: PropTypes.object.isRequired
+        };
+
         return (
             <div className="ds-inline-squad-col">
                 <div className="ds-inline-squad-header">
@@ -106,12 +110,12 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
                     {lineup.formation && <Badge variant="primary" size="xs">{lineup.formation}</Badge>}
                 </div>
                 <div className="ds-inline-player-list">
-                    {starting.map((entry, i) => <PlayerRow key={i} entry={entry} />)}
+                    {starting.map((entry) => <PlayerRow key={entry.player_id} entry={entry} />)}
                 </div>
 
                 <h4 className="ds-inline-squad-section-title">Reserves</h4>
                 <div className="ds-inline-player-list">
-                    {subs.map((entry, i) => <PlayerRow key={i} entry={entry} />)}
+                    {subs.map((entry) => <PlayerRow key={entry.player_id} entry={entry} />)}
                 </div>
 
                 <div className="ds-inline-coach">

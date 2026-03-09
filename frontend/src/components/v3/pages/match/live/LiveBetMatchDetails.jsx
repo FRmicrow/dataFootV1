@@ -82,7 +82,12 @@ const LiveBetMatchDetails = () => {
     if (isFinished && prediction?.predictions?.winner) {
         const homeGoals = goals.home ?? 0;
         const awayGoals = goals.away ?? 0;
-        const actualWinner = homeGoals > awayGoals ? teams.home.name : (awayGoals > homeGoals ? teams.away.name : 'Draw');
+        const getWinner = () => {
+            if (homeGoals > awayGoals) return teams.home.name;
+            if (awayGoals > homeGoals) return teams.away.name;
+            return 'Draw';
+        };
+        const actualWinner = getWinner();
 
         if (prediction.predictions.winner.name === actualWinner) {
             isPredictionCorrect = true;
@@ -318,7 +323,7 @@ const LiveBetMatchDetails = () => {
                                 return (
                                     <div key={statName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                         <span style={{ color: '#fff', fontWeight: '700', flex: 1, textAlign: 'left' }}>{homeStat}</span>
-                                        <span style={{ color: '#94a3b8', flex: 2, textAlign: 'center' }}>{statName.replace('Ball ', '').replace('Total ', '')}</span>
+                                        <span style={{ color: '#94a3b8', flex: 2, textAlign: 'center' }}>{statName.replaceAll('Ball ', '').replaceAll('Total ', '')}</span>
                                         <span style={{ color: '#fff', fontWeight: '700', flex: 1, textAlign: 'right' }}>{awayStat}</span>
                                     </div>
                                 );
@@ -347,10 +352,10 @@ const LiveBetMatchDetails = () => {
                                             )}
                                         </div>
                                         <div style={{ display: 'flex', gap: '5px' }}>
-                                            {market.values.slice(0, 3).map((v, i) => {
+                                            {market.values.slice(0, 3).map((v) => {
                                                 const fairProb = fairObj?.probabilities?.[v.value];
                                                 return (
-                                                    <div key={i} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem' }}>
+                                                    <div key={v.value} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem' }}>
                                                         <div style={{ color: '#94a3b8', marginBottom: '2px', fontSize: '0.7rem' }}>{v.value}</div>
                                                         <div style={{ fontWeight: '800', color: '#fff' }}>{v.odd}</div>
                                                         {fairProb && (
@@ -432,11 +437,18 @@ const LiveBetMatchDetails = () => {
                         <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#94a3b8' }}>Recent Form</div>
                         <div style={{ display: 'flex', gap: '5px' }}>
                             {prediction?.teams?.home?.league?.form ? (
-                                prediction.teams.home.league.form.slice(-5).split('').map((char, i) => (
-                                    <span key={i} style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontWeight: '800', color: '#fff', background: char === 'W' ? '#10b981' : char === 'D' ? '#fbbf24' : '#ef4444' }}>
-                                        {char}
-                                    </span>
-                                ))
+                                prediction.teams.home.league.form.slice(-5).split('').map((char, i) => {
+                                    const getFormColor = (c) => {
+                                        if (c === 'W') return '#10b981';
+                                        if (c === 'D') return '#fbbf24';
+                                        return '#ef4444';
+                                    };
+                                    return (
+                                        <span key={`form-home-${i}`} style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontWeight: '800', color: '#fff', background: getFormColor(char) }}>
+                                            {char}
+                                        </span>
+                                    );
+                                })
                             ) : <span style={{ color: '#64748b' }}>No data</span>}
                         </div>
                     </div>
@@ -448,8 +460,8 @@ const LiveBetMatchDetails = () => {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                             {homeLineup && homeLineup.startXI ? (
-                                homeLineup.startXI.map((p, idx) => (
-                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: '#1e293b', borderRadius: '6px', justifyContent: 'space-between' }}>
+                                homeLineup.startXI.map((p) => (
+                                    <div key={p.player.id} style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: '#1e293b', borderRadius: '6px', justifyContent: 'space-between' }}>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <span style={{ width: '24px', fontWeight: '800', color: '#64748b', fontSize: '0.85rem' }}>{p.player.number}</span>
                                             <span style={{ fontWeight: '500', color: '#f1f5f9', fontSize: '0.95rem' }}>{p.player.name}</span>
@@ -496,11 +508,18 @@ const LiveBetMatchDetails = () => {
                         <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#94a3b8' }}>Recent Form</div>
                         <div style={{ display: 'flex', gap: '5px' }}>
                             {prediction?.teams?.away?.league?.form ? (
-                                prediction.teams.away.league.form.slice(-5).split('').map((char, i) => (
-                                    <span key={i} style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontWeight: '800', color: '#fff', background: char === 'W' ? '#10b981' : char === 'D' ? '#fbbf24' : '#ef4444' }}>
-                                        {char}
-                                    </span>
-                                ))
+                                prediction.teams.away.league.form.slice(-5).split('').map((char, i) => {
+                                    const getFormColor = (c) => {
+                                        if (c === 'W') return '#10b981';
+                                        if (c === 'D') return '#fbbf24';
+                                        return '#ef4444';
+                                    };
+                                    return (
+                                        <span key={`form-away-${i}`} style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontWeight: '800', color: '#fff', background: getFormColor(char) }}>
+                                            {char}
+                                        </span>
+                                    );
+                                })
                             ) : <span style={{ color: '#64748b' }}>No data</span>}
                         </div>
                     </div>
@@ -512,8 +531,8 @@ const LiveBetMatchDetails = () => {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                             {awayLineup && awayLineup.startXI ? (
-                                awayLineup.startXI.map((p, idx) => (
-                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: '#1e293b', borderRadius: '6px', justifyContent: 'space-between' }}>
+                                awayLineup.startXI.map((p) => (
+                                    <div key={p.player.id} style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: '#1e293b', borderRadius: '6px', justifyContent: 'space-between' }}>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <span style={{ width: '24px', fontWeight: '800', color: '#64748b', fontSize: '0.85rem' }}>{p.player.number}</span>
                                             <span style={{ fontWeight: '500', color: '#f1f5f9', fontSize: '0.95rem' }}>{p.player.name}</span>

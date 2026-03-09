@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import * as d3 from 'd3';
 
 const ChartCanvas = ({ wizardData, year, width, height, onDrawComplete }) => {
@@ -255,6 +256,22 @@ const ChartCanvas = ({ wizardData, year, width, height, onDrawComplete }) => {
             }}
         />
     );
+};
+
+ChartCanvas.propTypes = {
+    wizardData: PropTypes.shape({
+        chartData: PropTypes.array,
+        topN: PropTypes.number,
+        theme: PropTypes.string,
+        stat: PropTypes.string,
+        chartType: PropTypes.string,
+        yearStart: PropTypes.number,
+        yearEnd: PropTypes.number
+    }).isRequired,
+    year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    width: PropTypes.number.isRequired,
+    height: PropTypes.number.isRequired,
+    onDrawComplete: PropTypes.func
 };
 
 export default ChartCanvas;

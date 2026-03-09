@@ -30,7 +30,7 @@ const ModelSection = ({ hasModels, leagueModels, isBuildingModels, buildStatus, 
                             background: '#0f172a', borderRadius: '8px', padding: '6px 10px', marginBottom: '4px',
                             fontSize: '0.72rem'
                         }}>
-                            <span style={{ color: '#10b981', fontWeight: 600 }}>{m.horizon_type?.replace('_', ' ')}</span>
+                            <span style={{ color: '#10b981', fontWeight: 600 }}>{m.horizon_type?.replaceAll('_', ' ')}</span>
                             <span style={{ color: '#e2e8f0' }}>{m.accuracy ? `${(m.accuracy * 100).toFixed(1)}%` : '-'}</span>
                             <span style={{ color: '#64748b' }}>{m.training_dataset_size || '-'} matches</span>
                         </div>

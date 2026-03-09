@@ -40,7 +40,7 @@ const V3Dashboard = () => {
                 <Skeleton width="300px" height="20px" />
             </header>
             <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-md)" style={{ marginBottom: 'var(--spacing-xl)' }}>
-                {[...new Array(4)].map((_, i) => <MetricCardSkeleton key={`metric-skeleton-${i}`} />)}
+                {[...new Array(4)].map((_, i) => <MetricCardSkeleton key={`skeleton-metric-${i}`} />)}
             </Grid>
             <Grid columns="repeat(2, 1fr)" gap="var(--spacing-lg)">
                 <CardSkeleton />
@@ -73,7 +73,11 @@ const V3Dashboard = () => {
                         <Progress
                             label="System Health"
                             value={health_summary.score}
-                            variant={health_summary.score > 80 ? 'success' : health_summary.score > 50 ? 'warning' : 'danger'}
+                            variant={(() => {
+                                if (health_summary.score > 80) return 'success';
+                                if (health_summary.score > 50) return 'warning';
+                                return 'danger';
+                            })()}
                             showLabel
                             className="flex-1"
                         />

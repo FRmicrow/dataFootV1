@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../../../../../services/api';
 import LeagueDiscovery from '../../../modules/league/LeagueDiscovery';
 import LeagueActivationStage from '../../../modules/league/LeagueActivationStage';
@@ -157,34 +157,44 @@ const SimulationDashboard = () => {
         return () => clearInterval(interval);
     }, [selectedLeague, selectedYear, selectedHorizon, metrics]);
 
-    const checkActiveJob = async () => {
-        if (!selectedLeague || !selectedYear || !selectedHorizon) return;
-        try {
-            const data = await api.getSimulationStatus(selectedLeague, selectedYear, selectedHorizon);
-            if (!data) return;
+    const handleJobStatusUpdate = (data) => {
+        const jobStatusStr = String(data.status);
+        if (jobStatusStr === 'NONE') {
+            setJobStatus(null);
+            setPreviousSimAvailable(null);
+            return;
+        }
 
-            const jobStatusStr = String(data.status);
-            if (jobStatusStr === 'NONE') {
-                setJobStatus(null);
-                setPreviousSimAvailable(null);
-                return;
-            }
+        setJobStatus(data);
+        const statusLower = jobStatusStr.toLowerCase();
 
-            setJobStatus(data);
-            const statusLower = jobStatusStr.toLowerCase();
-            if (statusLower === 'running' || statusLower === 'pending') {
+        switch (statusLower) {
+            case 'running':
+            case 'pending':
                 setLoading(true);
                 setError(null);
-            } else if (statusLower === 'completed') {
+                break;
+            case 'completed':
                 setLoading(false);
                 if (data.metrics) {
                     setMetrics(data.metrics);
                     setSimId(data.id || null);
                 }
-            } else if (statusLower === 'failed') {
+                break;
+            case 'failed':
                 setLoading(false);
                 setError(data.error_log || data.error || 'Simulation Failed.');
-            }
+                break;
+            default:
+                break;
+        }
+    };
+
+    const checkActiveJob = async () => {
+        if (!selectedLeague || !selectedYear || !selectedHorizon) return;
+        try {
+            const data = await api.getSimulationStatus(selectedLeague, selectedYear, selectedHorizon);
+            if (data) handleJobStatusUpdate(data);
         } catch (err) {
             if (err.response?.status !== 404) {
                 console.warn("Job check failed (non-critical):", err.message);

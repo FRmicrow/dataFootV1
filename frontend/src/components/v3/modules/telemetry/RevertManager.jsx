@@ -19,7 +19,7 @@ const RevertManager = () => {
     }, []);
 
     const handleRevert = async (groupId, count, date) => {
-        if (!window.confirm(`This will restore ${count} records deleted on ${new Date(date).toLocaleString()}. Continue?`)) return;
+        if (!globalThis.confirm(`This will restore ${count} records deleted on ${new Date(date).toLocaleString()}. Continue?`)) return;
 
         setLoading(true);
         try {

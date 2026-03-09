@@ -64,11 +64,11 @@ const customStyles = {
     }),
     option: (provided, state) => ({
         ...provided,
-        backgroundColor: state.isSelected
-            ? 'var(--color-primary-600)'
-            : state.isFocused
-                ? 'rgba(255, 255, 255, 0.05)'
-                : 'transparent',
+        backgroundColor: (() => {
+            if (state.isSelected) return 'var(--color-primary-600)';
+            if (state.isFocused) return 'rgba(255, 255, 255, 0.05)';
+            return 'transparent';
+        })(),
         color: state.isSelected ? 'white' : 'var(--color-text-main)',
         fontSize: 'var(--font-size-sm)',
         padding: '10px 12px',

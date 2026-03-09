@@ -156,8 +156,8 @@ const FixturesList = ({
                     </Stack>
                 ) : (
                     <Stack gap="0" style={{ flex: 1, overflowY: 'auto' }} className="scrollbar-custom">
-                        {groupedFixtures.map((group, idx) => (
-                            <div key={idx} className={group.type === 'TIE' ? 'ds-fixture-tie-group' : ''}>
+                        {groupedFixtures.map((group) => (
+                            <div key={group.fixtures[0].fixture_id} className={group.type === 'TIE' ? 'ds-fixture-tie-group' : ''}>
                                 {group.fixtures.map((f, fIdx) => {
                                     const isExpanded = expandedFixtureId === f.fixture_id;
                                     return (

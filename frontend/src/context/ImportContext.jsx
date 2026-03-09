@@ -1,5 +1,5 @@
-
 import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 
 const ImportContext = createContext();
@@ -121,7 +121,9 @@ export const ImportProvider = ({ children }) => {
     const stopImport = useCallback(async () => {
         try {
             await api.stopImport();
-        } catch (e) { /* best effort */ }
+        } catch (e) {
+            console.warn("Best-effort stopImport failed:", e.message);
+        }
 
         // Also abort the fetch stream client-side
         if (abortControllerRef.current) {
@@ -162,6 +164,10 @@ export const ImportProvider = ({ children }) => {
             {children}
         </ImportContext.Provider>
     );
+};
+
+ImportProvider.propTypes = {
+    children: PropTypes.node.isRequired
 };
 
 export const useImport = () => useContext(ImportContext);

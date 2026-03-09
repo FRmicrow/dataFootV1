@@ -161,7 +161,11 @@ const SeasonOverviewPage = () => {
         { id: 'overview', label: 'Surveillance', icon: '🔭' },
         {
             id: 'standings',
-            label: isModernUEFA ? 'Phase de Ligue' : (isUEFACup ? 'Phase de Groupes' : 'Standings'),
+            label: (() => {
+                if (isModernUEFA) return 'Phase de Ligue';
+                if (isUEFACup) return 'Phase de Groupes';
+                return 'Standings';
+            })(),
             icon: '📊',
             hidden: league.type === 'Cup' && !isUEFACup
         },
@@ -200,8 +204,9 @@ const SeasonOverviewPage = () => {
                     }
                     right={
                         <div className="ds-filter-box">
-                            <label>Season Edition</label>
+                            <label htmlFor="season-edition-select">Season Edition</label>
                             <select
+                                id="season-edition-select"
                                 value={year}
                                 onChange={handleSeasonChange}
                             >

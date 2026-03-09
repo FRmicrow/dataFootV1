@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../../../services/api';
 import { Card, Badge, Table, MetricCard, Stack, Grid } from '../../../../design-system';
 
@@ -110,6 +111,11 @@ const ExpandedLeagueStats = ({ league_id, season_year }) => {
             </Stack>
         </div>
     );
+};
+
+ExpandedLeagueStats.propTypes = {
+    league_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    season_year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
 };
 
 
@@ -361,5 +367,7 @@ const MLSimulationDashboard = () => {
         </Stack>
     );
 };
+
+MLSimulationDashboard.propTypes = {}; // No props for the main dashboard
 
 export default MLSimulationDashboard;

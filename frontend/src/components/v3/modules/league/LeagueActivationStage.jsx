@@ -22,7 +22,7 @@ const LeagueActivationStage = ({ leagueId, onComplete, onCancel }) => {
 
     const runActivation = async () => {
         setStatus('SYNCING');
-        setLogs(prev => [...prev, `Starting deep-sync for league #${leagueId}...`]);
+        setLogs(prev => [...prev, { msg: `Starting deep-sync for league #${leagueId}...`, ts: Date.now() }]);
 
         try {
             // Trigger a deep sync to backfill missing data
@@ -30,7 +30,7 @@ const LeagueActivationStage = ({ leagueId, onComplete, onCancel }) => {
 
             if (res.success !== false) {
                 setProgress(50);
-                setLogs(prev => [...prev, 'Deep sync triggered. Polling for completion...']);
+                setLogs(prev => [...prev, { msg: 'Deep sync triggered. Polling for completion...', ts: Date.now() }]);
 
                 // Poll for sync completion
                 let attempts = 0;
@@ -46,17 +46,17 @@ const LeagueActivationStage = ({ leagueId, onComplete, onCancel }) => {
                             clearInterval(interval);
                             setProgress(100);
                             setStatus('COMPLETE');
-                            setLogs(prev => [...prev, '✅ Activation complete. League is Forge-ready.']);
+                            setLogs(prev => [...prev, { msg: '✅ Activation complete. League is Forge-ready.', ts: Date.now() }]);
                             setTimeout(() => onComplete(), 1500);
                         } else if (attempts >= maxAttempts) {
                             clearInterval(interval);
                             setProgress(100);
                             setStatus('COMPLETE');
-                            setLogs(prev => [...prev, '⚠️ Sync timed out but league may be partially ready.']);
+                            setLogs(prev => [...prev, { msg: '⚠️ Sync timed out but league may be partially ready.', ts: Date.now() }]);
                             setTimeout(() => onComplete(), 1500);
                         }
                     } catch (pollErr) {
-                        // Silently continue polling
+                        console.warn("Activation status poll failed:", pollErr.message);
                     }
                 }, 3000);
             } else {
@@ -109,10 +109,16 @@ const LeagueActivationStage = ({ leagueId, onComplete, onCancel }) => {
                     display: 'inline-block', padding: '4px 12px', borderRadius: '20px',
                     fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase',
                     letterSpacing: '0.5px',
-                    background: status === 'COMPLETE' ? 'rgba(16,185,129,0.15)' :
-                        status === 'FAILED' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)',
-                    color: status === 'COMPLETE' ? '#10b981' :
-                        status === 'FAILED' ? '#ef4444' : '#3b82f6'
+                    background: (() => {
+                        if (status === 'COMPLETE') return 'rgba(16,185,129,0.15)';
+                        if (status === 'FAILED') return 'rgba(239,68,68,0.15)';
+                        return 'rgba(59,130,246,0.15)';
+                    })(),
+                    color: (() => {
+                        if (status === 'COMPLETE') return '#10b981';
+                        if (status === 'FAILED') return '#ef4444';
+                        return '#3b82f6';
+                    })()
                 }}>
                     {status}
                 </span>
@@ -127,8 +133,8 @@ const LeagueActivationStage = ({ leagueId, onComplete, onCancel }) => {
                 maxHeight: '150px', overflowY: 'auto', fontFamily: 'monospace',
                 fontSize: '0.75rem', color: '#94a3b8', lineHeight: '1.6'
             }}>
-                {logs.map((log, i) => (
-                    <div key={i}>{log}</div>
+                {logs.map((log) => (
+                    <div key={log.ts}>{log.msg}</div>
                 ))}
             </div>
 

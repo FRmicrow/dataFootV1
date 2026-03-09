@@ -42,14 +42,14 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
             frame.records.forEach(r => {
                 const id = r.id;
                 if (r.image && !imagesRef.current[id]) {
-                    const img = new Image();
+                    const img = new globalThis.Image();
                     img.crossOrigin = "Anonymous";
                     imagesRef.current[id] = { img, loaded: false };
                     img.onload = () => { if (imagesRef.current[id]) imagesRef.current[id].loaded = true; };
                     img.src = r.image;
                 }
                 if (r.team_logo && !teamColorsRef.current[id]) {
-                    const logoImg = new Image();
+                    const logoImg = new globalThis.Image();
                     logoImg.crossOrigin = "Anonymous";
                     teamColorsRef.current[id] = { color: null, img: logoImg, loaded: false };
                     logoImg.onload = () => {
@@ -222,7 +222,7 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
         const canvas = canvasRef.current;
         if (!canvas) return;
         const context = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = globalThis.devicePixelRatio || 1;
         canvas.width = width * dpr;
         canvas.height = height * dpr;
         context.scale(dpr, dpr);

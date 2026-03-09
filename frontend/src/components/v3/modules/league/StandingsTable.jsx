@@ -129,9 +129,13 @@ const StandingsTable = ({
             align: 'center',
             width: '50px',
             render: (val) => {
-                const color = val > 0 ? 'var(--color-success-500)' : val < 0 ? 'var(--color-danger-500)' : 'inherit';
+                const getGDColor = (v) => {
+                    if (v > 0) return 'var(--color-success-500)';
+                    if (v < 0) return 'var(--color-danger-500)';
+                    return 'inherit';
+                };
                 return (
-                    <span style={{ color, fontWeight: 'bold' }}>
+                    <span style={{ color: getGDColor(val), fontWeight: 'bold' }}>
                         {val > 0 ? `+${val}` : val}
                     </span>
                 );

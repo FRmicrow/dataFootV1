@@ -32,7 +32,7 @@ const ClubProfilePageV3 = () => {
     const [selectedCompId, setSelectedCompId] = useState('all');
 
     useEffect(() => {
-        const hash = location.hash.replace('#', '');
+        const hash = location.hash.replaceAll('#', '');
         const validTabs = ['performance', 'squad', 'lineup', 'matches', 'stats'];
         if (hash && validTabs.includes(hash)) {
             setActiveTab(hash);
@@ -149,16 +149,18 @@ const ClubProfilePageV3 = () => {
                     right={
                         <Stack direction="row" gap="var(--spacing-md)">
                             <div className="ds-filter-box">
-                                <label>Season</label>
+                                <label htmlFor="season-select-id">Season</label>
                                 <Select
+                                    inputId="season-select-id"
                                     options={availableYears.map(y => ({ value: y, label: `${y}/${Number.parseInt(y) + 1}` }))}
                                     value={{ value: selectedYear, label: `${selectedYear}/${Number.parseInt(selectedYear) + 1}` }}
                                     onChange={(opt) => setSelectedYear(opt.value)}
                                 />
                             </div>
                             <div className="ds-filter-box">
-                                <label>Module</label>
+                                <label htmlFor="module-select-id">Module</label>
                                 <Select
+                                    inputId="module-select-id"
                                     options={[{ value: 'all', label: 'Global' }, ...competitionsForYear.map(c => ({ value: c.league_id, label: c.league_name }))]}
                                     value={selectedCompId === 'all' ? { value: 'all', label: 'Global' } : { value: selectedCompId, label: competitionsForYear.find(c => c.league_id == selectedCompId)?.league_name }}
                                     onChange={(opt) => setSelectedCompId(opt.value)}

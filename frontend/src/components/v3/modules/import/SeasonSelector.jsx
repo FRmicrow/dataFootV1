@@ -62,29 +62,44 @@ const SeasonSelector = ({
 
             {/* Availability Matrix */}
             <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Availability Status</label>
+                <span className="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Availability Status</span>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 p-1">
                     {leagueSyncStatus.map(s => {
                         const isFull = s.status === 'FULL';
                         const isPartial = s.status === 'PARTIAL' || s.status === 'PARTIAL_DISCOVERY';
                         const inRange = fromYear && toYear && s.year >= Math.min(fromYear, toYear) && s.year <= Math.max(fromYear, toYear);
 
+                        const getStatusData = () => {
+                            if (isFull) return {
+                                title: "Fully Imported",
+                                icon: '✅',
+                                className: 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
+                            };
+                            if (isPartial) return {
+                                title: "Partially Imported",
+                                icon: '⚠️',
+                                className: 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400'
+                            };
+                            return {
+                                title: "Not Imported",
+                                icon: '⭕',
+                                className: 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500'
+                            };
+                        };
+
+                        const statusData = getStatusData();
+
                         return (
                             <div
                                 key={s.year}
-                                title={isFull ? "Fully Imported" : isPartial ? "Partially Imported" : "Not Imported"}
+                                title={statusData.title}
                                 className={`
                                     relative flex flex-col items-center justify-center p-2 rounded-lg text-xs font-mono font-medium border transition-all cursor-default select-none
-                                    ${isFull
-                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
-                                        : isPartial
-                                            ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400'
-                                            : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500'
-                                    }
+                                    ${statusData.className}
                                     ${inRange ? 'ring-2 ring-blue-400 ring-offset-1 dark:ring-offset-slate-900 shadow-md transform scale-105' : 'opacity-80 hover:opacity-100'}
                                 `}
                             >
-                                <span className="text-[10px] mb-0.5 opacity-75">{isFull ? '✅' : isPartial ? '⚠️' : '⭕'}</span>
+                                <span className="text-[10px] mb-0.5 opacity-75">{statusData.icon}</span>
                                 {s.year}
                                 {s.is_current && (
                                     <span className="absolute -top-1 -right-1 flex h-2 w-2">

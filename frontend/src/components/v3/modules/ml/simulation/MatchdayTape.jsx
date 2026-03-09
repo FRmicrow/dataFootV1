@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 const getGreenOpacity = (probStr) => {
     if (!probStr) return 'rgba(0, 0, 0, 0)';
-    const val = Number.parseFloat(probStr.replace('%', ''));
+    const val = Number.parseFloat(probStr.replaceAll('%', ''));
     if (Number.isNaN(val)) return 'rgba(0, 0, 0, 0)';
     const opacity = Math.min((val / 100) * 0.9 + 0.1, 1);
     return `rgba(16, 185, 129, ${opacity.toFixed(2)})`;
@@ -50,7 +50,7 @@ const MatchdayTape = ({ tapeData, loadingTape }) => {
                                     </tr>
                                 )}
                                 <tr>
-                                    <td className="tape-round">{m.round_name?.replace('Regular Season - ', 'MD ') || '-'}</td>
+                                    <td className="tape-round">{m.round_name?.replaceAll('Regular Season - ', 'MD ') || '-'}</td>
                                     <td className="tape-match">{homeTeam} vs {awayTeam}</td>
 
                                     <td className="center tape-prob-cell" style={{ backgroundColor: getGreenOpacity(m.prob_home) }}>

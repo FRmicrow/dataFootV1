@@ -194,7 +194,11 @@ const SearchPageV3 = () => {
                                             className={`ds-filter-tab ${type === t ? 'active' : ''}`}
                                             onClick={() => setType(t)}
                                         >
-                                            {t === 'all' ? 'All' : t === 'player' ? 'Players' : 'Clubs'}
+                                            {(() => {
+                                                if (t === 'all') return 'All';
+                                                if (t === 'player') return 'Players';
+                                                return 'Clubs';
+                                            })()}
                                         </button>
                                     ))}
                                 </Stack>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
+import PropTypes from 'prop-types';
 import './MatchDetailLineups.css';
 
 const MatchDetailLineups = ({ fixtureId }) => {
@@ -82,6 +83,10 @@ const MatchDetailLineups = ({ fixtureId }) => {
             {renderTeamLineup(away, 'away')}
         </div>
     );
+};
+
+MatchDetailLineups.propTypes = {
+    fixtureId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
 };
 
 export default MatchDetailLineups;

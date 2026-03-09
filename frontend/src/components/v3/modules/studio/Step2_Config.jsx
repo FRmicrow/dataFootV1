@@ -20,7 +20,7 @@ const Step2_Config = () => {
 
             {/* Chart Type Selection */}
             <Stack gap="md" className="form-group-v2">
-                <label className="form-label-v2">Chart Layout</label>
+                <span className="form-label-v2">Chart Layout</span>
                 <Grid columns="repeat(auto-fit, minmax(220px, 1fr))" gap="md" className="config-grid-v2">
                     <button
                         className={`config-card-v2 ${visual.type === 'bar_race' ? 'active' : ''}`}
@@ -67,8 +67,9 @@ const Step2_Config = () => {
             {/* Row Options: Theme & Format */}
             <Grid columns="1fr 1fr" gap="2rem" className="options-row-v2">
                 <Stack gap="sm" className="form-group-v2">
-                    <label className="form-label-v2">Visual Theme</label>
+                    <label htmlFor="visual-theme-select" className="form-label-v2">Visual Theme</label>
                     <Select
+                        inputId="visual-theme-select"
                         options={[
                             { value: 'v3_dark', label: 'V3 Obsidian (Signature)' },
                             { value: 'light', label: 'Clinical White' },
@@ -80,7 +81,7 @@ const Step2_Config = () => {
                 </Stack>
 
                 <Stack gap="sm" className="form-group-v2">
-                    <label className="form-label-v2">Output Aspect Ratio</label>
+                    <span className="form-label-v2">Output Aspect Ratio</span>
                     <Grid columns="repeat(3, 1fr)" gap="0.75rem" className="format-grid-v2">
                         <button
                             className={`format-btn-v2 ${visual.format === '9:16' ? 'active' : ''}`}
@@ -108,13 +109,14 @@ const Step2_Config = () => {
             </Grid>
 
             <div className="form-group-v2">
-                <label className="form-label-v2">Animation Speed</label>
+                <label htmlFor="animation-speed-slider" className="form-label-v2">Animation Speed</label>
                 <div className="slider-container-v2">
                     <div className="slider-header-v2">
                         <span className="slider-label-v2">TRANSITION PACE</span>
                         <span className="slider-value-v2">{visual.speed}x</span>
                     </div>
                     <input
+                        id="animation-speed-slider"
                         type="range"
                         min="0.5"
                         max="3.0"

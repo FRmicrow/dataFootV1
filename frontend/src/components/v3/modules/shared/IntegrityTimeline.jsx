@@ -12,7 +12,11 @@ const IntegrityTimeline = ({ milestones, activeMilestone }) => {
                 return (
                     <div key={m.id} className={`timeline-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
                         <div className="step-number">
-                            {isCompleted && m.status === 'CLEAN' ? '✅' : (isCompleted && m.status === 'ISSUES' ? '⚠️' : idx + 1)}
+                            {(() => {
+                                if (isCompleted && m.status === 'CLEAN') return '✅';
+                                if (isCompleted && m.status === 'ISSUES') return '⚠️';
+                                return idx + 1;
+                            })()}
                         </div>
                         <div className="step-content">
                             <div className="step-title">{m.title}</div>

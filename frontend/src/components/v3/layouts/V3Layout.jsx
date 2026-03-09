@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import ImportLogPanel from '../modules/import/ImportLogPanel.jsx';
 import './V3Layout.css';
 
 const V3Layout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const location = useLocation();
 
     const navItems = [
         { to: "/dashboard", label: "Dashboard" },
@@ -16,6 +17,11 @@ const V3Layout = () => {
         { to: "/search", label: "Search" },
         { to: "/health", label: "DB Health" },
     ];
+
+    // US-205: Ensure scroll to top on navigation
+    useEffect(() => {
+        globalThis.scrollTo(0, 0);
+    }, [location.pathname]);
 
     return (
         <div className={`v3-layout ${isSidebarOpen ? 'sidebar-open' : ''}`}>
@@ -57,6 +63,5 @@ const V3Layout = () => {
         </div>
     );
 };
-
 
 export default V3Layout;

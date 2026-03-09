@@ -33,7 +33,12 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
                     justifyContent: 'center',
                     fontSize: '10px',
                     fontWeight: 'var(--font-weight-bold)',
-                    background: rank === 1 ? 'var(--color-accent-500)' : rank === 2 ? '#cbd5e1' : rank === 3 ? '#94a3b8' : 'var(--color-border)',
+                    background: (() => {
+                        if (rank === 1) return 'var(--color-accent-500)';
+                        if (rank === 2) return '#cbd5e1';
+                        if (rank === 3) return '#94a3b8';
+                        return 'var(--color-border)';
+                    })(),
                     color: rank === 1 ? 'black' : 'inherit'
                 }}>
                     {rank}

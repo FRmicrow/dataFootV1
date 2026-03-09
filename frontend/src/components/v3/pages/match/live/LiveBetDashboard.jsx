@@ -245,7 +245,7 @@ const LiveBetDashboard = () => {
             <div className="lb-title-bar">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <button onClick={() => window.history.back()} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textAlign: 'left', fontSize: '0.9rem', width: 'fit-content' }}>
+                        <button onClick={() => globalThis.history.back()} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textAlign: 'left', fontSize: '0.9rem', width: 'fit-content' }}>
                             ← Back to Hub
                         </button>
                         <h1 style={{ margin: 0 }}>Live Bet Central</h1>
@@ -314,7 +314,7 @@ const LiveBetDashboard = () => {
                             <button
                                 onClick={async () => {
                                     const date = selectedDate || new Date().toISOString().split('T')[0];
-                                    if (!window.confirm(`Perform multi-market depth ingestion for all fixtures on ${date}?`)) return;
+                                    if (!globalThis.confirm(`Perform multi-market depth ingestion for all fixtures on ${date}?`)) return;
                                     try {
                                         const res = await api.bulkIngestOdds(date);
                                         alert(`Success: ${res.result.successful} fixtures updated with depth odds.`);

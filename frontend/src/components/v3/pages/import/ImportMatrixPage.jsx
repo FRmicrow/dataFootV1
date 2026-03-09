@@ -226,7 +226,7 @@ const ImportMatrixPage = () => {
     };
 
     const handleAudit = async () => {
-        if (!window.confirm('Start Database Discovery Scan?')) return;
+        if (!globalThis.confirm('Start Database Discovery Scan?')) return;
         setIsAuditing(true);
         try {
             await api.triggerAuditScan();
@@ -244,7 +244,7 @@ const ImportMatrixPage = () => {
         if (!league) return;
 
         const currentSeason = league.seasons.find(s => s.current)?.year || new Date().getFullYear();
-        if (!window.confirm(`Import Core data for ${league.league.name} (${currentSeason})?`)) return;
+        if (!globalThis.confirm(`Import Core data for ${league.league.name} (${currentSeason})?`)) return;
 
         setIsDiscovering(true);
         try {
@@ -284,7 +284,7 @@ const ImportMatrixPage = () => {
 
     const runDiscoveryBatch = async () => {
         if (discoveryBatch.length === 0) return;
-        if (!window.confirm(`Start importing ${discoveryBatch.length} discovery leagues?`)) return;
+        if (!globalThis.confirm(`Start importing ${discoveryBatch.length} discovery leagues?`)) return;
 
         setIsDiscovering(true);
         try {
@@ -306,7 +306,7 @@ const ImportMatrixPage = () => {
     const handleIndicatorClick = (leagueId, year, pillar, statusCode) => {
         if (statusCode === STATUS.LOCKED || statusCode === STATUS.NO_DATA) return;
         if (statusCode === STATUS.COMPLETE) {
-            if (!window.confirm('This pillar is complete. Re-import?')) return;
+            if (!globalThis.confirm('This pillar is complete. Re-import?')) return;
         }
         togglePillar(leagueId, year, pillar);
     };
@@ -344,7 +344,7 @@ const ImportMatrixPage = () => {
 
     const runBatchDeepSync = () => {
         if (selectedLeagues.length === 0) return;
-        if (!window.confirm(`⚡ Start Deep Sync for ${selectedLeagues.length} leagues?`)) return;
+        if (!globalThis.confirm(`⚡ Start Deep Sync for ${selectedLeagues.length} leagues?`)) return;
         startImport('/import/leagues/batch-deep-sync', 'POST', { leagueIds: selectedLeagues });
         setSelectedLeagues([]);
     };

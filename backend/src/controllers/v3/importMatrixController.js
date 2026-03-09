@@ -31,13 +31,17 @@ const setupSSEStream = (res) => {
         try {
             res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
             if (res.flush) res.flush();
-        } catch (e) { }
+        } catch (e) {
+            console.warn("SSE write failed:", e.message);
+        }
     };
     sendLog.emit = (data) => {
         try {
             res.write(`data: ${JSON.stringify(data)}\n\n`);
             if (res.flush) res.flush();
-        } catch (e) { }
+        } catch (e) {
+            console.warn("SSE emit failed:", e.message);
+        }
     };
     return sendLog;
 };
@@ -322,4 +326,20 @@ export const triggerDiscoveryBatchImport = async (req, res) => {
         sendLog(`❌ Critical Batch Failure: ${error.message}`, 'error');
         res.end();
     }
+};
+
+export default {
+    getImportMatrixStatus,
+    triggerBatchDeepSync,
+    resetImportStatus,
+    stopImport,
+    pauseImport,
+    resumeImport,
+    getImportStateEndpoint,
+    triggerDeepSync,
+    triggerAuditScan,
+    getDiscoveryCountries,
+    getDiscoveryLeagues,
+    triggerDiscoveryImport,
+    triggerDiscoveryBatchImport
 };

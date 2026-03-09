@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../../../services/api';
 import LeagueSelector from '../../modules/import/LeagueSelector';
 import SeasonSelector from '../../modules/import/SeasonSelector';
@@ -177,10 +177,11 @@ const ImportV3Page = () => {
                 if (line.startsWith('data: ')) {
                     try {
                         const data = JSON.parse(line.slice(6));
-                        setLogs(prev => [...prev, data]);
+                        setLogs(prev => [...prev, { ...data, id: `log-${Date.now()}-${prev.length}` }]);
 
                         if (data.type === 'complete') {
                             setLogs(prev => [...prev, {
+                                id: `success-${data.leagueId}-${data.season}`,
                                 type: 'success',
                                 message: `✅ Import Finished. View Dashboard: /league/${data.leagueId}/season/${data.season}`,
                                 link: `/league/${data.leagueId}/season/${data.season}`
@@ -201,7 +202,7 @@ const ImportV3Page = () => {
 
 
         setIsImporting(true);
-        setLogs([{ type: 'info', message: `🚀 Starting Batch V3 Import with ${importQueue.length} items...` }]);
+        setLogs([{ id: 'start-batch', type: 'info', message: `🚀 Starting Batch V3 Import with ${importQueue.length} items...` }]);
 
         const selection = importQueue.map(item => ({
             leagueId: item.leagueId,
@@ -226,15 +227,21 @@ const ImportV3Page = () => {
 
         } catch (error) {
             console.error("Import failed", error);
-            setLogs(prev => [...prev, { type: 'error', message: `Fatal Error: ${error.message}` }]);
+            setLogs(prev => [...prev, { id: `error-${Date.now()}`, type: 'error', message: `Fatal Error: ${error.message}` }]);
             setIsImporting(false);
         }
     };
 
     const getSeasonStatusStyles = (s) => {
-        if (s.isFull) return 'bg-emerald-900/30 border-emerald-800 text-emerald-400';
-        if (s.isPartial) return 'bg-amber-900/30 border-amber-800 text-amber-400';
-        return 'bg-slate-700 border-slate-600 text-slate-400';
+        if (s.isFull) return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+        if (s.isPartial) return 'bg-amber-500/10 border-amber-500/20 text-amber-400';
+        return 'bg-slate-800 border-slate-700 text-slate-500';
+    };
+
+    const getBatchButtonStyle = () => {
+        if (isImporting) return 'bg-slate-700 text-slate-400 cursor-wait';
+        if (importQueue.length === 0) return 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700';
+        return 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transform hover:-translate-y-1 shadow-blue-900/20';
     };
 
     const getLogTypeStyles = (type) => {
@@ -351,12 +358,7 @@ const ImportV3Page = () => {
                         disabled={isImporting || importQueue.length === 0}
                         className={`
                             w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all
-                            ${isImporting
-                                ? 'bg-slate-700 text-slate-400 cursor-wait'
-                                : importQueue.length === 0
-                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700'
-                                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transform hover:-translate-y-1 shadow-blue-900/20'
-                            }
+                            ${getBatchButtonStyle()}
                         `}
                     >
                         {isImporting ? (
@@ -400,8 +402,8 @@ const ImportV3Page = () => {
                                 <p>Ready for input...</p>
                             </div>
                         )}
-                        {logs.map((log, index) => (
-                            <div key={index} className="flex gap-3 font-mono text-xs md:text-sm">
+                        {logs.map((log) => (
+                            <div key={log.id} className="flex gap-3 font-mono text-xs md:text-sm">
                                 <span className="text-slate-600 shrink-0">[{new Date().toLocaleTimeString()}]</span>
                                 <span className={`break-words ${getLogTypeStyles(log.type)}`}>
                                     {log.type === 'info' && <span className="text-blue-500 mr-2">ℹ</span>}

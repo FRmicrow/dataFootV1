@@ -29,11 +29,9 @@ const TeamSelector = ({
             </div>
 
             <div className="ds-team-selector-list scrollbar-custom">
-                {loading ? (
-                    <div className="ds-team-selector-loading">Syncing...</div>
-                ) : teams.length === 0 ? (
-                    <div className="ds-team-selector-empty">No results</div>
-                ) : (
+                {loading && <div className="ds-team-selector-loading">Syncing...</div>}
+                {!loading && teams.length === 0 && <div className="ds-team-selector-empty">No results</div>}
+                {!loading && teams.length > 0 && (
                     teams.map(team => {
                         const isSelected = String(team.team_id) === String(selectedTeamId);
                         return (

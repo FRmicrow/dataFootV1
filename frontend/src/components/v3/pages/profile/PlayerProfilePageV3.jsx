@@ -288,11 +288,19 @@ const PlayerProfilePageV3 = () => {
                                                     dataIndex: 'games_rating',
                                                     key: 'rating',
                                                     align: 'center',
-                                                    render: (val) => (
-                                                        <Badge variant={Number.parseFloat(val) > 7.3 ? 'success' : Number.parseFloat(val) > 6.7 ? 'primary' : 'neutral'}>
-                                                            {val || '--'}
-                                                        </Badge>
-                                                    )
+                                                    render: (val) => {
+                                                        const getRatingVariant = (v) => {
+                                                            const n = Number.parseFloat(v);
+                                                            if (n > 7.3) return 'success';
+                                                            if (n > 6.7) return 'primary';
+                                                            return 'neutral';
+                                                        };
+                                                        return (
+                                                            <Badge variant={getRatingVariant(val)}>
+                                                                {val || '--'}
+                                                            </Badge>
+                                                        );
+                                                    }
                                                 }
                                             ]}
                                             data={rows}
@@ -311,8 +319,8 @@ const PlayerProfilePageV3 = () => {
                                 <Stack gap="var(--spacing-xs)">
                                     {trophies
                                         .sort((a, b) => (a.importance_rank || 99) - (b.importance_rank || 99) || b.season - a.season)
-                                        .map((t, idx) => (
-                                            <div key={idx} className="honor-item">
+                                        .map((t) => (
+                                            <div key={`${t.league_id}-${t.season}-${t.place}`} className="honor-item">
                                                 <div className="honor-left">
                                                     <Badge variant={t.place?.toLowerCase().includes('winner') ? 'warning' : 'neutral'} size="xs" dense>
                                                         {t.place?.toLowerCase().includes('winner') ? 'Winner' : 'Runner-up'}
@@ -336,8 +344,8 @@ const PlayerProfilePageV3 = () => {
                                     { l: 'Birth Place', v: player.birth_place ? `${player.birth_place}, ${player.birth_country}` : 'N/A' },
                                     { l: 'Weight', v: player.weight || 'N/A' },
                                     { l: 'Status', v: currentContext?.status || 'Active' }
-                                ].map((item, i) => (
-                                    <Grid key={i} columns="1fr auto">
+                                ].map((item) => (
+                                    <Grid key={item.l} columns="1fr auto">
                                         <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>{item.l}</span>
                                         <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'bold' }}>{item.v}</span>
                                     </Grid>

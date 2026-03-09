@@ -40,7 +40,7 @@ const MonitoringConsole = () => {
     };
 
     const handleRetrain = async () => {
-        if (window.confirm("Trigger Global ML Model Retraining? This will refresh all feature vectors and optimize model weights.")) {
+        if (globalThis.confirm("Trigger Global ML Model Retraining? This will refresh all feature vectors and optimize model weights.")) {
             try {
                 await axios.post('/api/ml/train');
                 fetchMlStatus();
@@ -91,7 +91,7 @@ const MonitoringConsole = () => {
     return (
         <div className="monitoring-console animate-fade-in">
             <header className="monitoring-header">
-                <button onClick={() => window.history.back()} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textAlign: 'left', fontSize: '1rem', marginBottom: '10px' }}>
+                <button onClick={() => globalThis.history.back()} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', textAlign: 'left', fontSize: '1rem', marginBottom: '10px' }}>
                     ← Back to Hub
                 </button>
                 <span className="badge">Intelligence Infrastructure</span>

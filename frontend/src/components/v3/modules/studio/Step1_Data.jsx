@@ -266,22 +266,22 @@ const Step1_Data = () => {
             />
 
             <div className="form-group-v2">
-                <label className="form-label-v2">{mode === 'specific' ? 'Selected Players' : 'Selected Scope'}</label>
+                <label htmlFor="scope-search-input" className="form-label-v2">{mode === 'specific' ? 'Selected Players' : 'Selected Scope'}</label>
                 <div style={{ position: 'relative' }}>
                     {mode === 'specific' && (
-                        <input type="text" placeholder="Search players..." value={queries.player}
+                        <input id="scope-search-input" type="text" placeholder="Search players..." value={queries.player}
                             onChange={e => setQueries({ ...queries, player: e.target.value })} className="input-v2" />
                     )}
                     {(mode === 'league' || mode === 'standings') && (
-                        <input type="text" placeholder="Search leagues..." value={queries.league}
+                        <input id="scope-search-input" type="text" placeholder="Search leagues..." value={queries.league}
                             onChange={e => setQueries({ ...queries, league: e.target.value })} className="input-v2" />
                     )}
                     {mode === 'country' && (
-                        <input type="text" placeholder="Search nationalities..." value={queries.country}
+                        <input id="scope-search-input" type="text" placeholder="Search nationalities..." value={queries.country}
                             onChange={e => setQueries({ ...queries, country: e.target.value })} className="input-v2" />
                     )}
                     {mode === 'club' && (
-                        <input type="text" placeholder="Search clubs..." value={queries.team}
+                        <input id="scope-search-input" type="text" placeholder="Search clubs..." value={queries.team}
                             onChange={e => setQueries({ ...queries, team: e.target.value })} className="input-v2" />
                     )}
 
@@ -300,8 +300,8 @@ const Step1_Data = () => {
 
             {mode !== 'standings' && (
                 <div className="form-group-v2">
-                    <label className="form-label-v2">Performance Metric</label>
-                    <select value={filters.stat} onChange={e => setFilters({ ...filters, stat: e.target.value })} className="input-v2">
+                    <label htmlFor="metric-select" className="form-label-v2">Performance Metric</label>
+                    <select id="metric-select" value={filters.stat} onChange={e => setFilters({ ...filters, stat: e.target.value })} className="input-v2">
                         <option value="">Select Surveillance Metric...</option>
                         {statsMeta.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                     </select>
@@ -309,10 +309,10 @@ const Step1_Data = () => {
             )}
 
             <div className="form-group-v2">
-                <label className="form-label-v2">Time Range Filter</label>
+                <label htmlFor="time-range-start" className="form-label-v2">Time Range Filter</label>
                 <div className="range-grid-v2">
                     {mode === 'standings' ? (
-                        <select value={filters.years[1]}
+                        <select id="time-range-start" value={filters.years[1]}
                             onChange={e => setFilters({ ...filters, years: [filters.years[0], Number.parseInt(e.target.value)] })}
                             className="input-v2" style={{ gridColumn: 'span 3' }}>
                             {Array.from({ length: 15 }, (_, i) => 2024 - i).map(y => (
@@ -321,11 +321,11 @@ const Step1_Data = () => {
                         </select>
                     ) : (
                         <>
-                            <input type="number" value={filters.years[0]}
+                            <input id="time-range-start" type="number" value={filters.years[0]}
                                 onChange={e => setFilters({ ...filters, years: [Number.parseInt(e.target.value), filters.years[1]] })}
                                 className="input-v2" />
                             <span>TO</span>
-                            <input type="number" value={filters.years[1]}
+                            <input id="time-range-end" type="number" value={filters.years[1]}
                                 onChange={e => setFilters({ ...filters, years: [filters.years[0], Number.parseInt(e.target.value)] })}
                                 className="input-v2" />
                         </>

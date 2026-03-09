@@ -61,8 +61,8 @@ const ProfileHeader = ({
                     <div className="ds-profile-info">
                         <Stack gap="2px">
                             <div className="ds-profile-badges">
-                                {badges.map((b, i) => (
-                                    <Badge key={i} variant={b.variant || 'neutral'} size="xs">
+                                {badges.map((b) => (
+                                    <Badge key={b.label} variant={b.variant || 'neutral'} size="xs">
                                         {b.icon && <span className="ds-badge-icon-wrap">{b.icon}</span>}
                                         {b.label}
                                     </Badge>
@@ -72,7 +72,7 @@ const ProfileHeader = ({
 
                             <div className="ds-profile-subtitles">
                                 {subtitles.map((s, i) => (
-                                    <span key={i} className="ds-profile-subtitle">
+                                    <span key={s} className="ds-profile-subtitle">
                                         {i > 0 && <span className="ds-profile-separator">•</span>}
                                         {s}
                                     </span>
@@ -83,8 +83,8 @@ const ProfileHeader = ({
                         {/* Integrated Stats for density */}
                         {stats.length > 0 && (
                             <div className="ds-profile-compact-stats">
-                                {stats.map((st, i) => (
-                                    <div key={i} className="ds-profile-stat-item">
+                                {stats.map((st) => (
+                                    <div key={st.label} className="ds-profile-stat-item">
                                         <span className="ds-profile-stat-label">{st.label}</span>
                                         <span className="ds-profile-stat-value">{st.value}</span>
                                     </div>

@@ -141,14 +141,16 @@ const MLOddsPage = () => {
 
             <Grid columns="1fr 1fr" gap="lg" align="start">
                 <Card title="Upcoming Odds" subtitle="Matches with pre-match market availability.">
-                    {loading ? (
+                    {loading && (
                         <div className="p-xl ds-text-center"><span className="ds-spinner"></span> Loading fixtures...</div>
-                    ) : upcoming.length === 0 ? (
+                    )}
+                    {!loading && upcoming.length === 0 && (
                         <div className="ds-text-center py-xl">
                             <p className="ds-text-neutral-400">No upcoming odds found.</p>
                             <Button variant="outline" className="mt-md" onClick={fetchUpcoming}>Refresh</Button>
                         </div>
-                    ) : (
+                    )}
+                    {!loading && upcoming.length > 0 && (
                         <div className="ds-fixtures-list ds-flex ds-flex-col ds-gap-sm">
                             {upcoming.map(fix => (
                                 <FixtureRow

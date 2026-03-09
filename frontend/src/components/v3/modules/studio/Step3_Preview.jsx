@@ -33,7 +33,18 @@ const Step3_Preview = () => {
         <div className="step-container animate-fade-in" style={{ maxWidth: '1000px' }}>
             <h2 className="step-title-v2">Creative Preview</h2>
             <div className="preview-stage-v2">
-                <div className="canvas-wrapper-v2" style={{ width: '100%', maxWidth: visual.format === '9:16' ? '400px' : '800px', aspectRatio: visual.format === '9:16' ? '9/16' : (visual.format === '1:1' ? '1/1' : '16/9') }}>
+                <div
+                    className="canvas-wrapper-v2"
+                    style={{
+                        width: '100%',
+                        maxWidth: visual.format === '9:16' ? '400px' : '800px',
+                        aspectRatio: (() => {
+                            if (visual.format === '9:16') return '9/16';
+                            if (visual.format === '1:1') return '1/1';
+                            return '16/9';
+                        })()
+                    }}
+                >
                     {visual.type === 'line' || visual.type === 'bump' ? (
                         <LineChartRace data={chartData.timeline} width={layout.width} height={layout.height} barCount={layout.barCount} isPlaying={isPlaying} speed={visual.speed} onComplete={() => setIsPlaying(false)} title={chartTitle} isBump={visual.type === 'bump'} leagueLogo={chartData.meta.league_logo} />
                     ) : (

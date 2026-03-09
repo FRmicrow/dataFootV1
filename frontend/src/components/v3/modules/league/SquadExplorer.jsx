@@ -91,7 +91,11 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                 <Stack direction="row" gap="var(--spacing-xs)">
                     <Select
                         options={[{ value: '', label: 'All Teams' }, ...teams.map(t => ({ value: t.team_id, label: t.team_name }))]}
-                        value={teamId ? { value: teamId, label: teams.find(t => t.team_id == teamId)?.team_name } : { value: '', label: 'All Teams' }}
+                        value={(() => {
+                            if (!teamId) return { value: '', label: 'All Teams' };
+                            const t = teams.find(team => String(team.team_id) === String(teamId));
+                            return { value: teamId, label: t?.team_name || 'All Teams' };
+                        })()}
                         onChange={(opt) => setTeamId(opt.value)}
                         placeholder="Team"
                         aria-label="Filter by Team"
@@ -105,7 +109,16 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                             { value: 'Midfielder', label: 'MF' },
                             { value: 'Attacker', label: 'FW' }
                         ]}
-                        value={{ value: position, label: position === 'ALL' ? 'Positions' : position === 'Goalkeeper' ? 'GK' : position === 'Defender' ? 'DF' : position === 'Midfielder' ? 'MF' : 'FW' }}
+                        value={(() => {
+                            const labels = {
+                                'ALL': 'Positions',
+                                'Goalkeeper': 'GK',
+                                'Defender': 'DF',
+                                'Midfielder': 'MF',
+                                'Attacker': 'FW'
+                            };
+                            return { value: position, label: labels[position] || 'FW' };
+                        })()}
                         onChange={(opt) => setPosition(opt.value)}
                         placeholder="Pos"
                         aria-label="Filter by Position"

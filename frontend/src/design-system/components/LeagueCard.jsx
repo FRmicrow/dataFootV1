@@ -56,9 +56,18 @@ const LeagueCard = ({
                 ) : null
             }
             extra={
-                <Badge variant={isCup ? 'warning' : featured ? 'primary' : 'neutral'} size="xs">
-                    {isCup ? 'Cup' : featured ? 'Elite' : 'League'}
-                </Badge>
+                (() => {
+                    let variant = 'neutral';
+                    let label = 'League';
+                    if (isCup) {
+                        variant = 'warning';
+                        label = 'Cup';
+                    } else if (featured) {
+                        variant = 'primary';
+                        label = 'Elite';
+                    }
+                    return <Badge variant={variant} size="xs">{label}</Badge>;
+                })()
             }
             interactive={interactive}
         >

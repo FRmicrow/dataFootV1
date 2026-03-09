@@ -124,7 +124,9 @@ export const getMLOrchestratorStatus = async (req, res) => {
             const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://ml-service:8008';
             const pyRes = await axios.get(`${mlServiceUrl}/health`, { timeout: 1500 });
             pythonStatus = pyRes.data;
-        } catch (e) { }
+        } catch (e) {
+            console.warn("ML service health check failed or timed out:", e.message);
+        }
 
         res.json({
             success: true,

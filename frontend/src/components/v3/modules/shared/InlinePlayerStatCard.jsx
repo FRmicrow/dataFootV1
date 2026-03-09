@@ -98,19 +98,19 @@ const InlinePlayerStatCard = ({ player }) => {
             <footer className="ds-intel-footer">
                 <Grid columns="repeat(4, 1fr)" gap="var(--spacing-xs)">
                     <div className="ds-intel-min-stat">
-                        <label>G/A</label>
+                        <span className="label">G/A</span>
                         <span>{player.goals_total || 0}/{player.goals_assists || 0}</span>
                     </div>
                     <div className="ds-intel-min-stat">
-                        <label>Passes</label>
+                        <span className="label">Passes</span>
                         <span>{player.passes_total || 0}</span>
                     </div>
                     <div className="ds-intel-min-stat">
-                        <label>Key P</label>
+                        <span className="label">Key P</span>
                         <span>{player.passes_key || 0}</span>
                     </div>
                     <div className="ds-intel-min-stat">
-                        <label>Duels</label>
+                        <span className="label">Duels</span>
                         <span>{player.duels_total || 0}</span>
                     </div>
                 </Grid>

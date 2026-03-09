@@ -123,7 +123,7 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
         });
 
         while (newStarters.length < 11) {
-            newStarters.push({ player_id: Math.random(), name: 'Unknown', photo_url: '' });
+            newStarters.push({ player_id: `unknown-${newStarters.length}`, name: 'Unknown', photo_url: '' });
         }
 
         return newStarters.slice(0, 11);
@@ -178,7 +178,7 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
                                     <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px' }}>{pos}s</div>
                                     <Stack gap="4px">
                                         {groupedRoster[pos].map(p => {
-                                            const isStarter = activeStarters.find(r => r.id === p.player_id || r.id === p.player_api_id);
+                                            const isStarter = activeStarters.find(r => r.player_id === p.player_id || r.player_api_id === p.player_api_id);
                                             return (
                                                 <div key={p.player_id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px', background: isStarter ? 'rgba(99, 102, 241, 0.1)' : 'transparent', borderRadius: '4px', border: isStarter ? '1px solid var(--color-primary-500)' : '1px solid transparent' }}>
                                                     <img src={p.photo_url} alt="" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
@@ -229,7 +229,7 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
 
                             {activeStarters.map((p, idx) => (
                                 <div
-                                    key={p.player_id || p.id || `starter-${idx}`}
+                                    key={p.player_id || `starter-${idx}`}
                                     style={{
                                         position: 'absolute',
                                         left: formationCoords[idx]?.left || '50%',
@@ -263,7 +263,7 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
                         <Card title="Frequent Substitutes">
                             <Stack direction="row" gap="var(--spacing-md)" justify="center">
                                 {bench.map((p, bIdx) => (
-                                    <Stack key={p.player_id || p.id || `bench-${bIdx}`} align="center" gap="4px">
+                                    <Stack key={p.player_id || `bench-${bIdx}`} align="center" gap="4px">
                                         <img src={p.photo_url || p.photo} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)' }} />
                                         <span style={{ fontSize: '10px' }}>{p.name}</span>
                                     </Stack>

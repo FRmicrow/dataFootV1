@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../../../services/api';
 import './MatchDetailTactical.css';
 
@@ -53,8 +54,8 @@ const MatchDetailTactical = ({ fixtureId }) => {
 
         let homePercent, awayPercent;
         if (row.type === 'percent') {
-            homePercent = parseFloat(homeVal);
-            awayPercent = parseFloat(awayVal);
+            homePercent = Number.parseFloat(homeVal);
+            awayPercent = Number.parseFloat(awayVal);
         } else {
             const total = homeVal + awayVal;
             if (total === 0) {
@@ -108,6 +109,10 @@ const MatchDetailTactical = ({ fixtureId }) => {
             </div>
         </div>
     );
+};
+
+MatchDetailTactical.propTypes = {
+    fixtureId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
 };
 
 export default MatchDetailTactical;

@@ -52,7 +52,7 @@ export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
             <thead>
                 <tr>
                     {new Array(cols).fill(0).map((_, i) => (
-                        <th key={i}><Skeleton width="60%" height="10px" /></th>
+                        <th key={`th-skeleton-${i}`}><Skeleton width="60%" height="10px" /></th>
                     ))}
                 </tr>
             </thead>
