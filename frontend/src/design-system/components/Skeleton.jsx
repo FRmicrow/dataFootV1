@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import './Skeleton.css';
 
 const Skeleton = ({ width, height, circle, className = '', style }) => {
@@ -11,6 +13,15 @@ const Skeleton = ({ width, height, circle, className = '', style }) => {
 
     return <div className={`ds-skeleton ${className}`} style={styles} />;
 };
+
+Skeleton.propTypes = {
+    width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    height: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    circle: PropTypes.bool,
+    className: PropTypes.string,
+    style: PropTypes.object
+};
+
 
 export const CardSkeleton = () => (
     <div className="ds-card ds-skeleton-card">
@@ -40,15 +51,15 @@ export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
         <table className="ds-table">
             <thead>
                 <tr>
-                    {Array(cols).fill(0).map((_, i) => (
+                    {new Array(cols).fill(0).map((_, i) => (
                         <th key={i}><Skeleton width="60%" height="10px" /></th>
                     ))}
                 </tr>
             </thead>
             <tbody>
-                {Array(rows).fill(0).map((_, i) => (
+                {new Array(rows).fill(0).map((_, i) => (
                     <tr key={i}>
-                        {Array(cols).fill(0).map((_, j) => (
+                        {new Array(cols).fill(0).map((_, j) => (
                             <td key={j}><Skeleton width={j === 0 ? "80%" : "60%"} height="12px" /></td>
                         ))}
                     </tr>
@@ -57,6 +68,12 @@ export const TableSkeleton = ({ rows = 5, cols = 4 }) => (
         </table>
     </div>
 );
+
+TableSkeleton.propTypes = {
+    rows: PropTypes.number,
+    cols: PropTypes.number
+};
+
 
 // Helper for Stack if not imported
 const Stack = ({ children, gap, direction = 'column' }) => (

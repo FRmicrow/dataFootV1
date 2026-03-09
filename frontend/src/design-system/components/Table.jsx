@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import './Table.css';
 
 const Table = ({ columns, data, loading = false, rowKey = 'id', onRowClick, className = '', style = {}, interactive = false }) => {
@@ -41,5 +43,23 @@ const Table = ({ columns, data, loading = false, rowKey = 'id', onRowClick, clas
         </div>
     );
 };
+
+Table.propTypes = {
+    columns: PropTypes.arrayOf(PropTypes.shape({
+        key: PropTypes.string,
+        title: PropTypes.node.isRequired,
+        dataIndex: PropTypes.string,
+        width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        render: PropTypes.func
+    })).isRequired,
+    data: PropTypes.arrayOf(PropTypes.object).isRequired,
+    loading: PropTypes.bool,
+    rowKey: PropTypes.string,
+    onRowClick: PropTypes.func,
+    className: PropTypes.string,
+    style: PropTypes.object,
+    interactive: PropTypes.bool
+};
+
 
 export default Table;

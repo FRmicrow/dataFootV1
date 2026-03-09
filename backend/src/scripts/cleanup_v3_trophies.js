@@ -1,7 +1,7 @@
 import initSqlJs from 'sql.js';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'path';
+import { dirname, join } from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -60,7 +60,7 @@ async function run() {
         console.log(`⚠️  Found ${dupeRows.length} sets of duplicates.`);
 
         let totalDeleted = 0;
-        for (const [player_id, league_name, trophy, season, place, count] of dupeRows) {
+        for (const [player_id, league_name, trophy, season, place] of dupeRows) {
             // Get all IDs for this set, keep the characteristically "best" one (highest ID - usually latest import)
             const idsRes = db.exec(`
                 SELECT id, created_at, league_name, country, season, place, trophy, competition_id 
@@ -76,7 +76,6 @@ async function run() {
             if (idsRes.length > 0) {
                 const results = idsRes[0].values;
                 // Keep the first one (highest ID), delete the rest
-                const keepId = results[0][0];
                 const toDelete = results.slice(1);
 
                 for (const delRow of toDelete) {

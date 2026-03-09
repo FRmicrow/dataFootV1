@@ -40,7 +40,7 @@ const V3Dashboard = () => {
                 <Skeleton width="300px" height="20px" />
             </header>
             <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-md)" style={{ marginBottom: 'var(--spacing-xl)' }}>
-                {Array(4).fill(0).map((_, i) => <MetricCardSkeleton key={i} />)}
+                {[...new Array(4)].map((_, i) => <MetricCardSkeleton key={`metric-skeleton-${i}`} />)}
             </Grid>
             <Grid columns="repeat(2, 1fr)" gap="var(--spacing-lg)">
                 <CardSkeleton />
@@ -128,8 +128,8 @@ const V3Dashboard = () => {
                                     outerRadius={90}
                                     paddingAngle={8}
                                 >
-                                    {distribution?.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    {distribution?.map((entry) => (
+                                        <Cell key={`cell-${entry.continent}`} fill={COLORS[distribution.indexOf(entry) % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip
@@ -174,22 +174,33 @@ const V3Dashboard = () => {
                             { title: 'Data Acquisition', desc: 'Initialize new competitive seasons', path: '/import' },
                             { title: 'Scout Explorer', desc: 'Browse hierarchies and entity analysis', path: '/leagues' },
                             { title: 'Integrity Matrix', desc: 'Resolve orphan dependencies', path: '/import/matrix-status' }
-                        ].map((action, i) => (
-                            <div
-                                key={i}
-                                className="action-row"
+                        ].map((action) => (
+                            <button
+                                key={action.path}
+                                className="action-row ds-button-reset"
                                 onClick={() => navigate(action.path)}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(action.path); }}
-                                role="button"
-                                tabIndex={0}
                                 aria-label={action.title}
+                                style={{
+                                    width: '100%',
+                                    textAlign: 'left',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: 'var(--spacing-md)',
+                                    borderRadius: 'var(--radius-md)',
+                                    background: 'var(--color-bg-sub)',
+                                    border: '1px solid var(--color-border)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    gap: '12px'
+                                }}
                             >
                                 <div style={{ flex: 1 }}>
-                                    <h4 style={{ margin: 0 }}>{action.title}</h4>
+                                    <h4 style={{ margin: 0, color: 'white' }}>{action.title}</h4>
                                     <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{action.desc}</p>
                                 </div>
-                                <div className="action-arrow">→</div>
-                            </div>
+                                <div className="action-arrow" style={{ transition: 'transform 0.2s' }}>→</div>
+                            </button>
                         ))}
                     </Stack>
                 </Card>

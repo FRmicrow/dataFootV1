@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import { Link } from 'react-router-dom';
 import { Stack, Badge } from '../../../design-system';
 
@@ -94,4 +96,26 @@ const PageHeader = ({ title, subtitle, actions, breadcrumbs, badge, extra, class
     );
 };
 
+PageHeader.propTypes = {
+    title: PropTypes.string.isRequired,
+    subtitle: PropTypes.string,
+    actions: PropTypes.node,
+    breadcrumbs: PropTypes.oneOfType([
+        PropTypes.node,
+        PropTypes.arrayOf(PropTypes.shape({
+            label: PropTypes.string.isRequired,
+            path: PropTypes.string,
+            active: PropTypes.bool
+        }))
+    ]),
+    badge: PropTypes.shape({
+        label: PropTypes.string,
+        variant: PropTypes.string
+    }),
+    extra: PropTypes.node,
+    className: PropTypes.string,
+    style: PropTypes.object
+};
+
 export default PageHeader;
+

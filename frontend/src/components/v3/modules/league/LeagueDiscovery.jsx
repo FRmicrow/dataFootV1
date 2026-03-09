@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
 import api from '../../../../services/api';
 
 /**
@@ -115,6 +117,9 @@ const LeagueDiscovery = ({ onSelectBatch, onCancel, importedApiIds = [] }) => {
                                     <div
                                         key={league.league_id}
                                         onClick={() => toggleStage(league)}
+                                        role="button"
+                                        tabIndex="0"
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStage(league); } }}
                                         style={{
                                             background: isStaged(league.league_id)
                                                 ? 'rgba(16, 185, 129, 0.15)'
@@ -171,4 +176,11 @@ const LeagueDiscovery = ({ onSelectBatch, onCancel, importedApiIds = [] }) => {
     );
 };
 
+LeagueDiscovery.propTypes = {
+    onSelectBatch: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
+    importedApiIds: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number]))
+};
+
 export default LeagueDiscovery;
+

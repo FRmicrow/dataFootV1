@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 
 /**
  * Standard content container for StatFoot V3 pages.
@@ -17,4 +19,11 @@ const PageContent = ({ children, className = '', style = {} }) => {
     );
 };
 
+PageContent.propTypes = {
+    children: PropTypes.node.isRequired,
+    className: PropTypes.string,
+    style: PropTypes.object
+};
+
 export default PageContent;
+

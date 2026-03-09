@@ -108,7 +108,7 @@ class ClubRepository extends BaseRepository {
         if (row) {
             const keys = ['possession', 'pass_accuracy', 'shots_per_match', 'shots_on_target_per_match', 'corners_per_match', 'saves_per_match', 'yellow_cards_per_match'];
             keys.forEach(k => {
-                row[k] = row[k] ? Number.parseFloat(row[k].toFixed(1)) : 0;
+                row[k] = row[k] ? Number.parseFloat(Number(row[k]).toFixed(1)) : 0;
             });
         }
         return row;
@@ -138,10 +138,10 @@ class ClubRepository extends BaseRepository {
         const g = await this.db.get(goalsSql, cleanParams(goalsParams));
 
         const matchesPlayed = Number.parseInt(g.played, 10) || 0;
-        s.goals_scored_per_match = matchesPlayed > 0 ? Number.parseFloat((g.scored / matchesPlayed).toFixed(2)) : 0;
-        s.goals_conceded_per_match = matchesPlayed > 0 ? Number.parseFloat((g.conceded / matchesPlayed).toFixed(2)) : 0;
-        s.clean_sheet_pct = matchesPlayed > 0 ? Number.parseFloat(((g.clean_sheets / matchesPlayed) * 100).toFixed(1)) : 0;
-        s.win_rate = matchesPlayed > 0 ? Math.min(100, Number.parseFloat(((g.wins / matchesPlayed) * 100).toFixed(1))) : 0;
+        s.goals_scored_per_match = matchesPlayed > 0 ? Number.parseFloat((Number(g.scored) / matchesPlayed).toFixed(2)) : 0;
+        s.goals_conceded_per_match = matchesPlayed > 0 ? Number.parseFloat((Number(g.conceded) / matchesPlayed).toFixed(2)) : 0;
+        s.clean_sheet_pct = matchesPlayed > 0 ? Number.parseFloat(((Number(g.clean_sheets) / matchesPlayed) * 100).toFixed(1)) : 0;
+        s.win_rate = matchesPlayed > 0 ? Math.min(100, Number.parseFloat(((Number(g.wins) / matchesPlayed) * 100).toFixed(1))) : 0;
         s.shot_conversion = s.shots_per_match > 0 ? Number.parseFloat(((s.goals_scored_per_match / s.shots_per_match) * 100).toFixed(1)) : 0;
 
         s.touches_per_match = "-";

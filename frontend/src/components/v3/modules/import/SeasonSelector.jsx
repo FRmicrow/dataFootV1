@@ -18,9 +18,10 @@ const SeasonSelector = ({
             {/* Range Selectors */}
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">From Season</label>
+                    <label htmlFor="fromYear" className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">From Season</label>
                     <div className="relative">
                         <select
+                            id="fromYear"
                             value={fromYear}
                             onChange={(e) => setFromYear(e.target.value)}
                             disabled={disabled}
@@ -38,9 +39,10 @@ const SeasonSelector = ({
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">To Season</label>
+                    <label htmlFor="toYear" className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">To Season</label>
                     <div className="relative">
                         <select
+                            id="toYear"
                             value={toYear}
                             onChange={(e) => setToYear(e.target.value)}
                             disabled={disabled}
@@ -113,8 +115,8 @@ const SeasonSelector = ({
             {/* Sync Warning */}
             {(() => {
                 if (!fromYear || !toYear) return null;
-                const start = parseInt(fromYear);
-                const end = parseInt(toYear);
+                const start = Number.parseInt(fromYear);
+                const end = Number.parseInt(toYear);
                 const alreadyInDb = leagueSyncStatus.filter(s =>
                     s.year >= Math.min(start, end) &&
                     s.year <= Math.max(start, end) &&

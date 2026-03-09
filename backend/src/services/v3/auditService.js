@@ -1,7 +1,7 @@
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import ImportStatusService from './importStatusService.js';
-import { IMPORT_STATUS, STATUS_LABELS, PILLARS } from './importStatusConstants.js';
+import { IMPORT_STATUS } from './importStatusConstants.js';
 
 // --- Private Pillar Audit Helpers ---
 
@@ -119,6 +119,26 @@ const auditTacticalPillar = async (pillar, league_id, season_year, totalFixtures
     return false;
 };
 
+const auditSeason = async (league_id, season_year) => {
+    const totalFixtures = (await db.get(
+        `SELECT COUNT(*) as count FROM V3_Fixtures 
+         WHERE league_id = ? AND season_year = ? AND status_short IN ('FT', 'AET', 'PEN')`,
+        cleanParams([league_id, season_year])
+    )).count;
+
+    const coreUpdated = await auditCore(league_id, season_year);
+    const eventsUpdated = await auditEvents(league_id, season_year, totalFixtures);
+    const lineupsUpdated = await auditLineups(league_id, season_year, totalFixtures);
+    const trophiesUpdated = await auditTrophies(league_id, season_year);
+    const fsUpdated = await auditTacticalPillar('fs', league_id, season_year, totalFixtures);
+    const psUpdated = await auditTacticalPillar('ps', league_id, season_year, totalFixtures);
+
+    const updated = coreUpdated || eventsUpdated || lineupsUpdated || trophiesUpdated || fsUpdated || psUpdated;
+    const locked = await ImportStatusService.checkAutoLock(league_id, season_year);
+
+    return { updated, locked };
+};
+
 /**
  * US_268: Audit Service Upgrade — Smart Discovery Scan
  * @returns {Promise<Object>} scan results
@@ -128,30 +148,10 @@ export const performDiscoveryScan = async () => {
     const seasons = await db.all("SELECT * FROM V3_League_Seasons");
     let updatedCount = 0;
     let autoLockedCount = 0;
-    let alreadyLockedCount = 0;
 
     for (const season of seasons) {
-        const { league_id, season_year } = season;
-
-        const totalFixtures = (await db.get(
-            `SELECT COUNT(*) as count FROM V3_Fixtures 
-             WHERE league_id = ? AND season_year = ? AND status_short IN ('FT', 'AET', 'PEN')`,
-            cleanParams([league_id, season_year])
-        )).count;
-
-        // Perform audits for each pillar
-        const coreUpdated = await auditCore(league_id, season_year);
-        const eventsUpdated = await auditEvents(league_id, season_year, totalFixtures);
-        const lineupsUpdated = await auditLineups(league_id, season_year, totalFixtures);
-        const trophiesUpdated = await auditTrophies(league_id, season_year);
-        const fsUpdated = await auditTacticalPillar('fs', league_id, season_year, totalFixtures);
-        const psUpdated = await auditTacticalPillar('ps', league_id, season_year, totalFixtures);
-
-        if (coreUpdated || eventsUpdated || lineupsUpdated || trophiesUpdated || fsUpdated || psUpdated) {
-            updatedCount++;
-        }
-
-        const locked = await ImportStatusService.checkAutoLock(league_id, season_year);
+        const { updated, locked } = await auditSeason(season.league_id, season.season_year);
+        if (updated) updatedCount++;
         if (locked) autoLockedCount++;
     }
 

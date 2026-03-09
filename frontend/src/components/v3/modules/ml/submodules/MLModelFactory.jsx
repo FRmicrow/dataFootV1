@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Grid, Stack, Badge, Button, Table, Progress } from '../../../../../design-system';
+import PropTypes from 'prop-types';
+import { Card, Grid, Stack, Badge, Button, Table, Progress, Input } from '../../../../../design-system';
+
 import api from '../../../../../services/api';
 
 const processLeagues = (data) => {
@@ -19,29 +21,50 @@ const processLeagues = (data) => {
 };
 
 const ForgeControlCard = ({ searchTerm, setSearchTerm, columns, filteredLeagues, status, loading, cancelForge }) => (
-    <Card title="The Forge" subtitle="Managed model assembly pipelines for verified competitions.">
-        <Grid columns="2fr 1fr" gap="xl">
-            <Stack gap="md">
-                <input
-                    type="text" placeholder="Filter competitions..." className="ds-input ds-flex-1"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: 'white', padding: '10px 14px', borderRadius: '8px', width: '100%', outline: 'none' }}
-                    value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+    <Card title="Forge Command" subtitle="Neural assembly control.">
+        <Stack gap="md">
+            <Stack direction="row" gap="md">
+                <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Filter neural networks..."
+                    className="ds-flex-1"
                 />
-                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                    <Table columns={columns} data={filteredLeagues} className="ds-table-compact" />
-                </div>
+                {status.is_building && (
+                    <Button variant="warning" onClick={cancelForge}>
+                        Abort Assembly
+                    </Button>
+                )}
             </Stack>
-            <Stack gap="lg" align="center" justify="center" className="ds-bg-neutral-900 ds-p-lg ds-rounded-lg">
-                <Stack gap="sm" align="center">
-                    <div className={`ds-text-3xl ${status.is_building ? 'ds-animate-pulse' : ''}`}>{status.is_building ? '🔥' : '⚒️'}</div>
-                    <h4 className="ds-font-bold">{status.is_building ? 'Forge Active' : 'Forge Standby'}</h4>
-                    <span className="ds-text-xs ds-text-neutral-500 mb-xs">{status.is_building ? `Building L#${status.league_id}` : 'Infrastructure ready'}</span>
-                    {status.is_building && <Button variant="danger" size="sm" onClick={cancelForge}>Emergency Stop</Button>}
-                </Stack>
-            </Stack>
-        </Grid>
+            <Table
+                columns={columns}
+                data={filteredLeagues}
+                loading={loading && !status.is_building}
+                rowKey="id"
+            />
+        </Stack>
     </Card>
 );
+
+
+ForgeControlCard.propTypes = {
+    searchTerm: PropTypes.string.isRequired,
+    setSearchTerm: PropTypes.func.isRequired,
+    columns: PropTypes.arrayOf(PropTypes.shape({
+        dataIndex: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        render: PropTypes.func
+    })).isRequired,
+    filteredLeagues: PropTypes.arrayOf(PropTypes.object).isRequired,
+    status: PropTypes.shape({
+        is_building: PropTypes.bool,
+        league_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        progress: PropTypes.number,
+        logs: PropTypes.arrayOf(PropTypes.string)
+    }).isRequired,
+    loading: PropTypes.bool.isRequired,
+    cancelForge: PropTypes.func.isRequired
+};
 
 const ForgeTelemetryCard = ({ status }) => (
     <Card title="Process Telemetry" subtitle="Assembly integrity monitor.">
@@ -57,6 +80,13 @@ const ForgeTelemetryCard = ({ status }) => (
         </Stack>
     </Card>
 );
+
+ForgeTelemetryCard.propTypes = {
+    status: PropTypes.shape({
+        progress: PropTypes.number,
+        logs: PropTypes.arrayOf(PropTypes.string)
+    }).isRequired
+};
 
 const MLModelFactory = () => {
     const [leagues, setLeagues] = useState([]);

@@ -13,11 +13,12 @@ const LeagueSelector = ({
     return (
         <div className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label htmlFor="countrySelect" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     🌍 Select Country
                 </label>
                 <div className="relative">
                     <select
+                        id="countrySelect"
                         value={selectedCountry}
                         onChange={(e) => setSelectedCountry(e.target.value)}
                         disabled={disabled}
@@ -39,11 +40,12 @@ const LeagueSelector = ({
             </div>
 
             <div className={`transition-opacity duration-300 ${!selectedCountry ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label htmlFor="leagueSelect" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     🏆 Select League
                 </label>
                 <div className="relative">
                     <select
+                        id="leagueSelect"
                         value={selectedLeague}
                         onChange={(e) => setSelectedLeague(e.target.value)}
                         disabled={disabled || !selectedCountry}

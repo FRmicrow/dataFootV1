@@ -12,8 +12,9 @@ const SimulationParams = ({
     return (
         <>
             <div className="param-group">
-                <label>③ Season Scope</label>
+                <label htmlFor="season-scope">③ Season Scope</label>
                 <select
+                    id="season-scope"
                     value={selectedYear}
                     onChange={(e) => onYearChange(e.target.value)}
                     disabled={loading || years.length === 0}
@@ -27,8 +28,9 @@ const SimulationParams = ({
             </div>
 
             <div className="param-group">
-                <label>Execution Architecture</label>
+                <label htmlFor="execution-architecture">Execution Architecture</label>
                 <select
+                    id="execution-architecture"
                     value={selectedMode}
                     onChange={(e) => onModeChange(e.target.value)}
                     disabled={loading}
@@ -40,7 +42,7 @@ const SimulationParams = ({
 
             <div className="param-group">
                 <div className="label-with-action">
-                    <label>Model Horizon</label>
+                    <label htmlFor="model-horizon">Model Horizon</label>
                     {eligibleHorizons.length < 3 && selectedYear && (
                         <span style={{ fontSize: '0.6rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
                             ⚠️ {3 - eligibleHorizons.length} restricted
@@ -48,6 +50,7 @@ const SimulationParams = ({
                     )}
                 </div>
                 <select
+                    id="model-horizon"
                     value={selectedHorizon}
                     onChange={(e) => onHorizonChange(e.target.value)}
                     disabled={loading}
@@ -57,13 +60,13 @@ const SimulationParams = ({
                         value="5Y_ROLLING"
                         disabled={!eligibleHorizons.includes('5Y_ROLLING')}
                     >
-                        5-Year Rolling Window {!eligibleHorizons.includes('5Y_ROLLING') ? '(N/A for this season)' : ''}
+                        5-Year Rolling Window {eligibleHorizons.includes('5Y_ROLLING') ? '' : '(N/A for this season)'}
                     </option>
                     <option
                         value="3Y_ROLLING"
                         disabled={!eligibleHorizons.includes('3Y_ROLLING')}
                     >
-                        3-Year Rolling Window {!eligibleHorizons.includes('3Y_ROLLING') ? '(N/A for this season)' : ''}
+                        3-Year Rolling Window {eligibleHorizons.includes('3Y_ROLLING') ? '' : '(N/A for this season)'}
                     </option>
                 </select>
             </div>
@@ -83,26 +86,34 @@ const SimulationParams = ({
                 </div>
             </div>
 
-            {readiness?.status === 'READY' ? (
-                <button
-                    className="btn-run-sim"
-                    onClick={onRunSimulation}
-                    disabled={loading || !selectedYear}
-                >
-                    {loading ? 'Running Simulation...' : '🚀 Run Simulation'}
-                </button>
-            ) : readiness ? (
-                <div className="preflight-warning">
-                    <div className="warning-content">
-                        <b>⚠️ Pre-Flight Check</b>
-                        <p>{readiness.message}</p>
-                    </div>
-                </div>
-            ) : (
-                <button className="btn-run-sim" disabled={true}>
-                    Select Season
-                </button>
-            )}
+            {(() => {
+                if (readiness?.status === 'READY') {
+                    return (
+                        <button
+                            className="btn-run-sim"
+                            onClick={onRunSimulation}
+                            disabled={loading || !selectedYear}
+                        >
+                            {loading ? 'Running Simulation...' : '🚀 Run Simulation'}
+                        </button>
+                    );
+                }
+                if (readiness) {
+                    return (
+                        <div className="preflight-warning">
+                            <div className="warning-content">
+                                <b>⚠️ Pre-Flight Check</b>
+                                <p>{readiness.message}</p>
+                            </div>
+                        </div>
+                    );
+                }
+                return (
+                    <button className="btn-run-sim" disabled={true}>
+                        Select Season
+                    </button>
+                );
+            })()}
         </>
     );
 };

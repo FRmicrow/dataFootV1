@@ -1,6 +1,5 @@
 import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
-import axios from 'axios';
 
 /**
  * Sync Predictions for Upcoming Matches
@@ -57,8 +56,7 @@ export const syncUpcomingProps = async (req, res) => {
                     `, [
                         fixture.fixture_id,
                         fixture.league_id,
-                        fixture.league_id,
-                        null, // Season logic if needed
+                        '2024',
                         winner.id,
                         winner.name,
                         winner.comment,

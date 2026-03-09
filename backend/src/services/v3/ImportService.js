@@ -180,7 +180,7 @@ export const Mappers = {
             is_start_xi: !playerApiData.substitute,
             minutes_played: s.games?.minutes || 0,
             position: s.games?.position || null,
-            rating: s.games?.rating || "0.0",
+            rating: s.games?.rating || "0",
 
             goals_total: s.goals?.total || 0,
             goals_conceded: s.goals?.conceded || 0,

@@ -63,7 +63,7 @@ const InlineMatchDetailTactical = ({ fixtureId }) => {
     const getRawVal = (stat, key) => {
         if (!stat) return 0;
         const val = stat[key];
-        if (typeof val === 'string' && val.includes('%')) return parseInt(val);
+        if (typeof val === 'string' && val.includes('%')) return Number.parseInt(val);
         return val ?? 0;
     };
 

@@ -1,43 +1,55 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../../../services/api';
-import { Card, Table, Badge, Stack, Button, Grid, Accordion } from '../../../../../design-system';
+import { Card, Badge, Stack, Button, Grid, Accordion } from '../../../../../design-system';
+
+const getMatchResult = (m, clubId, isHome) => {
+    if (m.status === 'NS') return null;
+    const [hg, ag] = (m.score || `${m.home_goals}-${m.away_goals}`).split('-').map(Number);
+    if (hg === ag) return 'D';
+    if (isHome) return hg > ag ? 'W' : 'L';
+    return ag > hg ? 'W' : 'L';
+};
+
+const getResultVariant = (res) => {
+    switch (res) {
+        case 'W': return 'success';
+        case 'L': return 'danger';
+        case 'D': return 'warning';
+        default: return 'primary';
+    }
+};
 
 const MatchRow = ({ m, clubId, clubName, navigate }) => {
     const isHome = String(m.home_id || m.home?.id) === String(clubId);
+    const result = getMatchResult(m, clubId, isHome);
     const [hg, ag] = (m.score || `${m.home_goals}-${m.away_goals}`).split('-').map(Number);
-    let result = null;
-    if (m.status !== 'NS') {
-        result = hg === ag ? 'D' : (isHome ? (hg > ag ? 'W' : 'L') : (ag > hg ? 'W' : 'L'));
-    }
-
-    const getResultVariant = (res) => {
-        if (res === 'W') return 'success';
-        if (res === 'L') return 'danger';
-        if (res === 'D') return 'warning';
-        return 'primary';
-    };
 
     const compName = m.league_name || m.competition?.name;
+    const homeTeamName = isHome ? clubName : (m.home_name || m.home?.name);
+    const awayTeamName = isHome ? (m.away_name || m.away?.name) : clubName;
+
+    const handleNavigate = useCallback(() => {
+        navigate(`/match/${m.match_id || m.fixture_id}`);
+    }, [navigate, m.match_id, m.fixture_id]);
+
+    const handleKeyDown = useCallback((e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleNavigate();
+        }
+    }, [handleNavigate]);
 
     return (
-        <div
-            className="ds-fixture-row"
-            onClick={() => navigate(`/match/${m.match_id || m.fixture_id}`)}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    navigate(`/match/${m.match_id || m.fixture_id}`);
-                }
-            }}
-            role="button"
-            tabIndex={0}
-            aria-label={`Match ${isHome ? clubName : (m.home_name || m.home?.name)} vs ${!isHome ? clubName : (m.away_name || m.away?.name)}`}
+        <button
+            className="ds-fixture-row ds-button-reset"
+            onClick={handleNavigate}
+            onKeyDown={handleKeyDown}
+            aria-label={`Match ${homeTeamName} vs ${awayTeamName}`}
+            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
         >
             <Grid columns="80px 1fr 40px" gap="var(--spacing-md)" align="center">
-
-                {/* Date Block */}
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold', color: 'var(--color-text-main)' }}>
                         {new Date(m.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
@@ -47,25 +59,22 @@ const MatchRow = ({ m, clubId, clubName, navigate }) => {
                     </div>
                 </div>
 
-                {/* Match Center Block */}
                 <Stack gap="2px">
                     {compName && (
                         <Stack direction="row" align="center" justify="center" gap="8px" style={{ marginBottom: '4px' }}>
-                            <img src={m.league_logo || m.competition?.logo} alt="" style={{ width: '12px' }} />
+                            <img src={m.league_logo || m.competition?.logo} alt={`${compName} logo`} style={{ width: '12px' }} />
                             <span style={{ fontSize: '9px', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{compName}</span>
                         </Stack>
                     )}
 
                     <Grid columns="1fr 80px 1fr" gap="var(--spacing-sm)" align="center">
-                        {/* Home */}
                         <Stack direction="row" gap="var(--spacing-sm)" align="center" justify="flex-end">
                             <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: isHome ? 'bold' : 'normal', color: isHome ? 'white' : 'var(--color-text-main)', textAlign: 'right' }}>
-                                {isHome ? clubName : (m.home_name || m.home?.name)}
+                                {homeTeamName}
                             </span>
-                            <img src={m.home_logo || m.home?.logo} alt="" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+                            <img src={m.home_logo || m.home?.logo} alt={`${homeTeamName} logo`} style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
                         </Stack>
 
-                        {/* Score / Time */}
                         <div style={{ textAlign: 'center' }}>
                             {m.status === 'NS' ? (
                                 <Badge variant="neutral" size="sm">{new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Badge>
@@ -76,17 +85,15 @@ const MatchRow = ({ m, clubId, clubName, navigate }) => {
                             )}
                         </div>
 
-                        {/* Away */}
                         <Stack direction="row" gap="var(--spacing-sm)" align="center" justify="flex-start">
-                            <img src={m.away_logo || m.away?.logo} alt="" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
-                            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: !isHome ? 'bold' : 'normal', color: !isHome ? 'white' : 'var(--color-text-main)', textAlign: 'left' }}>
-                                {!isHome ? clubName : (m.away_name || m.away?.name)}
+                            <img src={m.away_logo || m.away?.logo} alt={`${awayTeamName} logo`} style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+                            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: isHome ? 'normal' : 'bold', color: isHome ? 'var(--color-text-main)' : 'white', textAlign: 'left' }}>
+                                {awayTeamName}
                             </span>
                         </Stack>
                     </Grid>
                 </Stack>
 
-                {/* Result Badge */}
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                     {result && (
                         <Badge
@@ -100,12 +107,16 @@ const MatchRow = ({ m, clubId, clubName, navigate }) => {
                                 letterSpacing: '0.05em'
                             }}
                         >
-                            {result === 'W' ? 'WIN' : result === 'L' ? 'LOSE' : 'DRAW'}
+                            {(() => {
+                                if (result === 'W') return 'WIN';
+                                if (result === 'L') return 'LOSE';
+                                return 'DRAW';
+                            })()}
                         </Badge>
                     )}
                 </div>
             </Grid>
-        </div>
+        </button>
     );
 };
 
@@ -121,9 +132,7 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [venueFilter, setVenueFilter] = useState('all');
-
-    // New unified result filter state
-    const [resultFilter, setResultFilter] = useState('all'); // 'all', 'win', 'draw', 'defeat'
+    const [resultFilter, setResultFilter] = useState('all');
     const [selectedCompName, setSelectedCompName] = useState('all');
 
     useEffect(() => {
@@ -132,9 +141,9 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
             try {
                 const data = await api.getClubMatches(clubId, {
                     year,
-                    competition: competitionId !== 'all' ? competitionId : undefined,
-                    venue_type: venueFilter !== 'all' ? venueFilter : undefined,
-                    limit: 100 // Fetch all matches of the season
+                    competition: competitionId === 'all' ? undefined : competitionId,
+                    venue_type: venueFilter === 'all' ? undefined : venueFilter,
+                    limit: 100
                 });
                 setMatches(data);
             } catch (error) {
@@ -143,11 +152,13 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
             setLoading(false);
         };
 
-        if (year) fetchMatches();
+        if (year) {
+            fetchMatches();
+        }
     }, [clubId, year, competitionId, venueFilter]);
 
     const { finished, scheduled, competitionList } = useMemo(() => {
-        const finishedStatuses = ['FT', 'AET', 'PEN'];
+        const finishedStatuses = new Set(['FT', 'AET', 'PEN']);
         const comps = Array.from(new Set(matches.map(m => m.league_name || m.competition?.name))).filter(Boolean);
 
         let filtered = [...matches];
@@ -160,13 +171,13 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
 
         if (resultFilter !== 'all') {
             filtered = filtered.filter(m => {
-                if (!finishedStatuses.includes(m.status)) return true;
+                if (!finishedStatuses.has(m.status)) return true;
                 const isHome = String(m.home_id || m.home?.id) === String(clubId);
-                const hg = parseInt(m.home_goals, 10);
-                const ag = parseInt(m.away_goals, 10);
+                const hg = Number.parseInt(m.home_goals, 10);
+                const ag = Number.parseInt(m.away_goals, 10);
                 const [shg, sag] = (m.score || "").split('-').map(Number);
-                const final_hg = !isNaN(hg) ? hg : shg;
-                const final_ag = !isNaN(ag) ? ag : sag;
+                const final_hg = Number.isNaN(hg) ? shg : hg;
+                const final_ag = Number.isNaN(ag) ? sag : ag;
 
                 if (resultFilter === 'draw') return final_hg === final_ag;
                 if (resultFilter === 'win') return isHome ? (final_hg > final_ag) : (final_ag > final_hg);
@@ -183,8 +194,8 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
         const now = new Date();
 
         return {
-            finished: sorted.filter(m => finishedStatuses.includes(m.status)),
-            scheduled: sorted.filter(m => !finishedStatuses.includes(m.status) && new Date(m.date) > now).reverse(),
+            finished: sorted.filter(m => finishedStatuses.has(m.status)),
+            scheduled: sorted.filter(m => !finishedStatuses.has(m.status) && new Date(m.date) > now).reverse(),
             competitionList: comps
         };
     }, [matches, clubId, resultFilter, selectedCompName, venueFilter]);
@@ -256,7 +267,7 @@ const MatchesTab = ({ clubId, year, competitionId, clubName }) => {
 
 MatchesTab.propTypes = {
     clubId: PropTypes.string.isRequired,
-    year: PropTypes.string.isRequired,
+    year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     competitionId: PropTypes.string.isRequired,
     clubName: PropTypes.string.isRequired
 };

@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import { Stack, Grid } from './Grid';
 import Badge from './Badge';
 import './ProfileHeader.css';
@@ -105,5 +107,28 @@ const ProfileHeader = ({
         </div>
     );
 };
+
+ProfileHeader.propTypes = {
+    title: PropTypes.string.isRequired,
+    subtitles: PropTypes.arrayOf(PropTypes.string),
+    image: PropTypes.string,
+    coverImage: PropTypes.string,
+    accentColor: PropTypes.string,
+    secondaryColor: PropTypes.string,
+    tertiaryColor: PropTypes.string,
+    leagueId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    badges: PropTypes.arrayOf(PropTypes.shape({
+        label: PropTypes.string.isRequired,
+        variant: PropTypes.string,
+        icon: PropTypes.node
+    })),
+    actions: PropTypes.node,
+    stats: PropTypes.arrayOf(PropTypes.shape({
+        label: PropTypes.string.isRequired,
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    })),
+    genericData: PropTypes.arrayOf(PropTypes.string)
+};
+
 
 export default ProfileHeader;

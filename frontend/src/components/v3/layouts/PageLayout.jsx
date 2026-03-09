@@ -1,5 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Stack } from '../../../design-system';
+
 
 /**
  * Main Layout wrapper for StatFoot V3 pages.
@@ -24,4 +26,12 @@ const PageLayout = ({ children, className = '', style = {}, animate = true }) =>
     );
 };
 
+PageLayout.propTypes = {
+    children: PropTypes.node.isRequired,
+    className: PropTypes.string,
+    style: PropTypes.object,
+    animate: PropTypes.bool
+};
+
 export default PageLayout;
+

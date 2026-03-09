@@ -49,7 +49,11 @@ const MLLeaderboard = () => {
                             <div style={{
                                 width: `${percentage}%`,
                                 height: '100%',
-                                background: val > 0.65 ? 'var(--color-success-500)' : val > 0.5 ? 'var(--color-warning-500)' : 'var(--color-danger-500)',
+                                background: (() => {
+                                    if (val > 0.65) return 'var(--color-success-500)';
+                                    if (val > 0.5) return 'var(--color-warning-500)';
+                                    return 'var(--color-danger-500)';
+                                })(),
                                 transition: 'width 1s ease-out'
                             }} />
                         </div>

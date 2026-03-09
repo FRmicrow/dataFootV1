@@ -32,7 +32,7 @@ const ImportLineupsPage = () => {
                 name: curr.league_name || curr.name,
                 logo: curr.logo_url || curr.logo,
                 country: curr.country_name || 'World',
-                rank: curr.importance_rank !== undefined ? curr.importance_rank : 999,
+                rank: curr.importance_rank ?? 999,
                 seasons: []
             };
         }

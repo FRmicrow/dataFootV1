@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
+
 
 const StudioContext = createContext();
 
@@ -83,17 +85,26 @@ export const StudioProvider = ({ children }) => {
         setError(null);
     };
 
+    const contextValue = useMemo(() => ({
+        step, setStep, nextStep, prevStep, goToStep, resetWizard,
+        finalizeStep1,
+        isLoading, setIsLoading,
+        error, setError,
+        filters, setFilters,
+        visual, setVisual,
+        chartData, setChartData
+    }), [
+        step, isLoading, error, filters, visual, chartData
+    ]);
+
     return (
-        <StudioContext.Provider value={{
-            step, setStep, nextStep, prevStep, goToStep, resetWizard,
-            finalizeStep1,
-            isLoading, setIsLoading,
-            error, setError,
-            filters, setFilters,
-            visual, setVisual,
-            chartData, setChartData
-        }}>
+        <StudioContext.Provider value={contextValue}>
             {children}
         </StudioContext.Provider>
     );
 };
+
+StudioProvider.propTypes = {
+    children: PropTypes.node.isRequired
+};
+

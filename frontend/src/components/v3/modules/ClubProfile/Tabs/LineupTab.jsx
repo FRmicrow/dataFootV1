@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../../../../services/api';
-import { Card, Table, Badge, Stack, Button, Grid } from '../../../../../design-system';
+import { Card, Badge, Stack, Button, Grid } from '../../../../../design-system';
 
 const LineupTab = ({ clubId, year, competitionId, roster }) => {
     const [lineup, setLineup] = useState(null);
@@ -228,7 +229,7 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
 
                             {activeStarters.map((p, idx) => (
                                 <div
-                                    key={p.id}
+                                    key={p.player_id || p.id || `starter-${idx}`}
                                     style={{
                                         position: 'absolute',
                                         left: formationCoords[idx]?.left || '50%',
@@ -261,8 +262,8 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
                     {bench.length > 0 && (
                         <Card title="Frequent Substitutes">
                             <Stack direction="row" gap="var(--spacing-md)" justify="center">
-                                {bench.map(p => (
-                                    <Stack key={p.id} align="center" gap="4px">
+                                {bench.map((p, bIdx) => (
+                                    <Stack key={p.player_id || p.id || `bench-${bIdx}`} align="center" gap="4px">
                                         <img src={p.photo_url || p.photo} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)' }} />
                                         <span style={{ fontSize: '10px' }}>{p.name}</span>
                                     </Stack>
@@ -274,6 +275,19 @@ const LineupTab = ({ clubId, year, competitionId, roster }) => {
             </Grid>
         </div>
     );
+};
+
+LineupTab.propTypes = {
+    clubId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    competitionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    roster: PropTypes.arrayOf(PropTypes.shape({
+        player_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        photo_url: PropTypes.string,
+        position: PropTypes.string,
+        appearances: PropTypes.number
+    })).isRequired
 };
 
 export default LineupTab;

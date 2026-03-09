@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 
 const IntegrityTimeline = ({ milestones, activeMilestone }) => {
     return (
@@ -24,4 +26,15 @@ const IntegrityTimeline = ({ milestones, activeMilestone }) => {
     );
 };
 
+IntegrityTimeline.propTypes = {
+    milestones: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        title: PropTypes.string.isRequired,
+        status: PropTypes.string,
+        count: PropTypes.number
+    })).isRequired,
+    activeMilestone: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+};
+
 export default IntegrityTimeline;
+

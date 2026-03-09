@@ -4,11 +4,14 @@ import PropTypes from 'prop-types';
 const ModelSection = ({ hasModels, leagueModels, isBuildingModels, buildStatus, onBuildModels, mlStatus, disabled }) => {
     if (disabled) return null;
 
+    const sectionBg = hasModels ? 'rgba(16, 185, 129, 0.05)' : 'rgba(59, 130, 246, 0.05)';
+    const sectionBorder = hasModels ? '#134e3a' : '#1e3a5f';
+
     return (
         <div className="param-group" style={{
-            background: hasModels ? 'rgba(16, 185, 129, 0.05)' : 'rgba(59, 130, 246, 0.05)',
+            background: sectionBg,
             padding: '14px', borderRadius: '12px',
-            border: `1px solid ${hasModels ? '#134e3a' : '#1e3a5f'}`
+            border: `1px solid ${sectionBorder}`
         }}>
             <div className="label-with-action">
                 <label>② Models {hasModels ? '✅' : '⚠️'}</label>
@@ -28,7 +31,7 @@ const ModelSection = ({ hasModels, leagueModels, isBuildingModels, buildStatus, 
                             fontSize: '0.72rem'
                         }}>
                             <span style={{ color: '#10b981', fontWeight: 600 }}>{m.horizon_type?.replace('_', ' ')}</span>
-                            <span style={{ color: '#e2e8f0' }}>{m.accuracy ? (m.accuracy * 100).toFixed(1) + '%' : '-'}</span>
+                            <span style={{ color: '#e2e8f0' }}>{m.accuracy ? `${(m.accuracy * 100).toFixed(1)}%` : '-'}</span>
                             <span style={{ color: '#64748b' }}>{m.training_dataset_size || '-'} matches</span>
                         </div>
                     ))}
@@ -44,9 +47,18 @@ const ModelSection = ({ hasModels, leagueModels, isBuildingModels, buildStatus, 
                         }}>
                             <span style={{ color: '#94a3b8' }}>{horizon}</span>
                             <span style={{
-                                color: status === 'completed' ? '#10b981' : status === 'failed' ? '#ef4444' : '#f59e0b'
+                                color: (() => {
+                                    if (status === 'completed') return '#10b981';
+                                    if (status === 'failed') return '#ef4444';
+                                    return '#f59e0b';
+                                })()
                             }}>
-                                {status === 'completed' ? '✅' : status === 'failed' ? '❌' : status === 'training' ? '⏳ Training...' : '⏸️ Pending'}
+                                {(() => {
+                                    if (status === 'completed') return '✅';
+                                    if (status === 'failed') return '❌';
+                                    if (status === 'training') return '⏳ Training...';
+                                    return '⏸️ Pending';
+                                })()}
                             </span>
                         </div>
                     ))}

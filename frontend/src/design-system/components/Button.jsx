@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import './Button.css';
 
 const Button = ({ children, variant = 'primary', size = 'md', icon, loading = false, disabled = false, onClick, className = '', style = {}, type = 'button' }) => {
@@ -16,5 +18,19 @@ const Button = ({ children, variant = 'primary', size = 'md', icon, loading = fa
         </button>
     );
 };
+
+Button.propTypes = {
+    children: PropTypes.node,
+    variant: PropTypes.string,
+    size: PropTypes.string,
+    icon: PropTypes.node,
+    loading: PropTypes.bool,
+    disabled: PropTypes.bool,
+    onClick: PropTypes.func,
+    className: PropTypes.string,
+    style: PropTypes.object,
+    type: PropTypes.oneOf(['button', 'submit', 'reset'])
+};
+
 
 export default Button;

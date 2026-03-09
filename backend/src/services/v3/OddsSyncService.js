@@ -1,6 +1,5 @@
 import db from '../../config/database.js';
 import bulkOddsService from './bulkOddsService.js';
-import { cleanParams } from '../../utils/sqlHelpers.js';
 
 /**
  * Odds Sync Service (US-1915)

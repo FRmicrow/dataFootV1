@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 
 const getGreenOpacity = (probStr) => {
     if (!probStr) return 'rgba(0, 0, 0, 0)';
-    const val = parseFloat(probStr.replace('%', ''));
-    if (isNaN(val)) return 'rgba(0, 0, 0, 0)';
+    const val = Number.parseFloat(probStr.replace('%', ''));
+    if (Number.isNaN(val)) return 'rgba(0, 0, 0, 0)';
     const opacity = Math.min((val / 100) * 0.9 + 0.1, 1);
     return `rgba(16, 185, 129, ${opacity.toFixed(2)})`;
 };
@@ -40,9 +40,10 @@ const MatchdayTape = ({ tapeData, loadingTape }) => {
 
                         const prevRound = idx > 0 ? tapeData[idx - 1].round_name : null;
                         const isNewRound = idx === 0 || m.round_name !== prevRound;
+                        const itemKey = m.match_id || `${m.round_name}-${m.home_team_id}-${idx}`;
 
                         return (
-                            <React.Fragment key={idx}>
+                            <React.Fragment key={itemKey}>
                                 {isNewRound && (
                                     <tr className="round-separator">
                                         <td colSpan="7">{m.round_name || 'Next Phase'}</td>

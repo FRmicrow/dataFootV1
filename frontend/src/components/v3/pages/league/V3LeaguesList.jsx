@@ -15,7 +15,7 @@ const V3LeaguesList = () => {
     const [expandedCountries, setExpandedCountries] = useState(null); // Changed initial state to null
     const navigate = useNavigate();
 
-    const FEATURED_IDS = [2, 3, 39, 140, 78, 135, 61];
+    const FEATURED_IDS = new Set([2, 3, 39, 140, 78, 135, 61]);
 
     useEffect(() => {
         const fetchStructuredLeagues = async () => {
@@ -52,7 +52,7 @@ const V3LeaguesList = () => {
             ...Object.values(structuredData.international.continental).flat(),
             ...structuredData.national.flatMap(c => c.leagues)
         ];
-        return all.filter(l => FEATURED_IDS.includes(l.api_id));
+        return all.filter(l => FEATURED_IDS.has(l.api_id));
     };
 
     const featured = getFeaturedLeagues();
@@ -94,6 +94,7 @@ const V3LeaguesList = () => {
                             {featured.map(league => (
                                 <LeagueCard
                                     key={league.id}
+                                    id={league.id}
                                     name={league.name}
                                     logo={league.logo}
                                     isCup={league.is_cup}
@@ -203,6 +204,7 @@ const V3LeaguesList = () => {
                                             {country.leagues.map(league => (
                                                 <LeagueCard
                                                     key={league.id}
+                                                    id={league.id}
                                                     name={league.name}
                                                     logo={league.logo}
                                                     isCup={league.is_cup}

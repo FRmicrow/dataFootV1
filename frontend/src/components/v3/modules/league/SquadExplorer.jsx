@@ -94,6 +94,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                         value={teamId ? { value: teamId, label: teams.find(t => t.team_id == teamId)?.team_name } : { value: '', label: 'All Teams' }}
                         onChange={(opt) => setTeamId(opt.value)}
                         placeholder="Team"
+                        aria-label="Filter by Team"
                     />
 
                     <Select
@@ -107,6 +108,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                         value={{ value: position, label: position === 'ALL' ? 'Positions' : position === 'Goalkeeper' ? 'GK' : position === 'Defender' ? 'DF' : position === 'Midfielder' ? 'MF' : 'FW' }}
                         onChange={(opt) => setPosition(opt.value)}
                         placeholder="Pos"
+                        aria-label="Filter by Position"
                     />
                 </Stack>
             }
@@ -118,13 +120,24 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                     columns={columns.map(col => ({
                         ...col,
                         title: (
-                            <div
+                            <button
                                 onClick={() => handleSort(col.key)}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSort(col.key); }}
-                                role="button"
-                                tabIndex={0}
+                                type="button"
                                 aria-label={`Sort by ${col.title}`}
-                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: col.align === 'center' ? 'center' : 'flex-start' }}
+                                className="ds-table-sort-btn"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: 0,
+                                    color: 'inherit',
+                                    font: 'inherit',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    justifyContent: col.align === 'center' ? 'center' : 'flex-start',
+                                    width: '100%'
+                                }}
                             >
                                 {col.title}
                                 {sortConfig.key === col.key && (
@@ -132,7 +145,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                                         {sortConfig.direction === 'DESC' ? '▼' : '▲'}
                                     </span>
                                 )}
-                            </div>
+                            </button>
                         )
                     }))}
                     data={players}

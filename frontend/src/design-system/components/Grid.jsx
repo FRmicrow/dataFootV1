@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 
 /**
  * Grid component for 2D layouts.
@@ -20,6 +22,15 @@ export const Grid = ({ children, columns = 'repeat(auto-fill, minmax(300px, 1fr)
         </div>
     );
 };
+
+Grid.propTypes = {
+    children: PropTypes.node,
+    columns: PropTypes.string,
+    gap: PropTypes.string,
+    className: PropTypes.string,
+    style: PropTypes.object
+};
+
 
 /**
  * Stack component for flex-based 1D layouts.
@@ -56,3 +67,17 @@ export const Stack = ({
         </div>
     );
 };
+
+
+Stack.propTypes = {
+    children: PropTypes.node,
+    direction: PropTypes.oneOf(['row', 'column']),
+    gap: PropTypes.string,
+    align: PropTypes.string,
+    justify: PropTypes.string,
+    row: PropTypes.bool,
+    dense: PropTypes.bool,
+    className: PropTypes.string,
+    style: PropTypes.object
+};
+

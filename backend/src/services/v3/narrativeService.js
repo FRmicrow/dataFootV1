@@ -7,7 +7,7 @@ import db from '../../config/database.js';
 
 // Major Global Rivalries (Hardcoded mapping for AC 4)
 const MAJOR_RIVALRIES = [
-    { teams: [541, 529], name: "El Clásico", importance: 1.0 }, // Real Madrid vs Barcelona
+    { teams: [541, 529], name: "El Clásico", importance: 1 }, // Real Madrid vs Barcelona
     { teams: [40, 33], name: "North West Derby", importance: 0.9 }, // Liverpool vs Man Utd
     { teams: [85, 81], name: "Le Classique", importance: 0.8 }, // PSG vs Marseille
     { teams: [80, 1063], name: "Derby du Rhône", importance: 0.7 }, // Lyon vs Saint-Etienne

@@ -21,7 +21,6 @@ const run = async () => {
         });
 
         let insertedOdds = 0;
-        let insertedPreds = 0;
 
         await new Promise((resolve) => db.run('BEGIN TRANSACTION', resolve));
 

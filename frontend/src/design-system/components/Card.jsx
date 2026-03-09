@@ -50,7 +50,7 @@ const Card = ({
 
 Card.propTypes = {
     children: PropTypes.node,
-    title: PropTypes.string,
+    title: PropTypes.node,
     subtitle: PropTypes.string,
     titleLogo: PropTypes.node,
     footer: PropTypes.node,

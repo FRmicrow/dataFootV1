@@ -3,7 +3,6 @@ import * as d3 from 'd3';
 
 const ChartCanvas = ({ wizardData, year, width, height, onDrawComplete }) => {
     const canvasRef = useRef(null);
-    const margin = { top: 80, right: 60, bottom: 60, left: 60 };
 
     // --- DATA HELPERS ---
 
@@ -28,10 +27,10 @@ const ChartCanvas = ({ wizardData, year, width, height, onDrawComplete }) => {
         const intYear = Math.round(y);
         // Only include top N players based on current year performance? Or total?
         // Let's take top N from curent year and show their history.
-        const currentTop = getYearlyData(y).map(d => d.name);
+        const currentTop = new Set(getYearlyData(y).map(d => d.name));
 
         return wizardData.chartData
-            .filter(p => currentTop.includes(p.player))
+            .filter(p => currentTop.has(p.player))
             .map(p => ({
                 name: p.player,
                 history: p.values.filter(v => v.year <= intYear).sort((a, b) => a.year - b.year)
@@ -62,7 +61,6 @@ const ChartCanvas = ({ wizardData, year, width, height, onDrawComplete }) => {
 
     const drawBarRace = (ctx, data) => {
         const barMargin = { top: 100, right: 60, bottom: 20, left: 200 };
-        const barHeight = height - barMargin.top - barMargin.bottom;
 
         const maxValue = d3.max(data, d => d.value) || 100;
         const x = d3.scaleLinear()

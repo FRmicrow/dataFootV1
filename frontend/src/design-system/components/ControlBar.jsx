@@ -1,5 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import './ControlBar.css';
+
 
 /**
  * Global ControlBar component for context-specific actions and navigation.
@@ -26,4 +28,11 @@ const ControlBar = ({ left, right, className = '' }) => {
     );
 };
 
+ControlBar.propTypes = {
+    left: PropTypes.node,
+    right: PropTypes.node,
+    className: PropTypes.string
+};
+
 export default ControlBar;
+

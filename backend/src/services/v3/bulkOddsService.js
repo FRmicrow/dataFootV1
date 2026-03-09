@@ -8,7 +8,7 @@ import MarketVolatilityService from './MarketVolatilityService.js';
  * Handles depth ingestion of multiple betting markets.
  */
 
-const TARGET_BET_IDS = [1, 3, 5, 8, 10, 12, 4];
+const TARGET_BET_IDS = new Set([1, 3, 5, 8, 10, 12, 4]);
 
 /**
  * Maps API odd values to V3_Odds database columns
@@ -128,7 +128,7 @@ export const ingestMultiMarketOdds = async (fixtureId) => {
         `;
 
         for (const bet of bookmaker.bets) {
-            if (TARGET_BET_IDS.includes(bet.id)) {
+            if (TARGET_BET_IDS.has(bet.id)) {
                 const row = mapToOddsRow(fixtureId, bookmaker.id, bet.id, bet.values);
                 if (row) {
                     await db.run(sql, [

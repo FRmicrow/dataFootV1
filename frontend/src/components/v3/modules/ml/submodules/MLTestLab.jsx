@@ -7,7 +7,6 @@ const MLTestLab = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [prediction, setPrediction] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [syncing, setSyncing] = useState(false);
 
     const fetchUpcoming = async () => {
         setLoading(true);
@@ -26,18 +25,6 @@ const MLTestLab = () => {
     useEffect(() => {
         fetchUpcoming();
     }, []);
-
-    const syncOdds = async () => {
-        setSyncing(true);
-        try {
-            await api.syncMLUpcomingOdds();
-            await fetchUpcoming();
-        } catch (err) {
-            console.error("Sync failed", err);
-        } finally {
-            setSyncing(false);
-        }
-    };
 
     const runAnalysis = async (fixtureId, fixtureLabel) => {
         setLoading(true);
@@ -136,7 +123,11 @@ const MLTestLab = () => {
                             {Object.entries(prediction.probabilities || {}).map(([outcome, prob]) => (
                                 <Stack gap="xs" key={outcome} className="mb-md">
                                     <Stack direction="row" className="ds-justify-between ds-items-center">
-                                        <Badge variant={outcome === 'home' ? 'primary' : outcome === 'draw' ? 'neutral' : 'warning'}>
+                                        <Badge variant={(() => {
+                                            if (outcome === 'home') return 'primary';
+                                            if (outcome === 'draw') return 'neutral';
+                                            return 'warning';
+                                        })()}>
                                             {outcome.toUpperCase()}
                                         </Badge>
                                         <span className="ds-font-bold">{(prob * 100).toFixed(1)}%</span>

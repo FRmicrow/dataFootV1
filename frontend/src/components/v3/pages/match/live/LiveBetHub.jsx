@@ -49,10 +49,18 @@ const LiveBetHub = () => {
                         key={mod.id}
                         className={`lb-hub-card ${mod.disabled ? 'disabled' : ''}`}
                         onClick={() => !mod.disabled && navigate(mod.path)}
+                        onKeyDown={(e) => {
+                            if (!mod.disabled && (e.key === 'Enter' || e.key === ' ')) {
+                                e.preventDefault();
+                                navigate(mod.path);
+                            }
+                        }}
+                        role="button"
+                        tabIndex={mod.disabled ? "-1" : "0"}
                         style={{ '--accent-color': mod.color }}
                     >
                         <div className="card-glass-glow"></div>
-                        <div className="lb-hub-icon" style={{ background: `rgba(${parseInt(mod.color.slice(1, 3), 16)}, ${parseInt(mod.color.slice(3, 5), 16)}, ${parseInt(mod.color.slice(5, 7), 16)}, 0.1)` }}>
+                        <div className="lb-hub-icon" style={{ background: `rgba(${Number.parseInt(mod.color.slice(1, 3), 16)}, ${Number.parseInt(mod.color.slice(3, 5), 16)}, ${Number.parseInt(mod.color.slice(5, 7), 16)}, 0.1)` }}>
                             {mod.icon}
                         </div>
                         <div className="lb-hub-content">

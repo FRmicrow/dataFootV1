@@ -8,23 +8,20 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 
     const animationRef = useRef(null);
     // Helper to get time key (season or round)
-    const getTime = (frame) => frame.season !== undefined ? frame.season : frame.round;
+    const getTime = (frame) => frame.season ?? frame.round;
 
     const timeRef = useRef(getTime(data[0]));
     const yDomainRef = useRef([0, 10]); // Initial domain for smoothing
-    const zoomOutProgress = useRef(0);
     const waitProgress = useRef(0); // For 2s pause
-    const [isFinished, setIsFinished] = useState(false); // To trigger final render state if needed
+    const zoomOutProgress = useRef(0); // Transition to global view
 
-    // Layout Config
-    const isVertical = height > width;
 
     // Image Cache & Colors
     const imagesRef = useRef({});
     const teamColorsRef = useRef({});
     const leagueLogoRef = useRef({ img: null, loaded: false });
-    const [, forceRender] = useState(0);
-    const triggerRender = () => forceRender(n => n + 1);
+    const [renderCount, setRenderCount] = useState(0);
+    const triggerRender = () => setRenderCount(n => n + 1);
 
     // Layout Config
     const margin = {
@@ -33,15 +30,13 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
         bottom: height * 0.1,
         left: width * (isBump ? 0.15 : 0.05) // Increase left margin for Bump (Rank # space)
     };
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
 
     // Helper: Adjust Color Visibility (avoid black/dark on black bg)
     const adjustColorVisibility = (rgbStr) => {
         if (!rgbStr) return '#ffffff';
         const match = rgbStr.match(/rgb\((\d+),(\d+),(\d+)\)/);
         if (!match) return rgbStr;
-        let [_, r, g, b] = match.map(Number);
+        let [, r, g, b] = match.map(Number);
 
         const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 
@@ -293,7 +288,9 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
         ctx.stroke();
     };
 
-    const drawPlayer = (ctx, p, t, xScale, yScale, visualY, isRoundData, isBump) => {
+    const drawPlayer = (ctx, p, t, scales, visualY, flags) => {
+        const { xScale, yScale } = scales;
+        const { isRoundData, isBump } = flags;
         let color = adjustColorVisibility(teamColorsRef.current[p.id]?.color || `hsl(${(p.id * 137.5) % 360}, 70%, 55%)`);
         const tipX = xScale(t);
         const trueTipY = yScale(p.value);
@@ -309,7 +306,12 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
         p.hist.forEach(h => {
             if (h.season > t) return;
             const x = xScale(h.season), y = yScale((isRoundData && isBump) ? h.rank : h.value);
-            if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+            if (started) {
+                ctx.lineTo(x, y);
+            } else {
+                ctx.moveTo(x, y);
+                started = true;
+            }
         });
         ctx.lineTo(tipX, trueTipY);
         ctx.stroke();
@@ -376,7 +378,10 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
         const tickPoints = resolveLabelCollisions(interpolated, yScale, height * 0.04, zoomOutProgress.current, t, maxTime);
         const pointMap = new Map(tickPoints.map(p => [p.id, p.y]));
 
-        interpolated.forEach(p => drawPlayer(ctx, p, t, xScale, yScale, (zoomOutProgress.current === 0 && t < maxTime) ? yScale(p.value) : pointMap.get(p.id), isRoundData, isBump));
+        interpolated.forEach(p => {
+            const vY = (zoomOutProgress.current === 0 && t < maxTime) ? yScale(p.value) : pointMap.get(p.id);
+            drawPlayer(ctx, p, t, { xScale, yScale }, vY, { isRoundData, isBump });
+        });
     };
 
     useEffect(() => {
@@ -422,37 +427,44 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
             globalMax *= 1.1;
         }
 
+        const updateSimulationTime = (deltaTime) => {
+            if (manualTime !== null) {
+                timeRef.current = manualTime;
+                if (manualTime > maxTime) {
+                    const extra = manualTime - maxTime;
+                    if (extra < 2) {
+                        waitProgress.current = extra * 1000;
+                    } else {
+                        waitProgress.current = 2000;
+                        zoomOutProgress.current = (extra - 2) / 2;
+                    }
+                }
+                return;
+            }
+
+            if (!isPlaying) return;
+
+            if (timeRef.current < maxTime) {
+                const duration = 2000 / speed;
+                timeRef.current += (deltaTime / duration);
+                if (timeRef.current > maxTime) timeRef.current = maxTime;
+            } else if (waitProgress.current < 2000) {
+                waitProgress.current += deltaTime;
+            } else {
+                zoomOutProgress.current += (deltaTime / 2000);
+                if (zoomOutProgress.current > 1) {
+                    zoomOutProgress.current = 1;
+                    if (onComplete) onComplete();
+                }
+            }
+        };
+
         const draw = (timestamp) => {
             if (!lastTimestamp) lastTimestamp = timestamp;
             const deltaTime = timestamp - lastTimestamp;
             lastTimestamp = timestamp;
 
-            if (isPlaying && manualTime === null) {
-                if (timeRef.current < maxTime) {
-                    const duration = 2000 / speed;
-                    timeRef.current += (deltaTime / duration);
-                    if (timeRef.current > maxTime) timeRef.current = maxTime;
-                } else {
-                    if (waitProgress.current < 2000) waitProgress.current += deltaTime;
-                    else {
-                        zoomOutProgress.current += (deltaTime / 2000);
-                        if (zoomOutProgress.current > 1) {
-                            zoomOutProgress.current = 1;
-                            if (onComplete) onComplete();
-                        }
-                    }
-                }
-            } else if (manualTime !== null) {
-                timeRef.current = manualTime;
-                if (manualTime > maxTime) {
-                    const extra = manualTime - maxTime;
-                    if (extra < 2) waitProgress.current = extra * 1000;
-                    else {
-                        waitProgress.current = 2000;
-                        zoomOutProgress.current = (extra - 2) / 2;
-                    }
-                }
-            }
+            updateSimulationTime(deltaTime);
 
             renderFrame(context, timeRef.current, data, historyMap, globalMax, minTime, maxTime);
             if (isPlaying && zoomOutProgress.current < 1.05) {
@@ -478,7 +490,19 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 });
 
 LineChartRace.propTypes = {
-    data: PropTypes.arrayOf(PropTypes.object).isRequired,
+    data: PropTypes.arrayOf(PropTypes.shape({
+        round: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        season: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        records: PropTypes.arrayOf(PropTypes.shape({
+            id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+            label: PropTypes.string.isRequired,
+            value: PropTypes.number.isRequired,
+            image: PropTypes.string,
+            team_logo: PropTypes.string,
+            subLabel: PropTypes.string,
+            rank: PropTypes.number,
+        })).isRequired
+    })).isRequired,
     width: PropTypes.number.isRequired,
     height: PropTypes.number.isRequired,
     isPlaying: PropTypes.bool.isRequired,
@@ -492,5 +516,6 @@ LineChartRace.propTypes = {
     leagueLogo: PropTypes.string,
     manualTime: PropTypes.number
 };
+
 
 export default LineChartRace;

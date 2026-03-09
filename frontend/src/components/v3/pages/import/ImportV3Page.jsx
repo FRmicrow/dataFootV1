@@ -125,12 +125,12 @@ const ImportV3Page = () => {
             return;
         }
 
-        const leagueObj = leagues.find(l => l.league.id === parseInt(selectedLeague));
+        const leagueObj = leagues.find(l => l.league.id === Number.parseInt(selectedLeague));
         if (!leagueObj) return;
 
         const selectedSeasons = filterSeasonsRange(
-            parseInt(fromYear),
-            parseInt(toYear),
+            Number.parseInt(fromYear),
+            Number.parseInt(toYear),
             skipExisting,
             leagueSyncStatus
         );
@@ -153,7 +153,7 @@ const ImportV3Page = () => {
         const queueItem = {
             id: Date.now(),
             country: selectedCountry,
-            leagueId: parseInt(selectedLeague),
+            leagueId: Number.parseInt(selectedLeague),
             leagueName: leagueObj.league.name || 'Unknown League',
             seasons: queueSeasons
         };
@@ -163,6 +163,37 @@ const ImportV3Page = () => {
 
     const handleRemoveFromQueue = (id) => {
         setImportQueue(prev => prev.filter(item => item.id !== id));
+    };
+
+    const processImportStream = async (reader, decoder) => {
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            lines.forEach(line => {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        setLogs(prev => [...prev, data]);
+
+                        if (data.type === 'complete') {
+                            setLogs(prev => [...prev, {
+                                type: 'success',
+                                message: `✅ Import Finished. View Dashboard: /league/${data.leagueId}/season/${data.season}`,
+                                link: `/league/${data.leagueId}/season/${data.season}`
+                            }]);
+                            // Refresh status
+                            if (selectedLeague) fetchSyncStatus(selectedLeague);
+                        }
+                    } catch (e) {
+                        console.error("SSE Parse Error", e);
+                    }
+                }
+            });
+        }
     };
 
     const handleBatchImport = async () => {
@@ -187,41 +218,9 @@ const ImportV3Page = () => {
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            await processImportStream(reader, decoder);
 
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
-
-                lines.forEach(line => {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.slice(6));
-                            setLogs(prev => [...prev, data]);
-
-                            if (data.type === 'complete' || (data.type === 'error' && data.message && data.message.includes("Critical"))) {
-                                if (data.type === 'complete') {
-                                    setLogs(prev => [...prev, {
-                                        type: 'success',
-                                        message: `✅ Import Finished. View Dashboard: /league/${data.leagueId}/season/${data.season}`,
-                                        link: `/league/${data.leagueId}/season/${data.season}`
-                                    }]);
-                                    // Refresh status
-                                    if (selectedLeague) fetchSyncStatus(selectedLeague);
-                                }
-                                if (data.type === 'error') {
-                                    // Don't stop fully, maybe subsequent items work? 
-                                    // For batch, usually we continue, but let's see.
-                                }
-                            }
-                        } catch (e) {
-                            console.error("SSE Parse Error", e);
-                        }
-                    }
-                });
-            }
+            setIsImporting(false);
             setIsImporting(false);
             setImportQueue([]); // Clear queue on success
 
@@ -229,6 +228,22 @@ const ImportV3Page = () => {
             console.error("Import failed", error);
             setLogs(prev => [...prev, { type: 'error', message: `Fatal Error: ${error.message}` }]);
             setIsImporting(false);
+        }
+    };
+
+    const getSeasonStatusStyles = (s) => {
+        if (s.isFull) return 'bg-emerald-900/30 border-emerald-800 text-emerald-400';
+        if (s.isPartial) return 'bg-amber-900/30 border-amber-800 text-amber-400';
+        return 'bg-slate-700 border-slate-600 text-slate-400';
+    };
+
+    const getLogTypeStyles = (type) => {
+        switch (type) {
+            case 'error': return 'text-red-400';
+            case 'success': return 'text-emerald-400 font-bold';
+            case 'warning': return 'text-amber-400';
+            case 'complete': return 'text-emerald-300 border-t border-emerald-900/30 pt-2 mt-2 block w-full';
+            default: return 'text-slate-300';
         }
     };
 
@@ -310,12 +325,7 @@ const ImportV3Page = () => {
                                                 {item.seasons.map(s => (
                                                     <span
                                                         key={s.year}
-                                                        className={`text-[10px] px-1.5 py-0.5 rounded border ${s.isFull
-                                                            ? 'bg-emerald-900/30 border-emerald-800 text-emerald-400'
-                                                            : s.isPartial
-                                                                ? 'bg-amber-900/30 border-amber-800 text-amber-400'
-                                                                : 'bg-slate-700 border-slate-600 text-slate-400'
-                                                            }`}
+                                                        className={`text-[10px] px-1.5 py-0.5 rounded border ${getSeasonStatusStyles(s)}`}
                                                     >
                                                         {s.year} {s.isFull ? '✓' : s.isPartial ? '!' : ''}
                                                     </span>
@@ -393,12 +403,7 @@ const ImportV3Page = () => {
                         {logs.map((log, index) => (
                             <div key={index} className="flex gap-3 font-mono text-xs md:text-sm">
                                 <span className="text-slate-600 shrink-0">[{new Date().toLocaleTimeString()}]</span>
-                                <span className={`break-words ${log.type === 'error' ? 'text-red-400' :
-                                    log.type === 'success' ? 'text-emerald-400 font-bold' :
-                                        log.type === 'warning' ? 'text-amber-400' :
-                                            log.type === 'complete' ? 'text-emerald-300 border-t border-emerald-900/30 pt-2 mt-2 block w-full' :
-                                                'text-slate-300'
-                                    }`}>
+                                <span className={`break-words ${getLogTypeStyles(log.type)}`}>
                                     {log.type === 'info' && <span className="text-blue-500 mr-2">ℹ</span>}
                                     {log.type === 'success' && <span className="text-emerald-500 mr-2">✓</span>}
                                     {log.type === 'error' && <span className="text-red-500 mr-2">✗</span>}

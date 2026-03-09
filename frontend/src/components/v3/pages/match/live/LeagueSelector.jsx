@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
+
 
 /**
  * LeagueSelector (US_022 AC 1 & 4)
@@ -112,4 +114,18 @@ const LeagueSelector = ({ availableLeagues = [], trackedIds = [], onToggle, onCl
     );
 };
 
+LeagueSelector.propTypes = {
+    availableLeagues: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+        country: PropTypes.string,
+        logo: PropTypes.string,
+        importance_rank: PropTypes.number
+    })),
+    trackedIds: PropTypes.arrayOf(PropTypes.number),
+    onToggle: PropTypes.func.isRequired,
+    onClose: PropTypes.func.isRequired
+};
+
 export default LeagueSelector;
+

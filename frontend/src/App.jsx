@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ImportMatrixPage from './components/v3/pages/import/ImportMatrixPage';
 import ImportV3Page from './components/v3/pages/import/ImportV3Page';
 import SeasonOverviewPage from './components/v3/pages/league/SeasonOverviewPage';

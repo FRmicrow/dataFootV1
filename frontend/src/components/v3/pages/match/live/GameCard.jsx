@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import { useNavigate } from 'react-router-dom';
 import api from '../../../../../services/api';
 import './LiveBet.css';
@@ -60,7 +62,18 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
     };
 
     return (
-        <div className={`lb-game-card animate-fade-in ${isFeatured ? 'featured' : ''}`} onClick={handleCardClick}>
+        <div
+            className={`lb-game-card animate-fade-in ${isFeatured ? 'featured' : ''}`}
+            onClick={handleCardClick}
+            role="button"
+            tabIndex="0"
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCardClick();
+                }
+            }}
+        >
             <div className="lb-card-header">
                 <div className="lb-league-info">
                     {league.flag && <img src={league.flag} alt="" className="lb-league-flag" />}
@@ -69,6 +82,15 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                         onClick={(e) => { e.stopPropagation(); onToggleFavorite('league', league.id); }}
                         style={{ cursor: 'pointer', marginLeft: '4px', fontSize: '1.2rem' }}
                         title="Toggle Favorite League"
+                        role="button"
+                        tabIndex="0"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onToggleFavorite('league', league.id);
+                            }
+                        }}
                     >
                         {isFavLeague ? '⭐' : '☆'}
                     </span>
@@ -117,6 +139,15 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                             onClick={(e) => { e.stopPropagation(); onToggleFavorite('team', teams.home.id); }}
                             style={{ cursor: 'pointer', marginLeft: '4px' }}
                             title="Toggle Favorite Team"
+                            role="button"
+                            tabIndex="0"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onToggleFavorite('team', teams.home.id);
+                                }
+                            }}
                         >
                             {isFavHome ? '⭐' : '☆'}
                         </span>
@@ -133,6 +164,15 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
                             onClick={(e) => { e.stopPropagation(); onToggleFavorite('team', teams.away.id); }}
                             style={{ cursor: 'pointer', marginLeft: '4px' }}
                             title="Toggle Favorite Team"
+                            role="button"
+                            tabIndex="0"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onToggleFavorite('team', teams.away.id);
+                                }
+                            }}
                         >
                             {isFavAway ? '⭐' : '☆'}
                         </span>
@@ -251,4 +291,24 @@ const GameCard = ({ fixture, showOdds = true, preferences = { favorite_leagues: 
     );
 };
 
+GameCard.propTypes = {
+    fixture: PropTypes.shape({
+        fixture: PropTypes.object.isRequired,
+        league: PropTypes.object.isRequired,
+        teams: PropTypes.object.isRequired,
+        goals: PropTypes.object.isRequired,
+        live_odds: PropTypes.object,
+        ai_prediction: PropTypes.object,
+        implied_probabilities: PropTypes.object
+    }).isRequired,
+    showOdds: PropTypes.bool,
+    preferences: PropTypes.shape({
+        favorite_leagues: PropTypes.array,
+        favorite_teams: PropTypes.array
+    }),
+    onToggleFavorite: PropTypes.func,
+    isFeatured: PropTypes.bool
+};
+
 export default GameCard;
+

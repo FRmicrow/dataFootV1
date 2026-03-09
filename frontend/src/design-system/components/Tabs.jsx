@@ -12,7 +12,7 @@ const Tabs = ({ items = [], activeId, onChange, className = '', variant = 'line'
     const visibleItems = items.filter(item => !item.hidden);
 
     return (
-        <div className={`ds-tabs ds-tabs--${variant} ${className}`}>
+        <div className={`ds-tabs ds-tabs--${variant} ${className}`} role="tablist">
             <div className="ds-tabs-list">
                 {visibleItems.map(item => (
                     <button
@@ -20,6 +20,9 @@ const Tabs = ({ items = [], activeId, onChange, className = '', variant = 'line'
                         disabled={item.disabled}
                         className={`ds-tabs-trigger ${activeId === item.id ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
                         onClick={() => !item.disabled && onChange && onChange(item.id)}
+                        role="tab"
+                        aria-selected={activeId === item.id}
+                        aria-disabled={item.disabled}
                     >
                         {item.icon && <span className="ds-tabs-icon">{item.icon}</span>}
                         {item.label}

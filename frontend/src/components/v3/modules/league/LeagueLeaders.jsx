@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { Card, Stack, Badge, Grid } from '../../../../design-system';
+import { Card, Stack, Grid } from '../../../../design-system';
 
 const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) => {
 
@@ -98,10 +98,32 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
 };
 
 LeagueLeaders.propTypes = {
-    topScorers: PropTypes.array.isRequired,
-    topAssists: PropTypes.array.isRequired,
-    topRated: PropTypes.array,
+    topScorers: PropTypes.arrayOf(PropTypes.shape({
+        player_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        player_name: PropTypes.string,
+        name: PropTypes.string,
+        team_name: PropTypes.string,
+        photo_url: PropTypes.string,
+        goals_total: PropTypes.number
+    })).isRequired,
+    topAssists: PropTypes.arrayOf(PropTypes.shape({
+        player_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        player_name: PropTypes.string,
+        name: PropTypes.string,
+        team_name: PropTypes.string,
+        photo_url: PropTypes.string,
+        goals_assists: PropTypes.number
+    })).isRequired,
+    topRated: PropTypes.arrayOf(PropTypes.shape({
+        player_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        player_name: PropTypes.string,
+        name: PropTypes.string,
+        team_name: PropTypes.string,
+        photo_url: PropTypes.string,
+        games_rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    })),
     layout: PropTypes.oneOf(['grid', 'vertical'])
 };
+
 
 export default LeagueLeaders;

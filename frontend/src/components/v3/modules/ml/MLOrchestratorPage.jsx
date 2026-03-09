@@ -146,8 +146,11 @@ const MLOrchestratorPage = () => {
                         onClick={async () => {
                             try {
                                 await api.runMLOddsCatchup();
-                                alert("Past odds sync triggered.");
-                            } catch (e) { alert("Sync failed."); }
+                                globalThis.alert("Past odds sync triggered.");
+                            } catch (err) {
+                                console.error("Past odds sync failed:", err);
+                                globalThis.alert("Sync failed.");
+                            }
                         }}
                     >
                         Sync Past Odds
@@ -159,8 +162,11 @@ const MLOrchestratorPage = () => {
                         onClick={async () => {
                             try {
                                 await api.syncMLUpcomingOdds();
-                                alert("Future odds sync triggered.");
-                            } catch (e) { alert("Sync failed."); }
+                                globalThis.alert("Future odds sync triggered.");
+                            } catch (err) {
+                                console.error("Future odds sync failed:", err);
+                                globalThis.alert("Sync failed.");
+                            }
                         }}
                     >
                         Sync Future Odds

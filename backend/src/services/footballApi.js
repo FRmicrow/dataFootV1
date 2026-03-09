@@ -288,11 +288,7 @@ class FootballApi {
      * GET /teams?league={leagueId}&season={season}
      */
     async getTeamsByLeague(leagueId, season) {
-        const requestId = `teams-league-${leagueId}-${season}`;
-        return this.makeRequest('/teams', {
-            league: leagueId,
-            season: season
-        }, requestId);
+        return this.getTeamsFromLeague(leagueId, season);
     }
 
     /**

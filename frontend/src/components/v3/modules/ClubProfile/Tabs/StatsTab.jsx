@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../../../../../services/api';
 import { Card, Table, Badge, Stack, Button, Grid } from '../../../../../design-system';
+
+const MetricRow = ({ label, value, subValue, title }) => (
+    <div title={title} className={title ? 'tooltip-hover' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)', cursor: title ? 'help' : 'default' }}>
+        <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>{label}</span>
+        <Stack align="flex-end" gap="2px">
+            <span style={{ fontWeight: 'bold' }}>{value || '—'}</span>
+            {subValue && <span style={{ fontSize: '10px', opacity: 0.6 }}>{subValue}</span>}
+        </Stack>
+    </div>
+);
+
+MetricRow.propTypes = {
+    label: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    subValue: PropTypes.string,
+    title: PropTypes.string
+};
 
 const StatsTab = ({ clubId, year, competitionId }) => {
     const [stats, setStats] = useState(null);
@@ -41,16 +59,6 @@ const StatsTab = ({ clubId, year, competitionId }) => {
                 <div style={{ color: 'var(--color-text-muted)' }}>Mining tactical performance patterns...</div>
             </Stack>
         </Card>
-    );
-
-    const MetricRow = ({ label, value, subValue, variant = 'neutral', title }) => (
-        <div title={title} className={title ? 'tooltip-hover' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)', cursor: title ? 'help' : 'default' }}>
-            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>{label}</span>
-            <Stack align="flex-end" gap="2px">
-                <span style={{ fontWeight: 'bold' }}>{value || '—'}</span>
-                {subValue && <span style={{ fontSize: '10px', opacity: 0.6 }}>{subValue}</span>}
-            </Stack>
-        </div>
     );
 
     if (view === 'overview') {
@@ -162,6 +170,12 @@ const StatsTab = ({ clubId, year, competitionId }) => {
             </Card>
         </Stack>
     );
+};
+
+StatsTab.propTypes = {
+    clubId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    competitionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
 };
 
 export default StatsTab;

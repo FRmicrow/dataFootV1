@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
+
 import { useNavigate } from 'react-router-dom';
 import { Card, Table, Badge, Stack, Button } from '../../../../../design-system';
 import { getShortPosition } from '../../../../../utils/positionUtils';
@@ -59,7 +61,7 @@ const SquadTab = ({ roster, year }) => {
             dataIndex: 'rating',
             key: 'rating',
             align: 'center',
-            render: (v) => <Badge variant={parseFloat(v) >= 7.2 ? 'primary' : 'neutral'}>{v ? parseFloat(v).toFixed(1) : '—'}</Badge>
+            render: (v) => <Badge variant={Number.parseFloat(v) >= 7.2 ? 'primary' : 'neutral'}>{v ? Number.parseFloat(v).toFixed(1) : '—'}</Badge>
         }
     ];
 
@@ -102,4 +104,21 @@ const SquadTab = ({ roster, year }) => {
     );
 };
 
+SquadTab.propTypes = {
+    roster: PropTypes.arrayOf(PropTypes.shape({
+        player_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        photo_url: PropTypes.string,
+        position: PropTypes.string,
+        age: PropTypes.number,
+        appearances: PropTypes.number,
+        minutes: PropTypes.number,
+        goals: PropTypes.number,
+        assists: PropTypes.number,
+        rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    })).isRequired,
+    year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
+};
+
 export default SquadTab;
+

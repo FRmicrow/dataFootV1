@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Card, Stack, Badge, Grid, Button, FixtureRow } from '../../../../design-system';
+import { Card, Stack, Badge, FixtureRow } from '../../../../design-system';
 import InlineFixtureDetails from '../match/InlineFixtureDetails';
 
 const FixturesList = ({
@@ -175,7 +175,11 @@ const FixturesList = ({
                                                 onClick={() => handleFixtureToggle(f.fixture_id)}
                                             />
                                             {isExpanded && (
-                                                <div className="ds-fixture-expansion-panel animate-fade-in" onClick={e => e.stopPropagation()}>
+                                                <div
+                                                    className="ds-fixture-expansion-panel animate-fade-in"
+                                                    onClick={e => e.stopPropagation()}
+                                                    role="presentation"
+                                                >
                                                     <InlineFixtureDetails
                                                         fixtureId={f.fixture_id}
                                                         homeTeamId={f.home_team_id}

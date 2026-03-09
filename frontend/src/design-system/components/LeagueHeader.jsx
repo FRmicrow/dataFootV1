@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import ProfileHeader from './ProfileHeader';
 
 /**
@@ -40,5 +42,22 @@ const LeagueHeader = ({
         />
     );
 };
+
+LeagueHeader.propTypes = {
+    league: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        logo: PropTypes.string,
+        country: PropTypes.shape({
+            name: PropTypes.string
+        }),
+        rank: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        type: PropTypes.string
+    }).isRequired,
+    seasonsCount: PropTypes.number,
+    activeSeason: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    actions: PropTypes.node
+};
+
 
 export default LeagueHeader;

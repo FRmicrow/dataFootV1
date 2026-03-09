@@ -46,11 +46,11 @@ class MigrationService {
             .filter(f => f.endsWith('.js'))
             .sort();
 
-        const applied = (await db.all('SELECT name FROM V3_Migrations')).map(m => m.name);
+        const applied = new Set((await db.all('SELECT name FROM V3_Migrations')).map(m => m.name));
         let runCount = 0;
 
         for (const file of files) {
-            if (!applied.includes(file)) {
+            if (!applied.has(file)) {
                 console.log(`🚀 Applying migration: ${file}...`);
                 const { up } = await import(path.join(this.registryPath, file));
 

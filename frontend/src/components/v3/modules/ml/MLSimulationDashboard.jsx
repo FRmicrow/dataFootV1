@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
-import { Card, Badge, Table, Button, MetricCard, Stack, Grid } from '../../../../design-system';
+import { Card, Badge, Table, MetricCard, Stack, Grid } from '../../../../design-system';
 
 const ExpandedLeagueStats = ({ league_id, season_year }) => {
     const [stats, setStats] = useState(null);
@@ -112,6 +112,12 @@ const ExpandedLeagueStats = ({ league_id, season_year }) => {
     );
 };
 
+
+const getAlignment = (align) => {
+    if (align === 'center') return 'center';
+    if (align === 'right') return 'flex-end';
+    return 'flex-start';
+};
 
 const MLSimulationDashboard = () => {
     // Overview State
@@ -276,7 +282,7 @@ const MLSimulationDashboard = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    justifyContent: col.align === 'center' ? 'center' : col.align === 'right' ? 'flex-end' : 'flex-start',
+                    justifyContent: getAlignment(col.align),
                     width: '100%',
                     background: 'transparent',
                     border: 'none',

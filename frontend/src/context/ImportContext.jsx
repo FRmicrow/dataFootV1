@@ -32,7 +32,8 @@ export const ImportProvider = ({ children }) => {
                 const data = JSON.parse(line.substring(6));
                 handleServerEvent(data);
             } catch (e) {
-                // Ignore malformed JSON
+                // Silently ignore malformed JSON lines in the SSE stream
+                console.warn('Malformed SSE line ignored:', line, e);
             }
         }
     }, []);

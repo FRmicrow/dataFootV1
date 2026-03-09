@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
 import api from '../../../../services/api';
 import MatchDetailEvents from './MatchDetailEvents';
 import InlineMatchDetailTactical from './InlineMatchDetailTactical';
 import InlinePlayerStatCard from '../shared/InlinePlayerStatCard';
-import { Stack, Grid, Tabs, Card, Badge } from '../../../../design-system';
+import { Grid, Tabs, Badge } from '../../../../design-system';
 import './InlineFixtureDetails.css';
 
 const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
@@ -164,4 +166,11 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
     );
 };
 
+InlineFixtureDetails.propTypes = {
+    fixtureId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    homeTeamId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    awayTeamId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
+};
+
 export default InlineFixtureDetails;
+

@@ -162,9 +162,6 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
     console.log(`   🔗 Resolved ${apiIdPairs.length} api_ids: [${apiIdPairs.map(p => p.apiId).join(', ')}]`);
 
     // Fetch upcoming fixtures for each league in parallel by API ID
-    const results = await Promise.allSettled(
-        apiIdPairs.map(({ apiId }) => footballApi.getNextFixturesByLeague(apiId, 10))
-    );
 
     // Also fetch today's odds by date (best effort)
     const today = new Date().toISOString().split('T')[0];

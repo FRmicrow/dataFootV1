@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
+import PropTypes from 'prop-types';
 
 const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame, onComplete, speed = 1, className = "", title = "Chart Evolution", barCount = 10, manualTime = null }, ref) => {
     const internalCanvasRef = useRef(null);
@@ -267,5 +268,33 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
 
     return <canvas ref={canvasRef} className={`d3-canvas ${className}`} />;
 });
+
+BarChartRace.displayName = 'BarChartRace';
+
+BarChartRace.propTypes = {
+    data: PropTypes.arrayOf(PropTypes.shape({
+        round: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        season: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        records: PropTypes.arrayOf(PropTypes.shape({
+            id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+            label: PropTypes.string.isRequired,
+            value: PropTypes.number.isRequired,
+            image: PropTypes.string,
+            team_logo: PropTypes.string,
+            subLabel: PropTypes.string,
+            rank: PropTypes.number,
+        })).isRequired
+    })).isRequired,
+    width: PropTypes.number.isRequired,
+    height: PropTypes.number.isRequired,
+    isPlaying: PropTypes.bool.isRequired,
+    onFrame: PropTypes.func,
+    onComplete: PropTypes.func,
+    speed: PropTypes.number,
+    className: PropTypes.string,
+    title: PropTypes.string,
+    barCount: PropTypes.number,
+    manualTime: PropTypes.number,
+};
 
 export default BarChartRace;

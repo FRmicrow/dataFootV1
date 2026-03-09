@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Badge, Button, Stack, FixtureRow, TableSkeleton, Grid, MetricCard } from '../../../../design-system';
+import { Card, Table, Badge, Button, Stack, FixtureRow, Grid, MetricCard } from '../../../../design-system';
 import api from '../../../../services/api';
 
 const MLOddsPage = () => {
     const [upcoming, setUpcoming] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [selectedFixture, setSelectedFixture] = useState(null);
     const [fixtureOdds, setFixtureOdds] = useState([]);
     const [loadingOdds, setLoadingOdds] = useState(false);
@@ -21,7 +20,7 @@ const MLOddsPage = () => {
             setUpcoming(response.data || []);
             setLoading(false);
         } catch (err) {
-            setError("Failed to load upcoming fixtures with odds.");
+            console.error("Failed to load upcoming fixtures:", err);
             setLoading(false);
         }
     };
@@ -106,12 +105,13 @@ const MLOddsPage = () => {
                         variant="outline"
                         icon="⏪"
                         onClick={async () => {
-                            if (window.confirm("Launch a historical catch-up for past match odds (last 7 days)?")) {
+                            if (globalThis.confirm("Launch a historical catch-up for past match odds (last 7 days)?")) {
                                 try {
                                     await api.runMLOddsCatchup();
-                                    alert("Past odds synchronization completed.");
-                                } catch (e) {
-                                    alert("Sync failed (Past matches).");
+                                    globalThis.alert("Past odds synchronization completed.");
+                                } catch (err) {
+                                    console.error("Odds catchup failed:", err);
+                                    globalThis.alert("Sync failed (Past matches).");
                                 }
                             }
                         }}
@@ -122,13 +122,14 @@ const MLOddsPage = () => {
                         variant="primary"
                         icon="⏩"
                         onClick={async () => {
-                            if (window.confirm("Launch a synchronization for upcoming match odds (next 7 days)?")) {
+                            if (globalThis.confirm("Launch a synchronization for upcoming match odds (next 7 days)?")) {
                                 try {
                                     await api.syncMLUpcomingOdds();
                                     await fetchUpcoming();
-                                    alert("Upcoming odds synchronization completed.");
-                                } catch (e) {
-                                    alert("Sync failed (Upcoming matches).");
+                                    globalThis.alert("Upcoming odds synchronization completed.");
+                                } catch (err) {
+                                    console.error("Upcoming sync failed:", err);
+                                    globalThis.alert("Sync failed (Upcoming matches).");
                                 }
                             }
                         }}
@@ -171,19 +172,23 @@ const MLOddsPage = () => {
                             title={selectedMatch ? `${selectedMatch.home_name} vs ${selectedMatch.away_name}` : "Odds Details"}
                             subtitle={selectedMatch ? selectedMatch.league_name : "Market breakdown for the selected match."}
                         >
-                            {loadingOdds ? (
-                                <div className="p-xl ds-text-center"><span className="ds-spinner"></span> Fetching market data...</div>
-                            ) : fixtureOdds.length === 0 ? (
-                                <div className="ds-text-center py-xl ds-text-neutral-500 italic">No detailed odds available for this match.</div>
-                            ) : (
-                                <div className="ds-table-overflow ds-border ds-border-neutral-800 ds-rounded-lg">
-                                    <Table
-                                        columns={columns}
-                                        data={fixtureOdds}
-                                        rowKey={(record, index) => `${record.bookmaker_id}-${record.bet_id}-${record.value_label}-${index}`}
-                                    />
-                                </div>
-                            )}
+                            {(() => {
+                                if (loadingOdds) {
+                                    return <div className="p-xl ds-text-center"><span className="ds-spinner"></span> Fetching market data...</div>;
+                                }
+                                if (fixtureOdds.length === 0) {
+                                    return <div className="ds-text-center py-xl ds-text-neutral-500 italic">No detailed odds available for this match.</div>;
+                                }
+                                return (
+                                    <div className="ds-table-overflow ds-border ds-border-neutral-800 ds-rounded-lg">
+                                        <Table
+                                            columns={columns}
+                                            data={fixtureOdds}
+                                            rowKey={(record, index) => `${record.bookmaker_id}-${record.bet_id}-${record.value_label}-${index}`}
+                                        />
+                                    </div>
+                                );
+                            })()}
                         </Card>
                     ) : (
                         <Card variant="surface">

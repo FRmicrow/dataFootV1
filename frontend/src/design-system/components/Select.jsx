@@ -1,5 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Select from 'react-select';
+
 import './Select.css';
 
 const customStyles = {
@@ -109,4 +111,18 @@ const CustomSelect = ({ options, value, onChange, placeholder, isSearchable = fa
     );
 };
 
+CustomSelect.propTypes = {
+    options: PropTypes.arrayOf(PropTypes.shape({
+        value: PropTypes.any,
+        label: PropTypes.string
+    })).isRequired,
+    value: PropTypes.any,
+    onChange: PropTypes.func.isRequired,
+    placeholder: PropTypes.string,
+    isSearchable: PropTypes.bool,
+    className: PropTypes.string,
+    style: PropTypes.object
+};
+
 export default CustomSelect;
+

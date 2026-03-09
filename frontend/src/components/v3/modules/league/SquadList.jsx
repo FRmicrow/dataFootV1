@@ -22,10 +22,6 @@ const SquadList = ({
         }
     }, [teams, selectedTeamId, setSelectedTeamId]);
 
-    const filteredTeams = useMemo(() => {
-        if (!teamSearch) return teams;
-        return teams.filter(t => t.team_name.toLowerCase().includes(teamSearch.toLowerCase()));
-    }, [teams, teamSearch]);
 
     const filteredSquad = useMemo(() => {
         if (!searchTerm) return teamSquad;

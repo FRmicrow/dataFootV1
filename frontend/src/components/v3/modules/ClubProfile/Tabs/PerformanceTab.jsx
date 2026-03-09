@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import { Card, Table, Grid, Stack, Badge } from '../../../../../design-system';
 
 const PerformanceTab = ({ clubId, year, competitionId, summary, seasons }) => {
@@ -54,7 +56,7 @@ const PerformanceTab = ({ clubId, year, competitionId, summary, seasons }) => {
                 <Card title="Win Rate" variant="compact">
                     <Stack align="center" gap="4px">
                         <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'bold', color: 'var(--color-accent-500)' }}>
-                            {summary?.win_rate ? `${parseFloat(summary.win_rate).toFixed(1)}%` : '—'}
+                            {summary?.win_rate ? `${Number.parseFloat(summary.win_rate).toFixed(1)}%` : '—'}
                         </div>
                         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>SEASON {year}</div>
                     </Stack>
@@ -98,4 +100,32 @@ const PerformanceTab = ({ clubId, year, competitionId, summary, seasons }) => {
     );
 };
 
+PerformanceTab.propTypes = {
+    clubId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    competitionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    summary: PropTypes.shape({
+        win_rate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        total_played: PropTypes.number,
+        goals_scored: PropTypes.number,
+        goals_conceded: PropTypes.number
+    }),
+    seasons: PropTypes.arrayOf(PropTypes.shape({
+        league_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        league_name: PropTypes.string,
+        league_logo: PropTypes.string,
+        competition_type: PropTypes.string,
+        rank: PropTypes.number,
+        round_reached: PropTypes.string,
+        played: PropTypes.number,
+        win: PropTypes.number,
+        draw: PropTypes.number,
+        lose: PropTypes.number,
+        goals_for: PropTypes.number,
+        goals_against: PropTypes.number,
+        squad_size: PropTypes.number
+    })).isRequired
+};
+
 export default PerformanceTab;
+

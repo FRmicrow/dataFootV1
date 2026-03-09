@@ -12,7 +12,6 @@ import { PageLayout, PageContent } from '../../layouts';
 import LeagueOverview from '../../modules/league/LeagueOverview';
 import StandingsTable from '../../modules/league/StandingsTable';
 import FixturesList from '../../modules/league/FixturesList';
-import SquadExplorer from '../../modules/league/SquadExplorer';
 import SquadList from '../../modules/league/SquadList';
 
 const SeasonOverviewPage = () => {
@@ -157,10 +156,10 @@ const SeasonOverviewPage = () => {
 
     if (!data) return null;
 
-    const { league, topScorers, topAssists, topRated, availableYears, isFinished, hallOfFame } = data;
+    const { league, topScorers, topAssists, topRated, availableYears } = data;
 
-    const isUEFACup = [1475, 1476, 1516].includes(Number(id));
-    const isModernUEFA = isUEFACup && Number(year) >= 2024;
+    const isUEFACup = [1475, 1476, 1516].includes(Number.parseInt(id));
+    const isModernUEFA = isUEFACup && Number.parseInt(year) >= 2024;
 
     const tabItems = [
         { id: 'overview', label: 'Surveillance', icon: '🔭' },
@@ -211,7 +210,7 @@ const SeasonOverviewPage = () => {
                                 onChange={handleSeasonChange}
                             >
                                 {(availableYears || [year]).map(y => (
-                                    <option key={y} value={y}>{y}/{parseInt(y) + 1}</option>
+                                    <option key={y} value={y}>{y}/{Number.parseInt(y) + 1}</option>
                                 ))}
                             </select>
                         </div>

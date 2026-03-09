@@ -35,61 +35,67 @@ const ResultsCanvas = ({
         <main className="sim-canvas">
             <SimulationError error={error} handleRunSimulation={handleRunSimulation} />
 
-            {loading && !metrics && (!jobStatus || (jobStatus.status !== 'RUNNING' && jobStatus.status !== 'running')) ? (
-                <SimulationSkeleton />
-            ) : !metrics ? (
-                <InitialStateView
-                    getStepMessage={getStepMessage}
-                    previousSimAvailable={previousSimAvailable}
-                    handleLoadPreviousResults={handleLoadPreviousResults}
-                />
-            ) : metrics ? (
-                <div className="results-container animate-fade-in-up">
-                    {metrics.overconfidence_warning && (
-                        <div className="recalibration-banner">
-                            ⚠️ Overconfidence Alert — Model showed high confidence on predictions that were incorrect.
+            {(() => {
+                if (loading && !metrics && (!jobStatus || (jobStatus.status.toUpperCase() !== 'RUNNING'))) {
+                    return <SimulationSkeleton />;
+                }
+                if (!metrics) {
+                    return (
+                        <InitialStateView
+                            getStepMessage={getStepMessage}
+                            previousSimAvailable={previousSimAvailable}
+                            handleLoadPreviousResults={handleLoadPreviousResults}
+                        />
+                    );
+                }
+                return (
+                    <div className="results-container animate-fade-in-up">
+                        {metrics.overconfidence_warning && (
+                            <div className="recalibration-banner">
+                                ⚠️ Overconfidence Alert — Model showed high confidence on predictions that were incorrect.
+                            </div>
+                        )}
+
+                        <SimulationMetrics metrics={metrics} />
+
+                        {jobStatus && (jobStatus.status.toUpperCase() === 'COMPLETED') && (
+                            <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '20px', textAlign: 'right' }}>
+                                ✅ Protocol Verified — Last Ran: {new Date(jobStatus.last_heartbeat || jobStatus.created_at).toLocaleString()}
+                            </div>
+                        )}
+
+                        <RetrainSection
+                            simId={simId}
+                            activeModelForHorizon={activeModelForHorizon}
+                            selectedHorizon={selectedHorizon}
+                            handleRetrain={handleRetrain}
+                            isRetraining={isRetraining}
+                            mlStatus={mlStatus}
+                            retrainResult={retrainResult}
+                        />
+
+                        <div className="charts-grid">
+                            <AccuracyChart combinedChartData={combinedChartData} />
+                            {metrics.confusion_matrix && (
+                                <ConfusionMatrix matrix={metrics.confusion_matrix} />
+                            )}
                         </div>
-                    )}
 
-                    <SimulationMetrics metrics={metrics} />
-
-                    {jobStatus && (jobStatus.status === 'COMPLETED' || jobStatus.status === 'completed') && (
-                        <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '20px', textAlign: 'right' }}>
-                            ✅ Protocol Verified — Last Ran: {new Date(jobStatus.last_heartbeat || jobStatus.created_at).toLocaleString()}
+                        <div className="tape-actionbar">
+                            <button className="btn-tape-toggle" onClick={handleToggleTape}>
+                                {showTape ? 'Hide Matchday Tape ✕' : 'View Matchday Tape 📼'}
+                            </button>
                         </div>
-                    )}
 
-                    <RetrainSection
-                        simId={simId}
-                        activeModelForHorizon={activeModelForHorizon}
-                        selectedHorizon={selectedHorizon}
-                        handleRetrain={handleRetrain}
-                        isRetraining={isRetraining}
-                        mlStatus={mlStatus}
-                        retrainResult={retrainResult}
-                    />
-
-                    <div className="charts-grid">
-                        <AccuracyChart combinedChartData={combinedChartData} />
-                        {metrics.confusion_matrix && (
-                            <ConfusionMatrix matrix={metrics.confusion_matrix} />
+                        {showTape && (
+                            <div className="tape-container animate-fade-in">
+                                <h3>Historical Match Log (N={tapeData.length})</h3>
+                                <MatchdayTape tapeData={tapeData} loadingTape={loadingTape} />
+                            </div>
                         )}
                     </div>
-
-                    <div className="tape-actionbar">
-                        <button className="btn-tape-toggle" onClick={handleToggleTape}>
-                            {showTape ? 'Hide Matchday Tape ✕' : 'View Matchday Tape 📼'}
-                        </button>
-                    </div>
-
-                    {showTape && (
-                        <div className="tape-container animate-fade-in">
-                            <h3>Historical Match Log (N={tapeData.length})</h3>
-                            <MatchdayTape tapeData={tapeData} loadingTape={loadingTape} />
-                        </div>
-                    )}
-                </div>
-            ) : null}
+                );
+            })()}
         </main>
     );
 };

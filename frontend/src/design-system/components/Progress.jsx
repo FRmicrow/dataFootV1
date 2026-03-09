@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import './Progress.css';
 
 const Progress = ({
@@ -29,5 +31,16 @@ const Progress = ({
         </div>
     );
 };
+
+Progress.propTypes = {
+    value: PropTypes.number,
+    max: PropTypes.number,
+    size: PropTypes.string,
+    variant: PropTypes.string,
+    showLabel: PropTypes.bool,
+    label: PropTypes.string,
+    className: PropTypes.string
+};
+
 
 export default Progress;

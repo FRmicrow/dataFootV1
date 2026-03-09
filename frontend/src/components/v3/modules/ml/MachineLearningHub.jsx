@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import MLOrchestratorPage from './MLOrchestratorPage';
 import MLSimulationDashboard from './MLSimulationDashboard';
 import MLBetRecommendations from './MLBetRecommendations';
@@ -7,7 +7,6 @@ import MLOddsPage from './MLOddsPage';
 import './MachineLearningHub.css';
 
 const MachineLearningHub = () => {
-    const location = useLocation();
 
     return (
         <div className="ml-hub-container ds-container">

@@ -45,7 +45,7 @@ const MonitoringConsole = () => {
                 await axios.post('/api/ml/train');
                 fetchMlStatus();
             } catch (error) {
-                alert("Failed to trigger retraining: " + error.message);
+                alert(`Failed to trigger retraining: ${error.message}`);
             }
         }
     };

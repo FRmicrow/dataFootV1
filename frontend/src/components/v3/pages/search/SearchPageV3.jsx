@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import PropTypes from 'prop-types';
+
 import api from '../../../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { Card, Stack, Grid, Badge, Button } from '../../../../design-system';
+import { Card, Stack, Grid, Badge } from '../../../../design-system';
 import { PageLayout, PageHeader, PageContent } from '../../layouts';
 import './SearchPageV3.css';
 
@@ -97,6 +99,17 @@ const CountrySelector = ({ countries, selected, onSelect }) => {
         </div>
     );
 };
+
+CountrySelector.propTypes = {
+    countries: PropTypes.arrayOf(PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        flag_url: PropTypes.string,
+        importance_rank: PropTypes.number
+    })).isRequired,
+    selected: PropTypes.string,
+    onSelect: PropTypes.func.isRequired
+};
+
 
 const SearchPageV3 = () => {
     const [query, setQuery] = useState('');

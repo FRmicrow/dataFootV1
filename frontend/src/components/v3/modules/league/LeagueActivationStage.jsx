@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
 import api from '../../../../services/api';
 
 /**
@@ -143,4 +145,11 @@ const LeagueActivationStage = ({ leagueId, onComplete, onCancel }) => {
     );
 };
 
+LeagueActivationStage.propTypes = {
+    leagueId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    onComplete: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired
+};
+
 export default LeagueActivationStage;
+

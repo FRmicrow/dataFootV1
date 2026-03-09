@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../../../services/api';
 import {
-    Card, Stack, Grid, Badge, Button,
+    Card, Stack, Button,
     Tabs, ProfileHeader, ControlBar, Select, TableSkeleton, Skeleton
 } from '../../../../design-system';
 
@@ -50,7 +50,7 @@ const ClubProfilePageV3 = () => {
         const fetchClubProfile = async () => {
             setLoading(true);
             try {
-                const fetchedData = await api.getClub(id, selectedYear, selectedCompId !== 'all' ? selectedCompId : null);
+                const fetchedData = await api.getClub(id, selectedYear, selectedCompId === 'all' ? null : selectedCompId);
                 setData(fetchedData);
                 if (!selectedYear && fetchedData.rosterYear) {
                     setSelectedYear(fetchedData.rosterYear);
@@ -151,8 +151,8 @@ const ClubProfilePageV3 = () => {
                             <div className="ds-filter-box">
                                 <label>Season</label>
                                 <Select
-                                    options={availableYears.map(y => ({ value: y, label: `${y}/${parseInt(y) + 1}` }))}
-                                    value={{ value: selectedYear, label: `${selectedYear}/${parseInt(selectedYear) + 1}` }}
+                                    options={availableYears.map(y => ({ value: y, label: `${y}/${Number.parseInt(y) + 1}` }))}
+                                    value={{ value: selectedYear, label: `${selectedYear}/${Number.parseInt(selectedYear) + 1}` }}
                                     onChange={(opt) => setSelectedYear(opt.value)}
                                 />
                             </div>

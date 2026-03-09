@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStudio } from './StudioContext';
 import BarChartRace from './charts/BarChartRace';
 import LineChartRace from './charts/LineChartRace';
-import axios from 'axios';
 import './Step4_Export.css';
 
 const Step4_Export = () => {

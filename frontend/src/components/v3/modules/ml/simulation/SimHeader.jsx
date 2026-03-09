@@ -2,7 +2,7 @@ import React from 'react';
 
 const SimHeader = () => (
     <header className="sim-header">
-        <button onClick={() => window.history.back()} className="back-link">
+        <button onClick={() => globalThis.history.back()} className="back-link">
             ← Back to Hub
         </button>
         <div className="header-main-wrap">

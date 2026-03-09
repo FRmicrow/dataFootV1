@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../../../../services/api';
 import GameCard from './GameCard';
 import LeagueSelector from './LeagueSelector';
@@ -144,8 +144,8 @@ const LiveBetDashboard = () => {
     }, [upcomingGroups, searchTerm]);
 
     const trackedIds = preferences.tracked_leagues || [];
-    const TIER_1_IDS = [39, 140, 78, 135, 61, 2, 3];
-    const isTier1 = (leagueId) => TIER_1_IDS.includes(Number(leagueId));
+    const TIER_1_IDS = new Set([39, 140, 78, 135, 61, 2, 3]);
+    const isTier1 = (leagueId) => TIER_1_IDS.has(Number(leagueId));
 
     const renderContent = () => {
         if (loading) {
@@ -319,7 +319,7 @@ const LiveBetDashboard = () => {
                                         const res = await api.bulkIngestOdds(date);
                                         alert(`Success: ${res.result.successful} fixtures updated with depth odds.`);
                                     } catch (err) {
-                                        alert('Failed to ingest depth odds: ' + err.message);
+                                        alert(`Failed to ingest depth odds: ${err.message}`);
                                     }
                                 }}
                                 className="lb-action-btn"

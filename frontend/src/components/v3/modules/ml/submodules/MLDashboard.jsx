@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Stack, Grid, Card, Badge, Table } from '../../../../../design-system';
+import { Stack, Card, Badge, Table } from '../../../../../design-system';
 import api from '../../../../../services/api';
 import MLPulse from './MLPulse';
 
@@ -51,10 +51,10 @@ const MLDashboard = () => {
             dataIndex: 'ml_probability',
             title: 'Probability',
             render: (val) => {
-                const num = parseFloat(val);
+                const num = Number.parseFloat(val);
                 return (
                     <div className="ds-flex ds-items-center ds-gap-sm">
-                        <span className="ds-text-sm ds-font-medium">{isNaN(num) ? '-%' : `${(num * 100).toFixed(1)}%`}</span>
+                        <span className="ds-text-sm ds-font-medium">{Number.isNaN(num) ? '-%' : `${(num * 100).toFixed(1)}%`}</span>
                     </div>
                 );
             }

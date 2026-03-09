@@ -48,7 +48,11 @@ const SimulationMetrics = ({ metrics }) => {
                 </span>
                 <div className="val">{((metrics.avg_confidence || 0) * 100).toFixed(1)}%</div>
                 <div className="sub-val">
-                    {metrics.accuracy > 0.5 ? 'RELIABLE' : metrics.accuracy > 0.4 ? 'MODERATE' : 'NEEDS WORK'}
+                    {(() => {
+                        if (metrics.accuracy > 0.5) return 'RELIABLE';
+                        if (metrics.accuracy > 0.4) return 'MODERATE';
+                        return 'NEEDS WORK';
+                    })()}
                 </div>
             </div>
         </div>

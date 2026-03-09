@@ -99,7 +99,7 @@ def run_training():
     # 5. Evaluate Overall 1N2 Output
     print("\nEvaluating 1N2 Probabilities...")
     y_true_1n2 = []
-    for h, a in zip(y_test_h, y_test_a):
+    for h, a in zip(y_test_h.to_numpy(), y_test_a.to_numpy()):
         if h > a: y_true_1n2.append(0)    # 1
         elif h == a: y_true_1n2.append(1) # N
         else: y_true_1n2.append(2)        # 2

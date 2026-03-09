@@ -1,6 +1,8 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { Card, Stack, Grid, Badge } from '../../../../design-system';
+import { Card, Grid } from '../../../../design-system';
 import './InlinePlayerStatCard.css';
 
 const InlinePlayerStatCard = ({ player }) => {
@@ -18,7 +20,7 @@ const InlinePlayerStatCard = ({ player }) => {
         const duelsPct = p.duels_total > 0 ? Math.round((p.duels_won / p.duels_total) * 100) : 0;
 
         return [
-            { subject: 'Rating', value: (parseFloat(p.rating) || 0) * 10, display: p.rating, fullMark: 100 },
+            { subject: 'Rating', value: (Number.parseFloat(p.rating) || 0) * 10, display: p.rating, fullMark: 100 },
             { subject: 'Shots', value: Math.min((p.shots_total || 0) * 20, 100), display: p.shots_total || 0, fullMark: 100 },
             { subject: 'Passing', value: passAccuracyPct, display: `${passAccuracyPct}%`, fullMark: 100 },
             { subject: 'Defense', value: Math.min((p.tackles_interceptions || 0) * 15, 100), display: p.tackles_interceptions || 0, fullMark: 100 },
@@ -31,7 +33,7 @@ const InlinePlayerStatCard = ({ player }) => {
 
     const getRatingColor = (r) => {
         if (!r || r === 'N/A') return 'var(--color-text-dim)';
-        const rating = parseFloat(r);
+        const rating = Number.parseFloat(r);
         if (rating >= 8) return 'var(--color-success-500)';
         if (rating >= 7) return 'var(--color-primary-500)';
         if (rating >= 6.5) return 'var(--color-accent-500)';
@@ -117,4 +119,24 @@ const InlinePlayerStatCard = ({ player }) => {
     );
 };
 
+InlinePlayerStatCard.propTypes = {
+    player: PropTypes.shape({
+        player_photo: PropTypes.string,
+        player_name: PropTypes.string,
+        team_name: PropTypes.string,
+        minutes_played: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        goals_total: PropTypes.number,
+        goals_assists: PropTypes.number,
+        passes_total: PropTypes.number,
+        passes_key: PropTypes.number,
+        duels_total: PropTypes.number,
+        shots_total: PropTypes.number,
+        tackles_interceptions: PropTypes.number,
+        duels_won: PropTypes.number,
+        dribbles_success: PropTypes.number
+    })
+};
+
 export default InlinePlayerStatCard;
+

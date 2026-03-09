@@ -13,12 +13,12 @@ const MARKET_GOALS_OU = 5;
 // Bookmaker IDs
 const BK_WINAMAX = 52;
 const BK_UNIBET = 11;
-const PREFERRED_BOOKMAKERS = [BK_WINAMAX, BK_UNIBET];
+const PREFERRED_BOOKMAKERS = new Set([BK_WINAMAX, BK_UNIBET]);
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const selectBestBookmaker = (bookmakers) => {
-    let selected = bookmakers.find(b => PREFERRED_BOOKMAKERS.includes(b.id));
+    let selected = bookmakers.find(b => PREFERRED_BOOKMAKERS.has(b.id));
     return selected || bookmakers[0];
 };
 

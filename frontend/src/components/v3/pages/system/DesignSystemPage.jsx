@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     Card, Button, Badge, Grid, Stack,
     Tabs, Progress, MetricCard, ProfileHeader,
-    LeagueCard, PlayerCard, FixtureRow, Select, Skeleton, TableSkeleton
+    LeagueCard, PlayerCard, FixtureRow, Select, Skeleton
 } from '../../../../design-system';
 import { PageLayout, PageHeader, PageContent } from '../../layouts';
 

@@ -11,7 +11,6 @@ import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import {
     IMPORT_STATUS,
-    STATUS_LABELS,
     PILLARS,
     CONSECUTIVE_FAILURE_THRESHOLD
 } from './importStatusConstants.js';

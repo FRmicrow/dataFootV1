@@ -20,7 +20,7 @@ class OddsCrawlerService {
             SELECT fixture_id, api_id, date
             FROM V3_Fixtures
             WHERE status_short IN ('FT', 'AET', 'PEN')
-              AND date > (CURRENT_TIMESTAMP - INTERVAL '7 days')::text
+              AND date > (CURRENT_TIMESTAMP - INTERVAL '7 days')
               AND odds_last_sync IS NULL
             ORDER BY date DESC
         `);
@@ -61,7 +61,7 @@ class OddsCrawlerService {
             SELECT fixture_id, api_id, date
             FROM V3_Fixtures
             WHERE status_short = 'NS'
-              AND date BETWEEN CURRENT_TIMESTAMP::text AND (CURRENT_TIMESTAMP + INTERVAL '14 days')::text
+              AND date BETWEEN CURRENT_TIMESTAMP AND (CURRENT_TIMESTAMP + INTERVAL '14 days')
               AND (odds_last_sync IS NULL OR odds_last_sync < CURRENT_TIMESTAMP - INTERVAL '6 hours')
             ORDER BY date ASC
         `);

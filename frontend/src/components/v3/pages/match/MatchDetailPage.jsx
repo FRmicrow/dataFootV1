@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import api from '../../../../services/api';
 import MatchDetailLineups from '../../modules/match/MatchDetailLineups';
 import MatchDetailEvents from '../../modules/match/MatchDetailEvents';
@@ -10,7 +10,6 @@ import './MatchDetailPage.css';
 
 const MatchDetailPage = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
 
     const [fixture, setFixture] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -40,7 +39,7 @@ const MatchDetailPage = () => {
     const {
         home_name, home_logo, away_name, away_logo,
         goals_home, goals_away, status_short, date,
-        league_name, league_logo
+        league_name
     } = fixture;
 
     const dateStr = date ? new Date(date).toLocaleString() : '';

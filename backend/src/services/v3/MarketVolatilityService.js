@@ -144,8 +144,8 @@ export class MarketVolatilityService {
         const upcoming = await db.all(`
             SELECT fixture_id 
             FROM V3_Fixtures 
-            WHERE date > CURRENT_TIMESTAMP::text
-              AND date < (CURRENT_TIMESTAMP + INTERVAL '2 days')::text
+            WHERE date > CURRENT_TIMESTAMP
+              AND date < (CURRENT_TIMESTAMP + INTERVAL '2 days')
               ${leagueFilter}
         `);
 

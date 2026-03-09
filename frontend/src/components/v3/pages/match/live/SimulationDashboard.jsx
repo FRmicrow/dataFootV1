@@ -75,7 +75,7 @@ const SimulationDashboard = () => {
     useEffect(() => {
         if (!leagues || leagues.length === 0) return;
 
-        if (selectedLeague && !leagues.find(x => x.league_id === parseInt(selectedLeague))) {
+        if (selectedLeague && !leagues.find(x => x.league_id === Number.parseInt(selectedLeague))) {
             setSelectedLeague('');
             setSelectedYear('');
             localStorage.removeItem('forge_selected_league');
@@ -84,11 +84,11 @@ const SimulationDashboard = () => {
         }
 
         if (selectedLeague) {
-            const l = leagues.find(x => x.league_id === parseInt(selectedLeague));
+            const l = leagues.find(x => x.league_id === Number.parseInt(selectedLeague));
             if (l) {
                 setYears(l.years_imported || []);
                 const savedYear = localStorage.getItem('forge_selected_year');
-                const isYearValid = l.years_imported && l.years_imported.includes(parseInt(selectedYear || savedYear));
+                const isYearValid = l.years_imported && l.years_imported.includes(Number.parseInt(selectedYear || savedYear));
 
                 if (!isYearValid && l.years_imported && l.years_imported.length > 0) {
                     setSelectedYear(String(l.years_imported[0]));
@@ -226,8 +226,8 @@ const SimulationDashboard = () => {
             const data = await api.getLeagueModels(selectedLeague);
             if (data.models && data.models.length > 0) {
                 setForgeModels(prev => {
-                    const otherModels = prev.filter(m => m.league_id !== parseInt(selectedLeague));
-                    return [...otherModels, ...data.models.map(m => ({ ...m, league_id: parseInt(selectedLeague) }))];
+                    const otherModels = prev.filter(m => m.league_id !== Number.parseInt(selectedLeague));
+                    return [...otherModels, ...data.models.map(m => ({ ...m, league_id: Number.parseInt(selectedLeague) }))];
                 });
             }
         } catch (err) {
@@ -261,7 +261,7 @@ const SimulationDashboard = () => {
         setBuildStatus({ FULL_HISTORICAL: 'pending', '5Y_ROLLING': 'pending', '3Y_ROLLING': 'pending' });
         setError(null);
         try {
-            const result = await api.buildForgeModels({ leagueId: parseInt(selectedLeague) });
+            const result = await api.buildForgeModels({ leagueId: Number.parseInt(selectedLeague) });
             if (result.success) pollBuildStatus();
             else {
                 setError(result.message);
@@ -284,7 +284,7 @@ const SimulationDashboard = () => {
 
     const leagueModels = useMemo(() => {
         if (!selectedLeague) return [];
-        return forgeModels.filter(m => m.league_id === parseInt(selectedLeague) && m.is_active);
+        return forgeModels.filter(m => m.league_id === Number.parseInt(selectedLeague) && m.is_active);
     }, [selectedLeague, forgeModels]);
 
     const activeModelForHorizon = useMemo(() => {
@@ -305,8 +305,8 @@ const SimulationDashboard = () => {
 
         try {
             const data = await api.startSimulation({
-                leagueId: parseInt(selectedLeague),
-                seasonYear: parseInt(selectedYear),
+                leagueId: Number.parseInt(selectedLeague),
+                seasonYear: Number.parseInt(selectedYear),
                 mode: selectedMode,
                 horizon: selectedHorizon
             });
@@ -360,7 +360,7 @@ const SimulationDashboard = () => {
         const roundsMap = {};
         tapeData.forEach((m, idx) => {
             const roundMatch = m.round_name?.match(/\d+/);
-            const roundNum = roundMatch ? parseInt(roundMatch[0]) : Math.floor(idx / 10) + 1;
+            const roundNum = roundMatch ? Number.parseInt(roundMatch[0]) : Math.floor(idx / 10) + 1;
             if (!roundsMap[roundNum]) roundsMap[roundNum] = { round: roundNum, correct: 0, total: 0 };
             roundsMap[roundNum].total++;
             if (m.is_correct === 1) roundsMap[roundNum].correct++;
@@ -370,7 +370,7 @@ const SimulationDashboard = () => {
             .sort((a, b) => a.round - b.round)
             .map(r => ({
                 round: r.round,
-                accuracy: parseFloat(((r.correct / r.total) * 100).toFixed(1))
+                accuracy: Number.parseFloat(((r.correct / r.total) * 100).toFixed(1))
             }));
     }, [tapeData]);
 

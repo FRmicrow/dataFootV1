@@ -1,5 +1,4 @@
-import psycopg2
-from db_config import get_connection
+import sqlite3
 import pandas as pd
 import numpy as np
 import json
@@ -19,7 +18,7 @@ class TemporalFeatureFactory:
     Strict leakage-proof feature extractor. Fetches data exactly as it was known before a match.
     Enforces the 'Morning-Of' rule: date < target_date.
     """
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = "statfoot.db"):
         self.db_path = db_path
         # Standardized Sequence Order for XGBoost / Random Forest
         self.feature_columns = [
@@ -60,7 +59,7 @@ class TemporalFeatureFactory:
             cur.execute("""
                 SELECT date, home_team_id, away_team_id, league_id, round 
                 FROM V3_Fixtures 
-                WHERE fixture_id = %s
+                WHERE fixture_id = ?
             """, (fixture_id,))
             fixture = cur.fetchone()
             
@@ -78,43 +77,9 @@ class TemporalFeatureFactory:
             round_name = fixture['round'] or ""
             
             # 2. Build the vector
-            vector = {}
+            vector = self._assemble_vector(conn, h_id, a_id, morning_of, fixture_id, round_name)
             
-            # A. Rolling Momentum (3, 5, 10, 20)
-            home_mom = self._get_team_momentum(conn, h_id, morning_of)
-            away_mom = self._get_team_momentum(conn, a_id, morning_of)
-            
-            vector.update({
-                "mom_gd_h3": home_mom['gd_3'],
-                "mom_gd_h5": home_mom['gd_5'],
-                "mom_gd_h10": home_mom['gd_10'],
-                "mom_gd_h20": home_mom['gd_20'],
-                
-                "mom_pts_h3": home_mom['pts_3'],
-                "mom_pts_h5": home_mom['pts_5'],
-                "mom_pts_h10": home_mom['pts_10'],
-                "mom_pts_h20": home_mom['pts_20'],
-
-                "win_rate_h5": home_mom['win_5'],
-                "win_rate_h10": home_mom['win_10'],
-                "cs_rate_h5": home_mom['cs_5'],
-                "cs_rate_h10": home_mom['cs_10'],
-                
-                "mom_gd_a3": away_mom['gd_3'],
-                "mom_gd_a5": away_mom['gd_5'],
-                "mom_gd_a10": away_mom['gd_10'],
-                "mom_gd_a20": away_mom['gd_20'],
-
-                "mom_pts_a3": away_mom['pts_3'],
-                "mom_pts_a5": away_mom['pts_5'],
-                "mom_pts_a10": away_mom['pts_10'],
-                "mom_pts_a20": away_mom['pts_20'],
-
-                "win_rate_a5": away_mom['win_5'],
-                "win_rate_a10": away_mom['win_10'],
-                "cs_rate_a5": away_mom['cs_5'],
-                "cs_rate_a10": away_mom['cs_10'],
-            })
+            # 3. Standardization & Cleansing
 
             # Fatigue
             vector["rest_h"] = self._get_rest_days(conn, h_id, morning_of)
@@ -164,13 +129,55 @@ class TemporalFeatureFactory:
             
             return standard_vector
 
-        except Exception as e:
+        except (sqlite3.Error, ValueError, KeyError) as e:
             logger.error(f"Error generating vector for fixture {fixture_id}: {e}")
             # Return zeroed vector on failure to prevent pipeline crash
             return {col: 0.0 for col in self.feature_columns}
         finally:
             if should_close:
                 conn.close()
+
+    def _assemble_vector(self, conn, h_id, a_id, morning_of, fixture_id, round_name) -> Dict[str, float]:
+        vector = {}
+        
+        # A. Rolling Momentum (3, 5, 10, 20)
+        home_mom = self._get_team_momentum(conn, h_id, morning_of)
+        away_mom = self._get_team_momentum(conn, a_id, morning_of)
+        
+        vector.update({
+            "mom_gd_h3": home_mom['gd_3'], "mom_gd_h5": home_mom['gd_5'], "mom_gd_h10": home_mom['gd_10'], "mom_gd_h20": home_mom['gd_20'],
+            "mom_pts_h3": home_mom['pts_3'], "mom_pts_h5": home_mom['pts_5'], "mom_pts_h10": home_mom['pts_10'], "mom_pts_h20": home_mom['pts_20'],
+            "win_rate_h5": home_mom['win_5'], "win_rate_h10": home_mom['win_10'], "cs_rate_h5": home_mom['cs_5'], "cs_rate_h10": home_mom['cs_10'],
+            "mom_gd_a3": away_mom['gd_3'], "mom_gd_a5": away_mom['gd_5'], "mom_gd_a10": away_mom['gd_10'], "mom_gd_a20": away_mom['gd_20'],
+            "mom_pts_a3": away_mom['pts_3'], "mom_pts_a5": away_mom['pts_5'], "mom_pts_a10": away_mom['pts_10'], "mom_pts_a20": away_mom['pts_20'],
+            "win_rate_a5": away_mom['win_5'], "win_rate_a10": away_mom['win_10'], "cs_rate_a5": away_mom['cs_5'], "cs_rate_a10": away_mom['cs_10'],
+        })
+
+        # B. Venue & Fatigue
+        vector["rest_h"] = self._get_rest_days(conn, h_id, morning_of)
+        vector["rest_a"] = self._get_rest_days(conn, a_id, morning_of)
+        
+        home_venue = self._get_venue_stats(conn, h_id, morning_of)
+        away_venue = self._get_venue_stats(conn, a_id, morning_of)
+        vector["venue_diff_h"] = home_venue['pts_home'] - home_venue['pts_away']
+        vector["venue_diff_a"] = away_venue['pts_home'] - away_venue['pts_away']
+        vector["def_res_h"] = home_mom['ga_10']
+        vector["def_res_a"] = away_mom['ga_10']
+        
+        # C. Contextual Data (H2H, LQI, ELO, Story)
+        h2h = self._get_h2h_context(conn, h_id, a_id, morning_of)
+        vector.update({"h2h_h_wins": h2h['h_wins'], "h2h_draws": h2h['draws'], "h2h_a_wins": h2h['a_wins']})
+        
+        vector["lqi_h"] = self._get_lqi(conn, fixture_id, h_id)
+        vector["lqi_a"] = self._get_lqi(conn, fixture_id, a_id)
+        vector["elo_h"] = self._get_team_elo(conn, h_id, morning_of)
+        vector["elo_a"] = self._get_team_elo(conn, a_id, morning_of)
+        
+        vector["is_derby"] = self._is_derby(conn, h_id, a_id)
+        vector["travel_km"] = self._calculate_travel(conn, h_id, a_id)
+        vector["high_stakes"] = 1 if any(x in round_name.lower() for x in ['final', 'relegation', 'play-off']) else 0
+        
+        return vector
 
     def _get_team_momentum(self, conn, team_id: int, match_date: str) -> Dict[str, float]:
         """Calculates GD, PTS, Win Rate, and CS Rate for 3, 5, 10, 20 matches strictly BEFORE match_date."""
@@ -241,8 +248,8 @@ class TemporalFeatureFactory:
         query = """
             SELECT goals_home, goals_away, home_team_id, away_team_id
             FROM V3_Fixtures
-            WHERE (home_team_id = %s OR away_team_id = %s)
-              AND date < %s
+            WHERE (home_team_id = ? OR away_team_id = ?)
+              AND date < ?
               AND status_short IN ('FT', 'AET', 'PEN')
             ORDER BY date DESC
             LIMIT 20
@@ -269,8 +276,8 @@ class TemporalFeatureFactory:
         query = """
             SELECT goals_home, goals_away, home_team_id, away_team_id
             FROM V3_Fixtures
-            WHERE ((home_team_id = %s AND away_team_id = %s) OR (home_team_id = %s AND away_team_id = %s))
-              AND date < %s
+            WHERE ((home_team_id = ? AND away_team_id = ?) OR (home_team_id = ? AND away_team_id = ?))
+              AND date < ?
               AND status_short IN ('FT', 'AET', 'PEN')
             ORDER BY date DESC
             LIMIT 3
@@ -300,7 +307,7 @@ class TemporalFeatureFactory:
         # 1. Snapshot Priority (US_181)
         cur.execute("""
             SELECT feature_data FROM V3_Feature_Snapshots 
-            WHERE fixture_id = %s AND team_id = %s AND feature_type = 'SQUAD'
+            WHERE fixture_id = ? AND team_id = ? AND feature_type = 'SQUAD'
         """, (fixture_id, team_id))
         row = cur.fetchone()
         if row:
@@ -308,16 +315,14 @@ class TemporalFeatureFactory:
                 data = json.loads(row['feature_data'])
                 if 'lqi' in data: return data['lqi']
                 if 'rating_avg' in data: return data['rating_avg']
-                if 'players' in data:
-                    # If snapshot has players but no avg, calculate it
-                    ratings = [float(p.get('rating', 6.5)) for p in data['players']]
-                    return sum(ratings) / len(ratings) if ratings else 6.5
-            except: pass
+            except (json.JSONDecodeError, KeyError, TypeError) as e:
+                logger.debug(f"Snapshot parsing failed: {e}")
+                pass
             
         # 2. Dynamic Reconstruction (SQL Fallback)
         cur.execute("""
             SELECT starting_xi FROM V3_Fixture_Lineups 
-            WHERE fixture_id = %s AND team_id = %s
+            WHERE fixture_id = ? AND team_id = ?
         """, (fixture_id, team_id))
         row = cur.fetchone()
         if row and row['starting_xi']:
@@ -337,7 +342,7 @@ class TemporalFeatureFactory:
                         # Pad to 11 if some players missing
                         while len(ratings) < 11: ratings.append(6.5)
                         return sum(ratings) / len(ratings)
-            except Exception as e:
+            except (json.JSONDecodeError, KeyError, TypeError, sqlite3.Error) as e:
                 logger.debug(f"LQI Reconstruction failed for {fixture_id}/{team_id}: {e}")
                 
         return 6.5 # Safe baseline
@@ -347,7 +352,7 @@ class TemporalFeatureFactory:
         cur = conn.cursor()
         cur.execute("""
             SELECT elo_score FROM V3_Team_Ratings 
-            WHERE team_id = %s AND date < %s 
+            WHERE team_id = ? AND date < ? 
             ORDER BY date DESC LIMIT 1
         """, (team_id, morning_of))
         row = cur.fetchone()
@@ -370,7 +375,7 @@ class TemporalFeatureFactory:
         cur.execute("""
             SELECT v.city FROM V3_Teams t 
             LEFT JOIN V3_Venues v ON t.venue_id = v.api_id
-            WHERE t.team_id IN (%s, %s)
+            WHERE t.team_id IN (?, ?)
         """, (h_id, a_id))
         cities = [r[0] for r in cur.fetchall() if r[0]]
         if len(cities) == 2 and cities[0] == cities[1]:

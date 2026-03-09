@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+
 import './Accordion.css';
 
 const Accordion = ({ title, headerRight, defaultExpanded = false, children, maxHeight = '400px' }) => {
@@ -34,5 +36,14 @@ const Accordion = ({ title, headerRight, defaultExpanded = false, children, maxH
         </div>
     );
 };
+
+Accordion.propTypes = {
+    title: PropTypes.node.isRequired,
+    headerRight: PropTypes.node,
+    defaultExpanded: PropTypes.bool,
+    children: PropTypes.node,
+    maxHeight: PropTypes.string
+};
+
 
 export default Accordion;

@@ -240,7 +240,7 @@ const ImportMatrixPage = () => {
 
     const handleDiscoveryImport = async () => {
         if (!selectedDiscoveryLeague) return;
-        const league = availableLeagues.find(l => l.league.id === parseInt(selectedDiscoveryLeague));
+        const league = availableLeagues.find(l => l.league.id === Number.parseInt(selectedDiscoveryLeague));
         if (!league) return;
 
         const currentSeason = league.seasons.find(s => s.current)?.year || new Date().getFullYear();
@@ -263,7 +263,7 @@ const ImportMatrixPage = () => {
 
     const addToDiscoveryBatch = () => {
         if (!selectedDiscoveryLeague) return;
-        const league = availableLeagues.find(l => l.league.id === parseInt(selectedDiscoveryLeague));
+        const league = availableLeagues.find(l => l.league.id === Number.parseInt(selectedDiscoveryLeague));
         if (!league) return;
 
         const currentSeason = league.seasons.find(s => s.current)?.year || new Date().getFullYear();

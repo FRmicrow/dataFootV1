@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
-import { Stack, Badge } from '../../../../design-system';
+import { Badge } from '../../../../design-system';
 import './MatchDetailEvents.css';
 
 const MatchDetailEvents = ({ fixtureId }) => {

@@ -60,6 +60,14 @@ const MatchDetailPlayerVisuals = ({ fixtureId }) => {
                 key={key}
                 className={`player-mini-card ${isActive ? 'active' : ''}`}
                 onClick={() => setSelectedPlayer({ ...p })}
+                role="button"
+                tabIndex="0"
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedPlayer({ ...p });
+                    }
+                }}
             >
                 <div className="p-card-header">
                     <span className="p-rating" style={{ background: getRatingColor(p.rating) }}>

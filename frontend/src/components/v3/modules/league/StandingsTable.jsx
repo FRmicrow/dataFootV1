@@ -1,53 +1,83 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { Card, Table, Badge, Stack, Button, Grid, Input } from '../../../../design-system';
+import { Card, Table, Stack, Button, Grid, Input } from '../../../../design-system';
 
-const RankBadge = ({ rank }) => (
-    <div
-        style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: 'var(--radius-sm)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            background: rank <= 4 ? 'var(--color-primary-600)' : rank >= 18 ? 'var(--color-danger-500)' : 'var(--glass-bg)',
-            color: rank <= 4 || rank >= 18 ? 'white' : 'var(--color-text-main)'
-        }}
-    >
-        {rank}
-    </div>
-);
+const getRankTheme = (rank) => {
+    if (rank <= 4) return { background: 'var(--color-primary-600)', color: 'white' };
+    if (rank >= 18) return { background: 'var(--color-danger-500)', color: 'white' };
+    return { background: 'var(--glass-bg)', color: 'var(--color-text-main)' };
+};
 
-const FormIndicator = ({ form }) => (
-    <Stack direction="row" gap="4px" justify="center">
-        {form?.split('').map((char, i) => (
-            <div
-                key={i}
-                style={{
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '10px',
-                    fontWeight: '900',
-                    color: 'white',
-                    background: char === 'W' ? 'var(--color-success-500)' : char === 'D' ? 'var(--color-accent-500)' : char === 'L' ? 'var(--color-danger-500)' : 'rgba(255,255,255,0.05)'
-                }}
-                role="img"
-                aria-label={char === 'W' ? 'Win' : char === 'D' ? 'Draw' : char === 'L' ? 'Loss' : 'Unknown'}
-                title={char === 'W' ? 'Win' : char === 'D' ? 'Draw' : char === 'L' ? 'Loss' : 'Unknown'}
-            >
-                {char}
-            </div>
-        ))}
-    </Stack>
-);
+const RankBadge = ({ rank }) => {
+    const theme = getRankTheme(rank);
+    return (
+        <div
+            style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '11px',
+                fontWeight: 'bold',
+                ...theme
+            }}
+        >
+            {rank}
+        </div>
+    );
+};
+
+RankBadge.propTypes = {
+    rank: PropTypes.number.isRequired
+};
+
+const getFormTheme = (char) => {
+    switch (char) {
+        case 'W': return { background: 'var(--color-success-500)', label: 'Win' };
+        case 'D': return { background: 'var(--color-accent-500)', label: 'Draw' };
+        case 'L': return { background: 'var(--color-danger-500)', label: 'Loss' };
+        default: return { background: 'rgba(255,255,255,0.05)', label: 'Unknown' };
+    }
+};
+
+const FormIndicator = ({ form }) => {
+    const chars = form?.split('') || [];
+    return (
+        <Stack direction="row" gap="4px" justify="center">
+            {chars.map((char, i) => {
+                const theme = getFormTheme(char);
+                return (
+                    <div
+                        key={`${char}-${i}`}
+                        style={{
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: '900',
+                            color: 'white',
+                            background: theme.background
+                        }}
+                        aria-label={theme.label}
+                        title={theme.label}
+                    >
+                        {char}
+                    </div>
+                );
+            })}
+        </Stack>
+    );
+};
+
+FormIndicator.propTypes = {
+    form: PropTypes.string
+};
 
 const StandingsTable = ({
     standings = [],
@@ -56,7 +86,6 @@ const StandingsTable = ({
     rangeEnd,
     setRangeEnd,
     handleRangeUpdate,
-    isDynamicMode,
     loading
 }) => {
     const groupMap = (standings || []).reduce((acc, curr) => {
@@ -82,7 +111,7 @@ const StandingsTable = ({
             key: 'team',
             render: (_, t) => (
                 <Link to={`/club/${t.team_id}`} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', textDecoration: 'none', color: 'inherit' }}>
-                    <img src={t.team_logo} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                    <img src={t.team_logo} alt={`${t.team_name} logo`} style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
                     <span style={{ fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-sm)' }}>{t.team_name}</span>
                 </Link>
             )
@@ -99,11 +128,14 @@ const StandingsTable = ({
             key: 'diff',
             align: 'center',
             width: '50px',
-            render: (val) => (
-                <span style={{ color: val > 0 ? 'var(--color-success-500)' : val < 0 ? 'var(--color-danger-500)' : 'inherit', fontWeight: 'bold' }}>
-                    {val > 0 ? `+${val}` : val}
-                </span>
-            )
+            render: (val) => {
+                const color = val > 0 ? 'var(--color-success-500)' : val < 0 ? 'var(--color-danger-500)' : 'inherit';
+                return (
+                    <span style={{ color, fontWeight: 'bold' }}>
+                        {val > 0 ? `+${val}` : val}
+                    </span>
+                );
+            }
         },
         {
             title: 'PTS',
@@ -153,15 +185,17 @@ const StandingsTable = ({
                     style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
                     extra={idx === 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', background: 'rgba(255,255,255,0.03)', padding: '4px 12px', borderRadius: 'var(--radius-full)' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--color-text-dim)' }}>FILTER RANKS</span>
+                            <label htmlFor="range-start" style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--color-text-dim)' }}>FILTER RANKS</label>
                             <Input
+                                id="range-start"
                                 type="number"
                                 value={rangeStart}
                                 onChange={e => setRangeStart(e.target.value)}
                                 style={{ width: '48px', textAlign: 'center', padding: '4px' }}
                             />
-                            <span style={{ opacity: 0.3 }}>-</span>
+                            <label htmlFor="range-end" style={{ opacity: 0.3 }}>-</label>
                             <Input
+                                id="range-end"
                                 type="number"
                                 value={rangeEnd}
                                 onChange={e => setRangeEnd(e.target.value)}

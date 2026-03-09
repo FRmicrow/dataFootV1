@@ -100,7 +100,11 @@ const MLBetRecommendations = () => {
             key: 'edge',
             width: '100px',
             render: (val) => (
-                <Badge variant={val > 5 ? 'success' : val > 0 ? 'primary' : 'surface'} size="sm">
+                <Badge variant={(() => {
+                    if (val > 5) return 'success';
+                    if (val > 0) return 'primary';
+                    return 'surface';
+                })()} size="sm">
                     {val ? `${val.toFixed(1)}%` : '-'}
                 </Badge>
             )
@@ -196,8 +200,8 @@ const MLBetRecommendations = () => {
                 <Card title="Value Alerts" subtitle="Bets with positive expected value based on fair odds.">
                     <Stack gap="md">
                         {recommendations.top_value.length > 0 ? (
-                            recommendations.top_value.slice(0, 5).map((bet, idx) => (
-                                <div key={idx} className="ds-flex ds-justify-between ds-items-center ds-p-md ds-bg-surface-800 ds-rounded-lg ds-border ds-border-neutral-800 hover:ds-border-primary-500 ds-transition-all">
+                            recommendations.top_value.slice(0, 5).map((bet) => (
+                                <div key={`${bet.fixture_id}-${bet.market_type}-${bet.selection}`} className="ds-flex ds-justify-between ds-items-center ds-p-md ds-bg-surface-800 ds-rounded-lg ds-border ds-border-neutral-800 hover:ds-border-primary-500 ds-transition-all">
                                     <div>
                                         <div className="ds-text-xs ds-text-neutral-400">{bet.home_team} v {bet.away_team}</div>
                                         <div className="ds-font-bold ds-flex ds-items-center ds-gap-sm">

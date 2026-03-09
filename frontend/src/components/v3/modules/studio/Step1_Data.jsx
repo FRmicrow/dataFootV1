@@ -194,9 +194,12 @@ const Step1_Data = () => {
         setIsLoading(true);
         setError(null);
         try {
-            let contextLabel = mode === 'specific'
-                ? (selected.players.length === 1 ? selected.players[0].name : `${selected.players.length} Players`)
-                : (selected.leagues.length === 1 ? selected.leagues[0].name : 'Leagues');
+            let contextLabel = '';
+            if (mode === 'specific') {
+                contextLabel = selected.players.length === 1 ? selected.players[0].name : `${selected.players.length} Players`;
+            } else {
+                contextLabel = selected.leagues.length === 1 ? selected.leagues[0].name : 'Leagues';
+            }
 
             const data = mode === 'standings' ? await fetchLeagueRankings() : await fetchStandardQuery();
 

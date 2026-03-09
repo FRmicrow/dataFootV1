@@ -86,8 +86,8 @@ const PlayerProfilePageV3 = () => {
         }, []).sort((a, b) => a.name.localeCompare(b.name));
 
         const filtered = full.filter(s => {
-            const matchYear = yearFilter === 'all' || s.season_year === parseInt(yearFilter);
-            const matchLeague = leagueFilter === 'all' || s.league_id === parseInt(leagueFilter);
+            const matchYear = yearFilter === 'all' || s.season_year === Number.parseInt(yearFilter);
+            const matchLeague = leagueFilter === 'all' || s.league_id === Number.parseInt(leagueFilter);
             return matchYear && matchLeague;
         });
 
@@ -144,41 +144,6 @@ const PlayerProfilePageV3 = () => {
     const totalApps = Array.isArray(data.career) ? data.career.reduce((sum, s) => sum + (s.games_appearences || 0), 0) : 0;
     const totalGoals = Array.isArray(data.career) ? data.career.reduce((sum, s) => sum + (s.goals_total || 0), 0) : 0;
 
-    const careerColumns = (view) => [
-        ...(view !== 'club' ? [{
-            title: 'Team',
-            key: 'team',
-            render: (_, row) => (
-                <Stack direction="row" gap="var(--spacing-2xs)" align="center">
-                    <img src={row.team_logo} alt="" style={{ width: '16px' }} />
-                    <span>{row.team_name}</span>
-                </Stack>
-            )
-        }] : []),
-        {
-            title: 'Competition',
-            key: 'league',
-            render: (_, row) => (
-                <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="ds-link">
-                    {row.league_name}
-                </Link>
-            )
-        },
-        ...(view !== 'year' ? [{ title: 'Season', dataIndex: 'season_year', key: 'season' }] : []),
-        { title: 'Apps', dataIndex: 'games_appearences', key: 'apps', align: 'center' },
-        { title: 'Goals', dataIndex: 'goals_total', key: 'goals', align: 'center', render: (v) => <strong style={{ color: 'var(--color-primary-400)' }}>{v}</strong> },
-        {
-            title: 'Rating',
-            dataIndex: 'games_rating',
-            key: 'rating',
-            align: 'center',
-            render: (val) => (
-                <Badge variant={parseFloat(val) > 7.3 ? 'success' : parseFloat(val) > 6.7 ? 'primary' : 'neutral'}>
-                    {val || 'N/A'}
-                </Badge>
-            )
-        }
-    ];
 
     return (
         <div className="v3-player-page animate-fade-in">
@@ -228,6 +193,7 @@ const PlayerProfilePageV3 = () => {
                             columns={[
                                 {
                                     title: 'Team',
+                                    dataIndex: 'team_name',
                                     key: 'team',
                                     render: (_, club) => (
                                         <Link to={`/club/${club.team_id}`} className="ds-link-team">
@@ -285,12 +251,12 @@ const PlayerProfilePageV3 = () => {
                                 <div key={key} className="timeline-section">
                                     <div className="timeline-separator">
                                         {isClubView && teamLogo && <img src={teamLogo} alt="" className="timeline-club-icon" />}
-                                        <span className="timeline-label">{isClubView ? key : `${key}/${parseInt(key) + 1}`}</span>
+                                        <span className="timeline-label">{isClubView ? key : `${key}/${Number.parseInt(key) + 1}`}</span>
                                     </div>
                                     <Card ghost>
                                         <Table
                                             columns={[
-                                                ...(careerView !== 'club' ? [{
+                                                ...(careerView === 'club' ? [] : [{
                                                     title: 'Team',
                                                     key: 'team',
                                                     render: (_, row) => (
@@ -301,7 +267,7 @@ const PlayerProfilePageV3 = () => {
                                                             </Stack>
                                                         </Link>
                                                     )
-                                                }] : []),
+                                                }]),
                                                 {
                                                     title: 'Competition',
                                                     key: 'league',
@@ -314,7 +280,7 @@ const PlayerProfilePageV3 = () => {
                                                         </Link>
                                                     )
                                                 },
-                                                ...(careerView !== 'year' ? [{ title: 'Season', dataIndex: 'season_year', key: 'season' }] : []),
+                                                ...(careerView === 'year' ? [] : [{ title: 'Season', dataIndex: 'season_year', key: 'season' }]),
                                                 { title: 'Apps', dataIndex: 'games_appearences', key: 'apps', align: 'center' },
                                                 { title: 'Goals', dataIndex: 'goals_total', key: 'goals', align: 'center', render: (v) => <strong style={{ color: 'var(--color-primary-400)' }}>{v}</strong> },
                                                 {
@@ -323,7 +289,7 @@ const PlayerProfilePageV3 = () => {
                                                     key: 'rating',
                                                     align: 'center',
                                                     render: (val) => (
-                                                        <Badge variant={parseFloat(val) > 7.3 ? 'success' : parseFloat(val) > 6.7 ? 'primary' : 'neutral'}>
+                                                        <Badge variant={Number.parseFloat(val) > 7.3 ? 'success' : Number.parseFloat(val) > 6.7 ? 'primary' : 'neutral'}>
                                                             {val || '--'}
                                                         </Badge>
                                                     )

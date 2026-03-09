@@ -57,6 +57,45 @@ const calculateGroupStats = (matchGroups) => {
     return { stats, details };
 };
 
+const calculateLeagueSeasonStats = (matchGroups) => {
+    const lsStats = {};
+    for (const k in matchGroups) {
+        const g = matchGroups[k];
+        const best = g.predictions.sort((a, b) => b.ml_probability - a.ml_probability)[0];
+        const act = determineActualOutcome(g);
+        if (act === null) continue;
+
+        const lsKey = `${g.league_id}_${g.season_year}`;
+        if (!lsStats[lsKey]) lsStats[lsKey] = { ...g, total: 0, hits: 0, brier: 0, by_m: {} };
+        const s = lsStats[lsKey];
+        const hit = best.selection === act;
+        s.total++; if (hit) s.hits++;
+        if (!s.by_m[g.market_type]) s.by_m[g.market_type] = { h: 0, t: 0 };
+        s.by_m[g.market_type].t++; if (hit) s.by_m[g.market_type].h++;
+        s.brier += Math.pow(best.ml_probability - (hit ? 1 : 0), 2);
+    }
+    return lsStats;
+};
+
+const formatSimulationResults = (lsStats) => {
+    return Object.values(lsStats).map(s => ({
+        league_id: s.league_id,
+        league_name: s.league_name,
+        league_importance_rank: s.league_importance,
+        country_importance_rank: s.country_importance,
+        season_year: s.season_year,
+        global_hit_rate: s.total > 0 ? s.hits / s.total : 0,
+        brier_score: s.total > 0 ? s.brier / s.total : null,
+        market_1n2_ft: s.by_m['1N2_FT'] ? s.by_m['1N2_FT'].h / s.by_m['1N2_FT'].t : null,
+        market_1n2_ht: s.by_m['1N2_HT'] ? s.by_m['1N2_HT'].h / s.by_m['1N2_HT'].t : null
+    })).sort((a, b) =>
+        a.country_importance_rank - b.country_importance_rank ||
+        a.league_importance_rank - b.league_importance_rank ||
+        a.league_name.localeCompare(b.league_name) ||
+        b.season_year - a.season_year
+    );
+};
+
 // --- Controllers ---
 
 export const triggerModelRetrain = async (req, res) => {
@@ -178,29 +217,8 @@ export const getMLSimulationOverview = async (req, res) => {
             matchGroups[k].predictions.push(r);
         }
 
-        const lsStats = {};
-        for (const k in matchGroups) {
-            const g = matchGroups[k];
-            const best = g.predictions.sort((a, b) => b.ml_probability - a.ml_probability)[0];
-            const act = determineActualOutcome(g);
-            if (act === null) continue;
-
-            const lsKey = `${g.league_id}_${g.season_year}`;
-            if (!lsStats[lsKey]) lsStats[lsKey] = { ...g, total: 0, hits: 0, brier: 0, by_m: {} };
-            const s = lsStats[lsKey];
-            const hit = best.selection === act;
-            s.total++; if (hit) s.hits++;
-            if (!s.by_m[g.market_type]) s.by_m[g.market_type] = { h: 0, t: 0 };
-            s.by_m[g.market_type].t++; if (hit) s.by_m[g.market_type].h++;
-            s.brier += Math.pow(best.ml_probability - (hit ? 1 : 0), 2);
-        }
-
-        const data = Object.values(lsStats).map(s => ({
-            league_id: s.league_id, league_name: s.league_name, league_importance_rank: s.league_importance, country_importance_rank: s.country_importance, season_year: s.season_year,
-            global_hit_rate: s.total > 0 ? s.hits / s.total : 0, brier_score: s.total > 0 ? s.brier / s.total : null,
-            market_1n2_ft: s.by_m['1N2_FT'] ? s.by_m['1N2_FT'].h / s.by_m['1N2_FT'].t : null,
-            market_1n2_ht: s.by_m['1N2_HT'] ? s.by_m['1N2_HT'].h / s.by_m['1N2_HT'].t : null
-        })).sort((a, b) => a.country_importance_rank - b.country_importance_rank || a.league_importance_rank - b.league_importance_rank || a.league_name.localeCompare(b.league_name) || b.season_year - a.season_year);
+        const lsStats = calculateLeagueSeasonStats(matchGroups);
+        const data = formatSimulationResults(lsStats);
 
         res.json({ success: true, data });
     } catch (err) {

@@ -70,7 +70,7 @@ export class QuantService {
             level = 'LOW-RISK';
         } else if (bestVal.edge > 5 && confidence >= 50 && confidence <= 80) {
             level = 'MEDIUM-RISK';
-        } else if (bestVal.edge > 10 || odds > 5.0 || (outcome === 'draw' && confidence < 70)) {
+        } else if (bestVal.edge > 10 || odds > 5 || (outcome === 'draw' && confidence < 70)) {
             level = 'SPECULATIVE';
         }
 
