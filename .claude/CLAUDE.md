@@ -16,9 +16,16 @@ Read these before implementing any feature:
 - `.claude/rules/visual-manifesto.md` — UI design standards (UI features)
 - `.claude/workflows/implement-feature.md` — end-to-end feature workflow
 
-Skills auto-trigger based on context — do not load them manually:
-- `.claude/skills/frontend-design/SKILL.md` — any UI component, page, or styling task
-- `.claude/skills/qa-automation/SKILL.md` — writing tests, running tests, QA validation
+Skills are located in `.agents/skills/` and follow the [Agent Skills specification](https://agentskills.io/specification). Both Antigravity and Claude should use these:
+- `project-context` — master project reference (Read this first)
+- `web-dev` — React, Next.js, TS, CSS
+- `testing` — Vitest, Playwright, QA battery
+- `devops` — Docker, CI/CD
+- `docs` — Documentation standards
+- `code-quality` — Refactoring and Best Practices
+- `design` — UI/UX and Visual Manifesto
+- `productivity` — Workflows and Multi-agent coordination
+- `data-analyzer` — Match data and xG specialization
 
 ## Project Structure
 - `backend/src/config/database.js` — PostgreSQL pool with `db.all()`, `db.get()`, `db.run()` (parameterized, `?` → `$N` auto-conversion)
