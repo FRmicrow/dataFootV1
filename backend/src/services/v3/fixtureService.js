@@ -84,15 +84,24 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
                 sendLog.emit({ type: 'progress', step: 'events', current: i + chunk.length, total: targetFixtures.length, label: `Syncing Events: ${i + chunk.length}/${targetFixtures.length}` });
             }
 
+            let blacklisted = false;
             await Promise.all(chunk.map(async (fixture) => {
                 try {
                     await fetchAndStoreEvents(fixture.fixture_id, fixture.api_id);
                     success++;
+                    await ImportStatusService.resetFailures(leagueId, seasonYear, 'events');
                 } catch (err) {
                     console.error(`   ❌ Failed fixture ${fixture.fixture_id}: ${err.message}`);
                     failed++;
+                    const res = await ImportStatusService.incrementFailure(leagueId, seasonYear, 'events', err.message);
+                    if (res?.blacklisted) blacklisted = true;
                 }
             }));
+
+            if (blacklisted) {
+                if (sendLog) sendLog(`   ⛔ Events pillar blacklisted for ${seasonYear} due to consecutive failures.`, 'error');
+                break;
+            }
 
             // Aggressive delay: 5 calls every 700ms ~= 428 RPM
             await delay(700);

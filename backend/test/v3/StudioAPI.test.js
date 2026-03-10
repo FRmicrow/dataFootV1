@@ -1,23 +1,15 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import studioRoutes from '../../src/routes/v3/studio_routes.js';
-import { setupTestDb } from '../setup.js';
 
 vi.mock('../../src/config/database.js', () => {
     const mockDb = {
         init: vi.fn().mockResolvedValue(true),
-        get: vi.fn().mockReturnValue({}),
-        all: vi.fn().mockReturnValue([]),
-        prepare: vi.fn().mockReturnValue({
-            all: vi.fn().mockReturnValue([]),
-            get: vi.fn().mockReturnValue({}),
-            run: vi.fn().mockReturnValue({ lastInsertRowid: 1 })
-        }),
-        run: vi.fn().mockReturnValue({ lastInsertRowid: 1 }),
-        db: {
-            exec: vi.fn()
-        }
+        get: vi.fn().mockResolvedValue({}),
+        all: vi.fn().mockResolvedValue([]),
+        run: vi.fn().mockResolvedValue({ lastInsertRowid: 1, changes: 1 }),
+        query: vi.fn().mockResolvedValue([])
     };
     return { default: mockDb };
 });
@@ -27,9 +19,6 @@ app.use(express.json());
 app.use('/api/v3', studioRoutes);
 
 describe('Content Studio API Integration (Baseline)', () => {
-    beforeAll(async () => {
-        await setupTestDb();
-    });
 
     it('GET /api/v3/studio/meta/stats - should return stats list', async () => {
         const response = await request(app).get('/api/v3/studio/meta/stats');

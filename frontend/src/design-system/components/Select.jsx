@@ -38,7 +38,6 @@ const customStyles = {
     menu: (provided) => ({
         ...provided,
         backgroundColor: 'var(--color-bg-card)',
-        backdropFilter: 'var(--glass-blur)',
         border: '1px solid var(--color-border)',
         borderRadius: 'var(--radius-md)',
         overflow: 'hidden',

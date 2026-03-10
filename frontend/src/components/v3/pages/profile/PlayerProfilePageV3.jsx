@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../../../services/api';
 import {
     Card, Grid, Stack, Badge, Table, Button,
-    ProfileHeader, Progress
+    ProfileHeader, Progress,
+    Skeleton, CardSkeleton, TableSkeleton
 } from '../../../../design-system';
 import './PlayerProfilePageV3.css';
 
@@ -124,9 +125,42 @@ const PlayerProfilePageV3 = () => {
     }, [careerView, clubCareer]);
 
     if (loading) return (
-        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="ds-button-spinner" style={{ marginBottom: '12px' }}></div>
-            <p style={{ color: 'var(--color-text-dim)' }}>Scanning biological registries...</p>
+        <div className="v3-player-page">
+            {/* Profile header skeleton */}
+            <div style={{ padding: 'var(--spacing-xl)', marginBottom: 'var(--spacing-lg)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
+                    <Skeleton width="100px" height="100px" circle />
+                    <div style={{ flex: 1 }}>
+                        <Skeleton width="260px" height="28px" style={{ marginBottom: 'var(--spacing-sm)' }} />
+                        <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
+                            <Skeleton width="80px" height="14px" />
+                            <Skeleton width="60px" height="14px" />
+                            <Skeleton width="70px" height="14px" />
+                        </div>
+                        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                            <Skeleton width="100px" height="24px" />
+                            <Skeleton width="80px" height="24px" />
+                        </div>
+                    </div>
+                </div>
+                {/* Stats row skeleton */}
+                <div style={{ display: 'flex', gap: 'var(--spacing-xl)', marginTop: 'var(--spacing-lg)' }}>
+                    <Skeleton width="80px" height="40px" />
+                    <Skeleton width="80px" height="40px" />
+                    <Skeleton width="100px" height="40px" />
+                </div>
+            </div>
+            {/* Main content skeleton: career table + sidebar */}
+            <Grid columns="2.5fr 1fr" gap="var(--spacing-xl)" className="mb-xl">
+                <Stack gap="var(--spacing-xl)">
+                    <CardSkeleton />
+                    <TableSkeleton rows={6} cols={5} />
+                </Stack>
+                <Stack gap="var(--spacing-xl)">
+                    <CardSkeleton />
+                    <CardSkeleton />
+                </Stack>
+            </Grid>
         </div>
     );
 

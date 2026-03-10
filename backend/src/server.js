@@ -6,10 +6,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
+import cron from 'node-cron';
+import MarketVolatilityService from './services/v3/MarketVolatilityService.js';
 import db from './config/database.js';
 import v3Routes from './routes/v3_routes.js';
 import MigrationService from './services/v3/MigrationService.js';
 import SimulationQueueService from './services/v3/SimulationQueueService.js';
+import logger from './utils/logger.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,7 +24,7 @@ await db.init();
 await SimulationQueueService.init();
 // --- DB Migrations (US-161) ---
 await MigrationService.runPending().catch(err => {
-    console.error('❌ Critical Migration Error:', err);
+    logger.error({ err }, '❌ Critical Migration Error');
     process.exit(1);
 });
 
@@ -55,7 +58,7 @@ const corsOptions = {
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
@@ -67,13 +70,11 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-
-
 app.use(express.json());
 
 // Request logging
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    logger.info({ method: req.method, path: req.path }, 'request');
     next();
 });
 
@@ -87,52 +88,43 @@ app.get('/health', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('❌ Server error:', err);
+    logger.error({ err, method: req.method, path: req.path }, '❌ Server error');
     res.status(500).json({
         error: 'Internal server error',
         message: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : err.message
     });
 });
 
-
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
 
-import MarketVolatilityService from './services/v3/MarketVolatilityService.js';
-
 // Start server
 const server = app.listen(PORT, async () => {
-    console.log('⚽ Football Player Database API');
-    console.log('================================');
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 Database: PostgreSQL (node-postgres)`);
-    console.log(`🔑 API: API-Football v3`);
-    console.log('================================\n');
+    logger.info('⚽ Football Player Database API');
+    logger.info('================================');
+    logger.info(`🚀 Server running on http://localhost:${PORT}`);
+    logger.info('📊 Database: PostgreSQL (node-postgres)');
+    logger.info('🔑 API: API-Football v3');
+    logger.info('================================');
 
     // US_142: Odds Volatility Tracking - Background Job (Every 4 hours)
     setInterval(() => {
-        MarketVolatilityService.runGlobalSnapshot().catch(err => console.error("❌ Stats Snapshot Error:", err));
+        MarketVolatilityService.runGlobalSnapshot().catch(err => logger.error({ err }, '❌ Stats Snapshot Error'));
     }, 4 * 60 * 60 * 1000);
 
-    // US_174: Retraining Trigger System - Weekly Cycle (Every Monday at 04:00 AM)
+    // US_174: Retraining Trigger System - Every Monday at 04:00 AM
     const { default: mlService } = await import('./services/v3/mlService.js');
-    setInterval(() => {
-        const now = new Date();
-        // Monday search: day 1, hour 4
-        if (now.getDay() === 1 && now.getHours() === 4 && now.getMinutes() < 10) {
-            console.log("⏰ [US_174] Weekly retraining cycle triggered automatically.");
-            mlService.triggerRetraining().catch(err => console.error("❌ Weekly Training Error:", err));
-        }
-    }, 10 * 60 * 1000); // Check every 10 minutes
+    cron.schedule('0 4 * * 1', () => {
+        logger.info('⏰ [US_174] Weekly retraining cycle triggered automatically.');
+        mlService.triggerRetraining().catch(err => logger.error({ err }, '❌ Weekly Training Error'));
+    });
 });
 
 server.on('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-        console.log(`❌ Port ${PORT} is in use. Trying to kill the process...`);
-        // We can't actually kill it easily from here without exec, but we can exit gracefully
-        console.error(`⚠️ Port ${PORT} is already busy. Please run: kill -9 $(lsof -t -i:${PORT})`);
+        logger.error(`❌ Port ${PORT} is already busy. Please run: kill -9 $(lsof -t -i:${PORT})`);
         process.exit(1);
     }
 });

@@ -1,5 +1,6 @@
 import footballApi from '../footballApi.js';
 import db from '../../config/database.js';
+import logger from '../../utils/logger.js';
 
 class OddsService {
     /**
@@ -89,20 +90,20 @@ class OddsService {
      */
     static async importOddsByLeagueSeason(leagueId, seasonYear) {
         try {
-            console.log(`📡 Fetching odds for League: ${leagueId}, Season: ${seasonYear}`);
+            logger.info(`📡 Fetching odds for League: ${leagueId}, Season: ${seasonYear}`);
             const response = await footballApi.makeRequest('/odds', {
                 league: leagueId,
                 season: seasonYear
             }, `odds-league-${leagueId}-season-${seasonYear}`);
 
             const data = response?.response || [];
-            console.log(`📊 Found odds for ${data.length} fixtures in League ${leagueId}. Processing...`);
+            logger.info(`📊 Found odds for ${data.length} fixtures in League ${leagueId}. Processing...`);
 
             const stats = await this.processOdds(data);
-            console.log(`✅ [Odds Import] L${leagueId}/S${seasonYear}: Processed ${stats.processed}/${stats.total} odd values.`);
+            logger.info(`✅ [Odds Import] L${leagueId}/S${seasonYear}: Processed ${stats.processed}/${stats.total} odd values.`);
             return stats;
         } catch (error) {
-            console.error(`❌ [Odds Import Error] L${leagueId}/S${seasonYear}:`, error.message);
+            logger.error({ err: error }, `❌ [Odds Import Error] L${leagueId}/S${seasonYear}`);
             throw error;
         }
     }
@@ -113,7 +114,7 @@ class OddsService {
      */
     static async importHistoricalOdds(leagueId, seasonYear) {
         // Now just a wrapper for importOddsByLeagueSeason
-        console.log(`🚀 Starting historical odds import for League ${leagueId} / Season ${seasonYear}`);
+        logger.info(`🚀 Starting historical odds import for League ${leagueId} / Season ${seasonYear}`);
         return this.importOddsByLeagueSeason(leagueId, seasonYear);
     }
 
@@ -123,7 +124,7 @@ class OddsService {
      * we query the odds for the active season of our tracked leagues.
      */
     static async importNextWeekOdds() {
-        console.log(`🚀 Starting upcoming week odds import based on tracked leagues...`);
+        logger.info(`🚀 Starting upcoming week odds import based on tracked leagues...`);
 
         // Fetch current active leagues mapped to their current season
         const currentTracking = await db.all(`
@@ -133,7 +134,7 @@ class OddsService {
         `);
 
         if (!currentTracking || currentTracking.length === 0) {
-            console.log("⚠️ No active current seasons found in V3_League_Seasons.");
+            logger.info("⚠️ No active current seasons found in V3_League_Seasons.");
             return [];
         }
 
@@ -146,12 +147,12 @@ class OddsService {
                 // Pause to respect API rate limiting
                 await new Promise(r => setTimeout(r, 1000));
             } catch (err) {
-                console.error(`⚠️ Failed to import odds for L${track.league_id}/S${track.season_year}`);
+                logger.error(`⚠️ Failed to import odds for L${track.league_id}/S${track.season_year}`);
                 results.push({ league_id: track.league_id, error: err.message });
             }
         }
 
-        console.log(`✅ Next Week Odds Import finished.`);
+        logger.info(`✅ Next Week Odds Import finished.`);
         return results;
     }
 }

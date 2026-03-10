@@ -24,11 +24,13 @@ import MonitoringConsole from './components/v3/pages/match/live/MonitoringConsol
 import SimulationDashboard from './components/v3/pages/match/live/SimulationDashboard';
 import { ImportProvider } from './context/ImportContext.jsx';
 import { Navbar } from './design-system';
+import ErrorBoundary from './design-system/components/ErrorBoundary';
 import './design-system/tokens.css';
 import './App.css';
 
 function App() {
     return (
+        <ErrorBoundary>
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <ImportProvider>
                 <div className="app">
@@ -69,6 +71,7 @@ function App() {
                 </div >
             </ImportProvider >
         </Router >
+        </ErrorBoundary>
     );
 }
 

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
+import logger from '../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,7 +30,7 @@ class SimulationQueueService {
      * Scans for 'RUNNING' jobs that have timed out (no heartbeat for > 2 mins).
      */
     _startWatchdog() {
-        console.log('🐕 [US_213] Starting Forge Watchdog...');
+        logger.info('🐕 [US_213] Starting Forge Watchdog...');
         setInterval(async () => {
             try {
                 // Find jobs that haven't pulsed a heartbeat in 2 minutes
@@ -43,7 +44,7 @@ class SimulationQueueService {
                 `);
 
                 for (const job of hangingJobs) {
-                    console.warn(`🚨 [US_213] Detected hanging simulation ${job.id}. Marking as FAILED (TIMEOUT-CRASH).`);
+                    logger.warn(`🚨 [US_213] Detected hanging simulation ${job.id}. Marking as FAILED (TIMEOUT-CRASH).`);
                     await db.run(`
                         UPDATE V3_Forge_Simulations 
                         SET status = 'FAILED', 
@@ -53,7 +54,7 @@ class SimulationQueueService {
                     `, cleanParams([job.id]));
                 }
             } catch (err) {
-                console.error('❌ Watchdog Error:', err.message);
+                logger.error({ err }, '❌ Watchdog Error');
             }
         }, 30000); // Check every 30 seconds
     }
@@ -64,16 +65,16 @@ class SimulationQueueService {
      * to see that a job *was* running. If the process is dead, we'll mark it as FAILED.
      */
     async _recoverActiveJobs() {
-        console.log('🔄 [US_207] Scanning for orphaned simulation jobs...');
+        logger.info('🔄 [US_207] Scanning for orphaned simulation jobs...');
         try {
             const runningJobs = await db.all("SELECT id, league_id, season_year FROM V3_Forge_Simulations WHERE status = 'RUNNING'");
 
             for (const job of runningJobs) {
-                console.warn(`   ⚠️ Orphaned job detected: Sim ${job.id}. Marking as FAILED.`);
+                logger.warn(`   ⚠️ Orphaned job detected: Sim ${job.id}. Marking as FAILED.`);
                 await db.run("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = 'Server restarted. Job interrupted.' WHERE id = ?", cleanParams([job.id]));
             }
         } catch (err) {
-            console.warn('   ⚠️ Could not recover orphaned jobs (DB might not be ready yet):', err.message);
+            logger.warn({ err }, '   ⚠️ Could not recover orphaned jobs (DB might not be ready yet)');
         }
     }
 
@@ -100,7 +101,7 @@ class SimulationQueueService {
             throw new Error(`Simulation already active for League ${leagueId} Season ${seasonYear} [${horizon}] (ID: ${existing.id})`);
         }
 
-        console.log(`🚀 [US_207] Spawning Forge Process: ${leagueId} | ${seasonYear} | ${horizon} | Audit: ${isAudit}`);
+        logger.info(`🚀 [US_207] Spawning Forge Process: ${leagueId} | ${seasonYear} | ${horizon} | Audit: ${isAudit}`);
 
         // Insert new simulation record with Audit and Calibration fields (US_223)
         const insertStmt = await db.run(`
@@ -143,20 +144,20 @@ class SimulationQueueService {
                         cleanParams([progress, simId]));
                 }
             }
-            console.log(`[FORGE-OUT][ID:${simId}]: ${line}`);
+            logger.info(`[FORGE-OUT][ID:${simId}]: ${line}`);
         });
 
         pythonProcess.stderr.on('data', async data => {
             const line = data.toString().trim();
             if (line.toLowerCase().includes('error')) {
-                console.error(`[FORGE-ERR][ID:${simId}]: ${line}`);
+                logger.error(`[FORGE-ERR][ID:${simId}]: ${line}`);
                 // Capture error log (US_214)
                 await db.run("UPDATE V3_Forge_Simulations SET error_log = ? WHERE id = ?", cleanParams([line, simId]));
             }
         });
 
         pythonProcess.on('close', async code => {
-            console.log(`📡 Forge process for Sim ${simId} exited with code ${code}`);
+            logger.info(`📡 Forge process for Sim ${simId} exited with code ${code}`);
             this.activeProcesses.delete(`${leagueId}-${seasonYear}`);
 
             if (code !== 0) {

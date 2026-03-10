@@ -9,28 +9,37 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Environnements virtuels
+# Environnements (CRITIQUE : ne jamais commiter)
+.env
+**/.env
+.env.local
+.env.*.local
+
+# Environnements virtuels Python
 venv/
 .venv/
 env/
-.env.local
-.env.*.local
+ml-service/venv/
 __pycache__/
 *.py[cod]
 *$py.class
 
 # Bases de données & Backups (CRITIQUE : ne jamais commiter)
 *.sqlite
+*.sqlite*
 *.sqlite-journal
 *.sqlite-shm
 *.sqlite-wal
 *.db
 *.sql
+backend/*.sql
+backend/*.db
 backend/backups/
 backend/archive/
 backend/data/*.sqlite
 backend/data/*.db
 backend/data/*.sql
+backend/database.sqlite-journal
 
 # Modèles Machine Learning
 *.joblib
@@ -50,29 +59,19 @@ ml-service/catboost_info/
 
 # OS & Editeurs
 .DS_Store
-<<<<<<< HEAD
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Analyse de code
+# Analyse de code & Couverture
 sonarqube*/
 .scannerwork/
 .coverage
 coverage/
 htmlcov/
-=======
-*.sqlite
-*.sqlite*
-backend/*.sql
-backend/*.db
-backend/backups/
-backend/database.sqlite-journal
-ml-service/venv/
-sonarqube*/
-.scannerwork/
 frontend/coverage/
 backend/coverage/
->>>>>>> 32ec8570960a3dcff5069fa867558f28db9d0463
+
+# Divers
 backend/node_modules_host_backup

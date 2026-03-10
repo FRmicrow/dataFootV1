@@ -1,6 +1,7 @@
 import db from '../../config/database.js';
 import footballApi from '../footballApi.js';
 import OddsRefineryService from './OddsRefineryService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * US-1917: Odds Crawler Service
@@ -12,7 +13,7 @@ class OddsCrawlerService {
      * Helps build the initial training history.
      */
     async runHistoricalCatchup() {
-        console.log('🚀 [Crawler] Starting Historical Odds Catch-up...');
+        logger.info('🚀 [Crawler] Starting Historical Odds Catch-up...');
 
         // 1. Find fixtures finished in the last 7 days that don't have normalized odds yet
         // and have not been synced in the last 30 days (idempotence)
@@ -26,11 +27,11 @@ class OddsCrawlerService {
         `);
 
         if (fixtures.length === 0) {
-            console.log('✨ [Crawler] No finished fixtures pending historical catch-up.');
+            logger.info('✨ [Crawler] No finished fixtures pending historical catch-up.');
             return { total: 0, processed: 0 };
         }
 
-        console.log(`🔍 [Crawler] Found ${fixtures.length} finished fixtures for catch-up.`);
+        logger.info(`🔍 [Crawler] Found ${fixtures.length} finished fixtures for catch-up.`);
 
         let processedCount = 0;
         let skipCount = 0;
@@ -44,7 +45,7 @@ class OddsCrawlerService {
             await new Promise(r => setTimeout(r, 150));
         }
 
-        console.log(`✅ [Crawler] Catch-up finished. Processed: ${processedCount}, Skipped/Failed: ${skipCount}`);
+        logger.info(`✅ [Crawler] Catch-up finished. Processed: ${processedCount}, Skipped/Failed: ${skipCount}`);
         return { total: fixtures.length, processed: processedCount, skipped: skipCount };
     }
 
@@ -53,7 +54,7 @@ class OddsCrawlerService {
      * Builds the trend/line-movement data.
      */
     async runUpcomingSync() {
-        console.log('🚀 [Crawler] Starting Upcoming Odds Sync (Market Trend)...');
+        logger.info('🚀 [Crawler] Starting Upcoming Odds Sync (Market Trend)...');
 
         // Find upcoming matches in the next 14 days
         // We allow multiple syncs for trend tracking, but we limit to once every 6h per fixture
@@ -67,11 +68,11 @@ class OddsCrawlerService {
         `);
 
         if (fixtures.length === 0) {
-            console.log('✨ [Crawler] No upcoming fixtures need snapshotting right now.');
+            logger.info('✨ [Crawler] No upcoming fixtures need snapshotting right now.');
             return { total: 0, processed: 0 };
         }
 
-        console.log(`🔍 [Crawler] Found ${fixtures.length} upcoming fixtures for trend update.`);
+        logger.info(`🔍 [Crawler] Found ${fixtures.length} upcoming fixtures for trend update.`);
 
         let processedCount = 0;
         for (const f of fixtures) {
@@ -80,7 +81,7 @@ class OddsCrawlerService {
             await new Promise(r => setTimeout(r, 150));
         }
 
-        console.log(`✅ [Crawler] Upcoming sync finished. Snapshots taken: ${processedCount}`);
+        logger.info(`✅ [Crawler] Upcoming sync finished. Snapshots taken: ${processedCount}`);
         return { total: fixtures.length, processed: processedCount };
     }
 
@@ -106,7 +107,7 @@ class OddsCrawlerService {
                 return false;
             }
         } catch (err) {
-            console.error(`❌ [Crawler] Failed to sync fixture ${fixtureId} (API ID ${apiId}): ${err.message}`);
+            logger.error({ err }, `❌ [Crawler] Failed to sync fixture ${fixtureId} (API ID ${apiId})`);
             return false;
         }
     }

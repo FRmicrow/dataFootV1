@@ -7,6 +7,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
+        exclude: ['node_modules/**', 'node_modules_host_backup/**'],
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'lcov'],

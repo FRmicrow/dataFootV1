@@ -2,6 +2,7 @@ import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import ImportStatusService from './importStatusService.js';
 import { IMPORT_STATUS } from './importStatusConstants.js';
+import footballApi from '../footballApi.js';
 
 // --- Private Pillar Audit Helpers ---
 
@@ -79,7 +80,7 @@ const auditTrophies = async (league_id, season_year) => {
     if (current.status === IMPORT_STATUS.NO_DATA || current.status === IMPORT_STATUS.LOCKED) return false;
 
     const trophySync = await db.get(`
-        SELECT COUNT(*) as total, SUM(CASE WHEN p.is_trophy_synced = 1 THEN 1 ELSE 0 END) as synced
+        SELECT COUNT(*) as total, SUM(CASE WHEN p.is_trophy_synced = TRUE THEN 1 ELSE 0 END) as synced
         FROM V3_Player_Stats ps
         JOIN V3_Players p ON ps.player_id = p.player_id
         WHERE ps.league_id = ? AND ps.season_year = ?
@@ -145,6 +146,8 @@ const auditSeason = async (league_id, season_year) => {
  */
 export const performDiscoveryScan = async () => {
     console.log('🔍 Starting Database Discovery Scan (US_268)...');
+
+    // 1. Audit Existing Seasons
     const seasons = await db.all("SELECT * FROM V3_League_Seasons");
     let updatedCount = 0;
     let autoLockedCount = 0;
@@ -155,12 +158,59 @@ export const performDiscoveryScan = async () => {
         if (locked) autoLockedCount++;
     }
 
+    // 2. Discover New Seasons (Check API for missing seasons)
+    const leagues = await db.all("SELECT league_id, api_id, name FROM V3_Leagues");
+    let discoveredCount = 0;
+    let deletedGhostCount = 0;
+
+    for (const league of leagues) {
+        if (!league.api_id) continue;
+        try {
+            console.log(`📡 Discovery: Checking seasons for ${league.name} (API ${league.api_id})...`);
+            const leagueRes = await footballApi.getLeagues({ id: league.api_id });
+            const apiSeasons = leagueRes.response?.[0]?.seasons || [];
+            const apiYears = new Set(apiSeasons.map(s => s.year));
+
+            // Cleanup: Remove local 2026 seasons that don't exist in API
+            if (!apiYears.has(2026)) {
+                const deleted = await db.run(
+                    "DELETE FROM V3_League_Seasons WHERE league_id = ? AND season_year = 2026",
+                    [league.league_id]
+                );
+                if (deleted.changes > 0) {
+                    deletedGhostCount += deleted.changes;
+                    console.log(`🧹 Cleaned up ghost 2026 for ${league.name}`);
+                }
+            }
+
+            for (const s of apiSeasons) {
+                const exists = await db.get(
+                    "SELECT 1 FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?",
+                    [league.league_id, s.year]
+                );
+
+                if (!exists) {
+                    await db.run(
+                        "INSERT INTO V3_League_Seasons (league_id, season_year, sync_status, is_current) VALUES (?, ?, 'NONE', ?)",
+                        [league.league_id, s.year, s.current ? 1 : 0]
+                    );
+                    discoveredCount++;
+                    console.log(`✨ Discovered ${s.year} for ${league.name}`);
+                }
+            }
+        } catch (apiErr) {
+            console.warn(`⚠️ Failed to fetch seasons for ${league.name}: ${apiErr.message}`);
+        }
+    }
+
     const result = {
-        scanned: seasons.length,
+        scanned: leagues.length,
         updated: updatedCount,
+        discovered: discoveredCount,
+        deletedGhosts: deletedGhostCount,
         autoLocked: autoLockedCount,
         timestamp: new Date().toISOString()
     };
-    console.log(`✅ Discovery Scan Complete: ${updatedCount} seasons updated.`);
+    console.log(`✅ Discovery Scan Complete: ${updatedCount} updated, ${discoveredCount} new seasons, ${deletedGhostCount} ghosts removed.`);
     return result;
 };

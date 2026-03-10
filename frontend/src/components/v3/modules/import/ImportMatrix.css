@@ -320,43 +320,49 @@
 }
 
 .indicator {
-    width: 16px;
-    height: 16px;
-    border-radius: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 9px;
-    font-weight: 800;
+    font-size: 10px;
+    font-weight: 900;
     cursor: pointer;
-    transition: transform 0.1s, filter 0.2s;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+    position: relative;
+    border: 1px solid transparent;
 }
 
 .indicator:hover {
-    transform: scale(1.1);
-    filter: brightness(1.2);
+    transform: scale(1.2);
+    z-index: 5;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    filter: brightness(1.3);
 }
 
-/* US_267: Status Code 0 — NONE (Grey) */
+/* Optimized Status Palette - Higher Visibility, Lower CPU */
+
+/* NONE - Slate Ghost */
 .indicator.indicator-none {
-    background: rgba(148, 163, 184, 0.15);
-    color: var(--color-text-muted);
-    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: hsla(215, 16%, 47%, 0.3);
+    color: hsla(215, 16%, 47%, 0.85);
+    border: 1px solid hsla(215, 16%, 47%, 0.4);
 }
 
-/* US_267: Status Code 1 — PARTIAL (Orange + pulse) */
+/* PARTIAL - Amber Energy */
 .indicator.indicator-partial {
-    background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    animation: partialPulse 2s ease-in-out infinite;
+    background: hsla(38, 92%, 50%, 0.45);
+    color: hsl(38, 92%, 65%);
+    border: 1px solid hsla(38, 92%, 50%, 0.6);
+    animation: simplePulse 3s infinite ease-in-out;
 }
 
-@keyframes partialPulse {
+@keyframes simplePulse {
 
     0%,
     100% {
-        opacity: 0.8;
+        opacity: 0.7;
     }
 
     50% {
@@ -364,46 +370,36 @@
     }
 }
 
-/* US_267: Status Code 2 — COMPLETE (Green) */
+/* COMPLETE - Emerald Pride */
 .indicator.indicator-complete {
-    background: var(--color-success-bg);
-    color: var(--color-success-500);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: hsla(142, 71%, 45%, 0.5);
+    color: hsl(142, 71%, 70%);
+    border: 1px solid hsla(142, 71%, 45%, 0.7);
 }
 
-/* US_267: Status Code 3 — NO_DATA (Black/Dark) */
+/* NO_DATA - Stealth Onyx */
 .indicator.indicator-nodata {
-    background: rgba(15, 23, 42, 0.9);
-    color: #475569;
-    border: 1px solid rgba(71, 85, 105, 0.4);
+    background: hsla(222, 47%, 5%, 0.85);
+    color: hsla(217, 19%, 40%, 0.95);
+    border: 1px solid hsla(217, 19%, 27%, 0.4);
     cursor: not-allowed;
-    font-size: 10px;
-    letter-spacing: -1px;
+    filter: grayscale(1);
 }
 
-/* US_267: Status Code 4 — LOCKED (Green + Lock icon) */
+/* LOCKED - Royal Indigo / Protected */
 .indicator.indicator-locked {
-    background: rgba(16, 185, 129, 0.2);
-    color: var(--color-success-500);
-    border: 1px solid rgba(16, 185, 129, 0.5);
+    background: hsla(250, 89%, 60%, 0.45);
+    color: hsl(250, 89%, 75%);
+    border: 1px solid hsla(250, 89%, 60%, 0.7);
     cursor: not-allowed;
-    position: relative;
 }
 
-.indicator.indicator-locked .lock-icon {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    font-size: 7px;
-    filter: none;
-}
-
-/* Queued state (batch selection) */
+/* QUEUED - Hyper Blue */
 .indicator.queued {
-    background: var(--color-blue-500);
+    background: hsl(217, 91%, 60%);
     color: white;
-    border: 1px solid var(--color-blue-600);
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    border: 1px solid hsl(217, 91%, 85%);
+    box-shadow: 0 0 15px hsla(217, 91%, 60%, 0.6);
 }
 
 /* Legacy backward compat classes */

@@ -150,11 +150,11 @@ export const syncLeagueTacticalStatsService = async (leagueId, seasonYear, limit
     // Wrap up
     if (!skipFS && !stats.fsBlack && stats.fsSuccess > 0) {
         await ImportStatusService.setStatus(leagueId, seasonYear, 'fs', IMPORT_STATUS.COMPLETE);
-        await db.run("UPDATE V3_League_Seasons SET imported_fixture_stats = 1 WHERE league_id = ? AND season_year = ?", [leagueId, seasonYear]);
+        await db.run("UPDATE V3_League_Seasons SET imported_fixture_stats = TRUE WHERE league_id = ? AND season_year = ?", [leagueId, seasonYear]);
     }
     if (!skipPS && !stats.psBlack && stats.psSuccess > 0) {
-        await ImportStatusService.setStatus(leagueId, season_year, 'ps', IMPORT_STATUS.COMPLETE);
-        await db.run("UPDATE V3_League_Seasons SET imported_player_stats = 1 WHERE league_id = ? AND season_year = ?", [leagueId, seasonYear]);
+        await ImportStatusService.setStatus(leagueId, seasonYear, 'ps', IMPORT_STATUS.COMPLETE);
+        await db.run("UPDATE V3_League_Seasons SET imported_player_stats = TRUE WHERE league_id = ? AND season_year = ?", [leagueId, seasonYear]);
         await computePlayerSeasonNormalization(leagueId, seasonYear);
     }
 

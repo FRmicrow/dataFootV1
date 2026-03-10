@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../../../../services/api';
+import { Skeleton, CardSkeleton, MetricCardSkeleton } from '../../../../../design-system';
 import './LiveBet.css';
 
 const LiveBetMatchDetails = () => {
@@ -40,9 +41,53 @@ const LiveBetMatchDetails = () => {
     };
 
     if (loading) return (
-        <div className="lb-match-details loading">
-            <div className="spinner"></div>
-            <p>Gathering Intelligence...</p>
+        <div className="lb-match-details">
+            {/* Back button skeleton */}
+            <div className="lb-skeleton__header">
+                <Skeleton width="160px" height="20px" />
+                <div className="lb-skeleton__btn-group">
+                    <Skeleton width="180px" height="40px" />
+                    <Skeleton width="150px" height="40px" />
+                </div>
+            </div>
+            {/* Hero section skeleton */}
+            <div className="lb-detail-hero" style={{ padding: 'var(--spacing-xl)' }}>
+                <div className="lb-skeleton__hero-center">
+                    <Skeleton width="40px" height="40px" style={{ margin: '0 auto var(--spacing-sm)' }} />
+                    <Skeleton width="200px" height="20px" style={{ margin: '0 auto var(--spacing-xs)' }} />
+                    <Skeleton width="280px" height="14px" style={{ margin: '0 auto' }} />
+                </div>
+                <div className="lb-skeleton__score-row">
+                    <div className="lb-skeleton__score-team">
+                        <Skeleton width="80px" height="80px" style={{ margin: '0 auto' }} />
+                        <Skeleton width="120px" height="16px" style={{ margin: 'var(--spacing-sm) auto 0' }} />
+                    </div>
+                    <Skeleton width="100px" height="48px" />
+                    <div className="lb-skeleton__score-team">
+                        <Skeleton width="80px" height="80px" style={{ margin: '0 auto' }} />
+                        <Skeleton width="120px" height="16px" style={{ margin: 'var(--spacing-sm) auto 0' }} />
+                    </div>
+                </div>
+            </div>
+            {/* Intelligence cockpit + context cards skeleton */}
+            <div className="lb-skeleton__context-grid">
+                <div className="lb-skeleton__context-grid--span2">
+                    <CardSkeleton />
+                </div>
+                <CardSkeleton />
+                <CardSkeleton />
+            </div>
+            {/* Two-column team layout skeleton */}
+            <div className="lb-skeleton__teams-grid">
+                <div className="lb-skeleton__team-col">
+                    <CardSkeleton />
+                    <CardSkeleton />
+                </div>
+                <div className="lb-skeleton__team-col">
+                    <CardSkeleton />
+                    <CardSkeleton />
+                </div>
+            </div>
         </div>
     );
 
@@ -72,6 +117,12 @@ const LiveBetMatchDetails = () => {
         return badges.join(' ');
     };
 
+    const getFormBadgeClass = (c) => {
+        if (c === 'W') return 'lb-form-badge lb-form-badge--W';
+        if (c === 'D') return 'lb-form-badge lb-form-badge--D';
+        return 'lb-form-badge lb-form-badge--L';
+    };
+
     // AC 1: Lineups (Handled by backend service)
     const isOfficial = lineups?.type === 'OFFICIAL';
     const homeLineup = lineups?.home;
@@ -98,21 +149,62 @@ const LiveBetMatchDetails = () => {
         }
     }
 
+    const renderLineupList = (lineup) => {
+        if (!lineup || !lineup.startXI) {
+            return <div className="lb-lineup-empty">XI not available yet.</div>;
+        }
+        return lineup.startXI.map((p) => (
+            <div key={p.player.id} className="lb-player-row">
+                <div className="lb-player-row__info">
+                    <span className="lb-player-row__number">{p.player.number}</span>
+                    <span className="lb-player-row__name">{p.player.name}</span>
+                </div>
+                <span className="lb-player-row__badges">{getPlayerBadges(p.player.id)}</span>
+            </div>
+        ));
+    };
+
+    const renderSquadList = (squadPlayers) => {
+        if (!squadPlayers || squadPlayers.length === 0) {
+            return <div className="lb-squad-empty">Squad roster unavailable.</div>;
+        }
+        return squadPlayers.map(p => {
+            const isInjured = injuries.some(inj => inj.player?.id === p.id);
+            return (
+                <div key={p.id} className={`lb-squad-player ${isInjured ? 'lb-squad-player--injured' : 'lb-squad-player--available'}`}>
+                    <span>{p.name} {p.number ? `(#${p.number})` : ''}</span>
+                    {isInjured
+                        ? <span title="Injured/Missing" style={{ color: 'var(--color-danger-500)' }}>🔴</span>
+                        : <span title="Available" style={{ color: 'var(--color-success-500)' }}></span>
+                    }
+                </div>
+            );
+        });
+    };
+
+    const renderFormBadges = (form) => {
+        if (!form) return <span className="lb-no-data">No data</span>;
+        return form.slice(-5).split('').map((char, i) => (
+            <span key={`form-${i}`} className={getFormBadgeClass(char)}>
+                {char}
+            </span>
+        ));
+    };
+
     return (
         <div className="lb-match-details animate-fade-in">
-            <div className="lb-header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <button className="lb-back-btn" onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1rem' }}>
+            <div className="lb-header-actions">
+                <button className="lb-back-btn" onClick={() => navigate(-1)}>
                     ← Back to Dashboard
                 </button>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="lb-header-actions__btn-group">
                     <button
-                        className={`lb-save-btn-large ${saveState}`}
+                        className={`lb-save-btn-large lb-save-btn-large--depth ${saveState}`}
                         onClick={async () => {
                             setSaveState('saving');
                             try {
                                 await api.ingestDepthOdds(id);
                                 setSaveState('saved');
-                                // Refresh data to show more markets if any
                                 const res = await api.getMatchDetails(id);
                                 setData(res);
                                 setTimeout(() => setSaveState('idle'), 2000);
@@ -123,16 +215,6 @@ const LiveBetMatchDetails = () => {
                             }
                         }}
                         disabled={saveState === 'saving'}
-                        style={{
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            background: saveState === 'saved' ? '#10b981' : '#f59e0b', // Amber for depth
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            cursor: saveState === 'saving' ? 'wait' : 'pointer',
-                            transition: 'all 0.3s ease'
-                        }}
                     >
                         {saveState === 'idle' && '⚡ Depth Sync (Multi-Market)'}
                         {saveState === 'saving' && 'Syncing...'}
@@ -140,19 +222,9 @@ const LiveBetMatchDetails = () => {
                         {saveState === 'error' && 'Error ❌'}
                     </button>
                     <button
-                        className={`lb-save-btn-large ${saveState}`}
+                        className={`lb-save-btn-large lb-save-btn-large--basic ${saveState}`}
                         onClick={handleSaveOdds}
                         disabled={saveState === 'saving'}
-                        style={{
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            background: saveState === 'saved' ? '#10b981' : '#6366f1',
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            cursor: saveState === 'saving' ? 'wait' : 'pointer',
-                            transition: 'all 0.3s ease'
-                        }}
                     >
                         {saveState === 'idle' && '💾 Save Basic Odds'}
                         {saveState === 'saving' && 'Saving...'}
@@ -165,15 +237,15 @@ const LiveBetMatchDetails = () => {
             {/* Hero Section */}
             <div className="lb-detail-hero">
                 <div className="lb-league-header">
-                    <img src={league.logo} alt="" className="league-logo-med" style={{ width: '40px', marginBottom: '10px' }} />
-                    <div className="league-name-lg" style={{ fontWeight: '800', color: '#fff' }}>{league.name}</div>
-                    <div className="match-time" style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                    <img src={league.logo} alt="" className="lb-league-logo-med" />
+                    <div className="lb-league-name-lg">{league.name}</div>
+                    <div className="lb-match-time">
                         {new Date(matchInfo.date).toLocaleString()} • {matchInfo.venue.name}
                     </div>
 
                     {/* Narrative Badges (US_153) */}
                     {data.narrative && (
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
+                        <div className="lb-narrative-badges">
                             {data.narrative.derby?.is_derby && (
                                 <span className="lb-narrative-badge derby">
                                     ⚔️ {data.narrative.derby.name}
@@ -193,36 +265,36 @@ const LiveBetMatchDetails = () => {
                     )}
                 </div>
 
-                <div className="lb-score-board" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '40px', marginTop: '20px' }}>
-                    <div className="lb-team-lg" style={{ textAlign: 'center' }}>
-                        <img src={teams.home.logo} alt={teams.home.name} style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
-                        <div className="team-name-lg" style={{ fontWeight: '700', marginTop: '10px' }}>{teams.home.name}</div>
+                <div className="lb-score-board">
+                    <div className="lb-team-lg">
+                        <img src={teams.home.logo} alt={teams.home.name} className="lb-team-lg__logo" />
+                        <div className="lb-team-lg__name">{teams.home.name}</div>
                     </div>
 
-                    <div className="lb-score-display" style={{ fontSize: '3rem', fontWeight: '900', color: '#fff' }}>
+                    <div className="lb-score-display">
                         {goals.home ?? '-'} : {goals.away ?? '-'}
                     </div>
 
-                    <div className="lb-team-lg" style={{ textAlign: 'center' }}>
-                        <img src={teams.away.logo} alt={teams.away.name} style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
-                        <div className="team-name-lg" style={{ fontWeight: '700', marginTop: '10px' }}>{teams.away.name}</div>
+                    <div className="lb-team-lg">
+                        <img src={teams.away.logo} alt={teams.away.name} className="lb-team-lg__logo" />
+                        <div className="lb-team-lg__name">{teams.away.name}</div>
                     </div>
                 </div>
             </div>
 
             {/* ML Context Header (US_019 AC 3) */}
-            <div className="lb-ml-context-header" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+            <div className="lb-ml-context-header">
 
-                {/* US_172: Intelligence Cockpit Cockpit (Enhanced) */}
-                <div className="lb-context-card cockpit-main" style={{ background: 'linear-gradient(135deg, #1e1b4b, #0f172a)', padding: '24px', borderRadius: '16px', border: '1px solid #4338ca', gridColumn: 'span 2' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                {/* US_172: Intelligence Cockpit (Enhanced) */}
+                <div className="lb-context-card cockpit-main">
+                    <div className="lb-cockpit__header">
                         <div>
-                            <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#fff', fontWeight: '900' }}>🔬 Intelligence Cockpit</h3>
-                            <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>Advanced Probability Overlay & Market Inconsistency Detection</p>
+                            <h3 className="lb-cockpit__title">🔬 Intelligence Cockpit</h3>
+                            <p className="lb-cockpit__subtitle">Advanced Probability Overlay & Market Inconsistency Detection</p>
                         </div>
-                        <div className="lb-explainer-trigger" style={{ fontSize: '0.8rem', padding: '8px 12px', background: 'rgba(99,102,241,0.1)', borderRadius: '8px' }}>
+                        <div className="lb-explainer-trigger lb-cockpit__explainer-btn">
                             View Core Logic
-                            <div className="lb-logic-explainer" style={{ width: '280px' }}>
+                            <div className="lb-logic-explainer lb-cockpit__explainer-tooltip">
                                 <div className="lb-logic-title">Institutional Model Alpha</div>
                                 <div className="lb-logic-item">
                                     <span className="lb-logic-item-label">Backtested Confidence:</span>
@@ -230,60 +302,60 @@ const LiveBetMatchDetails = () => {
                                 </div>
                                 <div className="lb-logic-item">
                                     <span className="lb-logic-item-label">Market Efficiency:</span>
-                                    <span className="lb-logic-item-val" style={{ color: '#f59e0b' }}>Moderate</span>
+                                    <span className="lb-logic-item-val" style={{ color: 'var(--color-accent-500)' }}>Moderate</span>
                                 </div>
                                 <div className="lb-logic-item">
                                     <span className="lb-logic-item-label">Edge Delta:</span>
                                     <span className="lb-logic-item-val">{data.investment_value?.edge || 0}%</span>
                                 </div>
-                                <div style={{ marginTop: '10px', fontSize: '0.65rem', color: '#64748b', fontStyle: 'italic' }}>
+                                <div className="lb-cockpit__disclaimer">
                                     * Model weights adjusted for recent form and squad availability.
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px' }}>
-                        <div className="lb-prob-bar-matrix" style={{ gap: '12px' }}>
+                    <div className="lb-cockpit__grid">
+                        <div className="lb-prob-bar-matrix">
                             {/* Home */}
                             <div className="lb-prob-row">
-                                <span className="lb-prob-label" style={{ fontSize: '0.85rem' }}>1</span>
-                                <div className="lb-prob-track" style={{ height: '14px' }}>
+                                <span className="lb-prob-label lb-prob-label--lg">1</span>
+                                <div className="lb-prob-track lb-prob-track--lg">
                                     <div className="lb-prob-fill home" style={{ width: prediction?.predictions?.percent?.home || '33%' }}></div>
                                 </div>
-                                <span className="lb-prob-val" style={{ width: '45px', fontSize: '0.9rem' }}>{prediction?.predictions?.percent?.home || '33%'}</span>
+                                <span className="lb-prob-val lb-prob-val--lg">{prediction?.predictions?.percent?.home || '33%'}</span>
                             </div>
                             {/* Draw */}
                             <div className="lb-prob-row">
-                                <span className="lb-prob-label" style={{ fontSize: '0.85rem' }}>X</span>
-                                <div className="lb-prob-track" style={{ height: '14px' }}>
+                                <span className="lb-prob-label lb-prob-label--lg">X</span>
+                                <div className="lb-prob-track lb-prob-track--lg">
                                     <div className="lb-prob-fill draw" style={{ width: prediction?.predictions?.percent?.draw || '33%' }}></div>
                                 </div>
-                                <span className="lb-prob-val" style={{ width: '45px', fontSize: '0.9rem' }}>{prediction?.predictions?.percent?.draw || '33%'}</span>
+                                <span className="lb-prob-val lb-prob-val--lg">{prediction?.predictions?.percent?.draw || '33%'}</span>
                             </div>
                             {/* Away */}
                             <div className="lb-prob-row">
-                                <span className="lb-prob-label" style={{ fontSize: '0.85rem' }}>2</span>
-                                <div className="lb-prob-track" style={{ height: '14px' }}>
+                                <span className="lb-prob-label lb-prob-label--lg">2</span>
+                                <div className="lb-prob-track lb-prob-track--lg">
                                     <div className="lb-prob-fill away" style={{ width: prediction?.predictions?.percent?.away || '33%' }}></div>
                                 </div>
-                                <span className="lb-prob-val" style={{ width: '45px', fontSize: '0.9rem' }}>{prediction?.predictions?.percent?.away || '33%'}</span>
+                                <span className="lb-prob-val lb-prob-val--lg">{prediction?.predictions?.percent?.away || '33%'}</span>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Alpha Advice</div>
-                                <div style={{ color: '#fff', fontWeight: '800', fontSize: '1rem' }}>{prediction?.predictions?.advice || 'Monitor for In-Play Entry'}</div>
+                        <div className="lb-cockpit__advice-col">
+                            <div className="lb-advice-card">
+                                <div className="lb-advice-card__label">Alpha Advice</div>
+                                <div className="lb-advice-card__value">{prediction?.predictions?.advice || 'Monitor for In-Play Entry'}</div>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                <div style={{ padding: '10px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.2)', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '0.6rem', color: '#10b981', fontWeight: 'bold' }}>EDGE</div>
-                                    <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>+{data.investment_value?.edge || 0}%</div>
+                            <div className="lb-cockpit__metrics-grid">
+                                <div className="lb-cockpit__metric lb-cockpit__metric--edge">
+                                    <div className="lb-cockpit__metric-label lb-cockpit__metric-label--edge">EDGE</div>
+                                    <div className="lb-cockpit__metric-value lb-cockpit__metric-value--lg">+{data.investment_value?.edge || 0}%</div>
                                 </div>
-                                <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', border: '1px solid rgba(99, 102, 241, 0.2)', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '0.6rem', color: '#818cf8', fontWeight: 'bold' }}>RISK</div>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: '900', color: '#fff', marginTop: '4px' }}>{data.investment_value?.risk_level || 'CONSIDERABLE'}</div>
+                                <div className="lb-cockpit__metric lb-cockpit__metric--risk">
+                                    <div className="lb-cockpit__metric-label lb-cockpit__metric-label--risk">RISK</div>
+                                    <div className="lb-cockpit__metric-value lb-cockpit__metric-value--sm">{data.investment_value?.risk_level || 'CONSIDERABLE'}</div>
                                 </div>
                             </div>
                         </div>
@@ -292,15 +364,15 @@ const LiveBetMatchDetails = () => {
 
                 {/* H2H Mini Block */}
                 {h2h && h2h.length > 0 && (
-                    <div className="lb-context-card" style={{ background: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="lb-context-card lb-context-card--surface">
+                        <h3 className="lb-context-card__title lb-context-card__title--muted">
                             ⚔️ Recent Head-to-Head
                         </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className="lb-context-card__list">
                             {h2h.slice(0, 3).map(match => (
-                                <div key={match.fixture.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <span style={{ color: '#94a3b8' }}>{new Date(match.fixture.date).toLocaleDateString()}</span>
-                                    <span style={{ fontWeight: '700', color: '#fff' }}>
+                                <div key={match.fixture.id} className="lb-h2h-row">
+                                    <span className="lb-h2h-row__date">{new Date(match.fixture.date).toLocaleDateString()}</span>
+                                    <span className="lb-h2h-row__score">
                                         {match.goals.home} - {match.goals.away}
                                     </span>
                                 </div>
@@ -311,20 +383,20 @@ const LiveBetMatchDetails = () => {
 
                 {/* Match Statistics (If finished and available) */}
                 {isFinished && matchStats.length >= 2 && (
-                    <div className="lb-context-card" style={{ background: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', color: '#22d3ee', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="lb-context-card lb-context-card--surface">
+                        <h3 className="lb-context-card__title lb-context-card__title--cyan">
                             📊 Match Statistics
                         </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+                        <div className="lb-context-card__list lb-context-card__list--sm">
                             {['Ball Possession', 'Shots on Goal', 'Corner Kicks', 'Total passes'].map(statName => {
                                 const homeStat = matchStats[0]?.statistics?.find(s => s.type === statName)?.value || '-';
                                 const awayStat = matchStats[1]?.statistics?.find(s => s.type === statName)?.value || '-';
 
                                 return (
-                                    <div key={statName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <span style={{ color: '#fff', fontWeight: '700', flex: 1, textAlign: 'left' }}>{homeStat}</span>
-                                        <span style={{ color: '#94a3b8', flex: 2, textAlign: 'center' }}>{statName.replaceAll('Ball ', '').replaceAll('Total ', '')}</span>
-                                        <span style={{ color: '#fff', fontWeight: '700', flex: 1, textAlign: 'right' }}>{awayStat}</span>
+                                    <div key={statName} className="lb-stat-row">
+                                        <span className="lb-stat-row__value lb-stat-row__value--left">{homeStat}</span>
+                                        <span className="lb-stat-row__label">{statName.replaceAll('Ball ', '').replaceAll('Total ', '')}</span>
+                                        <span className="lb-stat-row__value lb-stat-row__value--right">{awayStat}</span>
                                     </div>
                                 );
                             })}
@@ -334,32 +406,32 @@ const LiveBetMatchDetails = () => {
 
                 {/* Detailed Odds Top Summary */}
                 {odds && odds.length > 0 && (
-                    <div className="lb-context-card" style={{ background: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="lb-context-card lb-context-card--surface">
+                        <h3 className="lb-context-card__title lb-context-card__title--amber">
                             💰 Key Markets
                         </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div className="lb-context-card__list">
                             {odds.slice(0, 3).map(market => {
                                 const fairObj = probabilities[market.id];
                                 return (
                                     <div key={market.id}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                                            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{market.name}</div>
+                                        <div className="lb-market-header">
+                                            <div className="lb-market-name">{market.name}</div>
                                             {fairObj && (
-                                                <div style={{ fontSize: '0.7rem', color: '#6366f1', fontWeight: 'bold' }}>
+                                                <div className="lb-market-margin">
                                                     Margin: {(fairObj.margin * 100).toFixed(1)}%
                                                 </div>
                                             )}
                                         </div>
-                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                        <div className="lb-market-values">
                                             {market.values.slice(0, 3).map((v) => {
                                                 const fairProb = fairObj?.probabilities?.[v.value];
                                                 return (
-                                                    <div key={v.value} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '4px', textAlign: 'center', fontSize: '0.8rem' }}>
-                                                        <div style={{ color: '#94a3b8', marginBottom: '2px', fontSize: '0.7rem' }}>{v.value}</div>
-                                                        <div style={{ fontWeight: '800', color: '#fff' }}>{v.odd}</div>
+                                                    <div key={v.value} className="lb-market-value-cell">
+                                                        <div className="lb-market-value-cell__label">{v.value}</div>
+                                                        <div className="lb-market-value-cell__odd">{v.odd}</div>
                                                         {fairProb && (
-                                                            <div style={{ fontSize: '0.65rem', color: '#6366f1', marginTop: '2px' }}>
+                                                            <div className="lb-market-value-cell__prob">
                                                                 {(fairProb * 100).toFixed(0)}%
                                                             </div>
                                                         )}
@@ -375,8 +447,8 @@ const LiveBetMatchDetails = () => {
                 )}
                 {/* Investment Value Block (Quant Engine) */}
                 {data.investment_value && (
-                    <div className="lb-context-card" style={{ background: 'linear-gradient(135deg, #064e3b, #022c22)', padding: '20px', borderRadius: '12px', border: '1px solid #059669' }}>
-                        <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1rem', color: '#6ee7b7', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="lb-context-card lb-context-card--investment">
+                        <h3 className="lb-context-card__title lb-context-card__title--emerald">
                             💎 Investment Value
                             {data.investment_value.is_value_bet && (
                                 <span className="lb-value-alert" title="Edge > 3% and Confidence > 60%">
@@ -387,34 +459,34 @@ const LiveBetMatchDetails = () => {
                                 {data.investment_value.risk_level}
                             </span>
                         </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '0.65rem', color: '#6ee7b7' }}>Calculated Edge</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>
+                        <div className="lb-investment__grid">
+                            <div className="lb-investment__metric">
+                                <div className="lb-investment__metric-label">Calculated Edge</div>
+                                <div className="lb-investment__metric-value">
                                     {data.investment_value.edge > 0 ? '+' : ''}{data.investment_value.edge}%
                                 </div>
                             </div>
-                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '0.65rem', color: '#6ee7b7' }}>Confidence</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>
+                            <div className="lb-investment__metric">
+                                <div className="lb-investment__metric-label">Confidence</div>
+                                <div className="lb-investment__metric-value">
                                     {data.investment_value.confidence}%
                                 </div>
                             </div>
-                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '0.65rem', color: '#6ee7b7' }}>Kelly Stake</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#4ade80' }}>
+                            <div className="lb-investment__metric">
+                                <div className="lb-investment__metric-label">Kelly Stake</div>
+                                <div className="lb-investment__metric-value lb-investment__metric-value--green">
                                     {data.investment_value.kelly_suggested}%
                                 </div>
                             </div>
                         </div>
-                        <div style={{ marginTop: '15px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', fontSize: '0.85rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                <span style={{ color: '#94a3b8' }}>Target Outcome:</span>
-                                <span style={{ color: '#fff', fontWeight: 'bold', textTransform: 'uppercase' }}>{data.investment_value.best_pick}</span>
+                        <div className="lb-investment__summary">
+                            <div className="lb-investment__summary-row">
+                                <span className="lb-investment__summary-label">Target Outcome:</span>
+                                <span className="lb-investment__summary-value">{data.investment_value.best_pick}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: '#94a3b8' }}>Expected Value (EV):</span>
-                                <span style={{ color: data.investment_value.ev > 0 ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>
+                            <div className="lb-investment__summary-row">
+                                <span className="lb-investment__summary-label">Expected Value (EV):</span>
+                                <span className={`lb-investment__summary-value ${data.investment_value.ev > 0 ? 'lb-investment__summary-value--positive' : 'lb-investment__summary-value--negative'}`}>
                                     {(data.investment_value.ev * 100).toFixed(2)}%
                                 </span>
                             </div>
@@ -424,146 +496,70 @@ const LiveBetMatchDetails = () => {
             </div>
 
             {/* Side-by-Side Teams Layout (US_019 AC 1) */}
-            <div className="lb-sbs-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+            <div className="lb-sbs-container">
 
                 {/* --- HOME TEAM COLUMN --- */}
-                <div className="lb-team-side" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="lb-team-side">
 
                     {/* Home Form */}
-                    <div className="lb-sbs-card" style={{ background: 'rgba(30, 41, 59, 0.4)', borderRadius: '12px', padding: '20px', borderTop: '4px solid #6366f1' }}>
-                        <div style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '15px', color: '#fff' }}>
-                            {teams.home.name} <span style={{ color: '#6366f1' }}>(Home)</span>
+                    <div className="lb-sbs-card lb-sbs-card--home">
+                        <div className="lb-sbs-card__team-title">
+                            {teams.home.name} <span className="lb-sbs-card__team-tag--home">(Home)</span>
                         </div>
-                        <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#94a3b8' }}>Recent Form</div>
-                        <div style={{ display: 'flex', gap: '5px' }}>
-                            {prediction?.teams?.home?.league?.form ? (
-                                prediction.teams.home.league.form.slice(-5).split('').map((char, i) => {
-                                    const getFormColor = (c) => {
-                                        if (c === 'W') return '#10b981';
-                                        if (c === 'D') return '#fbbf24';
-                                        return '#ef4444';
-                                    };
-                                    return (
-                                        <span key={`form-home-${i}`} style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontWeight: '800', color: '#fff', background: getFormColor(char) }}>
-                                            {char}
-                                        </span>
-                                    );
-                                })
-                            ) : <span style={{ color: '#64748b' }}>No data</span>}
+                        <div className="lb-sbs-card__form-label">Recent Form</div>
+                        <div className="lb-form-badges">
+                            {renderFormBadges(prediction?.teams?.home?.league?.form)}
                         </div>
                     </div>
 
                     {/* Home Lineup & Squad */}
-                    <div className="lb-sbs-card" style={{ background: 'rgba(30, 41, 59, 0.4)', borderRadius: '12px', padding: '20px' }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '15px', color: '#cbd5e1' }}>
+                    <div className="lb-sbs-card">
+                        <div className="lb-lineup-title">
                             {isOfficial ? '✅ Match XI' : '⚠️ Probable XI'}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                            {homeLineup && homeLineup.startXI ? (
-                                homeLineup.startXI.map((p) => (
-                                    <div key={p.player.id} style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: '#1e293b', borderRadius: '6px', justifyContent: 'space-between' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <span style={{ width: '24px', fontWeight: '800', color: '#64748b', fontSize: '0.85rem' }}>{p.player.number}</span>
-                                            <span style={{ fontWeight: '500', color: '#f1f5f9', fontSize: '0.95rem' }}>{p.player.name}</span>
-                                        </div>
-                                        <span style={{ fontSize: '1rem' }}>{getPlayerBadges(p.player.id)}</span>
-                                    </div>
-                                ))
-                            ) : (
-                                <div style={{ color: '#64748b', fontStyle: 'italic' }}>XI not available yet.</div>
-                            )}
+                        <div className="lb-lineup-list">
+                            {renderLineupList(homeLineup)}
                         </div>
 
                         {/* Home Full Squad & Injuries */}
-                        <div style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '10px', color: '#94a3b8', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                        <div className="lb-squad-header">
                             Full Squad Availability
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxHeight: '300px', overflowY: 'auto', paddingRight: '5px' }}>
-                            {squads.home && squads.home.length > 0 ? (
-                                squads.home.map(p => {
-                                    // Check if player exists in injuries array
-                                    const isInjured = injuries.some(inj => inj.player?.id === p.id);
-                                    return (
-                                        <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', fontSize: '0.85rem', color: isInjured ? '#94a3b8' : '#cbd5e1', opacity: isInjured ? 0.6 : 1 }}>
-                                            <span>{p.name} {p.number ? `(#${p.number})` : ''}</span>
-                                            {isInjured ? <span title="Injured/Missing" style={{ color: '#ef4444' }}>🔴</span> : <span title="Available" style={{ color: '#10b981' }}></span>}
-                                        </div>
-                                    );
-                                })
-                            ) : (
-                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Squad roster unavailable.</div>
-                            )}
+                        <div className="lb-squad-list">
+                            {renderSquadList(squads.home)}
                         </div>
                     </div>
                 </div>
 
                 {/* --- AWAY TEAM COLUMN --- */}
-                <div className="lb-team-side" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="lb-team-side">
 
                     {/* Away Form */}
-                    <div className="lb-sbs-card" style={{ background: 'rgba(30, 41, 59, 0.4)', borderRadius: '12px', padding: '20px', borderTop: '4px solid #ef4444' }}>
-                        <div style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '15px', color: '#fff' }}>
-                            {teams.away.name} <span style={{ color: '#ef4444' }}>(Away)</span>
+                    <div className="lb-sbs-card lb-sbs-card--away">
+                        <div className="lb-sbs-card__team-title">
+                            {teams.away.name} <span className="lb-sbs-card__team-tag--away">(Away)</span>
                         </div>
-                        <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#94a3b8' }}>Recent Form</div>
-                        <div style={{ display: 'flex', gap: '5px' }}>
-                            {prediction?.teams?.away?.league?.form ? (
-                                prediction.teams.away.league.form.slice(-5).split('').map((char, i) => {
-                                    const getFormColor = (c) => {
-                                        if (c === 'W') return '#10b981';
-                                        if (c === 'D') return '#fbbf24';
-                                        return '#ef4444';
-                                    };
-                                    return (
-                                        <span key={`form-away-${i}`} style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontWeight: '800', color: '#fff', background: getFormColor(char) }}>
-                                            {char}
-                                        </span>
-                                    );
-                                })
-                            ) : <span style={{ color: '#64748b' }}>No data</span>}
+                        <div className="lb-sbs-card__form-label">Recent Form</div>
+                        <div className="lb-form-badges">
+                            {renderFormBadges(prediction?.teams?.away?.league?.form)}
                         </div>
                     </div>
 
                     {/* Away Lineup & Squad */}
-                    <div className="lb-sbs-card" style={{ background: 'rgba(30, 41, 59, 0.4)', borderRadius: '12px', padding: '20px' }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '15px', color: '#cbd5e1' }}>
+                    <div className="lb-sbs-card">
+                        <div className="lb-lineup-title">
                             {isOfficial ? '✅ Match XI' : '⚠️ Probable XI'}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                            {awayLineup && awayLineup.startXI ? (
-                                awayLineup.startXI.map((p) => (
-                                    <div key={p.player.id} style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: '#1e293b', borderRadius: '6px', justifyContent: 'space-between' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <span style={{ width: '24px', fontWeight: '800', color: '#64748b', fontSize: '0.85rem' }}>{p.player.number}</span>
-                                            <span style={{ fontWeight: '500', color: '#f1f5f9', fontSize: '0.95rem' }}>{p.player.name}</span>
-                                        </div>
-                                        <span style={{ fontSize: '1rem' }}>{getPlayerBadges(p.player.id)}</span>
-                                    </div>
-                                ))
-                            ) : (
-                                <div style={{ color: '#64748b', fontStyle: 'italic' }}>XI not available yet.</div>
-                            )}
+                        <div className="lb-lineup-list">
+                            {renderLineupList(awayLineup)}
                         </div>
 
                         {/* Away Full Squad & Injuries */}
-                        <div style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '10px', color: '#94a3b8', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                        <div className="lb-squad-header">
                             Full Squad Availability
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxHeight: '300px', overflowY: 'auto', paddingRight: '5px' }}>
-                            {squads.away && squads.away.length > 0 ? (
-                                squads.away.map(p => {
-                                    // Check if player exists in injuries array
-                                    const isInjured = injuries.some(inj => inj.player?.id === p.id);
-                                    return (
-                                        <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', fontSize: '0.85rem', color: isInjured ? '#94a3b8' : '#cbd5e1', opacity: isInjured ? 0.6 : 1 }}>
-                                            <span>{p.name} {p.number ? `(#${p.number})` : ''}</span>
-                                            {isInjured ? <span title="Injured/Missing" style={{ color: '#ef4444' }}>🔴</span> : <span title="Available" style={{ color: '#10b981' }}></span>}
-                                        </div>
-                                    );
-                                })
-                            ) : (
-                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Squad roster unavailable.</div>
-                            )}
+                        <div className="lb-squad-list">
+                            {renderSquadList(squads.away)}
                         </div>
                     </div>
                 </div>

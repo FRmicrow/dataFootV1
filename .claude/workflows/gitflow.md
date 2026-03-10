@@ -1,0 +1,31 @@
+---
+description: Commit, push, merge sur main et suppression de branche. Se déclenche avec /gitflow ou quand on est prêt à livrer une feature.
+---
+
+# gitflow
+
+Ce workflow guide l’agent et l’utilisateur dans le processus de commit, test, merge sur `main` et suppression de branche.
+
+## Pré-requis
+- Le travail a été réalisé sur une branche `feature/*` ou correspondante.
+- Les modifications sont prêtes à être commitées.
+
+## Étapes
+1. **Endosser le Rôle Git** : L'agent doit activer la règle `@git-engineer`.
+2. **Vérification d'état** : Exécutez `git status` et `git diff` pour comprendre quels fichiers ont été modifiés.
+3. **Planification Git (BLOQUANT)** : **TOUJOURS** faire un plan avant d'agir. Générez ou mettez à jour un artefact `implementation_plan.md` listant :
+   - Les fichiers à commiter.
+   - Les commandes Git exactes prévues.
+   - Le message de commit (conforme à `commit-message-guidelines.md`).
+   - La stratégie de fusion vers `main`.
+   **VOUS DEVEZ UTILISER l'outil `notify_user` (`BlockedOnUser=true`) POUR FAIRE VALIDER CE PLAN A L'UTILISATEUR.** Interdiction absolue de l'exécuter sans son accord.
+4. **Commit et Tests Locaux** : Une fois le plan validé, créez le commit. **Vérifiez via `git status` que TOUS les fichiers attendus sont bien trackés et commités.** Appelez impérativement le workflow `/run-tests`.
+5. **Push de la branche** : Poussez le commit sur la branche courante distante (`git push -u origin HEAD`).
+6. **Archivage de la Feature (BLOQUANT)** : Si la feature est considérée comme terminée, déplacez impérativement le dossier `docs/features/Vxx-[Nom]` vers `docs/features/Completed-Feature/`. Commitez ce déplacement sur la branche de travail (`git add . && git commit -m "chore: archive feature folder before merge" && git push`).
+7. **Contrôle d'Intégrité (Zéro-Perte)** : Exécutez un dernier `git status`. **Interdiction de passer à l'étape suivante si le status n'est pas "nothing to commit, working tree clean".**
+8. **Demande d'Intégration vers Main (BLOQUANT)** : Redemandez une confirmation explicite à l'utilisateur : *"La feature est archivée et prête. Puis-je maintenant fusionner la branche <nom> sur `main` ?"*. Ne touchez pas à `main` sans ce feu vert.
+9. **Fusion (Merge)** : Basculez sur `main` (`git checkout main`), mettez à jour (`git pull origin main`), et fusionnez la branche (`git merge <branche>`). Poussez `main` (`git push origin main`).
+10. **Nettoyage (Suppression de Branche)** : Supprimez la branche de travail localement (`git branch -d <branche>`) et sur le distant (`git push origin --delete <branche>`). Confirmez la suppression à l'utilisateur.
+
+## Notes
+- La suppression de la branche à l'étape 8 remplace l'ancienne méthodologie de renommage en `-DONE`.

@@ -64,11 +64,11 @@ const V3Dashboard = () => {
                 <Stack direction="row" justify="space-between" align="center">
                     <div className="header-meta">
                         <Badge variant="primary" className="mb-xs">OPERATIONAL COMMAND</Badge>
-                        <h1 style={{ fontSize: 'var(--font-size-4xl)', fontWeight: 'var(--font-weight-black)', letterSpacing: '-0.02em' }}>Intelligence Hub</h1>
-                        <p style={{ color: 'var(--color-text-muted)' }}>Real-time surveillance of the professional scouting ecosystem</p>
+                        <h1 className="v3-header__title">Intelligence Hub</h1>
+                        <p className="v3-header__subtitle">Real-time surveillance of the professional scouting ecosystem</p>
                     </div>
 
-                    <Stack direction="row" gap="var(--spacing-lg)" style={{ minWidth: '400px' }}>
+                    <Stack direction="row" gap="var(--spacing-lg)" className="v3-header__progress-row">
 
                         <Progress
                             label="Data Coverage"
@@ -88,7 +88,7 @@ const V3Dashboard = () => {
             </header>
 
             {/* 2. Volumetrics Grid */}
-            <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-md)" style={{ marginBottom: 'var(--spacing-xl)' }}>
+            <Grid columns="repeat(auto-fit, minmax(240px, 1fr))" gap="var(--spacing-md)" className="mb-xl">
                 <MetricCard label="Leagues" value={volumetrics.total_leagues} subValue="Live monitoring enabled" />
                 <MetricCard label="Clubs" value={volumetrics.total_clubs} subValue="Across 55+ countries" />
                 <MetricCard
@@ -101,9 +101,9 @@ const V3Dashboard = () => {
             </Grid>
 
             {/* 3. Visual Intelligence Layer */}
-            <Grid columns="repeat(2, 1fr)" gap="var(--spacing-lg)" style={{ marginBottom: 'var(--spacing-xl)' }}>
+            <Grid columns="repeat(2, 1fr)" gap="var(--spacing-lg)" className="mb-xl">
                 <Card title="Nationality Distribution" subtitle="Top talent producing countries">
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div className="v3-chart-container">
                         <ResponsiveContainer>
                             <BarChart data={players_by_country} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -121,7 +121,7 @@ const V3Dashboard = () => {
                 </Card>
 
                 <Card title="Continental Scope" subtitle="Global distribution of scouted entities">
-                    <div style={{ width: '100%', height: 300 }}>
+                    <div className="v3-chart-container">
                         <ResponsiveContainer>
                             <PieChart>
                                 <Pie
@@ -147,9 +147,9 @@ const V3Dashboard = () => {
                     </div>
                 </Card>
 
-                <div style={{ gridColumn: 'span 2' }}>
+                <div className="v3-chart-span-full">
                     <Card title="Sync Acceleration" subtitle="Historical ingestion performance">
-                        <div style={{ width: '100%', height: 250 }}>
+                        <div className="v3-chart-container--sm">
                             <ResponsiveContainer>
                                 <AreaChart data={fixture_trends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                     <defs>
@@ -187,25 +187,12 @@ const V3Dashboard = () => {
                                 onClick={() => navigate(action.path)}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(action.path); }}
                                 aria-label={action.title}
-                                style={{
-                                    width: '100%',
-                                    textAlign: 'left',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: 'var(--spacing-md)',
-                                    borderRadius: 'var(--radius-md)',
-                                    background: 'var(--color-bg-sub)',
-                                    border: '1px solid var(--color-border)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    gap: '12px'
-                                }}
                             >
-                                <div style={{ flex: 1 }}>
-                                    <h4 style={{ margin: 0, color: 'white' }}>{action.title}</h4>
-                                    <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>{action.desc}</p>
+                                <div className="action-row__content">
+                                    <h4 className="action-row__title">{action.title}</h4>
+                                    <p className="action-row__desc">{action.desc}</p>
                                 </div>
-                                <div className="action-arrow" style={{ transition: 'transform 0.2s' }}>→</div>
+                                <div className="action-arrow">→</div>
                             </button>
                         ))}
                     </Stack>
@@ -213,17 +200,17 @@ const V3Dashboard = () => {
 
                 <Card title="Integrity Score" subtitle="System health markers">
                     <Stack gap="var(--spacing-md)">
-                        <Grid columns="1fr auto" align="center" style={{ padding: 'var(--spacing-xs)', borderBottom: '1px solid var(--color-border)' }}>
-                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-dim)' }}>Orphaned Profiles</span>
+                        <Grid columns="1fr auto" align="center" className="v3-integrity-row">
+                            <span className="v3-integrity-label">Orphaned Profiles</span>
                             <Badge variant={health_summary.orphans > 0 ? 'danger' : 'success'}>{health_summary.orphans}</Badge>
                         </Grid>
-                        <Grid columns="1fr auto" align="center" style={{ padding: 'var(--spacing-xs)', borderBottom: '1px solid var(--color-border)' }}>
-                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-dim)' }}>Partial Seasons</span>
+                        <Grid columns="1fr auto" align="center" className="v3-integrity-row">
+                            <span className="v3-integrity-label">Partial Seasons</span>
                             <Badge variant={health_summary.partial_seasons > 0 ? 'warning' : 'success'}>{health_summary.partial_seasons}</Badge>
                         </Grid>
-                        <Grid columns="1fr auto" align="center" style={{ padding: 'var(--spacing-xs)' }}>
-                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-dim)' }}>Legacy Modules</span>
-                            <span style={{ fontWeight: 'bold' }}>{volumetrics.imported_seasons}</span>
+                        <Grid columns="1fr auto" align="center" className="v3-integrity-row--last">
+                            <span className="v3-integrity-label">Legacy Modules</span>
+                            <span className="v3-integrity-value">{volumetrics.imported_seasons}</span>
                         </Grid>
                         <Button variant="secondary" onClick={() => navigate('/import/matrix-status')}>Full Audit Report</Button>
                     </Stack>

@@ -7,6 +7,7 @@ import QuantService from './quantService.js';
 import NarrativeService from './narrativeService.js';
 import { BOOKMAKER_PRIORITY } from '../../config/betting.js';
 import { parseProbability, mapLiveOdds } from '../../utils/v3Helpers.js';
+import logger from '../../utils/logger.js';
 
 // Simple in-memory cache for daily fixtures (TTL 15 mins)
 let dailyCache = {
@@ -26,7 +27,7 @@ const getTrackedLeagues = async () => {
         if (!row || !row.tracked_leagues) return [];
         return JSON.parse(row.tracked_leagues);
     } catch (e) {
-        console.error("⚠️ Failed to parse tracked_leagues:", e.message);
+        logger.error({ err: e }, "⚠️ Failed to parse tracked_leagues");
         return [];
     }
 };
@@ -71,7 +72,7 @@ export const getDailyFixturesService = async (targetDate) => {
         try {
             const oddsRes = await footballApi.getOdds({ date: today });
             (oddsRes.response || []).forEach(item => { oddsMap[item.fixture.id] = item; });
-        } catch (err) { console.error("⚠️ Failed to fetch odds:", err.message); }
+        } catch (err) { logger.error({ err }, "⚠️ Failed to fetch odds"); }
 
         const fixtureIds = fixtures.map(f => f.fixture.id);
         const predictionsMap = {};
@@ -109,7 +110,7 @@ export const getDailyFixturesService = async (targetDate) => {
         dailyCache = { date: today, data: mappedFixtures, timestamp: Date.now() };
         return mappedFixtures;
     } catch (error) {
-        console.error("Error in getDailyFixturesService:", error);
+        logger.error({ err: error }, "Error in getDailyFixturesService");
         throw error;
     }
 };
@@ -120,7 +121,7 @@ export const getDailyFixturesService = async (targetDate) => {
  * Falls back to Top 5 most important leagues from local DB.
  */
 export const getUpcomingByLeaguesService = async (leagueIds = []) => {
-    console.log(`📅 Fetching upcoming matches for league IDs: [${leagueIds.join(', ')}]`);
+    logger.info(`📅 Fetching upcoming matches for league IDs: [${leagueIds.join(', ')}]`);
 
     // Fetch all leagues with their importance rank & name for enrichment
     // Internal league_id and api_id (API-Football external id) are DIFFERENT
@@ -129,9 +130,9 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
         allDbLeagues = await db.all(
             "SELECT l.league_id, l.api_id, l.name, l.logo_url as logo, c.name as country, c.importance_rank FROM V3_Leagues l JOIN V3_Countries c ON l.country_id = c.country_id ORDER BY c.importance_rank ASC"
         );
-        console.log(`   🏛️ Loaded ${allDbLeagues.length} leagues from local DB for enrichment`);
+        logger.info(`   🏛️ Loaded ${allDbLeagues.length} leagues from local DB for enrichment`);
     } catch (dbErr) {
-        console.error('   ⚠️ DB lookup failed:', dbErr.message);
+        logger.error({ err: dbErr }, '   ⚠️ DB lookup failed');
     }
 
     // Build maps keyed by BOTH internal id and api_id for lookups
@@ -146,7 +147,7 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
     let targetInternalIds = (leagueIds || []).filter(Boolean).map(Number);
     if (targetInternalIds.length === 0) {
         targetInternalIds = allDbLeagues.slice(0, 5).map(l => l.league_id);
-        console.log(`   ℹ️ No leagues selected — defaulting to Top 5: [${targetInternalIds.join(', ')}]`);
+        logger.info(`   ℹ️ No leagues selected — defaulting to Top 5: [${targetInternalIds.join(', ')}]`);
     }
 
     if (targetInternalIds.length === 0) {
@@ -159,7 +160,7 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
         apiId: byInternalId[internalId]?.api_id
     })).filter(p => p.apiId); // skip any not found in DB
 
-    console.log(`   🔗 Resolved ${apiIdPairs.length} api_ids: [${apiIdPairs.map(p => p.apiId).join(', ')}]`);
+    logger.info(`   🔗 Resolved ${apiIdPairs.length} api_ids: [${apiIdPairs.map(p => p.apiId).join(', ')}]`);
 
     // Fetch upcoming fixtures for each league in parallel by API ID
 
@@ -208,7 +209,7 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
         }
         return results;
     } catch (error) {
-        console.error("Error in getUpcomingByLeaguesService:", error);
+        logger.error({ err: error }, "Error in getUpcomingByLeaguesService");
         throw error;
     }
 };
@@ -263,7 +264,7 @@ function computePredictiveFeatures(fixtureData, predictionData, injuriesData, h2
                 features.psychological_edge = winRate >= 60 ? `Home Dominant (${winRate}%)` : (winRate <= 30 ? `Away Edge (${100 - winRate}%)` : 'Neutral');
             }
         }
-    } catch (e) { console.warn("Predictive compute failed:", e.message); }
+    } catch (e) { logger.warn({ err: e }, "Predictive compute failed"); }
     return features;
 }
 
@@ -271,7 +272,7 @@ function computePredictiveFeatures(fixtureData, predictionData, injuriesData, h2
  * Get Match Details (US_012)
  */
 export const getMatchDetailsService = async (fixtureId) => {
-    console.log(`🔍 Fetching details for match ${fixtureId}...`);
+    logger.info(`🔍 Fetching details for match ${fixtureId}...`);
 
     const [fixtureRes, predictionsRes, lineupsRes, oddsRes, injuriesRes, mlPrediction] = await Promise.all([
         footballApi.getFixtureById(fixtureId), footballApi.getPredictions(fixtureId), footballApi.getFixtureLineups(fixtureId), footballApi.getOdds({ fixture: fixtureId }), footballApi.getInjuries(fixtureId), mlService.getPredictionForFixture(fixtureId)
@@ -288,7 +289,7 @@ export const getMatchDetailsService = async (fixtureId) => {
         homeSquad = res[0]?.response?.[0]?.players || []; awaySquad = res[1]?.response?.[0]?.players || [];
         if (promises.length > 2) { mEvents = res[2]?.response || []; mStats = res[3]?.response || []; }
     } catch (e) {
-        console.error("Secondary data fetch error (Ignored for robustness):", e);
+        logger.error({ err: e }, "Secondary data fetch error (Ignored for robustness)");
     }
 
     const lineups = resolveMatchLineups(officialLineups, predictionData, homeId, awayId);
@@ -330,7 +331,7 @@ async function createSmartSnapshot(fixtureId) {
         if (match.stats?.form?.home) await db.run(snapSql, [fixtureId, homeId, 'FORM', JSON.stringify(match.stats.form.home)]);
         if (match.stats?.form?.away) await db.run(snapSql, [fixtureId, awayId, 'FORM', JSON.stringify(match.stats.form.away)]);
         db.save(false);
-    } catch (e) { console.error("Snapshot failed:", e.message); }
+    } catch (e) { logger.error({ err: e }, "Snapshot failed"); }
 }
 
 /**

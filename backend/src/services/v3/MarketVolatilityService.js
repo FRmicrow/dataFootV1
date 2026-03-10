@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Market Volatility Service (US_142)
@@ -10,14 +11,14 @@ export class MarketVolatilityService {
      * Records a historical snapshot of all current odds for a fixture.
      */
     static async captureSnapshot(fixtureId) {
-        console.log(`📸 [US_142] Capturing odds snapshot for fixture ${fixtureId}...`);
+        logger.info(`📸 [US_142] Capturing odds snapshot for fixture ${fixtureId}...`);
 
         const lastSnapshot = await db.get("SELECT * FROM V3_Odds_History WHERE fixture_id = ? ORDER BY capture_timestamp DESC LIMIT 1", cleanParams([fixtureId]));
 
         const currentOdds = await db.all("SELECT * FROM V3_Odds WHERE fixture_id = ?", cleanParams([fixtureId]));
 
         if (currentOdds.length === 0) {
-            console.warn(`   ⚠️ No current odds found in V3_Odds for fixture ${fixtureId}. Skipping snapshot.`);
+            logger.warn(`   ⚠️ No current odds found in V3_Odds for fixture ${fixtureId}. Skipping snapshot.`);
             return;
         }
 
@@ -28,7 +29,7 @@ export class MarketVolatilityService {
                 currentMain.value_home_over === lastSnapshot.value_home_over &&
                 currentMain.value_draw === lastSnapshot.value_draw &&
                 currentMain.value_away_under === lastSnapshot.value_away_under) {
-                console.log(`   ⏭️ Snapshot identical to last one. Skipping.`);
+                logger.info(`   ⏭️ Snapshot identical to last one. Skipping.`);
                 return;
             }
         }
@@ -53,7 +54,7 @@ export class MarketVolatilityService {
             ]));
         }
 
-        console.log(`   ✅ Snapshot captured for ${currentOdds.length} markets.`);
+        logger.info(`   ✅ Snapshot captured for ${currentOdds.length} markets.`);
     }
 
     /**
@@ -127,7 +128,7 @@ export class MarketVolatilityService {
      * Background Task: Snapshots all upcoming fixtures in tracked leagues.
      */
     static async runGlobalSnapshot() {
-        console.log("🕒 [US_142] Starting Global Odds Snapshot Task...");
+        logger.info("🕒 [US_142] Starting Global Odds Snapshot Task...");
 
         const trackedLeaguesRaw = (await db.get("SELECT tracked_leagues FROM V3_System_Preferences LIMIT 1"))?.tracked_leagues || '[]';
         const trackedLeagues = JSON.parse(trackedLeaguesRaw);

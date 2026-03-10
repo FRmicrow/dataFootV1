@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import api from '../../../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { Card, Stack, Grid, Badge } from '../../../../design-system';
+import { Card, Stack, Grid, Badge, Skeleton, CardSkeleton } from '../../../../design-system';
 import { PageLayout, PageHeader, PageContent } from '../../layouts';
 import './SearchPageV3.css';
 
@@ -215,9 +215,14 @@ const SearchPageV3 = () => {
 
                 <main className="ds-search-main">
                     {loading && (
-                        <Stack align="center" justify="center" style={{ padding: '80px' }}>
-                            <div className="ds-button-spinner"></div>
-                            <p className="mt-md" style={{ color: 'var(--color-text-muted)' }}>Querying V3 Data...</p>
+                        <Stack gap="var(--spacing-xl)" style={{ padding: 'var(--spacing-xl) 0' }}>
+                            <div style={{ padding: '0 var(--spacing-md)' }}>
+                                <Skeleton width="200px" height="14px" />
+                            </div>
+                            <Grid columns="1fr 1fr" gap="var(--spacing-xl)">
+                                <CardSkeleton />
+                                <CardSkeleton />
+                            </Grid>
                         </Stack>
                     )}
 

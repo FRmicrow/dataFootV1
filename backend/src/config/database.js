@@ -1,6 +1,7 @@
 import pkg from 'pg';
 const { Pool, types } = pkg;
 import { cleanParams } from '../utils/sqlHelpers.js';
+import logger from '../utils/logger.js';
 
 // Configure type parsers to mimic SQLite behavior for backward compatibility
 // 16 is the OID for 'bool' in Postgres. Return 1 for true, 0 for false.
@@ -15,10 +16,13 @@ let pool;
  * This replaces better-sqlite3 to connect to the PostgreSQL Docker container.
  */
 async function initDatabase() {
-    try {
-        const connectionString = process.env.DATABASE_URL || 'postgres://statfoot_user:statfoot_password@localhost:5432/statfoot';
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+        throw new Error('DATABASE_URL is required. Copy backend/.env.example to backend/.env and fill in your credentials.');
+    }
 
-        console.log('🧪 Connecting to PostgreSQL:', connectionString.replace(/:[^:@]+@/, ':***@'));
+    try {
+        logger.info({ url: connectionString.replace(/:[^:@]+@/, ':***@') }, '🧪 Connecting to PostgreSQL');
 
         pool = new Pool({
             connectionString,
@@ -32,11 +36,11 @@ async function initDatabase() {
         const res = await client.query('SELECT NOW()');
         client.release();
 
-        console.log('🔒 Database connected successfully to PostgreSQL at', res.rows[0].now);
+        logger.info({ connectedAt: res.rows[0].now }, '🔒 Database connected successfully to PostgreSQL');
 
         return pool;
     } catch (err) {
-        console.error("❌ Failed to connect to PostgreSQL:", err);
+        logger.error({ err }, '❌ Failed to connect to PostgreSQL');
         throw err;
     }
 }

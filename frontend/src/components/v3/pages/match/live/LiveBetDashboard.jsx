@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../../../../services/api';
+import { Skeleton, CardSkeleton } from '../../../../../design-system';
 import GameCard from './GameCard';
 import LeagueSelector from './LeagueSelector';
 import './LiveBet.css';
@@ -150,9 +151,25 @@ const LiveBetDashboard = () => {
     const renderContent = () => {
         if (loading) {
             return (
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Scanning Matches...</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xl)' }}>
+                    {/* Skeleton for league group headers + game cards */}
+                    {[1, 2, 3].map(group => (
+                        <div key={group}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)', paddingBottom: 'var(--spacing-sm)', borderBottom: '2px solid rgba(99,102,241,0.3)' }}>
+                                <Skeleton width="28px" height="28px" />
+                                <div>
+                                    <Skeleton width="180px" height="16px" style={{ marginBottom: '4px' }} />
+                                    <Skeleton width="80px" height="10px" />
+                                </div>
+                                <Skeleton width="80px" height="22px" style={{ marginLeft: 'auto', borderRadius: '20px' }} />
+                            </div>
+                            <div className="lb-game-feed">
+                                {[1, 2, 3].map(card => (
+                                    <CardSkeleton key={card} />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             );
         }

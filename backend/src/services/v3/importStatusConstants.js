@@ -23,7 +23,7 @@ export const STATUS_LABELS = {
 export const PILLARS = ['core', 'events', 'lineups', 'trophies', 'fs', 'ps'];
 
 /** FS/PS consecutive failure threshold (1 full matchday) */
-export const CONSECUTIVE_FAILURE_THRESHOLD = 10;
+export const CONSECUTIVE_FAILURE_THRESHOLD = 5;
 
 /** Historical range: stop after N consecutive NO_DATA seasons */
 export const HISTORICAL_NO_DATA_STREAK_LIMIT = 2;

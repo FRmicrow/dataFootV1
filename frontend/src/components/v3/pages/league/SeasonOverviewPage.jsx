@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../../../services/api';
-import { Card, Stack, Badge, Button, Table, Tabs, LeagueHeader, ControlBar, Select, Grid } from '../../../../design-system';
+import { Card, Stack, Badge, Button, Table, Tabs, LeagueHeader, ControlBar, Select, Grid, Skeleton, CardSkeleton, TableSkeleton } from '../../../../design-system';
 import { PageLayout, PageContent } from '../../layouts';
 
 // Components
@@ -133,10 +133,29 @@ const SeasonOverviewPage = () => {
     };
 
     if (loading && !data) return (
-        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="ds-button-spinner" style={{ marginBottom: '12px' }}></div>
-            <p style={{ color: 'var(--color-text-dim)' }}>Mining league intelligence...</p>
-        </div>
+        <PageLayout>
+            {/* League header skeleton */}
+            <div style={{ padding: 'var(--spacing-xl)', marginBottom: 'var(--spacing-lg)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                    <Skeleton width="64px" height="64px" />
+                    <div>
+                        <Skeleton width="220px" height="24px" style={{ marginBottom: 'var(--spacing-xs)' }} />
+                        <Skeleton width="140px" height="14px" />
+                    </div>
+                </div>
+            </div>
+            <PageContent>
+                {/* Tab bar skeleton */}
+                <div style={{ display: 'flex', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-xl)' }}>
+                    <Skeleton width="100px" height="36px" />
+                    <Skeleton width="100px" height="36px" />
+                    <Skeleton width="80px" height="36px" />
+                    <Skeleton width="80px" height="36px" />
+                </div>
+                {/* Standings table skeleton */}
+                <TableSkeleton rows={10} cols={8} />
+            </PageContent>
+        </PageLayout>
     );
 
     if (error) return (

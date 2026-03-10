@@ -64,11 +64,51 @@ const calculateDataRanges = (statuses) => {
 };
 
 /**
- * US_266: Matrix API — Status-Aware Endpoint
+ * US_266: Matrix API — Status-Aware Endpoint (Paginated & Filterable)
  */
 export const getImportMatrixStatus = async (req, res) => {
     try {
-        const leaguesSql = `
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const search = req.query.search || '';
+        const offset = (page - 1) * limit;
+
+        let whereClause = '';
+        const params = [];
+        if (search) {
+            whereClause = `WHERE (l.name ILIKE $1 OR c.name ILIKE $1)`;
+            params.push(`%${search}%`);
+        }
+
+        // 1. Get total count for pagination
+        const countSql = `
+            SELECT COUNT(DISTINCT l.league_id) as total
+            FROM V3_Leagues l
+            JOIN V3_Countries c ON l.country_id = c.country_id
+            ${whereClause}
+        `;
+        const countRes = await db.get(countSql, params);
+        const total = parseInt(countRes.total);
+
+        // 2. Get paginated league IDs
+        const leaguesIdSql = `
+            SELECT l.league_id
+            FROM V3_Leagues l
+            JOIN V3_Countries c ON l.country_id = c.country_id
+            ${whereClause}
+            ORDER BY c.importance_rank ASC, l.importance_rank ASC, l.name ASC
+            LIMIT ${limit} OFFSET ${offset}
+        `;
+        const leagueIdsRows = await db.all(leaguesIdSql, params);
+        const leagueIds = leagueIdsRows.map(r => r.league_id);
+
+        if (leagueIds.length === 0) {
+            return res.json({ success: true, data: [], total, page, limit });
+        }
+
+        // 3. Get full data for these leagues and their seasons
+        const leagueIdsStr = leagueIds.join(',');
+        const fullLeaguesSql = `
             SELECT 
                 l.league_id, l.api_id, l.name as league_name, l.logo_url as league_logo,
                 c.name as country_name, c.flag_url as country_flag, c.importance_rank,
@@ -76,11 +116,14 @@ export const getImportMatrixStatus = async (req, res) => {
             FROM V3_Leagues l
             JOIN V3_Countries c ON l.country_id = c.country_id
             LEFT JOIN V3_League_Seasons s ON l.league_id = s.league_id
+            WHERE l.league_id IN (${leagueIdsStr})
             ORDER BY c.importance_rank ASC, l.importance_rank ASC, l.name ASC, s.season_year DESC
         `;
 
-        const rows = await db.all(leaguesSql);
-        const allStatuses = await db.all(`SELECT * FROM V3_Import_Status`);
+        const rows = await db.all(fullLeaguesSql);
+
+        // Optimize: only fetch statuses for these specific leagues
+        const allStatuses = await db.all(`SELECT * FROM V3_Import_Status WHERE league_id IN (${leagueIdsStr})`);
         const statusIndex = buildStatusIndex(allStatuses);
         const dataRanges = calculateDataRanges(allStatuses);
 
@@ -104,7 +147,10 @@ export const getImportMatrixStatus = async (req, res) => {
             }
         });
 
-        res.json({ success: true, data: Object.values(matrixMap) });
+        // Maintain the original order from leagueIds
+        const orderedData = leagueIds.map(id => matrixMap[id]).filter(Boolean);
+
+        res.json({ success: true, leagues: orderedData, total, page, limit });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -229,7 +275,9 @@ export const triggerAuditScan = async (req, res) => {
 export const getDiscoveryCountries = async (req, res) => {
     try {
         const response = await footballApi.getCountries();
-        res.json({ success: true, data: response.response || [] });
+        const countries = response.response || [];
+        countries.sort((a, b) => a.name.localeCompare(b.name));
+        res.json({ success: true, data: countries });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -245,7 +293,17 @@ export const getDiscoveryLeagues = async (req, res) => {
 
         const existingLeagues = await db.all("SELECT api_id FROM V3_Leagues");
         const existingApiIds = new Set(existingLeagues.map(l => l.api_id));
-        const filtered = apiLeagues.filter(l => !existingApiIds.has(l.league.id));
+
+        const filtered = apiLeagues
+            .filter(l => !existingApiIds.has(l.league.id))
+            .sort((a, b) => {
+                // Priority to "League" over "Cup"
+                if (a.league.type !== b.league.type) {
+                    return a.league.type === 'League' ? -1 : 1;
+                }
+                // Sort by ID ascending (heuristic: lower ID = higher division/importance)
+                return a.league.id - b.league.id;
+            });
 
         res.json({ success: true, data: filtered });
     } catch (error) {

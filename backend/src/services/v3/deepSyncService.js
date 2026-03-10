@@ -226,10 +226,17 @@ export async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
                         cleanParams([t.fixture_id, l.team.id, l.formation]));
                 }
                 success++;
+                await ImportStatusService.resetFailures(leagueId, seasonYear, 'lineups');
             } else {
                 failed++;
+                const res = await ImportStatusService.incrementFailure(leagueId, seasonYear, 'lineups', 'No data returned from API');
+                if (res?.blacklisted) break;
             }
-        } catch (e) { failed++; }
+        } catch (e) {
+            failed++;
+            const res = await ImportStatusService.incrementFailure(leagueId, seasonYear, 'lineups', e.message);
+            if (res?.blacklisted) break;
+        }
         await new Promise(r => setTimeout(r, 100));
     }
     return { success, failed };

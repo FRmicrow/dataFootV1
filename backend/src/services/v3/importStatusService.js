@@ -56,7 +56,7 @@ export async function getStatus(leagueId, seasonYear, pillar) {
  * @param {string} pillar
  * @returns {Promise<boolean>}
  */
-export async function shouldSkip(leagueId, seasonId, pillar) {
+export async function shouldSkip(leagueId, seasonYear, pillar) {
     const row = await getStatus(leagueId, seasonYear, pillar);
     return [IMPORT_STATUS.COMPLETE, IMPORT_STATUS.LOCKED, IMPORT_STATUS.NO_DATA].includes(row.status);
 }
@@ -200,6 +200,16 @@ export async function resetFailures(leagueId, seasonYear, pillar) {
  * Check if all 6 pillars are in terminal state (COMPLETE or NO_DATA).
  */
 export async function checkAutoLock(leagueId, seasonYear) {
+    // 1. Check if season is current. Never lock active seasons.
+    const seasonInfo = await db.get(
+        `SELECT is_current FROM V3_League_Seasons WHERE league_id = ? AND season_year = ?`,
+        cleanParams([leagueId, seasonYear])
+    );
+
+    // In PostgreSQL the boolean might be returned as true/false or 't'/'f'
+    const isCurrent = seasonInfo?.is_current === true || seasonInfo?.is_current === 't' || seasonInfo?.is_current === 1;
+    if (isCurrent) return false;
+
     const statuses = await db.all(`SELECT pillar, status FROM V3_Import_Status WHERE league_id = ? AND season_year = ?`, cleanParams([leagueId, seasonYear]));
     if (statuses.length < PILLARS.length) return false;
 
@@ -244,7 +254,7 @@ export async function resetStatus(leagueId, seasonYear, pillar, reason = null, r
  * During transition period, both systems stay in sync.
  */
 async function syncLegacyFlags(leagueId, seasonYear, pillar, status) {
-    const isImported = (status === IMPORT_STATUS.COMPLETE || status === IMPORT_STATUS.LOCKED) ? 1 : 0;
+    const isImported = (status === IMPORT_STATUS.COMPLETE || status === IMPORT_STATUS.LOCKED) ? true : false;
     const now = new Date().toISOString();
 
     const columnMap = {

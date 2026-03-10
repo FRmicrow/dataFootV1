@@ -6,6 +6,7 @@ import { syncLeagueEventsService } from './fixtureService.js';
 import { CompetitionRanker } from '../../utils/v3/CompetitionRanker.js';
 import * as ImportControl from './importControlService.js';
 import { syncAllV3Sequences } from '../../utils/v3/dbMaintenance.js';
+import ImportStatusService from './importStatusService.js';
 
 // --- Private Helpers for Import Job ---
 
@@ -170,29 +171,36 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) 
     const { forceApiId = false, forceRefresh = false } = options;
     sendLog(`🚀 V3 Import Started for League ID ${leagueId}, Season ${seasonYear}`, 'info');
 
-    await syncAllV3Sequences((msg) => sendLog(msg, 'info'));
-    const { localLeagueId, targetApiId, season } = await resolveLeagueAndSeason(leagueId, seasonYear, sendLog, forceApiId);
+    try {
+        await syncAllV3Sequences((msg) => sendLog(msg, 'info'));
+        const { localLeagueId, targetApiId, season } = await resolveLeagueAndSeason(leagueId, seasonYear, sendLog, forceApiId);
 
-    if (!forceRefresh && season.imported_standings && season.imported_fixtures && season.imported_players) {
-        sendLog(`⏩ Data already fully imported for ${seasonYear}.`, 'info');
-        return { leagueId: targetApiId, season: seasonYear, skipped: true };
+        if (!forceRefresh && season.imported_standings && season.imported_fixtures && season.imported_players) {
+            sendLog(`⏩ Data already fully imported for ${seasonYear}.`, 'info');
+            return { leagueId: targetApiId, season: seasonYear, skipped: true };
+        }
+
+        const { teams, localTeamMap } = await importTeamsAndVenues(targetApiId, seasonYear, sendLog);
+        const totalPlayers = await importPlayersAndStats(teams, seasonYear, targetApiId, localLeagueId, localTeamMap, sendLog);
+
+        await db.run("UPDATE V3_League_Seasons SET imported_players = TRUE, last_imported_at = CURRENT_TIMESTAMP, last_sync_core = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
+        sendLog(`Processed ${totalPlayers} players.`, 'success');
+
+        await importStandings(targetApiId, seasonYear, localLeagueId, localTeamMap, sendLog);
+        await importFixtures(targetApiId, seasonYear, localLeagueId, localTeamMap, sendLog);
+
+        const disc = await db.get("SELECT is_discovered FROM V3_Leagues WHERE league_id = ?", cleanParams([localLeagueId]));
+        if (disc?.is_discovered) await db.run("UPDATE V3_Leagues SET is_discovered = FALSE WHERE league_id = ?", cleanParams([localLeagueId]));
+
+        try { await syncLeagueEventsService(localLeagueId, seasonYear, 2000); } catch (e) { }
+
+        await ImportStatusService.resetFailures(leagueId, seasonYear, 'core');
+        return { leagueId: targetApiId, season: seasonYear };
+    } catch (err) {
+        sendLog(`❌ Core Import Failed: ${err.message}`, 'error');
+        await ImportStatusService.incrementFailure(leagueId, seasonYear, 'core', err.message);
+        throw err;
     }
-
-    const { teams, localTeamMap } = await importTeamsAndVenues(targetApiId, seasonYear, sendLog);
-    const totalPlayers = await importPlayersAndStats(teams, seasonYear, targetApiId, localLeagueId, localTeamMap, sendLog);
-
-    await db.run("UPDATE V3_League_Seasons SET imported_players = true, last_imported_at = CURRENT_TIMESTAMP, last_sync_core = CURRENT_TIMESTAMP WHERE league_id = ? AND season_year = ?", cleanParams([localLeagueId, seasonYear]));
-    sendLog(`Processed ${totalPlayers} players.`, 'success');
-
-    await importStandings(targetApiId, seasonYear, localLeagueId, localTeamMap, sendLog);
-    await importFixtures(targetApiId, seasonYear, localLeagueId, localTeamMap, sendLog);
-
-    const disc = await db.get("SELECT is_discovered FROM V3_Leagues WHERE league_id = ?", cleanParams([localLeagueId]));
-    if (disc?.is_discovered) await db.run("UPDATE V3_Leagues SET is_discovered = false WHERE league_id = ?", cleanParams([localLeagueId]));
-
-    try { await syncLeagueEventsService(localLeagueId, seasonYear, 2000); } catch (e) { }
-
-    return { leagueId: targetApiId, season: seasonYear };
 };
 
 // --- Player Career Sync ---

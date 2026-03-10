@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../../services/api';
 import {
     Grid, Stack, Badge, Button,
-    Tabs, LeagueCard, Accordion
+    Tabs, LeagueCard, Accordion,
+    Skeleton, CardSkeleton
 } from '../../../../design-system';
 import { PageLayout, PageHeader, PageContent } from '../../layouts';
 import './V3LeaguesList.css';
@@ -58,10 +59,45 @@ const V3LeaguesList = () => {
     const featured = getFeaturedLeagues();
 
     if (loading) return (
-        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="ds-button-spinner" style={{ marginBottom: '12px' }}></div>
-            <p style={{ color: 'var(--color-text-dim)' }}>Accessing Competition Vault...</p>
-        </div>
+        <PageLayout className="v3-leagues-content">
+            {/* Page header skeleton */}
+            <div style={{ padding: 'var(--spacing-xl)' }}>
+                <Skeleton width="240px" height="32px" style={{ marginBottom: 'var(--spacing-sm)' }} />
+                <Skeleton width="360px" height="16px" />
+            </div>
+            <PageContent>
+                {/* Featured leagues skeleton */}
+                <section style={{ marginBottom: 'var(--spacing-3xl)' }}>
+                    <Skeleton width="180px" height="18px" style={{ marginBottom: 'var(--spacing-md)' }} />
+                    <Grid columns="repeat(auto-fill, minmax(280px, 1fr))" gap="var(--spacing-md)">
+                        {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                            <CardSkeleton key={i} />
+                        ))}
+                    </Grid>
+                </section>
+                {/* Tabs skeleton */}
+                <div style={{ display: 'flex', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-xl)' }}>
+                    <Skeleton width="130px" height="36px" />
+                    <Skeleton width="80px" height="36px" />
+                    <Skeleton width="200px" height="36px" />
+                </div>
+                {/* Country accordion skeletons */}
+                <Stack gap="var(--spacing-md)">
+                    {[1, 2, 3, 4, 5].map(i => (
+                        <div key={i} style={{ padding: 'var(--spacing-md)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-elevated)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                                <Skeleton width="32px" height="32px" circle />
+                                <div>
+                                    <Skeleton width="140px" height="16px" style={{ marginBottom: '4px' }} />
+                                    <Skeleton width="90px" height="10px" />
+                                </div>
+                                <Skeleton width="60px" height="20px" style={{ marginLeft: 'auto' }} />
+                            </div>
+                        </div>
+                    ))}
+                </Stack>
+            </PageContent>
+        </PageLayout>
     );
 
     if (!structuredData) return (
