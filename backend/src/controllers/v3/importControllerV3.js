@@ -105,7 +105,14 @@ export const importLeagueV3 = async (req, res) => {
     const sendLog = (message, type = 'info') => res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
     try {
         ImportControl.resetImportState();
-        const meta = await runImportJob(req.body.leagueId, Number.parseInt(req.body.season), sendLog, { forceApiId: true });
+        const leagueId = req.body.leagueId || req.params.id;
+        const season = req.body.season || req.params.year;
+        
+        if (!leagueId || !season) {
+            throw new Error("Missing leagueId or season");
+        }
+
+        const meta = await runImportJob(leagueId, Number.parseInt(season), sendLog, { forceApiId: true, forceRefresh: req.body.forceRefresh || req.query.force === 'true' });
         res.write(`data: ${JSON.stringify({ type: 'complete', ...meta })}\n\n`);
         res.end();
     } catch (error) { sendLog(`❌ Error: ${error.message}`, 'error'); res.end(); }

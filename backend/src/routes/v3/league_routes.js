@@ -19,6 +19,7 @@ router.get('/league/:id/sync-status', validateRequest(leagueIdParamSchema), getS
 router.post('/leagues/seasons/init', validateRequest(initSeasonsSchema), initializeSeasons);
 router.get('/league/:id/season/:year', getSeasonOverview);
 router.get('/league/:id/season/:year/players', getSeasonPlayers);
+router.post('/league/:id/season/:year/sync', importLeagueV3);
 router.get('/league/:leagueId/season/:year/club/:teamId/squad', getTeamSquad);
 router.get('/league/:apiId/available-seasons', getAvailableSeasons);
 

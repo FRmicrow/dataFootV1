@@ -33,61 +33,64 @@ const SeasonOverviewPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                let targetYear = year;
-                if (!year) {
-                    const res = await api.getLeagueSeasons(id);
-                    const seasonsList = res.seasons || [];
-                    const imported = seasonsList.filter(s => s.imported_players === 1);
-                    if (imported.length > 0) {
-                        // Prioritize the season marked as current
-                        const currentSeason = imported.find(s => s.is_current === 1 || s.is_current === true);
-                        targetYear = currentSeason ? currentSeason.season_year : imported[0].season_year;
+    const [syncing, setSyncing] = useState(false);
+    const [syncLogs, setSyncLogs] = useState([]);
 
-                        navigate(`/league/${id}/season/${targetYear}`, { replace: true });
-                        return;
-                    } else {
-                        throw new Error("No imported seasons found for this league.");
-                    }
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            let targetYear = year;
+            if (!year) {
+                const res = await api.getLeagueSeasons(id);
+                const seasonsList = res.seasons || [];
+                const imported = seasonsList.filter(s => s.imported_players === 1);
+                if (imported.length > 0) {
+                    // Prioritize the season marked as current
+                    const currentSeason = imported.find(s => s.is_current === 1 || s.is_current === true);
+                    targetYear = currentSeason ? currentSeason.season_year : imported[0].season_year;
+
+                    navigate(`/league/${id}/season/${targetYear}`, { replace: true });
+                    return;
+                } else {
+                    throw new Error("No imported seasons found for this league.");
                 }
-
-                const [overviewRes, fixturesRes] = await Promise.all([
-                    api.getSeasonOverview(id, targetYear),
-                    api.getLeagueFixtures(id, targetYear)
-                ]);
-
-                setData(overviewRes);
-                setStandings(overviewRes.standings || []);
-
-                if (overviewRes.standings && overviewRes.standings.length > 0 && !isDynamicMode) {
-                    const maxPlayed = Math.max(...overviewRes.standings.map(t => t.played || 0));
-                    setRangeEnd(maxPlayed || 38);
-                }
-
-                setFixturesData(fixturesRes || { fixtures: [], rounds: [] });
-                if (fixturesRes?.rounds?.length > 0) {
-                    const allFixtures = fixturesRes.fixtures || [];
-                    let current = fixturesRes.rounds[0];
-                    const firstUnplayed = allFixtures.find(f => f.status_short === 'NS' || f.status_short === 'TBD');
-                    if (firstUnplayed) {
-                        current = firstUnplayed.round;
-                    } else if (allFixtures.length > 0) {
-                        current = allFixtures[allFixtures.length - 1].round;
-                    }
-                    setSelectedRound(current);
-                }
-
-            } catch (err) {
-                console.error("Error fetching season analytics:", err);
-                setError(err.response?.data?.error || err.message || "Failed to load dashboard.");
-            } finally {
-                setLoading(false);
             }
-        };
 
+            const [overviewRes, fixturesRes] = await Promise.all([
+                api.getSeasonOverview(id, targetYear),
+                api.getLeagueFixtures(id, targetYear)
+            ]);
+
+            setData(overviewRes);
+            setStandings(overviewRes.standings || []);
+
+            if (overviewRes.standings && overviewRes.standings.length > 0 && !isDynamicMode) {
+                const maxPlayed = Math.max(...overviewRes.standings.map(t => t.played || 0));
+                setRangeEnd(maxPlayed || 38);
+            }
+
+            setFixturesData(fixturesRes || { fixtures: [], rounds: [] });
+            if (fixturesRes?.rounds?.length > 0) {
+                const allFixtures = fixturesRes.fixtures || [];
+                let current = fixturesRes.rounds[0];
+                const firstUnplayed = allFixtures.find(f => f.status_short === 'NS' || f.status_short === 'TBD');
+                if (firstUnplayed) {
+                    current = firstUnplayed.round;
+                } else if (allFixtures.length > 0) {
+                    current = allFixtures[allFixtures.length - 1].round;
+                }
+                setSelectedRound(current);
+            }
+
+        } catch (err) {
+            console.error("Error fetching season analytics:", err);
+            setError(err.response?.data?.error || err.message || "Failed to load dashboard.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         if (id) fetchData();
     }, [id, year, navigate]);
 
@@ -109,6 +112,50 @@ const SeasonOverviewPage = () => {
         fetchSquad();
     }, [selectedTeamId, id, year, activeTab]);
 
+
+    const handleSync = async () => {
+        if (syncing) return;
+        setSyncing(true);
+        setSyncLogs([{ type: 'info', message: `🚀 Starting Sync for ${year}...` }]);
+
+        try {
+            const response = await fetch(`/api/league/${id}/season/${year}/sync`, {
+                method: 'POST'
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                lines.forEach(line => {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.type === 'complete') {
+                                setSyncLogs(prev => [...prev.slice(-4), { type: 'success', message: '✅ Sync Completed!' }]);
+                                setTimeout(() => setSyncing(false), 3000);
+                                fetchData();
+                            } else {
+                                setSyncLogs(prev => [...prev.slice(-4), data]); 
+                            }
+                        } catch (e) {
+                            console.error("SSE Parse Error", e);
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("Sync failed", err);
+            setSyncLogs(prev => [...prev, { type: 'error', message: `❌ Sync Failed: ${err.message}` }]);
+            setTimeout(() => setSyncing(false), 3000);
+        }
+    };
 
     const handleSeasonChange = (e) => {
         const newYear = e.target.value;
@@ -218,25 +265,54 @@ const SeasonOverviewPage = () => {
 
                 <ControlBar
                     left={
-                        <Tabs
-                            items={tabItems}
-                            activeId={activeTab}
-                            onChange={setActiveTab}
-                        />
+                        <Stack direction="row" gap="var(--spacing-lg)" align="center">
+                            <Tabs
+                                items={tabItems}
+                                activeId={activeTab}
+                                onChange={setActiveTab}
+                            />
+                            {syncing && (
+                                <div className="sync-status-indicator animate-pulse" style={{ 
+                                    display: 'flex', 
+                                    gap: 'var(--spacing-sm)', 
+                                    fontSize: 'var(--font-xs)',
+                                    color: 'var(--color-primary-light)',
+                                    background: 'rgba(var(--color-primary-rgb), 0.1)',
+                                    padding: '4px 12px',
+                                    borderRadius: '100px',
+                                    border: '1px solid rgba(var(--color-primary-rgb), 0.2)'
+                                }}>
+                                    <span className="spinner-mini"></span>
+                                    {syncLogs[syncLogs.length - 1]?.message || 'Syncing...'}
+                                </div>
+                            )}
+                        </Stack>
                     }
                     right={
-                        <div className="ds-filter-box">
-                            <label htmlFor="season-edition-select">Season Edition</label>
-                            <select
-                                id="season-edition-select"
-                                value={year}
-                                onChange={handleSeasonChange}
+                        <Stack direction="row" gap="var(--spacing-md)" align="center">
+                            <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                onClick={handleSync}
+                                loading={syncing}
+                                icon="🔄"
                             >
-                                {(availableYears || [year]).map(y => (
-                                    <option key={y} value={y}>{y}/{Number.parseInt(y) + 1}</option>
-                                ))}
-                            </select>
-                        </div>
+                                Sync {year}
+                            </Button>
+
+                            <div className="ds-filter-box">
+                                <label htmlFor="season-edition-select">Season Edition</label>
+                                <select
+                                    id="season-edition-select"
+                                    value={year}
+                                    onChange={handleSeasonChange}
+                                >
+                                    {(availableYears || [year]).map(y => (
+                                        <option key={y} value={y}>{y}/{Number.parseInt(y) + 1}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </Stack>
                     }
                 />
 

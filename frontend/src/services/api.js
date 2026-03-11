@@ -200,4 +200,5 @@ export default {
     getUpcomingOdds: () => api.get('/odds/upcoming'),
     getFixtureOdds: (id) => api.get(`/odds/fixture/${id}`),
     importOdds: (leagueId, seasonYear) => api.post('/odds/import', { leagueId, seasonYear }),
+    syncLeague: (leagueId, season) => api.post(`/league/${leagueId}/season/${season}/sync`),
 };
