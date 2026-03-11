@@ -136,7 +136,8 @@ def train_model(league_id: int = None, horizon_type: str = 'FULL_HISTORICAL',
         probs = model.predict_proba(X_test)
         
         acc = accuracy_score(y_test, preds)
-        loss = log_loss(y_test, probs) if len(np.unique(y_test)) > 1 else 0.0
+        # Handle cases where log_loss needs more than one class to calculate
+        loss = log_loss(y_test, probs) if len(np.unique(y_test)) > 1 and len(np.unique(y_train)) > 1 else 0.0
         
         # Brier Score
         y_one_hot = np.zeros((len(y_test), 3))

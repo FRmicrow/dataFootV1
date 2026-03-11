@@ -1,0 +1,23 @@
+# Task: Create New Feature
+
+- [x] Phase 0: Refinement & Context
+    - [x] Dialogue with user to define "Why" and "What"
+    - [x] Identify Version and Name
+    - [x] Define Vision & Objectives
+- [x] Phase 1: Technical Specifications (TSD)
+    - [x] Analyze Impact
+    - [x] Draft `technical-spec.md`
+    - [x] Get TSD validation
+- [x] Phase 2: Isolation & Structure
+    - [x] Create Git branch `feature/V34-MLhub-Improvement`
+    - [x] Initialize feature directory `feature/V34-MLhub-Improvement/`
+- [x] Phase 3: User Stories & Tests
+    - [x] Define User Stories
+    - [x] Integrate Test Scenarios
+    - [x] Create US files
+- [x] Phase 4: Launch
+    - [x] Presentation of backlog
+    - [x] Implementation of US-340 (Modular Factory) - [DONE]
+    - [x] Implementation of US-341 (xG Integration) - [DONE]
+    - [x] Implementation of US-342 (Submodel Refinement) - [Logic ready, needs UI trigger]
+    - [x] Launch `/implement-feature`

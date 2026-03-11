@@ -73,6 +73,11 @@ const MLLeaderboard = () => {
             render: (val) => typeof val === 'number' ? <Badge variant="neutral">{(val * 100).toFixed(1)}%</Badge> : '-'
         },
         {
+            dataIndex: 'market_ou_xg',
+            title: 'OU xG',
+            render: (val) => typeof val === 'number' ? <Badge variant="success">{(val * 100).toFixed(1)}%</Badge> : '-'
+        },
+        {
             dataIndex: 'brier_score',
             title: 'Error',
             render: (val) => typeof val === 'number' ? <span className="ds-text-neutral-400 ds-text-xs">{val.toFixed(3)}</span> : '-'
