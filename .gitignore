@@ -75,3 +75,9 @@ backend/coverage/
 
 # Divers
 backend/node_modules_host_backup
+
+# Data (CSV/ML)
+Database - Odds - Europe Conference League - LS.zip
+Database - Odds - Europe Conference League - LS/
+Database-Odds/
+*.csv
