@@ -16,7 +16,7 @@ class StatsEngine {
      */
     static async getDynamicStandings(leagueId, season, fromRound = 1, toRound = 50) {
         // 1. Fetch Fixtures in Range
-        // Optimization: SQLite handles thousands of rows easily, so fetching ~380 matches is fine.
+        // Optimization: fetching ~380 matches per season is lightweight for PostgreSQL.
         const matches = await db.all(`
             SELECT 
                 f.round,

@@ -3,17 +3,16 @@ const { Pool, types } = pkg;
 import { cleanParams } from '../utils/sqlHelpers.js';
 import logger from '../utils/logger.js';
 
-// Configure type parsers to mimic SQLite behavior for backward compatibility
-// 16 is the OID for 'bool' in Postgres. Return 1 for true, 0 for false.
+// Configure type parsers for PostgreSQL type coercion
+// 16 is the OID for 'bool' in Postgres. Return 1 for true, 0 for false (matches legacy int convention).
 types.setTypeParser(16, val => (val === 't' || val === true) ? 1 : 0);
-// 20 is the OID for 'int8' (BIGINT). Return as Number to avoid string scientific notation.
+// 20 is the OID for 'int8' (BIGINT). Parse as Number to avoid JS string issues with large integers.
 types.setTypeParser(20, val => Number.parseInt(val, 10));
 
 let pool;
 
 /**
- * Initialize database connection using node-postgres (pg)
- * This replaces better-sqlite3 to connect to the PostgreSQL Docker container.
+ * Initialize database connection using node-postgres (pg).
  */
 async function initDatabase() {
     const connectionString = process.env.DATABASE_URL;
@@ -66,7 +65,7 @@ async function run(sql, params = []) {
     const pgSql = convertToDollarParams(sql);
     const result = await pool.query(pgSql, sanitized);
 
-    // Attempt to mimic better-sqlite3 return object
+    // Return the id of the inserted row if RETURNING clause is present in the query.
     let lastInsertRowid = null;
     if (result.command === 'INSERT' && result.rows.length > 0) {
         // Postgres returns values only if RETURNING is in the query.
