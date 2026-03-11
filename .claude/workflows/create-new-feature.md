@@ -25,7 +25,7 @@ Ce workflow initie une nouvelle fonctionnalité et guide l’agent Product Owner
 
 ### Phase 2 : Isolation & Structure (Git Engineer)
 7. **Création de Branche** : Basculez sur une nouvelle branche fraîche (ex: `feature/Vxx-[Nom]`).
-8. **Initialisation du Dossier** : Créez le dossier `docs/features/Vxx-[Nom]/` et déplacez-y le TSD validé.
+8. **Initialisation du Dossier** : Créez le dossier `feature/Vxx-[Nom]/` et déplacez-y le TSD validé.
 
 ### Phase 3 : Définition des US & Tests (Product Owner)
 9. **Découpage en US** : Définissez les User Stories basées sur le TSD.
@@ -41,4 +41,4 @@ Ce workflow initie une nouvelle fonctionnalité et guide l’agent Product Owner
 - Ce workflow est la responsabilité exclusive de l'agent assumant le rôle de **Product Owner**.
 - La création de dossiers et de fichiers se fait uniquement après validation explicite de l’utilisateur à l'étape 6.
 - L'analyse préliminaire du dossier `.claude/project-architecture/` est primordiale pour garantir la viabilité technique des User Stories.
-- **IMPORTANT** : Une fois la feature terminée et validée, le dossier de documentation `docs/features/Vxx-[Nom]/` **doit** être déplacé vers `docs/features/Completed-Feature/` et **pushé** sur le dépôt.
+- **IMPORTANT** : Une fois la feature terminée et validée, le dossier de documentation `feature/Vxx-[Nom]/` **doit** être déplacé vers `feature/Completed-Feature/` et **pushé** sur le dépôt.

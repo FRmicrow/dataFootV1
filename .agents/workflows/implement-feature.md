@@ -7,7 +7,7 @@ description: Implement a new feature from design to QA.
 - Ce workflow est la responsabilité exclusive de l'agent assumant le rôle de **Product Owner**.
 - La création de dossiers et de fichiers se fait uniquement après validation explicite de l’utilisateur à l'étape 6.
 - L'analyse préliminaire du dossier `.claude/project-architecture/` est primordiale pour garantir la viabilité technique des User Stories.
-- **IMPORTANT** : Une fois la feature terminée et validée, le dossier de documentation `docs/features/Vxx-[Nom]/` **doit** être déplacé vers `docs/features/Completed-Feature/` et **pushé** sur le dépôt.
+- **IMPORTANT** : Une fois la feature terminée et validée, le dossier de documentation `feature/Vxx-[Nom]/` **doit** être déplacé vers `feature/Completed-Feature/` et **pushé** sur le dépôt.
 
 This workflow ensures that every new feature is implemented, tested, and documented correctly.
 
@@ -29,10 +29,10 @@ This workflow ensures that every new feature is implemented, tested, and documen
 4. **Testing & QA**
    - Run `cd backend && npm test`.
    - Run `cd frontend && npm test`.
-   - Create a `QA-REPORT.md` at `docs/features/Vxx-Name/`.
+   - Create a `QA-REPORT.md` at `feature/Vxx-Name/`.
 
 5. **Final Review**
    - Run a full build using `docker-compose up` to verify integration.
    - Perform a final visual audit for premium UI standards.
-   - **Move documentation folder** from `docs/features/Vxx-[Name]/` to `docs/features/Completed-Feature/`.
+   - **Move documentation folder** from `feature/Vxx-[Name]/` to `feature/Completed-Feature/`.
    - **Push** the documentation folder and its contents to the repository.

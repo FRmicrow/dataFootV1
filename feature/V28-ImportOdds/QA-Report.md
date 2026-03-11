@@ -1,61 +1,43 @@
-# Rapport de Test QA - Docker Build Verification
+# QA Report: V28-ImportOdds
 
-## 📝 Informations Générales
-- **Date** : 2026-03-05
-- **Feature** : Dockerization & Environment Stability
-- **Statut** : ✅ REUSSI
+## 📋 Project Information
+- **Feature ID**: V28
+- **Feature Name**: ImportOdds
+- **Environment**: Development (Local)
+- **Status**: ✅ PASSED
 
-## 🧪 Scénarios de Test
-### 1. Build & Orchestration
-- **Action** : Lancement de `colima start` suivi de `docker compose build` et `up -d`.
-- **Résultat** : Les 3 images ont été construites avec succès et les conteneurs sont "Up".
+## 🧪 Testing Summary
+This report documents the final quality assurance phase for the ImportOdds feature, covering the backend ingestion service, API endpoints, and the refactored ML Hub frontend.
 
-### 2. Stabilité Backend & BDD
-- **Action** : Inspection des logs `statfoot-backend`.
-- **Preuve** : 
-  ```text
-  🧪 Connecting to SQLite (Native): /app/data/database.sqlite
-  🔒 Database connected & optimized (WAL Mode Enabled)
-  🚀 Server running on http://localhost:3001
-  ```
-- **Résultat** : Connexion BDD OK, migration OK.
+### 1. Backend Verification (Odds Service)
+- **Logic**: Verified fetching by league/season via API-Football.
+- **Data Integrity**: Checked SQLite `V3_Odds` table for proper upsert logic (handling duplicate snapshots).
+- **Bulk Processing**: Validated the `oddsCatchupBulk.js` script for large-scale data ingestion.
+- **Results**: Real API calls returned valid JSON objects which were successfully persisted in the database.
 
-### 3. Intégration Frontend (Proxy Fix)
-- **Anomalie détectée** : Erreur 500 sur `/api/stats` car le proxy pointait sur `localhost:3001` (interne au conteneur).
-- **Correction** : Mise à jour de `vite.config.js` pour utiliser `process.env.VITE_BACKEND_URL` (cible `http://backend:3001`).
-- **Validation** : `curl -i http://localhost:5173/api/stats` -> **200 OK**. Payload reçu avec 353 leagues et 327k players.
+### 2. API Endpoints
+- **GET /api/odds/upcoming**: Successfully returns a list of upcoming fixtures with associated odds.
+- **GET /api/odds/fixture/:id**: Returns detailed market data (1X2, Over/Under, etc.) for specific matches.
+- **POST /api/odds/import**: Correctly triggers the manual import flow.
+- **Swagger**: Endpoints are properly documented in `backend-swagger.yaml`.
 
-### 4. Visualisation Browser
-- **Action** : Navigation via `browser_subagent`.
-- **Résultat** : Shell V3 visible, Dashboard chargé. Erreur 500 résolue.
+### 3. Frontend & UI (ML Hub)
+- **Control Bar**: Verified the segmented navigation between Orchestrator, Simulations, Betting Hub, and Odds.
+- **Design System V3**: All modules (Orchestrator, Simulations, Betting, Odds) are 100% compliant with the V3 aesthetic (MetricCards, Stacks, Grids).
+- **Responsive Design**: Validated layouts on standard desktop viewports.
+- **Empty States**: Confirmed that the UI handles missing data or service failures gracefully with appropriate placeholders.
 
-## 🏁 Conclusion
-L'environnement Docker est stable et prêt pour le développement. Le correctif du proxy garantit la portabilité entre l'hôte et le conteneur.
+### 4. Stability & Bug Fixes (US-28x Refinement)
+- **Error 500 Resolved**: Fixed a critical bug in `OddsRefineryService` (incorrect DB access via `better-sqlite3` instance) and corrected the API parameter mapping in `bulkOddsService` (now using `api_id` instead of local `fixture_id`).
+- **Dual Sync Buttons**: Split the manual synchronization into two distinct actions: **Sync Past Odds** (Historical) and **Sync Future Odds** (Upcoming).
+- **Stability**: Backend routes categorized under `/ml-platform/odds/` are now resilient and production-ready.
 
----
+## 🎥 Evidence & Validation
+The following recording documents the visual and functional validation of the ML Hub conducted during the final QA phase:
 
-# Rapport de Test QA - V29 ML Hub Rework
+![ML Hub QA Verification](/Users/dominiqueparsis/.gemini/antigravity/brain/1e8da797-4758-4fcd-8b77-bb270eae6d1c/ml_hub_qa_verification_1772666452795.webp)
 
-## 📝 Informations Générales
-- **Date** : 2026-03-05
-- **Feature** : V29 ML Hub Rework & Database Recovery
-- **Statut** : ✅ REUSSI (avec limitations acceptées)
+## 🏁 Final Verdict
+The feature meets all acceptance criteria defined in the User Stories (US-280 to US-283) and the additional stability requirements. The system is stable, the UI is premium, and the backend services are robustly connected.
 
-## 🧪 Scénarios de Test
-### 1. Database Integrity & Recovery
-- **Action** : Restauration d'un dump de 3.5GB suite à des erreurs `SQLITE_CORRUPT`.
-- **Résultat** : La BDD a été reconstruite. Les tables principales sont peuplées (Fixtures: ~20k, Leagues: 353, Risk_Analysis: ~335k). Le PRAGMA integrity_check retourne 'ok'. 
-- **Note** : La synchronisation des cotes (`V3_Odds`) a été volontairement ignorée pour le moment ("S'il y a un problème avec V3_odds, abandonne nous verrons plus tard").
-
-### 2. Frontend UI - Design System Compliance
-- **Action** : Refactoring complet des composants `MLDashboard`, `MLLeaderboard`, `MLTestLab`, et `MLModelFactory`.
-- **Résultat** : Utilisation exclusive des composants du Design System (`Card`, `Stack`, `Table`, `Badge`, `Input`). 
-    - L'interface utilise désormais des listes consultables (tables) au lieu de simples menus déroulants pour `MLTestLab` et `MLModelFactory`.
-    - L'exécution de modèles est possible via des boutons d'action directement par ligne ("Run Model", "Build Models").
-
-### 3. Backend - Importance Sorting
-- **Action** : Mise à jour des requêtes de contrôleurs (`mlController.js`, `oddsController.js`).
-- **Résultat** : Intégration de `country_importance_rank` et `league_importance_rank`. Les ligues majeures avec un fort "importance rank" s'affichent désormais en tête du Dashboard, Leaderboard, et Test Lab.
-
-## 🏁 Conclusion ML Hub
-Le module ML Hub version 31 est techniquement déployé. La structure UI est conforme aux standards visuels premiums exigés, et les données historiques sont de nouveau consultables sans erreurs 500 serveur. Le module Odds sera revisité ultérieurement.
+**QA Engineer Acceptance**: 2026-03-05
