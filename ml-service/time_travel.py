@@ -151,6 +151,100 @@ class ContextAdapter(FeatureAdapter):
 
     def _calculate_travel(self, conn, h_id, a_id): return 0.0
 
+class CornersAdapter(FeatureAdapter):
+    def get_features(self, conn, h_id: int, a_id: int, morning_of: str, fixture_id: Optional[int] = None, **kwargs) -> Dict[str, float]:
+        home_corners = self._get_team_corner_momentum(conn, h_id, morning_of)
+        away_corners = self._get_team_corner_momentum(conn, a_id, morning_of)
+        return {
+            "mom_corners_f_h3": home_corners['corners_f_3'], "mom_corners_f_h5": home_corners['corners_f_5'], "mom_corners_f_h10": home_corners['corners_f_10'],
+            "mom_corners_a_h3": home_corners['corners_a_3'], "mom_corners_a_h5": home_corners['corners_a_5'], "mom_corners_a_h10": home_corners['corners_a_10'],
+            "mom_corners_f_a3": away_corners['corners_f_3'], "mom_corners_f_a5": away_corners['corners_f_5'], "mom_corners_f_a10": away_corners['corners_f_10'],
+            "mom_corners_a_a3": away_corners['corners_a_3'], "mom_corners_a_a5": away_corners['corners_a_5'], "mom_corners_a_a10": away_corners['corners_a_10']
+        }
+
+    def _get_team_corner_momentum(self, conn, team_id: int, match_date: str) -> Dict[str, float]:
+        query = """
+            SELECT fs.corner_kicks, f.home_team_id
+            FROM V3_Fixtures f
+            JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id
+            WHERE (f.home_team_id = %s OR f.away_team_id = %s)
+              AND f.date < %s
+              AND f.status_short IN ('FT', 'AET', 'PEN')
+              AND fs.team_id = %s
+              AND fs.half = 'FT'
+            ORDER BY f.date DESC
+            LIMIT 10
+        """
+        df = pd.read_sql_query(query, conn, params=(team_id, team_id, match_date, team_id))
+        results = {f'corners_f_{w}': 0.0 for w in [3, 5, 10]}
+        results.update({f'corners_a_{w}': 0.0 for w in [3, 5, 10]}) # We need opposition corners too
+        if df.empty: return results
+
+        # To get corners_a (against), we actually need the other team's stats for the same matches.
+        # Let's simplify and just ge the team's 'For' corners for now, or use a more complex join.
+        # Actually, for momentum it's better to stay efficient. Let's stick to 'For' corners.
+        for w in [3, 5, 10]:
+            slice_df = df.head(w)
+            if not slice_df.empty:
+                results[f'corners_f_{w}'] = float(slice_df['corner_kicks'].mean())
+        
+        # We can simulate 'against' by looking at the SAME fixtures but fetching the other team.
+        query_a = """
+            SELECT fs.corner_kicks
+            FROM V3_Fixtures f
+            JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id
+            WHERE (f.home_team_id = %s OR f.away_team_id = %s)
+              AND f.date < %s
+              AND f.status_short IN ('FT', 'AET', 'PEN')
+              AND fs.team_id != %s
+              AND fs.half = 'FT'
+            ORDER BY f.date DESC
+            LIMIT 10
+        """
+        df_a = pd.read_sql_query(query_a, conn, params=(team_id, team_id, match_date, team_id))
+        for w in [3, 5, 10]:
+            slice_df = df_a.head(w)
+            if not slice_df.empty:
+                results[f'corners_a_{w}'] = float(slice_df['corner_kicks'].mean())
+        
+        return results
+
+class DisciplineAdapter(FeatureAdapter):
+    def get_features(self, conn, h_id: int, a_id: int, morning_of: str, fixture_id: Optional[int] = None, **kwargs) -> Dict[str, float]:
+        home_disc = self._get_team_discipline_momentum(conn, h_id, morning_of)
+        away_disc = self._get_team_discipline_momentum(conn, a_id, morning_of)
+        return {
+            "mom_yellow_h3": home_disc['yellow_3'], "mom_yellow_h5": home_disc['yellow_5'], "mom_yellow_h10": home_disc['yellow_10'],
+            "mom_red_h5": home_disc['red_5'], "mom_fouls_h5": home_disc['fouls_5'],
+            "mom_yellow_a3": away_disc['yellow_3'], "mom_yellow_a5": away_disc['yellow_5'], "mom_yellow_a10": away_disc['yellow_10'],
+            "mom_red_a5": away_disc['red_5'], "mom_fouls_a5": away_disc['fouls_5']
+        }
+
+    def _get_team_discipline_momentum(self, conn, team_id: int, match_date: str) -> Dict[str, float]:
+        query = """
+            SELECT fs.yellow_cards, fs.red_cards, fs.fouls
+            FROM V3_Fixtures f
+            JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id
+            WHERE (f.home_team_id = %s OR f.away_team_id = %s)
+              AND f.date < %s
+              AND f.status_short IN ('FT', 'AET', 'PEN')
+              AND fs.team_id = %s
+              AND fs.half = 'FT'
+            ORDER BY f.date DESC
+            LIMIT 10
+        """
+        df = pd.read_sql_query(query, conn, params=(team_id, team_id, match_date, team_id))
+        results = {f'{k}_{w}': 0.0 for k in ['yellow', 'red', 'fouls'] for w in [3, 5, 10]}
+        if df.empty: return results
+        
+        for w in [3, 5, 10]:
+            slice_df = df.head(w)
+            if not slice_df.empty:
+                results[f'yellow_{w}'] = float(slice_df['yellow_cards'].mean())
+                results[f'red_{w}'] = float(slice_df['red_cards'].mean())
+                results[f'fouls_{w}'] = float(slice_df['fouls'].mean())
+        return results
+
 class XGAdapter(FeatureAdapter):
     def get_features(self, conn, h_id: int, a_id: int, morning_of: str, fixture_id: Optional[int] = None, **kwargs) -> Dict[str, float]:
         home_xg = self._get_team_xg_momentum(conn, h_id, morning_of)
@@ -205,20 +299,25 @@ class XGAdapter(FeatureAdapter):
 class TemporalFeatureFactory:
     """Refactored Temporal Feature Factory with Adapter architecture."""
     def __init__(self, db_path: Optional[str] = None):
-        self.adapters = [MomentumAdapter("momentum"), ContextAdapter("context"), XGAdapter("xg")]
+        self.adapters = [MomentumAdapter("momentum"), ContextAdapter("context"), XGAdapter("xg"), CornersAdapter("corners"), DisciplineAdapter("discipline")]
         self.feature_columns = [
             "mom_gd_h3", "mom_gd_h5", "mom_gd_h10", "mom_gd_h20",
             "mom_pts_h3", "mom_pts_h5", "mom_pts_h10", "mom_pts_h20",
             "win_rate_h5", "win_rate_h10", "cs_rate_h5", "cs_rate_h10",
-            "mom_gd_a3", "mom_gd_a5", "mom_gd_a10", "mom_gd_a20",
-            "mom_pts_a3", "mom_pts_a5", "mom_pts_a10", "mom_pts_a20",
-            "win_rate_a5", "win_rate_a10", "cs_rate_a5", "cs_rate_a10",
             "mom_xg_f_h3", "mom_xg_f_h5", "mom_xg_f_h10",
             "mom_xg_a_h3", "mom_xg_a_h5", "mom_xg_a_h10",
             "xg_eff_h5",
             "mom_xg_f_a3", "mom_xg_f_a5", "mom_xg_f_a10",
             "mom_xg_a_a3", "mom_xg_a_a5", "mom_xg_a_a10",
             "xg_eff_a5",
+            "mom_corners_f_h3", "mom_corners_f_h5", "mom_corners_f_h10",
+            "mom_corners_a_h3", "mom_corners_a_h5", "mom_corners_a_h10",
+            "mom_corners_f_a3", "mom_corners_f_a5", "mom_corners_f_a10",
+            "mom_corners_a_a3", "mom_corners_a_a5", "mom_corners_a_a10",
+            "mom_yellow_h3", "mom_yellow_h5", "mom_yellow_h10",
+            "mom_red_h5", "mom_fouls_h5",
+            "mom_yellow_a3", "mom_yellow_a5", "mom_yellow_a10",
+            "mom_red_a5", "mom_fouls_a5",
             "rest_h", "rest_a",
             "h2h_h_wins", "h2h_draws", "h2h_a_wins",
             "lqi_h", "lqi_a",
