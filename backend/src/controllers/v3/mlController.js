@@ -7,7 +7,7 @@ import OddsCrawlerService from '../../services/v3/OddsCrawlerService.js';
 // --- Private Helpers for Evaluation & Simulation ---
 
 const determineActualOutcome = (group) => {
-    if (group.market_type === '1N2_FT') {
+    if (group.market_type === '1X2' || group.market_type === '1N2_FT') {
         if (group.goals_home > group.goals_away) return '1';
         if (group.goals_home < group.goals_away) return '2';
         return 'N';
@@ -16,6 +16,15 @@ const determineActualOutcome = (group) => {
         if (group.score_halftime_home > group.score_halftime_away) return '1';
         if (group.score_halftime_home < group.score_halftime_away) return '2';
         return 'N';
+    }
+    // Specialized markets
+    if (group.market_type === 'CORNERS') {
+        const total = parseFloat(group.total_corners || 0);
+        return total > 9.5 ? '1' : '0'; // Over=1, Under=0
+    }
+    if (group.market_type === 'CARDS') {
+        const total = parseFloat(group.total_cards || 0);
+        return total > 3.5 ? '1' : '0';
     }
     return null;
 };
@@ -249,6 +258,77 @@ export const getMLRecommendations = async (req, res) => {
     }
 };
 
+export const getMLClubEvaluation = async (req, res) => {
+    try {
+        const { leagueId, seasonYear } = req.query;
+        let queryParams = [], whereClause = `f.status_short IN ('FT', 'AET', 'PEN')`;
+        if (leagueId) { whereClause += ` AND l.league_id = ?`; queryParams.push(leagueId); }
+        if (seasonYear) { whereClause += ` AND f.season_year = ?`; queryParams.push(seasonYear); }
+
+        const rows = await dbModule.all(`
+            SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability, 
+                   f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away,
+                   l.name as league_name, ht.team_id as home_id, ht.name as home_team, 
+                   at.team_id as away_id, at.name as away_team, f.date,
+                   SUM(fs.corner_kicks) as total_corners,
+                   SUM(fs.yellow_cards + fs.red_cards) as total_cards
+            FROM V3_Risk_Analysis r
+            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id 
+            JOIN V3_Leagues l ON f.league_id = l.league_id 
+            JOIN V3_Teams ht ON f.home_team_id = ht.team_id 
+            JOIN V3_Teams at ON f.away_team_id = at.team_id
+            LEFT JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id AND fs.half = 'FT'
+            WHERE ${whereClause} 
+            GROUP BY r.risk_id, f.fixture_id, l.league_id, ht.team_id, at.team_id
+        `, queryParams);
+
+        const clubStats = {};
+        for (const r of rows) {
+            const actual = determineActualOutcome(r);
+            if (actual === null) continue;
+            const isHit = r.selection === actual;
+
+            // Update stats for both home and away clubs
+            [ {id: r.home_id, name: r.home_team}, {id: r.away_id, name: r.away_team} ].forEach(c => {
+                if (!clubStats[c.id]) clubStats[c.id] = { team_id: c.id, team_name: c.name, hits: 0, total: 0, by_market: {} };
+                const s = clubStats[c.id];
+                s.total++; if (isHit) s.hits++;
+                if (!s.by_market[r.market_type]) s.by_market[r.market_type] = { h: 0, t: 0 };
+                s.by_market[r.market_type].t++; if (isHit) s.by_market[r.market_type].h++;
+            });
+        }
+
+        const data = Object.values(clubStats).map(c => ({
+            ...c,
+            hit_rate: c.total > 0 ? c.hits / c.total : 0
+        })).sort((a, b) => b.hit_rate - a.hit_rate);
+
+        res.json({ success: true, data });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+export const getUpcomingPredictions = async (req, res) => {
+    try {
+        const rows = await dbModule.all(`
+            SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability, r.fair_odd, r.bookmaker_odd, 
+                   f.date, f.round, l.name as league_name, ht.name as home_team, ht.logo_url as home_logo, 
+                   at.name as away_team, at.logo_url as away_logo
+            FROM V3_Risk_Analysis r
+            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id 
+            JOIN V3_Leagues l ON f.league_id = l.league_id 
+            JOIN V3_Teams ht ON f.home_team_id = ht.team_id 
+            JOIN V3_Teams at ON f.away_team_id = at.team_id
+            WHERE f.status_short = 'NS' 
+            ORDER BY f.date ASC, r.ml_probability DESC
+        `);
+        res.json({ success: true, data: rows });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 export const syncUpcomingOdds = async (req, res) => {
     try {
         const result = await OddsSyncService.syncUpcomingOdds();
@@ -386,5 +466,7 @@ export default {
     getLeagueModels,
     syncAdvancedOdds,
     runOddsCatchup,
-    predictFixtureAll
+    predictFixtureAll,
+    getMLClubEvaluation,
+    getUpcomingPredictions
 };

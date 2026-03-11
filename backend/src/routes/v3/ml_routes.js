@@ -54,6 +54,8 @@ router.get('/ml-platform/orchestrator/status', getMLOrchestratorStatus);
 router.get('/ml-platform/risk/recent', getMLRecentAnalyses);
 router.get('/ml-platform/simulations/evaluation', getMLModelEvaluation);
 router.get('/ml-platform/simulations/overview', getMLSimulationOverview);
+router.get('/ml-platform/simulations/club-evaluation', getMLClubEvaluation);
+router.get('/ml-platform/predictions/upcoming', getUpcomingPredictions);
 router.get('/ml-platform/recommendations', getMLRecommendations);
 router.post('/ml-platform/odds/sync', syncUpcomingOdds);
 router.post('/ml-platform/odds/advanced-sync', syncAdvancedOdds);

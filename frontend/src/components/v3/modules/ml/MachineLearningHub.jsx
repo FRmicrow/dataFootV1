@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import MLOrchestratorPage from './MLOrchestratorPage';
 import MLSimulationDashboard from './MLSimulationDashboard';
+import MLIntelligenceDashboard from './submodules/MLIntelligenceDashboard';
 import MLBetRecommendations from './MLBetRecommendations';
 import MLOddsPage from './MLOddsPage';
 import './MachineLearningHub.css';
@@ -23,16 +24,22 @@ const MachineLearningHub = () => {
 
                 <nav className="ml-control-bar mt-lg">
                     <NavLink
+                        to="/machine-learning/intelligence"
+                        className={({ isActive }) => `ml-control-btn ${isActive ? 'active' : ''}`}
+                    >
+                        <span>🧠</span> Intelligence
+                    </NavLink>
+                    <NavLink
                         to="/machine-learning/orchestrator"
                         className={({ isActive }) => `ml-control-btn ${isActive ? 'active' : ''}`}
                     >
                         <span>⚙️</span> Orchestrator
                     </NavLink>
                     <NavLink
-                        to="/machine-learning/simulations"
+                        to="/machine-learning/performance"
                         className={({ isActive }) => `ml-control-btn ${isActive ? 'active' : ''}`}
                     >
-                        <span>🧪</span> Simulations
+                        <span>📊</span> Performance
                     </NavLink>
                     <NavLink
                         to="/machine-learning/betting"
@@ -40,20 +47,15 @@ const MachineLearningHub = () => {
                     >
                         <span>💰</span> Betting Hub
                     </NavLink>
-                    <NavLink
-                        to="/machine-learning/odds"
-                        className={({ isActive }) => `ml-control-btn ${isActive ? 'active' : ''}`}
-                    >
-                        <span>📊</span> Odds
-                    </NavLink>
                 </nav>
             </header>
 
             <main className="ml-hub-content mt-xl">
                 <Routes>
-                    <Route path="/" element={<Navigate to="orchestrator" replace />} />
+                    <Route path="/" element={<Navigate to="intelligence" replace />} />
+                    <Route path="intelligence" element={<MLIntelligenceDashboard />} />
                     <Route path="orchestrator" element={<MLOrchestratorPage />} />
-                    <Route path="simulations" element={<MLSimulationDashboard />} />
+                    <Route path="performance" element={<MLSimulationDashboard />} />
                     <Route path="betting" element={<MLBetRecommendations />} />
                     <Route path="odds" element={<MLOddsPage />} />
                 </Routes>

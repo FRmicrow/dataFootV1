@@ -174,6 +174,13 @@ export default {
     getMLRecentAnalyses: () => api.get('/ml-platform/risk/recent'),
     getMLSimulationFilters: () => api.get('/ml-platform/simulations/filters'),
     getMLSimulationOverview: () => api.get('/ml-platform/simulations/overview'),
+    getMLClubEvaluation: (leagueId, seasonYear) => {
+        const params = new URLSearchParams();
+        if (leagueId) params.append('leagueId', leagueId);
+        if (seasonYear) params.append('seasonYear', seasonYear);
+        return api.get(`/ml-platform/simulations/club-evaluation?${params.toString()}`);
+    },
+    getMLUpcomingPredictions: () => api.get('/ml-platform/predictions/upcoming'),
 
     getMLRecommendations: () => api.get('/ml-platform/recommendations'),
 
