@@ -92,7 +92,8 @@ const NICKNAME_MAP = {
     'Pepe': 'Képler Laveran Lima Ferreira',
     'Nani': 'Luís Carlos Almeida da Cunha',
     'Fred': 'Frederico Chaves Guedes',
-    'Edu': 'Eduardo Gonçalves de Oliveira'
+    'Edu': 'Eduardo Gonçalves de Oliveira',
+    'Mathis Cherki': 'R. Cherki'
 };
 
 function normalize(name) {

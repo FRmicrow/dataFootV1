@@ -64,7 +64,7 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
                     <div style={{ fontSize: '10px', color: 'var(--color-text-dim)', textTransform: 'uppercase' }}>{label}</div>
                     {secondaryValue !== undefined && (
                         <div style={{ fontSize: '9px', color: 'var(--color-text-dim)', marginTop: '2px' }}>
-                            {secondaryValue?.toFixed(2)} <span style={{ fontSize: '8px opacity: 0.7' }}>{secondaryLabel}</span>
+                            {secondaryValue?.toFixed(2)} <span style={{ fontSize: '8px', opacity: 0.7 }}>{secondaryLabel}</span>
                         </div>
                     )}
                 </div>
