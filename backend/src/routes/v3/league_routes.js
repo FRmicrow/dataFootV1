@@ -2,7 +2,7 @@ import express from 'express';
 import { validateRequest } from '../../middleware/validateRequest.js';
 import { leagueIdParamSchema, initSeasonsSchema } from '../../schemas/v3Schemas.js';
 import { getLeagueSeasonsStatus, initializeSeasons, getSyncStatus } from '../../controllers/v3/leagueSeasonController.js';
-import { getCountriesV3, getLeaguesV3, getStandingsV3, getFixturesV3, getAvailableSeasons } from '../../controllers/v3/importControllerV3.js';
+import { getCountriesV3, getLeaguesV3, getStandingsV3, getFixturesV3, getAvailableSeasons, importLeagueV3 } from '../../controllers/v3/importControllerV3.js';
 import { getStructuredLeagues } from '../../controllers/v3/leagueStructuredController.js';
 import { getSeasonOverview, getSeasonPlayers, getTeamSquad, getDynamicStandings } from '../../controllers/v3/seasonController.js';
 
