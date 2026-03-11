@@ -3,6 +3,11 @@ description: Implement a new feature from design to QA.
 ---
 
 # Feature Implementation Workflow
+## Notes
+- Ce workflow est la responsabilité exclusive de l'agent assumant le rôle de **Product Owner**.
+- La création de dossiers et de fichiers se fait uniquement après validation explicite de l’utilisateur à l'étape 6.
+- L'analyse préliminaire du dossier `.claude/project-architecture/` est primordiale pour garantir la viabilité technique des User Stories.
+- **IMPORTANT** : Une fois la feature terminée et validée, le dossier de documentation `docs/features/Vxx-[Nom]/` **doit** être déplacé vers `docs/features/Completed-Feature/` et **pushé** sur le dépôt.
 
 This workflow ensures that every new feature is implemented, tested, and documented correctly.
 
@@ -29,3 +34,5 @@ This workflow ensures that every new feature is implemented, tested, and documen
 5. **Final Review**
    - Run a full build using `docker-compose up` to verify integration.
    - Perform a final visual audit for premium UI standards.
+   - **Move documentation folder** from `docs/features/Vxx-[Name]/` to `docs/features/Completed-Feature/`.
+   - **Push** the documentation folder and its contents to the repository.
