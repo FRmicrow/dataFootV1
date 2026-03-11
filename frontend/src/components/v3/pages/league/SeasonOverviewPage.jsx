@@ -9,6 +9,8 @@ import LeagueOverview from '../../modules/league/LeagueOverview';
 import StandingsTable from '../../modules/league/StandingsTable';
 import FixturesList from '../../modules/league/FixturesList';
 import SquadList from '../../modules/league/SquadList';
+import LeagueXGTable from '../../modules/league/LeagueXGTable';
+import LeagueLeaders from '../../modules/league/LeagueLeaders';
 
 const SeasonOverviewPage = () => {
     const { id, year } = useParams();
@@ -171,13 +173,13 @@ const SeasonOverviewPage = () => {
 
     if (!data) return null;
 
-    const { league, topScorers, topAssists, topRated, availableYears } = data;
+    const { league, topScorers, topAssists, topRated, availableYears, xgStats } = data;
 
     const isUEFACup = [1475, 1476, 1516].includes(Number.parseInt(id));
     const isModernUEFA = isUEFACup && Number.parseInt(year) >= 2024;
 
     const tabItems = [
-        { id: 'overview', label: 'Surveillance', icon: '🔭' },
+        { id: 'overview', label: 'Player Insights', icon: '🔭' },
         {
             id: 'standings',
             label: (() => {
@@ -193,7 +195,8 @@ const SeasonOverviewPage = () => {
             label: isUEFACup ? 'Phase à Élimination' : 'Results',
             icon: '📅'
         },
-        { id: 'squads', label: 'Squads', icon: '👥' }
+        { id: 'squads', label: 'Squads', icon: '👥' },
+        { id: 'xg', label: 'xG', icon: '🎯' }
     ];
 
     return (
@@ -249,16 +252,23 @@ const SeasonOverviewPage = () => {
                         />
                     )}
                     {activeTab === 'standings' && (
-                        <StandingsTable
-                            standings={standings}
-                            rangeStart={rangeStart}
-                            setRangeStart={setRangeStart}
-                            rangeEnd={rangeEnd}
-                            setRangeEnd={setRangeEnd}
-                            handleRangeUpdate={handleRangeUpdate}
-                            isDynamicMode={isDynamicMode}
-                            loading={loading}
-                        />
+                        <Stack gap="var(--spacing-xl)">
+                            <StandingsTable
+                                standings={standings}
+                                rangeStart={rangeStart}
+                                setRangeStart={setRangeStart}
+                                rangeEnd={rangeEnd}
+                                setRangeEnd={setRangeEnd}
+                                handleRangeUpdate={handleRangeUpdate}
+                                isDynamicMode={isDynamicMode}
+                                loading={loading}
+                            />
+                            <LeagueLeaders 
+                                topScorers={topScorers}
+                                topAssists={topAssists}
+                                topRated={topRated}
+                            />
+                        </Stack>
                     )}
                     {activeTab === 'fixtures' && (
                         <FixturesList
@@ -275,6 +285,9 @@ const SeasonOverviewPage = () => {
                             squadLoading={squadLoading}
                             teamSquad={teamSquad}
                         />
+                    )}
+                    {activeTab === 'xg' && (
+                        <LeagueXGTable xgStats={xgStats} />
                     )}
                 </main>
             </PageContent>

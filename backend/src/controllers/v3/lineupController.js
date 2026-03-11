@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import StatsEngine from '../../services/v3/StatsEngine.js';
+import logger from '../../utils/logger.js';
 
 export const getLineups = async (req, res) => {
     const { id } = req.params;
@@ -30,7 +31,7 @@ export const getLineups = async (req, res) => {
         }
 
         // 2. Not found or incomplete? Sync from API
-        console.log(`[Lineups] Syncing for Fixture ${id}...`);
+        logger.info(`[Lineups] Syncing for Fixture ${id}...`);
 
         // Use StatsEngine to sync (keeps logic centralized)
         const syncedData = await StatsEngine.syncFixtureLineups(id);
@@ -60,7 +61,7 @@ export const getLineups = async (req, res) => {
         res.json({ source: 'api_synced', lineups: data });
 
     } catch (e) {
-        console.error("Error fetching lineups:", e);
+        logger.error({ err: e }, "Error fetching lineups");
         res.status(500).json({ error: e.message });
     }
 };
@@ -94,7 +95,7 @@ export const getLineupCandidates = async (req, res) => {
         const candidates = await db.all(sql);
         res.json(candidates);
     } catch (error) {
-        console.error('Error finding lineup candidates:', error);
+        logger.error({ err: error }, 'Error finding lineup candidates');
         res.status(500).json({ error: error.message });
     }
 };
@@ -135,7 +136,7 @@ export const importLineupsBatch = async (req, res) => {
                 // Small delay to be nice to API? StatsEngine calls are queued but loop is fast
                 await new Promise(r => setTimeout(r, 100));
             } catch (e) {
-                console.error(`Failed to sync lineup for fixture ${t.fixture_id}:`, e.message);
+                logger.error({ err: e }, `Failed to sync lineup for fixture ${t.fixture_id}`);
                 failed++;
             }
         }
@@ -154,7 +155,7 @@ export const importLineupsBatch = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error in importLineupsBatch:', error);
+        logger.error({ err: error }, 'Error in importLineupsBatch');
         res.status(500).json({ error: error.message });
     }
 };
@@ -251,7 +252,7 @@ export const getTypicalLineup = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in getTypicalLineup:", error);
+        logger.error({ err: error }, "Error in getTypicalLineup");
         res.status(500).json({ error: error.message });
     }
 };

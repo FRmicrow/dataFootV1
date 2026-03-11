@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import { getDailyFixturesService, getUpcomingByLeaguesService, getMatchDetailsService, saveMatchOddsService } from '../../services/v3/liveBetService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * PUT /api/v3/live-bet/leagues/:id/monitoring
@@ -21,7 +22,7 @@ export const toggleLeagueMonitoring = async (req, res) => {
             is_live_enabled: enabled
         });
     } catch (error) {
-        console.error("Error toggling monitoring:", error);
+        logger.error({ err: error }, "Error toggling monitoring");
         res.status(500).json({ error: "Failed to toggle monitoring" });
     }
 };
@@ -46,7 +47,7 @@ export const getMonitoringLeagues = async (req, res) => {
         const leagues = db.all(sql);
         res.json(leagues);
     } catch (error) {
-        console.error("Error fetching monitoring leagues:", error);
+        logger.error({ err: error }, "Error fetching monitoring leagues");
         res.status(500).json({ error: "Failed to fetch monitoring leagues" });
     }
 };
@@ -73,7 +74,7 @@ export const saveMatchOdds = async (req, res) => {
         const result = await saveMatchOddsService(numericId);
         res.json(result);
     } catch (error) {
-        console.error(`Error saving odds for ${id}:`, error);
+        logger.error({ err: error }, `Error saving odds for ${id}`);
         res.status(500).json({ error: "Failed to save odds", details: error.message });
     }
 };
@@ -88,7 +89,7 @@ export const getDailyFixtures = async (req, res) => {
         const fixtures = await getDailyFixturesService(date);
         res.json(fixtures);
     } catch (error) {
-        console.error("Critical Error in getDailyFixtures:", error);
+        logger.error({ err: error }, "Critical Error in getDailyFixtures");
         res.status(500).json({ error: "Failed to fetch daily fixtures", details: error.message });
     }
 };
@@ -106,7 +107,7 @@ export const getUpcomingFixtures = async (req, res) => {
         const result = await getUpcomingByLeaguesService(leagueIds);
         res.json(result);
     } catch (error) {
-        console.error("Error in getUpcomingFixtures:", error);
+        logger.error({ err: error }, "Error in getUpcomingFixtures");
         res.status(500).json({ error: "Failed to fetch upcoming fixtures", details: error.message });
     }
 };
@@ -126,7 +127,7 @@ export const getMatchDetails = async (req, res) => {
         const matchDetails = await getMatchDetailsService(numericId);
         res.json(matchDetails);
     } catch (error) {
-        console.error(`Error fetching match details for ${id}:`, error);
+        logger.error({ err: error }, `Error fetching match details for ${id}`);
         if (error.message === "Fixture not found") {
             return res.status(404).json({ error: "Fixture not found" });
         }

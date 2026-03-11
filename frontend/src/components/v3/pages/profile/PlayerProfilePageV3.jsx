@@ -207,6 +207,7 @@ const PlayerProfilePageV3 = () => {
                 stats={[
                     { label: 'Total Apps', value: totalApps },
                     { label: 'Career Goals', value: totalGoals },
+                    { label: 'Career xG', value: (careerTotals?.reduce((sum, t) => sum + (t.total_xg || 0), 0) || 0).toFixed(1) },
                     { label: 'Born', value: player.birth_date || 'N/A' }
                 ]}
                 actions={
@@ -241,6 +242,7 @@ const PlayerProfilePageV3 = () => {
                                 { title: 'Apps', dataIndex: 'total_matches', key: 'apps', align: 'center' },
                                 { title: 'Goals', dataIndex: 'total_goals', key: 'goals', align: 'center', render: (v) => <strong style={{ color: 'var(--color-primary-400)' }}>{v}</strong> },
                                 { title: 'Assists', dataIndex: 'total_assists', key: 'assists', align: 'center' },
+                                { title: 'xG', dataIndex: 'total_xg', key: 'xg', align: 'center', render: (v) => (v !== null && v !== undefined) ? v.toFixed(1) : '-' },
                                 { title: 'Avg Rating', dataIndex: 'avg_rating', key: 'rating', align: 'center', render: (v) => <Badge variant="primary">{v}</Badge> }
                             ]}
                             data={careerTotals.sort((a, b) => b.total_matches - a.total_matches)}
@@ -317,6 +319,8 @@ const PlayerProfilePageV3 = () => {
                                                 ...(careerView === 'year' ? [] : [{ title: 'Season', dataIndex: 'season_year', key: 'season' }]),
                                                 { title: 'Apps', dataIndex: 'games_appearences', key: 'apps', align: 'center' },
                                                 { title: 'Goals', dataIndex: 'goals_total', key: 'goals', align: 'center', render: (v) => <strong style={{ color: 'var(--color-primary-400)' }}>{v}</strong> },
+                                                { title: 'xG', dataIndex: 'xg', key: 'xg', align: 'center', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
+                                                { title: 'xA', dataIndex: 'xa', key: 'xa', align: 'center', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
                                                 {
                                                     title: 'Rating',
                                                     dataIndex: 'games_rating',
@@ -348,6 +352,46 @@ const PlayerProfilePageV3 = () => {
 
                 <aside>
                     <Stack gap="var(--spacing-xl)">
+                        {/* Advanced Performance Card */}
+                        <Card title="Advanced Performance" subtitle="Expected goals and playmaking efficiency">
+                            <Stack gap="var(--spacing-md)">
+                                {(() => {
+                                    const latestSeason = (data?.career || []).sort((a,b) => b.season_year - a.season_year)[0];
+                                    if (!latestSeason) return <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>No advanced metrics available.</div>;
+                                    
+                                    return (
+                                        <>
+                                            <Grid columns="1fr auto" gap="var(--spacing-xs)">
+                                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>xG per 90</span>
+                                                <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold', color: 'var(--color-primary-400)' }}>
+                                                    {latestSeason.xg_90 ? latestSeason.xg_90.toFixed(2) : '0.00'}
+                                                </span>
+                                            </Grid>
+                                            <Grid columns="1fr auto" gap="var(--spacing-xs)">
+                                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>xA per 90</span>
+                                                <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold', color: 'var(--color-secondary-400)' }}>
+                                                    {latestSeason.xa_90 ? latestSeason.xa_90.toFixed(2) : '0.00'}
+                                                </span>
+                                            </Grid>
+                                            <Grid columns="1fr auto" gap="var(--spacing-xs)">
+                                                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>NPxG (Non-Penalty)</span>
+                                                <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'bold' }}>
+                                                    {latestSeason.npxg ? latestSeason.npxg.toFixed(1) : '0.0'}
+                                                </span>
+                                            </Grid>
+                                             <div style={{ marginTop: 'var(--spacing-xs)', paddingTop: 'var(--spacing-xs)', borderTop: '1px solid var(--color-border)' }}>
+                                                <span style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--color-text-dim)', display: 'block' }}>Current League Efficiency</span>
+                                                <Stack direction="row" justify="space-between" align="center" style={{ marginTop: '4px' }}>
+                                                     <Badge variant="neutral" size="xs">Season xG: {latestSeason.xg ? latestSeason.xg.toFixed(1) : '0.0'}</Badge>
+                                                     <Badge variant="primary" size="xs">Goals: {latestSeason.goals_total || 0}</Badge>
+                                                </Stack>
+                                             </div>
+                                        </>
+                                    );
+                                })()}
+                            </Stack>
+                        </Card>
+
                         {trophies.length > 0 && (
                             <Card title="Honor Hub">
                                 <Stack gap="var(--spacing-xs)">

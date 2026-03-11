@@ -71,8 +71,34 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
         { title: 'Pos', key: 'pos', dataIndex: 'position', align: 'center', width: '60px', render: (v) => <span style={{ opacity: 0.6 }}>{getShortPosition(v)}</span> },
         { title: 'App', key: 'apps', dataIndex: 'appearances', align: 'center', width: '50px' },
         { title: '90s', key: 'mins', dataIndex: 'minutes', align: 'center', width: '50px', render: (m) => Math.round(m / 90) },
-        { title: 'G', key: 'goals', dataIndex: 'goals', align: 'center', width: '40px', render: (v) => <span style={{ color: v > 0 ? 'var(--color-success-500)' : 'inherit', fontWeight: v > 0 ? 'bold' : 'normal' }}>{v}</span> },
+        { 
+            title: 'G', 
+            key: 'goals', 
+            dataIndex: 'goals', 
+            align: 'center', 
+            width: '40px', 
+            render: (v, player, index) => {
+                const isTopScorer = sortConfig.key === 'goals' && index === 0 && v > 0;
+                return (
+                    <span style={{ 
+                        color: v > 0 ? 'var(--color-success-500)' : 'inherit', 
+                        fontWeight: v > 0 ? 'bold' : 'normal',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px'
+                    }}>
+                        {v}
+                        {isTopScorer && <span title="Golden Boot Candidate">👑</span>}
+                    </span>
+                );
+            }
+        },
         { title: 'A', key: 'assists', dataIndex: 'assists', align: 'center', width: '40px', render: (v) => <span style={{ color: v > 0 ? 'var(--color-primary-400)' : 'inherit', fontWeight: v > 0 ? 'bold' : 'normal' }}>{v}</span> },
+        { title: 'xG', key: 'xg', dataIndex: 'xg', align: 'center', width: '60px', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
+        { title: 'xA', key: 'xa', dataIndex: 'xa', align: 'center', width: '60px', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
+        { title: 'npxG', key: 'npxg', dataIndex: 'npxg', align: 'center', width: '60px', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
+        { title: 'xG90', key: 'xg_90', dataIndex: 'xg_90', align: 'center', width: '60px', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
         {
             title: 'Rat',
             key: 'rating',
@@ -130,7 +156,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
         >
             <div className="ds-card-body scrollbar-custom" style={{ padding: 0, overflowY: 'auto', flex: 1 }}>
                 <Table
-                    columns={columns.map(col => ({
+                    columns={columns.map((col, colIndex) => ({
                         ...col,
                         title: (
                             <button
@@ -163,6 +189,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                     }))}
                     data={players}
                     loading={loading}
+                    rowKey="player_id"
                     interactive
                 />
             </div>

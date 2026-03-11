@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Season Controller for V3 POC
@@ -75,10 +76,14 @@ async function fetchSeasonLeaderboards(leagueId, season) {
     const commonJoin = `FROM V3_Player_Stats ps JOIN V3_Players p ON ps.player_id = p.player_id JOIN V3_Teams t ON ps.team_id = t.team_id`;
     const commonWhere = `WHERE ps.league_id = ? AND ps.season_year = ?`;
 
+    const leaderSelect = `${commonSelect}, ps.goals_total, ps.goals_assists, ps.games_rating, xG.xg, xG.xa, xG.npxg`;
+    const leaderJoin = `${commonJoin} LEFT JOIN V3_Player_Season_xG xG ON ps.player_id = xG.player_id AND ps.league_id = xG.league_id AND ps.season_year = xG.season_year AND ps.team_id = xG.team_id`;
+    const leaderWhere = commonWhere;
+
     return {
-        topScorers: await db.all(`${commonSelect}, ps.goals_total ${commonJoin} ${commonWhere} ORDER BY ps.goals_total DESC LIMIT 5`, [leagueId, season]),
-        topAssists: await db.all(`${commonSelect}, ps.goals_assists ${commonJoin} ${commonWhere} ORDER BY ps.goals_assists DESC LIMIT 5`, [leagueId, season]),
-        topRated: await db.all(`${commonSelect}, ps.games_rating ${commonJoin} ${commonWhere} AND ps.games_rating IS NOT NULL ORDER BY CAST(ps.games_rating AS FLOAT) DESC LIMIT 5`, [leagueId, season])
+        topScorers: await db.all(`${leaderSelect} ${leaderJoin} ${leaderWhere} ORDER BY ps.goals_total DESC LIMIT 5`, [leagueId, season]),
+        topAssists: await db.all(`${leaderSelect} ${leaderJoin} ${leaderWhere} ORDER BY ps.goals_assists DESC LIMIT 5`, [leagueId, season]),
+        topRated: await db.all(`${leaderSelect} ${leaderJoin} ${leaderWhere} AND ps.games_rating IS NOT NULL ORDER BY CAST(ps.games_rating AS FLOAT) DESC LIMIT 5`, [leagueId, season])
     };
 }
 
@@ -87,7 +92,7 @@ export const getSeasonOverview = async (req, res) => {
         const { id: leagueId, year: season } = req.params;
         if (!leagueId || !season) return res.status(400).json({ error: "Missing leagueId or season year" });
 
-        console.log(`📊 Fetching Season Overview for League ${leagueId}, Season ${season}`);
+        logger.info(`📊 Fetching Season Overview for League ${leagueId}, Season ${season}`);
 
         const leagueInfo = await db.get(`
             SELECT 
@@ -114,12 +119,20 @@ export const getSeasonOverview = async (req, res) => {
         const { topScorers, topAssists, topRated } = await fetchSeasonLeaderboards(leagueId, season);
         const availableYears = (await db.all(`SELECT season_year FROM V3_League_Seasons WHERE league_id = ? ORDER BY season_year DESC`, [leagueId])).map(y => y.season_year);
 
+        const xgStats = await db.all(`
+            SELECT x.*, t.name as team_name, t.logo_url as team_logo
+            FROM V3_League_Season_xG x
+            JOIN V3_Teams t ON x.team_id = t.team_id
+            WHERE x.league_id = ? AND x.season_year = ?
+            ORDER BY x.xg_points DESC
+        `, [leagueId, season]);
+
         res.json({
             success: true,
-            data: { league: leagueInfo, isFinished, hallOfFame, standings, topScorers, topAssists, topRated, availableYears }
+            data: { league: leagueInfo, isFinished, hallOfFame, standings, topScorers, topAssists, topRated, availableYears, xgStats }
         });
     } catch (error) {
-        console.error("Error fetching V3 Season Overview:", error);
+        logger.error({ err: error }, "Error fetching V3 Season Overview");
         res.status(500).json({ success: false, message: "Failed to fetch season overview" });
     }
 };
@@ -134,7 +147,7 @@ export const getSeasonPlayers = async (req, res) => {
         const { id: leagueId, year } = req.params;
         const { teamId, position, sortBy = 'goals', order = 'DESC' } = req.query;
 
-        console.log(`🔍 getSeasonPlayers: leagueId=${leagueId}, year=${year}, teamId=${teamId}, position=${position}, sortBy=${sortBy}, order=${order}`);
+        logger.info(`🔍 getSeasonPlayers: leagueId=${leagueId}, year=${year}, teamId=${teamId}, position=${position}, sortBy=${sortBy}, order=${order}`);
 
         const validColumns = {
             name: 'p.name',
@@ -146,7 +159,10 @@ export const getSeasonPlayers = async (req, res) => {
             assists: 'ps.goals_assists',
             yellow: 'ps.cards_yellow',
             red: 'ps.cards_red',
-            rating: 'ps.games_rating'
+            rating: 'ps.games_rating',
+            xg: 'xG.xg',
+            xa: 'xG.xa',
+            npxg: 'xG.npxg'
         };
 
         const sortCol = validColumns[sortBy] || 'ps.goals_total';
@@ -158,10 +174,15 @@ export const getSeasonPlayers = async (req, res) => {
                 ps.games_appearences as appearances, ps.games_lineups as lineups,
                 ps.games_minutes as minutes, ps.goals_total as goals, ps.goals_assists as assists,
                 ps.cards_yellow as yellow, ps.cards_red as red, ps.games_rating as rating,
-                t.team_id, t.name as team_name, t.logo_url as team_logo
+                t.team_id, t.name as team_name, t.logo_url as team_logo,
+                xG.xg, xG.xa, xG.npxg, xG.xg_90, xG.xa_90, xG.npxg_90, xG.xg_chain, xG.xg_buildup
             FROM V3_Player_Stats ps
             JOIN V3_Players p ON ps.player_id = p.player_id
             JOIN V3_Teams t ON ps.team_id = t.team_id
+            LEFT JOIN V3_Player_Season_xG xG ON ps.player_id = xG.player_id 
+                AND ps.league_id = xG.league_id 
+                AND ps.season_year = xG.season_year 
+                AND ps.team_id = xG.team_id
             WHERE ps.league_id = ? AND ps.season_year = ?
         `;
         const params = [leagueId, year];
@@ -178,11 +199,11 @@ export const getSeasonPlayers = async (req, res) => {
 
         sql += ` ORDER BY ${sortCol} ${sortOrder}, ps.games_appearences DESC`;
 
-        console.log(`📡 Executing SQL for season players...`);
+        logger.info(`📡 Executing SQL for season players...`);
         const players = await db.all(sql, cleanParams(params));
         res.json({ success: true, data: players });
     } catch (error) {
-        console.error("❌ Error fetching season players:", error);
+        logger.error({ err: error }, "❌ Error fetching season players");
         res.status(500).json({ success: false, message: "Failed to fetch players", details: error.message });
     }
 };
@@ -217,7 +238,7 @@ export const getTeamSquad = async (req, res) => {
         `, [leagueId, year, teamId]);
         res.json({ success: true, data: squad });
     } catch (error) {
-        console.error("Error fetching team squad:", error);
+        logger.error({ err: error }, "Error fetching team squad");
         res.status(500).json({ success: false, message: "Failed to fetch team squad" });
     }
 };
@@ -235,7 +256,7 @@ export const getDynamicStandings = async (req, res) => {
             return res.status(400).json({ error: "Missing league_id or season year" });
         }
 
-        console.log(`📊 Fetching Dynamic Standings for League ${league_id}, Season ${season}, Rounds ${from_round}-${to_round}`);
+        logger.info(`📊 Fetching Dynamic Standings for League ${league_id}, Season ${season}, Rounds ${from_round}-${to_round}`);
 
         // Currently logic is in the service file we just created
         // But wait, the previous code block didn't import the service yet.
@@ -245,7 +266,7 @@ export const getDynamicStandings = async (req, res) => {
         res.json({ success: true, data: table });
 
     } catch (error) {
-        console.error("Error fetching dynamic standings:", error);
+        logger.error({ err: error }, "Error fetching dynamic standings");
         res.status(500).json({ success: false, message: "Failed to fetch standings" });
     }
 };

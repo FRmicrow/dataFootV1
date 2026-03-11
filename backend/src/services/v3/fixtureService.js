@@ -5,6 +5,7 @@ import { syncAllV3Sequences } from '../../utils/v3/dbMaintenance.js';
 import * as ImportControl from './importControlService.js';
 import ImportStatusService from './importStatusService.js';
 import { IMPORT_STATUS } from './importStatusConstants.js';
+import logger from '../../utils/logger.js';
 
 const API_KEY = process.env.API_FOOTBALL_KEY;
 const API_BASE_URL = 'https://v3.football.api-sports.io';
@@ -25,7 +26,7 @@ const fetchWithRetry = async (url, retries = 3, backoff = 2000) => {
         return await api.get(url);
     } catch (err) {
         if (err.response?.status === 429 && retries > 0) {
-            console.warn(`⚠️ Rate Limit 429. Pausing ${backoff}ms...`);
+            logger.warn(`⚠️ Rate Limit 429. Pausing ${backoff}ms...`);
             await delay(backoff);
             return fetchWithRetry(url, retries - 1, backoff * 2);
         }
@@ -42,7 +43,7 @@ const fetchWithRetry = async (url, retries = 3, backoff = 2000) => {
  */
 export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, sendLog = null) => {
     const log = (msg, type = 'info') => {
-        console.log(msg);
+        logger.info(msg);
         if (sendLog) sendLog(msg, type);
     };
 
@@ -91,7 +92,7 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
                     success++;
                     await ImportStatusService.resetFailures(leagueId, seasonYear, 'events');
                 } catch (err) {
-                    console.error(`   ❌ Failed fixture ${fixture.fixture_id}: ${err.message}`);
+                    logger.error({ err }, `   ❌ Failed fixture ${fixture.fixture_id}`);
                     failed++;
                     const res = await ImportStatusService.incrementFailure(leagueId, seasonYear, 'events', err.message);
                     if (res?.blacklisted) blacklisted = true;
@@ -113,7 +114,7 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
         return { total: targetFixtures.length, success, failed };
 
     } catch (error) {
-        console.error('Service Error in syncLeagueEventsService:', error);
+        logger.error({ err: error }, 'Service Error in syncLeagueEventsService');
         throw error;
     }
 };
@@ -133,7 +134,7 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
     const response = await fetchWithRetry(`/fixtures?id=${apiFixtureId}`);
 
     if (!response.data.response || response.data.response.length === 0) {
-        console.warn(`   No data returned for fixture ${apiFixtureId}`);
+        logger.warn(`   No data returned for fixture ${apiFixtureId}`);
         return;
     }
 
@@ -173,7 +174,7 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
             ]));
         }
     } catch (err) {
-        console.error(`   ❌ Error storing events for fixture ${localFixtureId}:`, err.message);
+        logger.error({ err }, `   ❌ Error storing events for fixture ${localFixtureId}`);
         throw err;
     }
 }

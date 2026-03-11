@@ -56,18 +56,18 @@ describe('StatsEngine', () => {
 
             expect(standings).toHaveLength(2);
 
-            const teamA = standings.find(t => t.name === 'Team A');
-            const teamB = standings.find(t => t.name === 'Team B');
+            const teamA = standings.find(t => t.team_name === 'Team A');
+            const teamB = standings.find(t => t.team_name === 'Team B');
 
             expect(teamA.points).toBe(3);
-            expect(teamA.wins).toBe(1);
-            expect(teamA.gf).toBe(2);
-            expect(teamA.ga).toBe(0);
+            expect(teamA.win).toBe(1);
+            expect(teamA.goals_for).toBe(2);
+            expect(teamA.goals_against).toBe(0);
 
             expect(teamB.points).toBe(0);
-            expect(teamB.losses).toBe(1);
-            expect(teamB.gf).toBe(0);
-            expect(teamB.ga).toBe(2);
+            expect(teamB.lose).toBe(1);
+            expect(teamB.goals_for).toBe(0);
+            expect(teamB.goals_against).toBe(2);
         });
 
         it('should calculate correct points for a draw', async () => {
@@ -83,13 +83,13 @@ describe('StatsEngine', () => {
 
             const standings = await StatsEngine.getDynamicStandings(39, 2024, 1, 1);
 
-            const teamA = standings.find(t => t.name === 'Team A');
-            const teamB = standings.find(t => t.name === 'Team B');
+            const teamA = standings.find(t => t.team_name === 'Team A');
+            const teamB = standings.find(t => t.team_name === 'Team B');
 
             expect(teamA.points).toBe(1);
-            expect(teamA.draws).toBe(1);
+            expect(teamA.draw).toBe(1);
             expect(teamB.points).toBe(1);
-            expect(teamB.draws).toBe(1);
+            expect(teamB.draw).toBe(1);
         });
 
         it('should sort standings by points, then goal difference', async () => {
@@ -112,9 +112,8 @@ describe('StatsEngine', () => {
 
             const standings = await StatsEngine.getDynamicStandings(39, 2024, 1, 1);
 
-            // Both Leader and Second have 3 points, but Leader has GD +3 vs +1
-            expect(standings[0].name).toBe('Leader');
-            expect(standings[1].name).toBe('Second');
+            expect(standings[0].team_name).toBe('Leader');
+            expect(standings[1].team_name).toBe('Second');
         });
 
         it('should filter by round range', async () => {
@@ -135,18 +134,17 @@ describe('StatsEngine', () => {
                 }
             ]);
 
-            // Only rounds 1-3 → should only include the first match
             const standings = await StatsEngine.getDynamicStandings(39, 2024, 1, 3);
 
-            const teamA = standings.find(t => t.name === 'A');
+            const teamA = standings.find(t => t.team_name === 'A');
             expect(teamA.played).toBe(1);
-            expect(teamA.gf).toBe(1);
+            expect(teamA.goals_for).toBe(1);
         });
 
         it('should handle malformed round strings', async () => {
             db.all.mockResolvedValue([
                 {
-                    round: null, // malformed
+                    round: null,
                     home_team_id: 1, away_team_id: 2,
                     goals_home: 1, goals_away: 0,
                     home_name: 'A', home_logo: 'a.png',
@@ -154,9 +152,7 @@ describe('StatsEngine', () => {
                 }
             ]);
 
-            // Should not crash, round=null parsed to 999 which is > toRound=50 default
             const standings = await StatsEngine.getDynamicStandings(39, 2024);
-            // With default toRound=50, round 999 is excluded
             expect(standings).toEqual([]);
         });
 
@@ -180,12 +176,25 @@ describe('StatsEngine', () => {
 
             const standings = await StatsEngine.getDynamicStandings(39, 2024, 1, 2);
 
-            const teamA = standings.find(t => t.name === 'A');
+            const teamA = standings.find(t => t.team_name === 'A');
             expect(teamA.played).toBe(2);
-            expect(teamA.wins).toBe(2);
+            expect(teamA.win).toBe(2);
             expect(teamA.points).toBe(6);
-            expect(teamA.gf).toBe(5); // 2 + 3
-            expect(teamA.ga).toBe(1); // 1 + 0
+            expect(teamA.goals_for).toBe(5);
+            expect(teamA.goals_against).toBe(1);
+        });
+
+        it('should build form string from last 5 matches', async () => {
+            db.all.mockResolvedValue([
+                { round: 'Regular Season - 1', home_team_id: 1, away_team_id: 2, goals_home: 1, goals_away: 0, home_name: 'A', home_logo: 'a.png', away_name: 'B', away_logo: 'b.png' },
+                { round: 'Regular Season - 2', home_team_id: 1, away_team_id: 2, goals_home: 1, goals_away: 1, home_name: 'A', home_logo: 'a.png', away_name: 'B', away_logo: 'b.png' },
+                { round: 'Regular Season - 3', home_team_id: 1, away_team_id: 2, goals_home: 0, goals_away: 1, home_name: 'A', home_logo: 'a.png', away_name: 'B', away_logo: 'b.png' }
+            ]);
+
+            const standings = await StatsEngine.getDynamicStandings(39, 2024, 1, 3);
+            const teamA = standings.find(t => t.team_name === 'A');
+
+            expect(teamA.form).toBe('WDL');
         });
     });
 });

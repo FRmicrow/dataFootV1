@@ -81,7 +81,7 @@ export const getStandingsV3 = async (req, res) => {
 export const getFixturesV3 = async (req, res) => {
     try {
         const { id, year } = { id: req.params.id || req.query.id, year: req.query.year || req.query.season };
-        const fixtures = await db.all(`SELECT f.*, ht.name as home_team_name, ht.logo_url as home_team_logo, at.name as away_team_name, at.logo_url as away_team_logo FROM V3_Fixtures f JOIN V3_Teams ht ON f.home_team_id = ht.team_id JOIN V3_Teams at ON f.away_team_id = at.team_id WHERE f.league_id = ? AND f.season_year = ? ORDER BY f.date ASC`, cleanParams([id, year]));
+        const fixtures = await db.all(`SELECT f.fixture_id, f.league_id, f.season_year, f.date, f.round, f.status_short, f.goals_home, f.goals_away, f.xg_home, f.xg_away, ht.team_id as home_team_id, ht.name as home_team_name, ht.logo_url as home_team_logo, at.team_id as away_team_id, at.name as away_team_name, at.logo_url as away_team_logo FROM V3_Fixtures f JOIN V3_Teams ht ON f.home_team_id = ht.team_id JOIN V3_Teams at ON f.away_team_id = at.team_id WHERE f.league_id = ? AND f.season_year = ? ORDER BY f.date ASC`, cleanParams([id, year]));
         res.json({ success: true, data: { fixtures, rounds: Array.from(new Set(fixtures.map(f => f.round))) } });
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 };

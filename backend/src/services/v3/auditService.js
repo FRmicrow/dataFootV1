@@ -3,6 +3,7 @@ import { cleanParams } from '../../utils/sqlHelpers.js';
 import ImportStatusService from './importStatusService.js';
 import { IMPORT_STATUS } from './importStatusConstants.js';
 import footballApi from '../footballApi.js';
+import logger from '../../utils/logger.js';
 
 // --- Private Pillar Audit Helpers ---
 
@@ -145,7 +146,7 @@ const auditSeason = async (league_id, season_year) => {
  * @returns {Promise<Object>} scan results
  */
 export const performDiscoveryScan = async () => {
-    console.log('🔍 Starting Database Discovery Scan (US_268)...');
+    logger.info('🔍 Starting Database Discovery Scan (US_268)...');
 
     // 1. Audit Existing Seasons
     const seasons = await db.all("SELECT * FROM V3_League_Seasons");
@@ -166,7 +167,7 @@ export const performDiscoveryScan = async () => {
     for (const league of leagues) {
         if (!league.api_id) continue;
         try {
-            console.log(`📡 Discovery: Checking seasons for ${league.name} (API ${league.api_id})...`);
+            logger.info(`📡 Discovery: Checking seasons for ${league.name} (API ${league.api_id})...`);
             const leagueRes = await footballApi.getLeagues({ id: league.api_id });
             const apiSeasons = leagueRes.response?.[0]?.seasons || [];
             const apiYears = new Set(apiSeasons.map(s => s.year));
@@ -179,7 +180,7 @@ export const performDiscoveryScan = async () => {
                 );
                 if (deleted.changes > 0) {
                     deletedGhostCount += deleted.changes;
-                    console.log(`🧹 Cleaned up ghost 2026 for ${league.name}`);
+                    logger.info(`🧹 Cleaned up ghost 2026 for ${league.name}`);
                 }
             }
 
@@ -195,11 +196,11 @@ export const performDiscoveryScan = async () => {
                         [league.league_id, s.year, s.current ? 1 : 0]
                     );
                     discoveredCount++;
-                    console.log(`✨ Discovered ${s.year} for ${league.name}`);
+                    logger.info(`✨ Discovered ${s.year} for ${league.name}`);
                 }
             }
         } catch (apiErr) {
-            console.warn(`⚠️ Failed to fetch seasons for ${league.name}: ${apiErr.message}`);
+            logger.warn(`⚠️ Failed to fetch seasons for ${league.name}: ${apiErr.message}`);
         }
     }
 
@@ -211,6 +212,6 @@ export const performDiscoveryScan = async () => {
         autoLocked: autoLockedCount,
         timestamp: new Date().toISOString()
     };
-    console.log(`✅ Discovery Scan Complete: ${updatedCount} updated, ${discoveredCount} new seasons, ${deletedGhostCount} ghosts removed.`);
+    logger.info(`✅ Discovery Scan Complete: ${updatedCount} updated, ${discoveredCount} new seasons, ${deletedGhostCount} ghosts removed.`);
     return result;
 };

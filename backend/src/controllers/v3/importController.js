@@ -1,6 +1,7 @@
 import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Import Controller for V3 POC
@@ -18,7 +19,7 @@ export const getCountries = async (req, res) => {
         const countries = db.all("SELECT * FROM V3_Countries ORDER BY name ASC");
         res.json(countries);
     } catch (error) {
-        console.error("Error fetching countries from DB:", error);
+        logger.error({ err: error }, "Error fetching countries from DB");
         res.status(500).json({ error: "Failed to fetch countries" });
     }
 };
@@ -37,7 +38,7 @@ export const getLeagues = async (req, res) => {
         const response = await footballApi.client.get('/leagues', { params });
         res.json(response.data.response);
     } catch (error) {
-        console.error("Error fetching leagues:", error);
+        logger.error({ err: error }, "Error fetching leagues");
         res.status(500).json({ error: "Failed to fetch leagues" });
     }
 };
@@ -227,7 +228,7 @@ async function importTeamPlayers(teamApiId, teamName, teamId, v3LeagueId, season
             db.run('COMMIT');
         } catch (err) {
             db.run('ROLLBACK');
-            console.error(`Error processing page ${page} for team ${teamName}:`, err);
+            logger.error({ err }, `Error processing page ${page} for team ${teamName}`);
         }
 
         page++;
@@ -252,7 +253,7 @@ export const importLeagueData = async (req, res) => {
     }
 
     try {
-        console.log(`🚀 Starting V3 Import for League ${leagueId}, Season ${season}`);
+        logger.info(`🚀 Starting V3 Import for League ${leagueId}, Season ${season}`);
 
         // 1. Fetch League Info from API
         const leagueResponse = await footballApi.client.get('/leagues', {
@@ -273,7 +274,7 @@ export const importLeagueData = async (req, res) => {
         ensureLeagueSeason(v3LeagueId, season, seasonData);
 
         // 3. Fetch and Import Teams + Players
-        console.log(`📥 Fetching teams for League ${leagueId}`);
+        logger.info(`📥 Fetching teams for League ${leagueId}`);
         const teamsResponse = await footballApi.getTeamsFromLeague(leagueId, season);
         const teamsList = teamsResponse.response;
 
@@ -287,7 +288,7 @@ export const importLeagueData = async (req, res) => {
             totalTeams++;
 
             if (seasonData.coverage.players) {
-                console.log(`   👤 Fetching players for ${team.name}...`);
+                logger.info(`   👤 Fetching players for ${team.name}...`);
                 const playerCount = await importTeamPlayers(team.id, team.name, teamId, v3LeagueId, season);
                 totalPlayers += playerCount;
             }
@@ -307,7 +308,7 @@ export const importLeagueData = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("V3 Import Error:", error);
+        logger.error({ err: error }, "V3 Import Error");
         res.status(500).json({ error: "Import failed: " + error.message });
     }
 };

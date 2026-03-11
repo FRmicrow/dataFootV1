@@ -13,10 +13,16 @@ class PlayerRepository extends BaseRepository {
 
     async getPlayerStats(playerId) {
         return await this.db.all(`
-            SELECT ps.*, t.name as team_name, t.logo_url as team_logo, l.name as league_name
+            SELECT 
+                ps.*, t.name as team_name, t.logo_url as team_logo, l.name as league_name,
+                x.xg, x.xa, x.npxg, x.xg_90, x.xa_90, x.npxg_90
             FROM V3_Player_Stats ps
             JOIN V3_Teams t ON ps.team_id = t.team_id
             JOIN V3_Leagues l ON ps.league_id = l.league_id
+            LEFT JOIN V3_Player_Season_xG x ON ps.player_id = x.player_id 
+                AND ps.league_id = x.league_id 
+                AND ps.season_year = x.season_year 
+                AND ps.team_id = x.team_id
             WHERE ps.player_id = ?
             ORDER BY ps.season_year DESC
         `, cleanParams([playerId]));
@@ -41,10 +47,15 @@ class PlayerRepository extends BaseRepository {
                 SUM(ps.games_appearences) as total_matches,
                 SUM(ps.goals_total) as total_goals,
                 SUM(ps.goals_assists) as total_assists,
+                SUM(x.xg) as total_xg,
                 ROUND(AVG(CAST(NULLIF(ps.games_rating, 'N/A') AS FLOAT))::numeric, 2) as avg_rating
             FROM V3_Player_Stats ps
             JOIN V3_Teams t ON ps.team_id = t.team_id
             JOIN V3_Leagues l ON ps.league_id = l.league_id
+            LEFT JOIN V3_Player_Season_xG x ON ps.player_id = x.player_id 
+                AND ps.league_id = x.league_id 
+                AND ps.season_year = x.season_year 
+                AND ps.team_id = x.team_id
             WHERE ps.player_id = ?
             GROUP BY ps.team_id, t.name, t.logo_url
         `, cleanParams([playerId]));

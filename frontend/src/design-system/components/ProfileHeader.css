@@ -3,8 +3,8 @@
     padding: var(--spacing-lg) var(--spacing-xl);
     border-radius: var(--radius-lg);
     position: relative;
-    overflow: hidden;
-    margin-bottom: var(--spacing-md);
+    overflow: visible; /* Changed from hidden to prevent cropping when stats expand */
+    margin-bottom: var(--spacing-xl);
     background: linear-gradient(135deg, var(--header-accent) 0%, var(--header-accent) 40%, var(--header-secondary) 85%, var(--header-tertiary) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: var(--shadow-xl);

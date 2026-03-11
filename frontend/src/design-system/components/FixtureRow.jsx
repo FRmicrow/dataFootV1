@@ -11,6 +11,8 @@ const FixtureRow = ({
     awayTeam,
     scoreHome,
     scoreAway,
+    xgHome,
+    xgAway,
     status,
     date,
     active = false,
@@ -56,10 +58,17 @@ const FixtureRow = ({
                                 {new Date(date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         ) : (
-                            <div className="ds-fixture-score">
-                                <span className={isFinished && scoreHome > scoreAway ? 'is-winner' : ''}>{scoreHome ?? '-'}</span>
-                                <span className="sep">:</span>
-                                <span className={isFinished && scoreAway > scoreHome ? 'is-winner' : ''}>{scoreAway ?? '-'}</span>
+                            <div className="ds-fixture-score-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div className="ds-fixture-score">
+                                    <span className={isFinished && scoreHome > scoreAway ? 'is-winner' : ''}>{scoreHome ?? '-'}</span>
+                                    <span className="sep">:</span>
+                                    <span className={isFinished && scoreAway > scoreHome ? 'is-winner' : ''}>{scoreAway ?? '-'}</span>
+                                </div>
+                                {(xgHome !== undefined && xgHome !== null && xgAway !== undefined && xgAway !== null) && (
+                                    <div className="ds-fixture-xg" style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                                        xG: {xgHome.toFixed(2)} - {xgAway.toFixed(2)}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

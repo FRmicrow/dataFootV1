@@ -1,11 +1,11 @@
 .v3-player-page {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 var(--spacing-sm);
-    height: calc(100vh - 64px);
+    padding: var(--spacing-xl) var(--spacing-sm);
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    gap: var(--spacing-xl);
 }
 
 /* Timeline Styles */

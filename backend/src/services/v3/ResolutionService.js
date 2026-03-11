@@ -1,6 +1,7 @@
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import { calculateSimilarity } from '../../utils/fuzzy.js';
+import logger from '../../utils/logger.js';
 
 export class ResolutionService {
     /**
@@ -70,7 +71,7 @@ export class ResolutionService {
     static async performMerge(id1, id2) {
         const { masterId, ghostId } = await this.identifyMaster(id1, id2);
 
-        console.log(`🔄 Merging Ghost Player ${ghostId} into Master ${masterId}...`);
+        logger.info(`🔄 Merging Ghost Player ${ghostId} into Master ${masterId}...`);
 
         try {
             const ghostStats = await db.all("SELECT * FROM V3_Player_Stats WHERE player_id = ?", cleanParams([ghostId]));
@@ -109,10 +110,10 @@ export class ResolutionService {
             // Delete Ghost Record
             await db.run("DELETE FROM V3_Players WHERE player_id = ?", cleanParams([ghostId]));
 
-            console.log(`✅ Merge complete. Ghost record ${ghostId} removed.`);
+            logger.info(`✅ Merge complete. Ghost record ${ghostId} removed.`);
             return { success: true, masterId, ghostId };
         } catch (err) {
-            console.error("❌ Merge failed:", err.message);
+            logger.error({ err }, "❌ Merge failed");
             throw err;
         }
     }
@@ -121,7 +122,7 @@ export class ResolutionService {
      * Scans for potential duplicates in the database.
      */
     static async findGlobalDuplicates(threshold = 80) {
-        console.log("🔍 Scanning for duplicate candidates via targeted SQL...");
+        logger.info("🔍 Scanning for duplicate candidates via targeted SQL...");
 
         // Strategy: Narrow down candidates by finding exact name matches first.
         // Doing fuzzy matching on 300k+ players is impossible O(N^2).
@@ -132,7 +133,7 @@ export class ResolutionService {
             LIMIT 5000
         `);
 
-        console.log(`📊 Found ${pairs.length} potential name matches to analyze...`);
+        logger.info(`📊 Found ${pairs.length} potential name matches to analyze...`);
 
         const duplicates = [];
         for (const pair of pairs) {

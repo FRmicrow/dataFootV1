@@ -9,6 +9,7 @@ import {
     CONSECUTIVE_FAILURE_THRESHOLD,
     CROSS_PILLAR_REDUCED_THRESHOLD
 } from './importStatusConstants.js';
+import logger from '../../utils/logger.js';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -194,7 +195,7 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
     const res = await footballApi.getFixtureStatistics(apiFixtureId, { half: true });
 
     if (!res.response || res.response.length === 0) {
-        console.warn(`      No FS data for fixture ${apiFixtureId}`);
+        logger.warn(`      No FS data for fixture ${apiFixtureId}`);
         return false;
     }
 
@@ -205,7 +206,7 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
             const localTeamId = dbTeam?.team_id;
 
             if (!localTeamId) {
-                console.warn(`      Team API ID ${teamApiId} not found locally.`);
+                logger.warn(`      Team API ID ${teamApiId} not found locally.`);
                 continue;
             }
 
@@ -226,7 +227,7 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
         }
         return true;
     } catch (err) {
-        console.error(`      Error storing statistics for fixture ${localFixtureId}:`, err.message);
+        logger.error({ err }, `      Error storing statistics for fixture ${localFixtureId}`);
         throw err;
     }
 }
@@ -242,7 +243,7 @@ export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
     const res = await footballApi.getFixturePlayerStatistics(apiFixtureId);
 
     if (!res.response || res.response.length === 0) {
-        console.warn(`      No PS data for fixture ${apiFixtureId}`);
+        logger.warn(`      No PS data for fixture ${apiFixtureId}`);
         return false;
     }
 
@@ -260,7 +261,7 @@ export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
         }
         return true;
     } catch (err) {
-        console.error(`      Error storing player stats for fixture ${localFixtureId}:`, err.message);
+        logger.error({ err }, `      Error storing player stats for fixture ${localFixtureId}`);
         throw err;
     }
 }
@@ -348,6 +349,6 @@ export async function computePlayerSeasonNormalization(leagueId, seasonYear) {
             await computeSinglePlayerNormalization(p, leagueId, seasonYear);
         }
     } catch (err) {
-        console.error('Normalization Error:', err);
+        logger.error({ err }, 'Normalization Error');
     }
 }

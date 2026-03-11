@@ -5,7 +5,7 @@ import { Card, Stack, Grid } from '../../../../design-system';
 
 const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) => {
 
-    const LeaderCard = ({ player, rank, label, value }) => (
+    const LeaderCard = ({ player, rank, label, value, secondaryLabel, secondaryValue }) => (
         <Link
             to={`/player/${player.player_id}`}
             style={{ textDecoration: 'none', color: 'inherit' }}
@@ -62,6 +62,11 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
                 <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary-400)' }}>{value}</div>
                     <div style={{ fontSize: '10px', color: 'var(--color-text-dim)', textTransform: 'uppercase' }}>{label}</div>
+                    {secondaryValue !== undefined && (
+                        <div style={{ fontSize: '9px', color: 'var(--color-text-dim)', marginTop: '2px' }}>
+                            {secondaryValue?.toFixed(2)} <span style={{ fontSize: '8px opacity: 0.7' }}>{secondaryLabel}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </Link>
@@ -74,7 +79,7 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
         value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
     };
 
-    const Section = ({ title, subtitle, data, playerLabel, dataKey }) => (
+    const Section = ({ title, subtitle, data, playerLabel, dataKey, secondaryLabel, secondaryKey }) => (
         <Card title={title} subtitle={subtitle} ghost={layout === 'vertical'}>
             <Stack gap="var(--spacing-2xs)">
                 {data.slice(0, 3).map((player, idx) => (
@@ -84,6 +89,8 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
                         rank={idx + 1}
                         label={playerLabel}
                         value={player[dataKey]}
+                        secondaryLabel={secondaryLabel}
+                        secondaryValue={secondaryKey ? player[secondaryKey] : undefined}
                     />
                 ))}
             </Stack>
@@ -101,8 +108,8 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
     if (layout === 'vertical') {
         return (
             <Stack gap="var(--spacing-lg)">
-                <Section title="Golden Boot" subtitle="Goal leaders" data={topScorers} playerLabel="Goals" dataKey="goals_total" />
-                <Section title="Playmakers" subtitle="Assist leaders" data={topAssists} playerLabel="Assists" dataKey="goals_assists" />
+                <Section title="Golden Boot" subtitle="Goal leaders" data={topScorers} playerLabel="Goals" dataKey="goals_total" secondaryLabel="xG" secondaryKey="xg" />
+                <Section title="Playmakers" subtitle="Assist leaders" data={topAssists} playerLabel="Assists" dataKey="goals_assists" secondaryLabel="xA" secondaryKey="xa" />
                 <Section title="MVP Track" subtitle="Avg Ratings" data={topRated || []} playerLabel="Rating" dataKey="games_rating" />
             </Stack>
         );
@@ -110,8 +117,8 @@ const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) =>
 
     return (
         <Grid columns="repeat(auto-fit, minmax(280px, 1fr))" gap="var(--spacing-lg)">
-            <Section title="Golden Boot" data={topScorers} playerLabel="Goals" dataKey="goals_total" />
-            <Section title="Top Playmakers" data={topAssists} playerLabel="Assists" dataKey="goals_assists" />
+            <Section title="Golden Boot" data={topScorers} playerLabel="Goals" dataKey="goals_total" secondaryLabel="xG" secondaryKey="xg" />
+            <Section title="Top Playmakers" data={topAssists} playerLabel="Assists" dataKey="goals_assists" secondaryLabel="xA" secondaryKey="xa" />
             <Section title="MVP Candidates" data={topRated || []} playerLabel="Rating" dataKey="games_rating" />
         </Grid>
     );

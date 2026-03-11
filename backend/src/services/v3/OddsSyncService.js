@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import bulkOddsService from './bulkOddsService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Odds Sync Service (US-1915)
@@ -7,7 +8,7 @@ import bulkOddsService from './bulkOddsService.js';
  */
 
 export const syncUpcomingOdds = async () => {
-    console.log("🔄 [US-1915] Starting Upcoming Odds Synchronization...");
+    logger.info("🔄 [US-1915] Starting Upcoming Odds Synchronization...");
 
     try {
         // 1. Fetch upcoming fixtures (next 7 days) that are Not Started
@@ -21,11 +22,11 @@ export const syncUpcomingOdds = async () => {
         `);
 
         if (fixtures.length === 0) {
-            console.log("ℹ️ [US-1915] No upcoming matches to sync odds for.");
+            logger.info("ℹ️ [US-1915] No upcoming matches to sync odds for.");
             return { success: true, count: 0, message: "No upcoming matches found in window." };
         }
 
-        console.log(`🔍 Found ${fixtures.length} upcoming fixtures to sync.`);
+        logger.info(`🔍 Found ${fixtures.length} upcoming fixtures to sync.`);
 
         let syncedCount = 0;
         for (const f of fixtures) {
@@ -34,19 +35,19 @@ export const syncUpcomingOdds = async () => {
                 const res = await bulkOddsService.ingestMultiMarketOdds(f.fixture_id);
                 if (res.success) syncedCount++;
             } catch (e) {
-                console.warn(`⚠️ Failed to sync odds for fixture ${f.fixture_id}: ${e.message}`);
+                logger.warn(`⚠️ Failed to sync odds for fixture ${f.fixture_id}: ${e.message}`);
             }
         }
 
         // 2. Reconcile with V3_Risk_Analysis
-        console.log("⚖️ [US-1915] Reconciling V3_Risk_Analysis with new odds...");
+        logger.info("⚖️ [US-1915] Reconciling V3_Risk_Analysis with new odds...");
         const reconciled = await reconcileRiskWithOdds();
 
-        console.log(`✅ [US-1915] Synchronization completed. ${syncedCount} fixtures updated. ${reconciled} risk rows reconciled.`);
+        logger.info(`✅ [US-1915] Synchronization completed. ${syncedCount} fixtures updated. ${reconciled} risk rows reconciled.`);
         return { success: true, count: syncedCount, reconciled_rows: reconciled };
 
     } catch (err) {
-        console.error("❌ [US-1915] Odds Synchronization Critical Error:", err);
+        logger.error({ err }, "❌ [US-1915] Odds Synchronization Critical Error");
         throw err;
     }
 };

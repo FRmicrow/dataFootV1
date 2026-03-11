@@ -34,8 +34,8 @@ export const Mappers = {
         code: api.code,
         country: api.country,
         founded: api.founded,
-        national: api.national ? 1 : 0,
-        is_national_team: api.national ? 1 : 0,
+        national: api.national ? true : false,
+        is_national_team: api.national ? true : false,
         logo_url: api.logo
     }),
     player: (api) => ({
@@ -50,7 +50,7 @@ export const Mappers = {
         nationality: api.nationality,
         height: api.height,
         weight: api.weight,
-        injured: api.injured ? 1 : 0,
+        injured: api.injured ? true : false,
         photo_url: api.photo,
         preferred_foot: api.foot
     }),
@@ -65,7 +65,7 @@ export const Mappers = {
         games_number: stat.games.number,
         games_position: stat.games.position,
         games_rating: stat.games.rating,
-        games_captain: stat.games.captain ? 1 : 0,
+        games_captain: stat.games.captain ? true : false,
         substitutes_in: stat.substitutes.in || 0,
         substitutes_out: stat.substitutes.out || 0,
         substitutes_bench: stat.substitutes.bench || 0,
@@ -267,7 +267,7 @@ export const ImportRepository = {
         // 4. Create New Discovered League
         const rank = CompetitionRanker.calculate({ name: finalName, type: data.type, country_name: countryName });
         const info = await db.run(
-            "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered, importance_rank) VALUES (?, ?, ?, ?, ?, 1, ?) RETURNING league_id",
+            "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered, importance_rank) VALUES (?, ?, ?, ?, ?, TRUE, ?) RETURNING league_id",
             cleanParams([data.api_id, finalName, data.type, data.logo_url, countryId, rank])
         );
         return info.lastInsertRowid || info.league_id || info[0]?.league_id;
@@ -281,7 +281,7 @@ export const ImportRepository = {
             const info = await db.run(`INSERT INTO V3_League_Seasons (
                 league_id, season_year, sync_status, is_current, 
                 coverage_standings, coverage_players, coverage_top_scorers, coverage_top_assists, coverage_top_cards, coverage_injuries, coverage_predictions, coverage_odds
-            ) VALUES (?, ?, 'PARTIAL_DISCOVERY', 0, 0, 0, 0, 0, 0, 0, 0, 0) RETURNING league_season_id`,
+            ) VALUES (?, ?, 'PARTIAL_DISCOVERY', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE) RETURNING league_season_id`,
                 cleanParams([data.league_id, data.season_year]));
             return info.lastInsertRowid || info.league_season_id || info[0]?.league_season_id;
         }

@@ -216,3 +216,73 @@
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
 }
+
+/* Search results summary */
+.search__results-summary {
+    padding: 0 var(--spacing-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.search__results-summary .search__query-highlight {
+    color: var(--color-primary-400);
+}
+
+/* Empty state */
+.search__empty-state {
+    padding: var(--spacing-3xl) 0;
+}
+
+.search__empty-icon {
+    font-size: var(--font-size-5xl);
+    opacity: 0.5;
+}
+
+.search__empty-title {
+    font-size: var(--font-size-2xl);
+    margin: 0;
+}
+
+.search__empty-description {
+    color: var(--color-text-muted);
+    text-align: center;
+    max-width: 400px;
+}
+
+/* Result row text styles */
+.search__result-name {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+}
+
+.search__result-meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.search__flag-icon {
+    width: var(--spacing-xs);
+}
+
+.search__country-flag {
+    width: var(--spacing-xs);
+}
+
+/* Loading skeleton padding */
+.search__skeleton-wrapper {
+    padding: var(--spacing-xl) 0;
+}
+
+.search__skeleton-label {
+    padding: 0 var(--spacing-md);
+}
+
+/* Country selector inline overrides */
+.search__selector-rank {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.search__chevron {
+    font-size: var(--font-size-xs);
+}

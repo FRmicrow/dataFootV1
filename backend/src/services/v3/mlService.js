@@ -1,4 +1,5 @@
 import axios from 'axios';
+import logger from '../../utils/logger.js';
 
 /**
  * ML Service Integration (US_154)
@@ -11,7 +12,7 @@ const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://ml-service:8008';
  * Used if the ML Service is unreachable (AC 2)
  */
 const calculateHeuristicPrediction = (fixtureId) => {
-    console.log(`📡 [US_154] ML Service unreachable. Falling back to Heuristic for ${fixtureId}...`);
+    logger.info(`📡 [US_154] ML Service unreachable. Falling back to Heuristic for ${fixtureId}...`);
     // Simple 1X2 baseline: 45% Home, 25% Draw, 30% Away
     return {
         success: true,
@@ -28,7 +29,7 @@ const calculateHeuristicPrediction = (fixtureId) => {
 
 export const getPredictionForFixture = async (fixtureId) => {
     try {
-        console.log(`🤖 [US_154] Requesting ML prediction from FastAPI for fixture ${fixtureId}...`);
+        logger.info(`🤖 [US_154] Requesting ML prediction from FastAPI for fixture ${fixtureId}...`);
 
         const response = await axios.post(`${ML_SERVICE_URL}/predict`, {
             fixture_id: Number.parseInt(fixtureId)
@@ -39,7 +40,7 @@ export const getPredictionForFixture = async (fixtureId) => {
         if (err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT') {
             return calculateHeuristicPrediction(fixtureId);
         }
-        console.error(`❌ ML Service API Error: ${err.message}`);
+        logger.error(`❌ ML Service API Error: ${err.message}`);
         return { success: false, reason: err.message };
     }
 };
@@ -54,7 +55,7 @@ export const getBatchPredictions = async (fixtureIds) => {
         });
         return response.data;
     } catch (err) {
-        console.warn(`⚠️ Batch prediction failed, returning empty set.`);
+        logger.warn(`⚠️ Batch prediction failed, returning empty set.`);
         return { success: false, results: [] };
     }
 };
@@ -67,7 +68,7 @@ export const triggerRetraining = async () => {
         const response = await axios.post(`${ML_SERVICE_URL}/train`);
         return response.data;
     } catch (err) {
-        console.error(`❌ ML Retraining Trigger Error: ${err.message}`);
+        logger.error(`❌ ML Retraining Trigger Error: ${err.message}`);
         return { success: false, message: err.message };
     }
 };
@@ -95,7 +96,7 @@ export const buildForgeModels = async (leagueId, seasonYear = null) => {
         });
         return response.data;
     } catch (err) {
-        console.error(`❌ Forge Build Error: ${err.message}`);
+        logger.error(`❌ Forge Build Error: ${err.message}`);
         return { success: false, message: err.message };
     }
 };
@@ -138,7 +139,7 @@ export const retrainFromSimulation = async (modelId, simulationId) => {
         }, { timeout: 300000 }); // 5min timeout for retraining
         return response.data;
     } catch (err) {
-        console.error(`❌ Retrain Error: ${err.message}`);
+        logger.error(`❌ Retrain Error: ${err.message}`);
         return { success: false, message: err.message };
     }
 };
@@ -181,7 +182,7 @@ export const predictFixtureAll = async (fixtureId) => {
         const response = await axios.get(`${ML_SERVICE_URL}/predict/fixture/${fixtureId}`);
         return response.data;
     } catch (err) {
-        console.error(`❌ ML Master Prediction Error: ${err.message}`);
+        logger.error(`❌ ML Master Prediction Error: ${err.message}`);
         return { success: false, message: err.message };
     }
 };

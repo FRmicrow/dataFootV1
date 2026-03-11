@@ -27,23 +27,32 @@ const Navbar = () => {
 
     return (
         <nav className="ds-navbar">
-            <div className="navbar-links">
-                {links.map(link => (
-                    <NavLink
-                        key={link.to}
-                        to={link.to}
-                        className={({ isActive }) => `ds-button ds-button--md ${isActive ? 'ds-button--primary active' : 'ds-button--ghost'}`}
-                        style={link.color ? { color: link.color, borderColor: link.color } : {}}
-                    >
-                        <span className="ds-button-text">{link.label}</span>
+            <div className="ds-navbar-content">
+                <div className="ds-navbar-brand">
+                    <NavLink to="/dashboard" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        statFoot<span style={{ color: 'var(--color-primary-400)' }}>V3</span>
                     </NavLink>
-                ))}
+                </div>
+                
+                <div className="ds-navbar-links">
+                    {links.map(link => (
+                        <NavLink
+                            key={link.to}
+                            to={link.to}
+                            className={({ isActive }) => `ds-navbar-link ${isActive ? 'ds-navbar-link--active' : ''}`}
+                            style={link.color ? { '--link-color': link.color } : {}}
+                        >
+                            {link.label}
+                        </NavLink>
+                    ))}
+                </div>
+
                 <button
-                    className={`ds-button ds-button--md ds-button--ghost ${debugMode ? 'active' : ''}`}
+                    className={`ds-debug-toggle ${debugMode ? 'active' : ''}`}
                     onClick={() => setDebugMode(!debugMode)}
                     title="Toggle Design System Debug Mode"
                 >
-                    <span className="ds-button-text">🛠️</span>
+                    🛠️ Debug
                 </button>
             </div>
         </nav>

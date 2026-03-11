@@ -69,6 +69,11 @@ const MatchDetailPage = () => {
                                 <span className="divider">:</span>
                                 <span className="score">{goals_away ?? '-'}</span>
                                 <div className="match-status">{status_short}</div>
+                                {(fixture.xg_home !== null && fixture.xg_away !== null) && (
+                                    <div className="match-xg" style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                                        xG: {fixture.xg_home.toFixed(2)} - {fixture.xg_away.toFixed(2)}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="team away">

@@ -45,7 +45,7 @@ const CountrySelector = ({ countries, selected, onSelect }) => {
                         <span>All Regions</span>
                     </Stack>
                 )}
-                <span style={{ fontSize: '10px' }}>{isOpen ? '▲' : '▼'}</span>
+                <span className="search__chevron">{isOpen ? '▲' : '▼'}</span>
             </button>
 
             {isOpen && (
@@ -69,7 +69,7 @@ const CountrySelector = ({ countries, selected, onSelect }) => {
                                             <img src={c.flag_url} alt="" style={{ width: '16px' }} />
                                             <span>{c.name}</span>
                                         </Stack>
-                                        <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>#{c.importance_rank}</span>
+                                        <span className="search__selector-rank">#{c.importance_rank}</span>
                                     </Stack>
                                 </button>
                             ))}
@@ -215,8 +215,8 @@ const SearchPageV3 = () => {
 
                 <main className="ds-search-main">
                     {loading && (
-                        <Stack gap="var(--spacing-xl)" style={{ padding: 'var(--spacing-xl) 0' }}>
-                            <div style={{ padding: '0 var(--spacing-md)' }}>
+                        <Stack gap="var(--spacing-xl)" className="search__skeleton-wrapper">
+                            <div className="search__skeleton-label">
                                 <Skeleton width="200px" height="14px" />
                             </div>
                             <Grid columns="1fr 1fr" gap="var(--spacing-xl)">
@@ -228,8 +228,8 @@ const SearchPageV3 = () => {
 
                     {!loading && hasSearched && (
                         <Stack gap="var(--spacing-xl)">
-                            <div style={{ padding: '0 var(--spacing-md)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                                Showing <strong>{totalResults}</strong> matches for <span style={{ color: 'var(--color-primary-400)' }}>"{query}"</span>
+                            <div className="search__results-summary">
+                                Showing <strong>{totalResults}</strong> matches for <span className="search__query-highlight">"{query}"</span>
                             </div>
 
                             <Grid columns="1fr 1fr" gap="var(--spacing-xl)">
@@ -250,10 +250,10 @@ const SearchPageV3 = () => {
                                                             <img src={c.logo_url} alt="" onError={(e) => { e.target.src = 'https://media.api-sports.io/football/teams/0.png'; }} />
                                                         </div>
                                                         <div>
-                                                            <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-sm)' }}>{c.name}</div>
+                                                            <div className="search__result-name">{c.name}</div>
                                                             <Stack direction="row" align="center" gap="4px">
-                                                                {c.country_flag && <img src={c.country_flag} alt="" style={{ width: '12px' }} />}
-                                                                <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{c.country}</span>
+                                                                {c.country_flag && <img src={c.country_flag} alt="" className="search__country-flag" />}
+                                                                <span className="search__result-meta">{c.country}</span>
                                                             </Stack>
                                                         </div>
                                                     </Stack>
@@ -282,10 +282,10 @@ const SearchPageV3 = () => {
                                                             <img src={p.photo_url} alt="" onError={(e) => { e.target.src = 'https://media.api-sports.io/football/players/0.png'; }} />
                                                         </div>
                                                         <div>
-                                                            <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-sm)' }}>{p.name}</div>
+                                                            <div className="search__result-name">{p.name}</div>
                                                             <Stack direction="row" align="center" gap="4px">
-                                                                {p.nationality_flag && <img src={p.nationality_flag} alt="" style={{ width: '12px' }} />}
-                                                                <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{p.nationality} • {p.age}y</span>
+                                                                {p.nationality_flag && <img src={p.nationality_flag} alt="" className="search__flag-icon" />}
+                                                                <span className="search__result-meta">{p.nationality} • {p.age}y</span>
                                                             </Stack>
                                                         </div>
                                                     </Stack>
@@ -301,10 +301,10 @@ const SearchPageV3 = () => {
                     )}
 
                     {!loading && !hasSearched && (
-                        <Stack align="center" justify="center" gap="var(--spacing-lg)" style={{ padding: '120px 0' }}>
-                            <div style={{ fontSize: '64px', opacity: 0.5 }}>⚽</div>
-                            <h2 style={{ fontSize: 'var(--font-size-2xl)', margin: 0 }}>Scout Engine Ready</h2>
-                            <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', maxWidth: '400px' }}>
+                        <Stack align="center" justify="center" gap="var(--spacing-lg)" className="search__empty-state">
+                            <div className="search__empty-icon">⚽</div>
+                            <h2 className="search__empty-title">Scout Engine Ready</h2>
+                            <p className="search__empty-description">
                                 Query deep statistical profiles and historical milestones across 50+ global leagues.
                             </p>
                         </Stack>

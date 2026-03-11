@@ -138,7 +138,7 @@ export class MarketVolatilityService {
             const ids = trackedLeagues.join(',');
             leagueFilter = `AND league_id IN (${ids})`;
         } else {
-            console.log("   ℹ️ No tracked leagues found. Snapshotting all upcoming fixtures.");
+            logger.info("   ℹ️ No tracked leagues found. Snapshotting all upcoming fixtures.");
         }
 
         // Get upcoming fixtures (next 48h)
@@ -150,13 +150,13 @@ export class MarketVolatilityService {
               ${leagueFilter}
         `);
 
-        console.log(`   🔎 Found ${upcoming.length} upcoming fixtures to snapshot.`);
+        logger.info(`   🔎 Found ${upcoming.length} upcoming fixtures to snapshot.`);
 
         for (const f of upcoming) {
             await this.captureSnapshot(f.fixture_id);
         }
 
-        console.log("✅ [US_142] Global Snapshot Task Complete.");
+        logger.info("✅ [US_142] Global Snapshot Task Complete.");
     }
 }
 

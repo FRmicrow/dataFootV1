@@ -2,6 +2,7 @@ import db from '../../config/database.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import logger from '../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,7 +36,7 @@ class MigrationService {
         // Ensure registry table exists first using pool
         await this.initTrackingTable();
 
-        console.log('🏗️  Checking for Database Migrations...');
+        logger.info('🏗️  Checking for Database Migrations...');
 
         // Ensure registry directory exists
         if (!fs.existsSync(this.registryPath)) {
@@ -51,7 +52,7 @@ class MigrationService {
 
         for (const file of files) {
             if (!applied.has(file)) {
-                console.log(`🚀 Applying migration: ${file}...`);
+                logger.info(`🚀 Applying migration: ${file}...`);
                 const { up } = await import(path.join(this.registryPath, file));
 
                 // Acquire a dedicated client for the transaction
@@ -66,11 +67,11 @@ class MigrationService {
                     await client.run('INSERT INTO V3_Migrations (name) VALUES ($1)', [file]);
                     await client.commit();
 
-                    console.log(`✅ Successfully applied ${file}`);
+                    logger.info(`✅ Successfully applied ${file}`);
                     runCount++;
                 } catch (error) {
                     await client.rollback();
-                    console.error(`❌ Failed to apply migration ${file}:`, error.message);
+                    logger.error({ err: error }, `❌ Failed to apply migration ${file}`);
                     throw error;
                 } finally {
                     client.release();
@@ -79,9 +80,9 @@ class MigrationService {
         }
 
         if (runCount === 0) {
-            console.log('✨ Database is up to date.');
+            logger.info('✨ Database is up to date.');
         } else {
-            console.log(`🎉 Finished running ${runCount} migrations.`);
+            logger.info(`🎉 Finished running ${runCount} migrations.`);
         }
     }
 }

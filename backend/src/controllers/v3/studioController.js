@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import logger from '../../utils/logger.js';
 
 /**
  * GET /api/v3/studio/meta/stats
@@ -51,7 +52,7 @@ export const getStudioNationalities = async (req, res) => {
         const rows = await db.all(sql);
         res.json(rows.map(r => r.nationality));
     } catch (error) {
-        console.error('Error fetching nationalities:', error);
+        logger.error({ err: error }, 'Error fetching nationalities');
         res.status(500).json({ error: error.message });
     }
 };
@@ -100,7 +101,7 @@ export const getStudioLeagues = async (req, res) => {
 
         res.json(Object.values(grouped));
     } catch (error) {
-        console.error('Error fetching studio leagues:', error);
+        logger.error({ err: error }, 'Error fetching studio leagues');
         res.status(500).json({ error: error.message });
     }
 };
@@ -150,7 +151,7 @@ export const searchStudioPlayers = async (req, res) => {
         const rows = await db.all(sql, params);
         res.json(rows);
     } catch (error) {
-        console.error('Error searching studio players:', error);
+        logger.error({ err: error }, 'Error searching studio players');
         res.status(500).json({ error: error.message });
     }
 };
@@ -179,7 +180,7 @@ export const searchStudioTeams = async (req, res) => {
         const rows = await db.all(sql, params);
         res.json(rows);
     } catch (error) {
-        console.error('Error searching studio teams:', error);
+        logger.error({ err: error }, 'Error searching studio teams');
         res.status(500).json({ error: error.message });
     }
 };
@@ -269,7 +270,7 @@ export const queryStudioData = async (req, res) => {
 
         res.json({ meta: { stat, cumulative, count: rows.length }, timeline });
     } catch (error) {
-        console.error("Error in queryStudioData:", error);
+        logger.error({ err: error }, "Error in queryStudioData");
         res.status(500).json({ error: 'Data aggregation failed' });
     }
 };
@@ -322,7 +323,7 @@ export const queryLeagueRankings = async (req, res) => {
 
         res.json({ meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline });
     } catch (error) {
-        console.error("Error in queryLeagueRankings:", error);
+        logger.error({ err: error }, "Error in queryLeagueRankings");
         res.status(500).json({ error: 'League processing failed' });
     }
 };
