@@ -1,53 +1,45 @@
 import React, { useMemo } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { ControlBar, Tabs, Stack } from '../../../../design-system';
+import MLModelCatalog from './MLModelCatalog';
+import MLPerformanceLab from './MLPerformanceLab';
+import MLForesightHub from './MLForesightHub';
+import MLSubModelBuilder from './MLSubModelBuilder';
+import MLGlossary from './MLGlossary';
 import MLOrchestratorPage from './MLOrchestratorPage';
-import MLSimulationDashboard from './MLSimulationDashboard';
-import MLIntelligenceDashboard from './submodules/MLIntelligenceDashboard';
-import MLTestLab from './submodules/MLTestLab';
-import MLBetRecommendations from './MLBetRecommendations';
-import MLOddsPage from './MLOddsPage';
-import MLModelFactory from './submodules/MLModelFactory';
-import MLKnowledgeBase from './submodules/MLKnowledgeBase';
+import './MachineLearningHub.css';
+
+const navItems = [
+    { id: 'models',       label: 'Modèles',     icon: '🔬' },
+    { id: 'performance',  label: 'Performance',  icon: '📊' },
+    { id: 'foresight',    label: 'Prévisions',   icon: '🔭' },
+    { id: 'submodels',    label: 'Sub-Models',   icon: '🧬' },
+    { id: 'glossary',     label: 'Glossaire',    icon: '📖' },
+    { id: 'orchestrator', label: 'Système',      icon: '⚙️' },
+];
 
 const MachineLearningHub = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const navItems = [
-        { id: 'intelligence', label: 'Intelligence', icon: '🧠' },
-        { id: 'orchestrator', label: 'Orchestrator', icon: '⚙️' },
-        { id: 'factory', label: 'Model Factory', icon: '⚒️' },
-        { id: 'test-lab', label: 'Test Lab', icon: '🧪' },
-        { id: 'performance', label: 'Performance', icon: '📊' },
-        { id: 'betting', label: 'Betting Hub', icon: '💰' },
-        { id: 'knowledge', label: 'Knowledge Base', icon: '📖' }
-    ];
-
     const activeTab = useMemo(() => {
         const segments = location.pathname.split('/').filter(Boolean);
         const last = segments[segments.length - 1];
-        const validIds = navItems.map(item => item.id);
-        return validIds.includes(last) ? last : 'intelligence';
+        return navItems.some(item => item.id === last) ? last : 'models';
     }, [location]);
 
-    const handleTabChange = (id) => {
-        navigate(`/machine-learning/${id}`);
-    };
+    const handleTabChange = (id) => navigate(`/machine-learning/${id}`);
 
     return (
-        <div className="ml-hub-container ds-container">
-            <header className="ml-hub-header ds-p-xl ds-mb-2xl">
+        <div className="ml-hub ds-container">
+            <header className="ml-hub__header ds-p-xl ds-mb-2xl">
                 <Stack direction="row" gap="md" className="ds-items-center mb-lg">
-                    <span className="ds-text-4xl">🤖</span>
+                    <span className="ml-hub__icon">⚡</span>
                     <div>
-                        <h1 className="ds-text-heading-2 mb-xs">Machine Learning Hub</h1>
-                        <p className="ds-text-body ds-text-neutral-400">
-                            Predictive analytics, risk engine, and backtesting suite.
-                        </p>
+                        <h1 className="ml-hub__title">Intelligence Hub</h1>
+                        <p className="ml-hub__subtitle">Modèles prédictifs · Performance · Analyse de valeur</p>
                     </div>
                 </Stack>
-
                 <ControlBar
                     left={
                         <Tabs
@@ -60,17 +52,22 @@ const MachineLearningHub = () => {
                 />
             </header>
 
-            <main className="ml-hub-content mt-xl">
+            <main className="ml-hub__content">
                 <Routes>
-                    <Route path="/" element={<Navigate to="intelligence" replace />} />
-                    <Route path="intelligence" element={<MLIntelligenceDashboard />} />
+                    <Route path="/" element={<Navigate to="models" replace />} />
+                    <Route path="models"       element={<MLModelCatalog />} />
+                    <Route path="performance"  element={<MLPerformanceLab />} />
+                    <Route path="foresight"    element={<MLForesightHub />} />
+                    <Route path="submodels"    element={<MLSubModelBuilder />} />
+                    <Route path="glossary"     element={<MLGlossary />} />
                     <Route path="orchestrator" element={<MLOrchestratorPage />} />
-                    <Route path="factory" element={<MLModelFactory />} />
-                    <Route path="test-lab" element={<MLTestLab />} />
-                    <Route path="performance" element={<MLSimulationDashboard />} />
-                    <Route path="betting" element={<MLBetRecommendations />} />
-                    <Route path="odds" element={<MLOddsPage />} />
-                    <Route path="knowledge" element={<MLKnowledgeBase />} />
+                    {/* Legacy redirects */}
+                    <Route path="intelligence" element={<Navigate to="/machine-learning/models" replace />} />
+                    <Route path="factory"      element={<Navigate to="/machine-learning/models" replace />} />
+                    <Route path="test-lab"     element={<Navigate to="/machine-learning/foresight" replace />} />
+                    <Route path="betting"      element={<Navigate to="/machine-learning/foresight" replace />} />
+                    <Route path="knowledge"    element={<Navigate to="/machine-learning/glossary" replace />} />
+                    <Route path="odds"         element={<Navigate to="/machine-learning/foresight" replace />} />
                 </Routes>
             </main>
         </div>

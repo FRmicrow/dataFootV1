@@ -145,6 +145,7 @@ export default {
     getSimulationReadiness: (leagueId, seasonYear) => api.get(`/simulation/readiness?leagueId=${leagueId}&seasonYear=${seasonYear}`),
     getSimulationResults: (simId) => api.get(`/simulation/results/${simId}`),
     getLeagueSimulations: (leagueId) => api.get(`/simulation/league/${leagueId}`),
+    triggerBulkSimulation: () => api.post('/simulation/bulk', {}),
 
     // --- ML Management (V8) ---
     getMLStatus: () => api.get('/ml/status'),
@@ -202,6 +203,15 @@ export default {
     getDiscoveryCountries: () => api.get('/import/discovery/countries'),
     getDiscoveryLeagues: (country) => api.get(`/import/discovery/leagues?country=${country}`),
     triggerDiscoveryImport: (data) => api.post('/import/discovery/import', data),
+
+    // --- ML Hub V37 ---
+    getModelsCatalog: (params) => api.get('/ml-platform/models/catalog', { params }),
+    calculateROI: (data) => api.post('/ml-platform/performance/roi', data),
+    getLeaguesWithOdds: () => api.get('/ml-platform/performance/leagues-with-odds'),
+    getTopEdges: (params) => api.get('/ml-platform/edges/top', { params }),
+    getSubmodels: () => api.get('/ml-platform/submodels'),
+    createSubmodel: (data) => api.post('/ml-platform/submodels', data),
+    deleteSubmodel: (id) => api.delete(`/ml-platform/submodels/${id}`),
 
     // --- Odds (V28) ---
     getUpcomingOdds: () => api.get('/odds/upcoming'),

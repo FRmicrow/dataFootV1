@@ -3,7 +3,10 @@ import { validateRequest } from '../../middleware/validateRequest.js';
 import {
     mlTrainSchema,
     leagueIdV3ParamSchema,
-    simulationStatusSchema
+    simulationStatusSchema,
+    roiRequestSchema,
+    edgesTopQuerySchema,
+    createSubmodelSchema
 } from '../../schemas/v3Schemas.js';
 import {
     triggerModelRetrain,
@@ -26,7 +29,14 @@ import {
     runOddsCatchup,
     predictFixtureAll,
     getMLClubEvaluation,
-    getUpcomingPredictions
+    getUpcomingPredictions,
+    getModelsCatalog,
+    calculatePerformanceROI,
+    getTopEdges,
+    getSubmodels,
+    createSubmodel,
+    deleteSubmodel,
+    getLeaguesWithOdds
 } from '../../controllers/v3/mlController.js';
 import {
     triggerSimulation,
@@ -63,6 +73,15 @@ router.post('/ml-platform/odds/sync', syncUpcomingOdds);
 router.post('/ml-platform/odds/advanced-sync', syncAdvancedOdds);
 router.post('/ml-platform/odds/catchup', runOddsCatchup);
 router.get('/predict/fixture/:id', predictFixtureAll);
+
+// V37 ML Hub — New Endpoints
+router.get('/ml-platform/models/catalog', getModelsCatalog);
+router.post('/ml-platform/performance/roi', validateRequest(roiRequestSchema), calculatePerformanceROI);
+router.get('/ml-platform/edges/top', validateRequest(edgesTopQuerySchema), getTopEdges);
+router.get('/ml-platform/submodels', getSubmodels);
+router.get('/ml-platform/performance/leagues-with-odds', getLeaguesWithOdds);
+router.post('/ml-platform/submodels', validateRequest(createSubmodelSchema), createSubmodel);
+router.delete('/ml-platform/submodels/:id', deleteSubmodel);
 
 // Simulation Engine
 router.post('/simulation/start', triggerSimulation);

@@ -1,0 +1,114 @@
+.ml-submodel { padding: 0 var(--space-xl) var(--space-2xl); display: flex; flex-direction: column; gap: var(--space-xl); }
+
+.ml-submodel__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; }
+.ml-submodel__title {
+    font-family: 'Space Grotesk', var(--font-family);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-xs);
+}
+.ml-submodel__subtitle { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; }
+.ml-submodel__error { padding: var(--space-md); color: var(--color-error); font-size: var(--text-sm); }
+
+/* Grid */
+.ml-submodel__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-lg); }
+.ml-submodel__empty { padding: var(--space-2xl); text-align: center; color: var(--color-text-muted); }
+.ml-submodel__empty-hint { font-size: var(--text-sm); color: var(--color-text-muted); }
+
+/* SubModel Card */
+.ml-submodel__card { padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-md); }
+.ml-submodel__card-header { display: flex; gap: var(--space-sm); align-items: flex-start; }
+.ml-submodel__card-icon { font-size: 1.8rem; flex-shrink: 0; }
+.ml-submodel__card-info { flex: 1; }
+.ml-submodel__card-name {
+    font-family: 'Space Grotesk', var(--font-family);
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-xs);
+}
+.ml-submodel__card-badges { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.ml-submodel__card-desc { font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0; }
+.ml-submodel__card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+.ml-submodel__card-metrics { display: flex; gap: var(--space-lg); flex-wrap: wrap; }
+.ml-submodel__metric { display: flex; flex-direction: column; gap: 2px; }
+.ml-submodel__metric-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); }
+.ml-submodel__metric-value { font-family: 'Courier New', monospace; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); }
+
+.ml-submodel__training-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--color-warning);
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: var(--radius-sm);
+}
+.ml-submodel__training-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-warning);
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.ml-submodel__card-actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: auto; }
+
+/* Create Form */
+.ml-submodel__create-form { padding: var(--space-xl); border: 1px solid var(--color-accent); }
+.ml-submodel__form-title {
+    font-family: 'Space Grotesk', var(--font-family);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-lg);
+}
+.ml-submodel__form-error { color: var(--color-error); font-size: var(--text-sm); margin-bottom: var(--space-md); }
+.ml-submodel__form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+.ml-submodel__form-label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+.ml-submodel__form-input {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--text-sm);
+    font-family: inherit;
+    outline: none;
+    transition: var(--transition-base);
+}
+.ml-submodel__form-input:focus { border-color: var(--color-accent); box-shadow: var(--focus-ring); }
+.ml-submodel__form-actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+.ml-submodel__form-hint { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+.ml-submodel__reset-name {
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    margin-top: 2px;
+    text-align: left;
+}
