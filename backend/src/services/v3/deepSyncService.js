@@ -230,12 +230,18 @@ export async function syncSeasonLineups(leagueId, seasonYear, sendLog) {
             } else {
                 failed++;
                 const res = await ImportStatusService.incrementFailure(leagueId, seasonYear, 'lineups', 'No data returned from API');
-                if (res?.blacklisted) break;
+                if (res?.blacklisted) {
+                    await ImportStatusService.setStatus(leagueId, seasonYear, 'lineups', IMPORT_STATUS.NO_DATA, { failure_reason: 'Auto-blacklisted after consecutive empty responses' });
+                    break;
+                }
             }
         } catch (e) {
             failed++;
             const res = await ImportStatusService.incrementFailure(leagueId, seasonYear, 'lineups', e.message);
-            if (res?.blacklisted) break;
+            if (res?.blacklisted) {
+                await ImportStatusService.setStatus(leagueId, seasonYear, 'lineups', IMPORT_STATUS.NO_DATA, { failure_reason: `Auto-blacklisted after consecutive errors: ${e.message}` });
+                break;
+            }
         }
         await new Promise(r => setTimeout(r, 100));
     }

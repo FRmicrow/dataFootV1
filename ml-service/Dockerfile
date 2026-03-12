@@ -3,7 +3,7 @@ FROM python:3.10-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    sqlite3 \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -19,7 +19,6 @@ COPY . .
 
 # Environment defaults
 ENV PORT=8008
-ENV DATABASE_PATH=/app/data/database.sqlite
 ENV MODELS_PATH=/app/models
 
 # Expose the ML service port

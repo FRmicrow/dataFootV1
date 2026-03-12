@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
-import { Card, Badge, Table, Grid, Stack, Button, MetricCard } from '../../../../design-system';
+import { Card, Badge, Table, Grid, Stack, Button, MetricCard, Progress } from '../../../../design-system';
 
 const MLBetRecommendations = () => {
     const [recommendations, setRecommendations] = useState(null);
@@ -11,7 +11,7 @@ const MLBetRecommendations = () => {
     const fetchData = async () => {
         try {
             const res = await api.getMLRecommendations();
-            setRecommendations(res.data);
+            setRecommendations(res || { top_confidence: [], top_value: [], all: [] });
         } catch (err) {
             console.error("Failed to load recommendations", err);
             setError("Failed to fetch betting recommendations.");
@@ -81,9 +81,7 @@ const MLBetRecommendations = () => {
             render: (val) => (
                 <Stack gap="2xs">
                     <span className="ds-font-bold ds-text-xs">{(val * 100).toFixed(1)}%</span>
-                    <div className="ds-progress-bar" style={{ height: '4px', width: '100%' }}>
-                        <div className="ds-progress-fill" style={{ width: `${val * 100}%`, backgroundColor: val > 0.75 ? 'var(--color-success-500)' : 'var(--color-primary-500)' }}></div>
-                    </div>
+                    <Progress value={val * 100} variant={val > 0.75 ? 'success' : 'primary'} size="sm" />
                 </Stack>
             )
         },
@@ -118,7 +116,7 @@ const MLBetRecommendations = () => {
         }
     ];
 
-    const pickOfTheDay = recommendations.top_confidence[0] || recommendations.all[0];
+    const pickOfTheDay = recommendations?.top_confidence?.[0] || recommendations?.all?.[0];
 
     return (
         <Stack gap="xl">

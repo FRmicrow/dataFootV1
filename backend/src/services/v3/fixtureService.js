@@ -86,21 +86,34 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
             }
 
             let blacklisted = false;
-            await Promise.all(chunk.map(async (fixture) => {
+            for (const fixture of chunk) {
                 try {
-                    await fetchAndStoreEvents(fixture.fixture_id, fixture.api_id);
-                    success++;
-                    await ImportStatusService.resetFailures(leagueId, seasonYear, 'events');
+                    const found = await fetchAndStoreEvents(fixture.fixture_id, fixture.api_id);
+                    if (found) {
+                        success++;
+                        await ImportStatusService.resetFailures(leagueId, seasonYear, 'events');
+                    } else {
+                        failed++;
+                        const res = await ImportStatusService.incrementFailure(leagueId, seasonYear, 'events', 'No events returned for fixture');
+                        if (res?.blacklisted) {
+                            blacklisted = true;
+                            break;
+                        }
+                    }
                 } catch (err) {
                     logger.error({ err }, `   ❌ Failed fixture ${fixture.fixture_id}`);
                     failed++;
                     const res = await ImportStatusService.incrementFailure(leagueId, seasonYear, 'events', err.message);
-                    if (res?.blacklisted) blacklisted = true;
+                    if (res?.blacklisted) {
+                        blacklisted = true;
+                        break;
+                    }
                 }
-            }));
+            }
 
             if (blacklisted) {
                 if (sendLog) sendLog(`   ⛔ Events pillar blacklisted for ${seasonYear} due to consecutive failures.`, 'error');
+                await ImportStatusService.setStatus(leagueId, seasonYear, 'events', IMPORT_STATUS.NO_DATA, { failure_reason: 'Auto-blacklisted after consecutive empty responses' });
                 break;
             }
 
@@ -135,14 +148,14 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
 
     if (!response.data.response || response.data.response.length === 0) {
         logger.warn(`   No data returned for fixture ${apiFixtureId}`);
-        return;
+        return false;
     }
 
     const events = response.data.response[0].events; // Array of events
 
     if (!events || events.length === 0) {
         // No events
-        return;
+        return false;
     }
 
     try {
@@ -173,6 +186,7 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
                 ev.comments
             ]));
         }
+        return true;
     } catch (err) {
         logger.error({ err }, `   ❌ Error storing events for fixture ${localFixtureId}`);
         throw err;

@@ -31,12 +31,11 @@ class ForgeOrchestrator:
     V8 Forge Orchestrator: Selection → Training → Prediction → Evaluation.
     Manages the lifecycle of a simulation run.
     """
-    def __init__(self, db_path: str = DB_PATH):
-        self.db_path = db_path
-        self.analytics = ForgeAnalytics(db_path)
+    def __init__(self, analytics=None):
+        self.analytics = analytics or ForgeAnalytics()
 
     def get_connection(self):
-        return sqlite3.connect(self.db_path)
+        return get_connection()
 
     def start_simulation(self, league_id: int, season_year: int, mode: str = 'STATIC', horizon: str = 'FULL_HISTORICAL', sim_id: int = None):
         """
@@ -56,7 +55,7 @@ class ForgeOrchestrator:
         # Lookup the most recent active model for this league/horizon
         cur.execute("""
             SELECT id, model_path FROM V3_Model_Registry 
-            WHERE league_id IS %s AND horizon_type = %s AND is_active = 1
+            WHERE league_id = %s AND horizon_type = %s AND is_active = 1
             ORDER BY id DESC LIMIT 1
         """, (league_id, horizon))
         row = cur.fetchone()
@@ -84,7 +83,7 @@ class ForgeOrchestrator:
             )
             
             if model_path:
-                cur.execute("SELECT id FROM V3_Model_Registry WHERE model_path = ? LIMIT 1", (model_path,))
+                cur.execute("SELECT id FROM V3_Model_Registry WHERE model_path = %s LIMIT 1", (model_path,))
                 row = cur.fetchone()
                 if row: model_id = row[0]
             else:
@@ -97,7 +96,7 @@ class ForgeOrchestrator:
                     error_msg = "No valid model available. Cannot run simulation."
                     logger.error(f"❌ {error_msg}")
                     if sim_id:
-                        cur.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = ?, stage = 'ERROR' WHERE id = ?", (error_msg, sim_id))
+                        cur.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = %s, stage = 'ERROR' WHERE id = %s", (error_msg, sim_id))
                         conn.commit()
                     print(f"PROGRESS: 0% | FAILED: {error_msg}")
                     sys.stdout.flush()
@@ -114,8 +113,9 @@ class ForgeOrchestrator:
             cur.execute("""
                 INSERT INTO V3_Forge_Simulations (league_id, season_year, model_id, status, horizon_type, stage)
                 VALUES (%s, %s, %s, 'RUNNING', %s, 'PREPARING')
+                RETURNING id
             """, (league_id, season_year, model_id, horizon, 'PREPARING'))
-            sim_id = cur.lastrowid
+            sim_id = cur.fetchone()[0]
         
         conn.commit()
         conn.close()
@@ -145,7 +145,8 @@ class ForgeOrchestrator:
             
             # Final Success Update
             conn = self.get_connection()
-            conn.execute("UPDATE V3_Forge_Simulations SET status = 'COMPLETED', stage = 'FINISHED' WHERE id = ?", (sim_id,))
+            cur = conn.cursor()
+            cur.execute("UPDATE V3_Forge_Simulations SET status = 'COMPLETED', stage = 'FINISHED' WHERE id = %s", (sim_id,))
             conn.commit()
             conn.close()
             
@@ -158,7 +159,8 @@ class ForgeOrchestrator:
             import traceback
             traceback.print_exc()
             conn = self.get_connection()
-            conn.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = ?, stage = 'ERROR' WHERE id = ?", (error_msg, sim_id))
+            cur = conn.cursor()
+            cur.execute("UPDATE V3_Forge_Simulations SET status = 'FAILED', error_log = %s, stage = 'ERROR' WHERE id = %s", (error_msg, sim_id))
             conn.commit()
             conn.close()
 
@@ -171,7 +173,7 @@ class ForgeOrchestrator:
         
         conn = self.get_connection()
         query = """
-            SELECT DISTINCT strftime('%Y-%m', date) as month 
+            SELECT DISTINCT TO_CHAR(date, 'YYYY-MM') as month 
             FROM V3_Fixtures 
             WHERE league_id = %s AND season_year = %s AND status_short IN ('FT','AET','PEN')
             ORDER BY month ASC
@@ -197,11 +199,13 @@ class ForgeOrchestrator:
             if not specialized_model_path:
                 # Fallback to the initial model assigned to simulation
                 conn = self.get_connection()
-                row = conn.execute("""
+                cur = conn.cursor()
+                cur.execute("""
                     SELECT r.model_path FROM V3_Model_Registry r 
                     JOIN V3_Forge_Simulations s ON r.id = s.model_id 
                     WHERE s.id = %s
-                """, (sim_id,)).fetchone()
+                """, (sim_id,))
+                row = cur.fetchone()
                 conn.close()
                 if row:
                     specialized_model_path = row[0]

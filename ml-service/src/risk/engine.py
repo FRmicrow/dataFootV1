@@ -7,12 +7,12 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 def get_db_connection():
     return get_connection()
 
-def save_risk_data(conn, query, fixture_id, market_type, data, key):
+def save_risk_data(cur, query, fixture_id, market_type, data, key):
     """Helper to parse probabilities and save to DB if data exists."""
     if key in data:
         for sel, prob in data[key].items():
             if prob > 0:
-                conn.execute(query, (fixture_id, market_type, sel, float(prob), 1.0 / prob))
+                cur.execute(query, (fixture_id, market_type, sel, float(prob), 1.0 / prob))
 
 def extract_and_save_fair_odds(fixture_id):
     """
@@ -30,9 +30,11 @@ def extract_and_save_fair_odds(fixture_id):
     }
 
     try:
+        cur = conn.cursor()
         # Fetch all submodel outputs for this fixture
-        query = "SELECT model_type, prediction_json FROM V3_Submodel_Outputs WHERE fixture_id = ?"
-        rows = conn.execute(query, (fixture_id,)).fetchall()
+        query = "SELECT model_type, prediction_json FROM V3_Submodel_Outputs WHERE fixture_id = %s"
+        cur.execute(query, (fixture_id,))
+        rows = cur.fetchall()
         
         insert_query = """
             INSERT INTO V3_Risk_Analysis 
@@ -51,9 +53,10 @@ def extract_and_save_fair_odds(fixture_id):
                 
             data = json.loads(json_str)
             market_type, data_key = MODEL_CONFIGS[model_type]
-            save_risk_data(conn, insert_query, fixture_id, market_type, data, data_key)
+            save_risk_data(cur, insert_query, fixture_id, market_type, data, data_key)
             
         conn.commit()
+        cur.close()
     except Exception as e:
         print(f"Error in risk engine for fixture {fixture_id}: {e}")
     finally:

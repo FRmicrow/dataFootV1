@@ -4,12 +4,15 @@ import joblib
 import pandas as pd
 import json
 import os
-import sqlite3
 import subprocess
 import sys
 import time
 from typing import List, Optional
 from datetime import datetime
+import warnings
+# Suppress pandas warning about non-SQLAlchemy connections (mentions sqlite by default)
+warnings.filterwarnings('ignore', category=UserWarning, module='pandas')
+
 from db_config import get_connection
 
 app = FastAPI(title="StatFoot V3 ML Service", version="1.3.0-catboost-1x2")
@@ -398,10 +401,11 @@ def predict_fixture_all(fixture_id: int):
     try:
         from src.orchestrator.predictor import generate_master_prediction
         result = generate_master_prediction(fixture_id)
-        if not result["success"]:
-            raise HTTPException(status_code=500, detail="All submodels failed to generate predictions.")
+        # We no longer raise 500 if submodels fail, let the caller handle success=False
         return result
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 

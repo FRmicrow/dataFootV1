@@ -10,9 +10,8 @@ const MLPulse = () => {
         const fetchStatus = async () => {
             try {
                 const res = await api.getMLOrchestratorStatus();
-                if (res.success) {
-                    setStatus(res);
-                }
+                // api service already unwraps the 'data' field
+                setStatus(res);
             } catch (err) {
                 console.error("Pulse fetch failed", err);
             } finally {
@@ -31,30 +30,33 @@ const MLPulse = () => {
         <Card title="System Intelligence" subtitle={`Engine: ${status?.version || 'Unknown'}`}>
             <Grid columns="repeat(auto-fit, minmax(200px, 1fr))" gap="lg">
                 <Stack gap="xs">
-                    <span className="ds-text-xs ds-text-neutral-500 ds-uppercase ds-font-bold">Engine Status</span>
-                    <div className="ds-flex ds-items-center ds-gap-sm">
-                        <div className={`ds-w-2 ds-h-2 ds-rounded-full ${status?.status === 'online' ? 'ds-bg-success-500' : 'ds-bg-danger-500'} ds-animate-pulse`} />
-                        <span className="ds-font-bold">{status?.status?.toUpperCase() || 'OFFLINE'}</span>
-                    </div>
+                    <span className="ds-text-xs ds-text-dim ds-uppercase ds-font-bold ds-tracking-wider">Engine Status</span>
+                    <Stack direction="row" gap="sm" className="ds-items-center">
+                        <div 
+                            className="ds-w-2 ds-h-2 ds-rounded-full ds-animate-pulse" 
+                            style={{ background: status?.status === 'online' ? 'var(--color-success-500)' : 'var(--color-danger-500)' }}
+                        />
+                        <span className="ds-font-bold ds-text-main">{status?.status?.toUpperCase() || 'OFFLINE'}</span>
+                    </Stack>
                 </Stack>
 
                 <Stack gap="xs">
-                    <span className="ds-text-xs ds-text-neutral-500 ds-uppercase ds-font-bold">Model Core</span>
+                    <span className="ds-text-xs ds-text-dim ds-uppercase ds-font-bold ds-tracking-wider">Model Core</span>
                     <Badge variant={status?.model_loaded ? 'success' : 'warning'}>
                         {status?.model_loaded ? 'Active' : 'Standby'}
                     </Badge>
                 </Stack>
 
                 <Stack gap="xs">
-                    <span className="ds-text-xs ds-text-neutral-500 ds-uppercase ds-font-bold">Training State</span>
+                    <span className="ds-text-xs ds-text-dim ds-uppercase ds-font-bold ds-tracking-wider">Training State</span>
                     <Badge variant={status?.training?.is_training ? 'primary' : 'neutral'}>
                         {status?.training?.is_training ? 'Training' : 'Idle'}
                     </Badge>
                 </Stack>
 
                 <Stack gap="xs">
-                    <span className="ds-text-xs ds-text-neutral-500 ds-uppercase ds-font-bold">Total Analysis</span>
-                    <span className="ds-text-lg ds-font-bold">{(status?.total_risk_rows || 0).toLocaleString()}</span>
+                    <span className="ds-text-xs ds-text-dim ds-uppercase ds-font-bold ds-tracking-wider">Total Analysis</span>
+                    <span className="ds-text-lg ds-font-bold ds-text-primary-400">{(status?.total_risk_rows || 0).toLocaleString()}</span>
                 </Stack>
             </Grid>
         </Card>

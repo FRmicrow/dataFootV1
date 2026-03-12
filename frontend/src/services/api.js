@@ -180,7 +180,7 @@ export default {
         if (seasonYear) params.append('seasonYear', seasonYear);
         return api.get(`/ml-platform/simulations/club-evaluation?${params.toString()}`);
     },
-    getMLUpcomingPredictions: () => api.get('/ml-platform/predictions/upcoming'),
+    getMLUpcomingPredictions: (params) => api.get('/ml-platform/predictions/upcoming', { params }),
 
     getMLRecommendations: () => api.get('/ml-platform/recommendations'),
 

@@ -27,10 +27,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def _load_registry_and_model(conn, model_id):
     """Load model registry info and the model file itself."""
-    reg = conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
         SELECT id, league_id, horizon_type, model_path, accuracy, training_dataset_size
         FROM V3_Model_Registry WHERE id = %s
-    """, (model_id,)).fetchone()
+    """, (model_id,))
+    reg = cur.fetchone()
+    cur.close()
     
     if not reg:
         return None, f"Model {model_id} not found in registry."
@@ -106,15 +109,18 @@ def _prepare_training_data(conn, simulation_id, reg_data, factory):
 
 def _evaluate_model_performance(conn, league_id, factory, old_model, new_model):
     """Strictly evaluate improvement using the 3-season validation gate."""
-    latest_seasons_query = "SELECT DISTINCT season_year FROM V3_Fixtures WHERE league_id = ? AND status_short IN ('FT', 'AET', 'PEN') ORDER BY season_year DESC LIMIT 3"
-    val_seasons = [r[0] for r in conn.execute(latest_seasons_query, (league_id,)).fetchall()]
+    latest_seasons_query = "SELECT DISTINCT season_year FROM V3_Fixtures WHERE league_id = %s AND status_short IN ('FT', 'AET', 'PEN') ORDER BY season_year DESC LIMIT 3"
+    cur = conn.cursor()
+    cur.execute(latest_seasons_query, (league_id,))
+    val_seasons = [r[0] for r in cur.fetchall()]
+    cur.close()
     
     total_val_matches = 0
     total_old_correct = 0
     total_new_correct = 0
     
     for s_year in val_seasons:
-        s_data = pd.read_sql_query("SELECT fixture_id, goals_home, goals_away FROM V3_Fixtures WHERE league_id = ? AND season_year = ? AND status_short IN ('FT', 'AET', 'PEN')", conn, params=(league_id, s_year))
+        s_data = pd.read_sql_query("SELECT fixture_id, goals_home, goals_away FROM V3_Fixtures WHERE league_id = %s AND season_year = %s AND status_short IN ('FT', 'AET', 'PEN')", conn, params=(league_id, s_year))
         for _, row in s_data.iterrows():
             try:
                 v = factory.get_vector(int(row['fixture_id']), conn=conn)
@@ -166,10 +172,12 @@ def retrain_from_simulation(model_id: int, simulation_id: int) -> dict:
         version_tag = f"catboost_v{datetime.now().strftime('%Y%m%d_%H%M%S')}_retrain"
         joblib.dump(new_model, reg_data["model_path"])
         
-        conn.execute("UPDATE V3_Model_Registry SET is_active = 0 WHERE league_id IS ? AND horizon_type = ?", (reg_data["league_id"], reg_data["horizon_type"]))
-        conn.execute("INSERT INTO V3_Model_Registry (league_id, horizon_type, version_tag, training_dataset_size, features_count, accuracy, model_path, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)", 
-                     (reg_data["league_id"], reg_data["horizon_type"], version_tag, len(X_train), len(X.columns), float(accuracy_score(y_test, new_model.predict(X_test))), reg_data["model_path"]))
+        cur = conn.cursor()
+        cur.execute("UPDATE V3_Model_Registry SET is_active = 0 WHERE league_id = %s AND horizon_type = %s", (reg_data["league_id"], reg_data["horizon_type"]))
+        cur.execute("INSERT INTO V3_Model_Registry (league_id, horizon_type, version_tag, training_dataset_size, features_count, accuracy, model_path, is_active) VALUES (%s, %s, %s, %s, %s, %s, %s, 1)", 
+                    (reg_data["league_id"], reg_data["horizon_type"], version_tag, len(X_train), len(X.columns), float(accuracy_score(y_test, new_model.predict(X_test))), reg_data["model_path"]))
         conn.commit()
+        cur.close()
         
         return {"status": "accepted", "improvement": float(improvement)}
         

@@ -27,8 +27,8 @@ const PredictionTimeline = () => {
             key: 'fixture_id',
             render: (text, row) => (
                 <Stack gap="none">
-                    <span className="ds-text-sm ds-font-bold">{row.home_team} vs {row.away_team}</span>
-                    <span className="ds-text-xs ds-text-neutral-500">
+                    <span className="ds-text-sm ds-font-bold ds-text-main">{row.home_team} vs {row.away_team}</span>
+                    <span className="ds-text-xs ds-text-dim">
                         {new Date(row.date).toLocaleDateString()} • {row.league_name}
                     </span>
                 </Stack>
@@ -38,37 +38,31 @@ const PredictionTimeline = () => {
             title: 'Market',
             dataIndex: 'market_type',
             key: 'market',
-            width: '120px',
             render: (val) => <Badge variant="surface" size="sm">{val}</Badge>
         },
         {
             title: 'Prediction (Prob)',
             dataIndex: 'selection',
             key: 'prediction',
-            width: '180px',
             render: (val, row) => (
-                <div className="ds-flex ds-items-center ds-gap-sm">
+                <Stack direction="row" gap="sm" className="ds-items-center">
                     <span className="ds-font-bold ds-text-primary-400">{val}</span>
-                    <Badge variant="neutral" size="sm">{(row.ml_probability * 100).toFixed(1)}%</Badge>
-                </div>
+                    <Badge variant="surface" size="sm">{(row.ml_probability * 100).toFixed(1)}%</Badge>
+                </Stack>
             )
         },
         {
             title: 'Fair Odd',
             dataIndex: 'fair_odd',
             key: 'fair_odd',
-            width: '100px',
-            align: 'right',
-            render: (val) => <span className="ds-font-mono ds-text-xs">{val.toFixed(2)}</span>
+            render: (val) => <span className="ds-font-mono ds-text-sm ds-text-dim">{val.toFixed(2)}</span>
         },
         {
             title: 'Value',
             dataIndex: 'bookmaker_odd',
             key: 'value',
-            width: '100px',
-            align: 'right',
             render: (val, row) => {
-                if (!val) return '-';
+                if (!val) return <span className="ds-text-dim">-</span>;
                 const edge = ((val / row.fair_odd) - 1) * 100;
                 return (
                     <Badge variant={edge > 5 ? 'success' : 'neutral'} size="sm">
@@ -80,10 +74,15 @@ const PredictionTimeline = () => {
     ];
 
     return (
-        <Stack gap="lg">
+        <Stack gap="lg" className="ds-animate-reveal">
             <Card title="Prediction Timeline" subtitle="Upcoming fixtures processed by the intelligence engine. High value markers indicate profitable edges against current odds.">
                 {loading ? (
-                    <div className="ds-p-xl ds-text-center"><span className="ds-spinner"></span> Synthesizing future probabilities...</div>
+                    <div className="ds-p-xl ds-text-center">
+                        <Stack gap="md" className="ds-items-center">
+                            <div className="ds-w-8 ds-h-8 ds-border-2 ds-border-primary-500 ds-border-t-transparent ds-rounded-full ds-animate-spin" />
+                            <span className="ds-text-dim">Synthesizing future probabilities...</span>
+                        </Stack>
+                    </div>
                 ) : (
                     <div className="ds-table-overflow">
                         <Table
@@ -92,7 +91,7 @@ const PredictionTimeline = () => {
                             rowKey={(record) => `${record.fixture_id}-${record.market_type}-${record.selection}`}
                         />
                         {data.length === 0 && (
-                            <div className="ds-p-xl ds-text-center ds-text-neutral-500">
+                            <div className="ds-p-xl ds-text-center ds-text-dim">
                                 No upcoming predictions found. Run a future sync to populate this view.
                             </div>
                         )}

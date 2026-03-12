@@ -20,10 +20,12 @@ def save_to_submodel_outputs(fixture_id, model_type, prediction_dict):
     """
     conn = get_db_connection()
     try:
+        cur = conn.cursor()
         # Get team_id context so it's queryable. We only need home_team_id representing the fixture.
-        fixture_query = "SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = ?"
-        f_df = conn.execute(fixture_query, (fixture_id,)).fetchone()
-        team_id = f_df[0] if f_df else 0
+        fixture_query = "SELECT home_team_id FROM V3_Fixtures WHERE fixture_id = %s"
+        cur.execute(fixture_query, (fixture_id,))
+        row = cur.fetchone()
+        team_id = row[0] if row else 0
         
         json_str = json.dumps(prediction_dict)
         
@@ -33,8 +35,9 @@ def save_to_submodel_outputs(fixture_id, model_type, prediction_dict):
             ON CONFLICT(fixture_id, team_id, model_type) 
             DO UPDATE SET prediction_json=excluded.prediction_json, calculated_at=CURRENT_TIMESTAMP;
         """
-        conn.execute(query, (fixture_id, team_id, model_type, json_str))
+        cur.execute(query, (fixture_id, team_id, model_type, json_str))
         conn.commit()
+        cur.close()
     except Exception as e:
         print(f"Failed to save {model_type} for {fixture_id}: {e}")
     finally:
@@ -57,6 +60,7 @@ def generate_master_prediction(fixture_id):
         results["models"]["FT_RESULT"] = res_ft
         save_to_submodel_outputs(fixture_id, "FT_RESULT", res_ft)
     except Exception as e:
+        traceback.print_exc()
         results["models"]["FT_RESULT"] = {"error": str(e)}
         
     # HT_RESULT

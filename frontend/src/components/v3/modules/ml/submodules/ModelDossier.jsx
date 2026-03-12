@@ -27,28 +27,33 @@ const ModelDossier = () => {
     ];
 
     return (
-        <Stack gap="lg">
+        <Stack gap="lg" className="ds-animate-reveal">
             <Card title="Model Dossier" subtitle="Detailed breakdown of the intelligence models currently active in the core engine.">
                 <Grid columns="repeat(1, 1fr)" gap="md">
-                    {models.map(m => (
-                        <div key={m.id} className="ds-p-lg ds-bg-neutral-900 ds-rounded-lg ds-border ds-border-neutral-800">
-                            <div className="ds-flex ds-justify-between ds-items-start mb-sm">
-                                <div>
+                    {models.map((m, i) => (
+                        <Stack 
+                            key={m.id} 
+                            gap="md"
+                            className="ds-p-lg ds-bg-card ds-rounded-lg ds-border ds-border-neutral-800 ds-animate-reveal"
+                            style={{ animationDelay: `${i * 100}ms` }}
+                        >
+                            <Stack direction="row" className="ds-justify-between ds-items-start">
+                                <Stack gap="xs">
                                     <h3 className="ds-text-lg ds-font-bold ds-text-primary-400">{m.name}</h3>
-                                    <p className="ds-text-sm ds-text-neutral-400 mt-xs">{m.description}</p>
-                                </div>
+                                    <p className="ds-text-sm ds-text-dim">{m.description}</p>
+                                </Stack>
                                 <Badge variant="primary">{m.accuracy}</Badge>
-                            </div>
+                            </Stack>
                             
-                            <div className="mt-md">
-                                <span className="ds-text-xs ds-text-neutral-500 ds-uppercase ds-font-bold ds-tracking-wider">Key Feature Sets</span>
-                                <div className="ds-flex ds-flex-wrap ds-gap-xs mt-xs">
+                            <Stack gap="sm">
+                                <span className="ds-text-xs ds-text-dim ds-uppercase ds-font-bold ds-tracking-wider">Key Feature Sets</span>
+                                <Stack direction="row" gap="xs" className="ds-flex-wrap">
                                     {m.features.map(f => (
                                         <Badge key={f} variant="surface" size="sm">{f}</Badge>
                                     ))}
-                                </div>
-                            </div>
-                        </div>
+                                </Stack>
+                            </Stack>
+                        </Stack>
                     ))}
                 </Grid>
             </Card>

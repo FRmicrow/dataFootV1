@@ -17,7 +17,7 @@ const MLOrchestratorPage = () => {
                     api.getMLRecentAnalyses()
                 ]);
                 setStatus(statusRes);
-                setRecentAnalyses(analysesRes.data || []);
+                setRecentAnalyses(analysesRes || []);
                 setError(null);
             } catch (err) {
                 console.error("Failed to load ML Orchestrator data", err);
@@ -97,13 +97,14 @@ const MLOrchestratorPage = () => {
                 <MetricCard
                     label="Python Service"
                     value={isOnline ? "Online" : "Offline"}
-                    variant={isOnline ? "success" : "danger"}
+                    variant={isOnline ? "featured" : "default"}
                     icon={isOnline ? "🌐" : "⚠️"}
                 />
                 <MetricCard
                     label="Model Engine"
                     value={status?.model_loaded ? "Active" : "Locked"}
                     subValue={`v${status?.version || '1.3.0'}`}
+                    variant={status?.model_loaded ? "featured" : "default"}
                     icon="🧠"
                 />
                 <MetricCard
@@ -115,7 +116,7 @@ const MLOrchestratorPage = () => {
                 <MetricCard
                     label="Status"
                     value={status?.training?.is_training ? "Training" : "Idle"}
-                    variant={status?.training?.is_training ? "warning" : "default"}
+                    variant={status?.training?.is_training ? "featured" : "default"}
                     icon="⚙️"
                 />
             </Grid>

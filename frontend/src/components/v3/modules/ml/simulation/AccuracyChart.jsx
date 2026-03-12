@@ -10,8 +10,8 @@ const AccuracyChart = ({ combinedChartData }) => {
                 <h3>📈 Accuracy by Matchday</h3>
                 <InfoIcon text="Prediction accuracy (%) per matchday round. Higher is better." />
             </div>
-            <div className="chart-wrapper">
-                <ResponsiveContainer width="100%" height={300}>
+            <div className="chart-wrapper" style={{ width: '100%', height: '300px', minHeight: '300px', position: 'relative' }}>
+                <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={combinedChartData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                         <XAxis

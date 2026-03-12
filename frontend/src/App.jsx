@@ -13,7 +13,7 @@ import ContentStudioV3 from './components/v3/pages/studio/ContentStudioV3';
 import ImportEventsPage from './components/v3/pages/import/ImportEventsPage';
 import ImportLineupsPage from './components/v3/pages/import/ImportLineupsPage';
 import MatchDetailPage from './components/v3/pages/match/MatchDetailPage';
-import MachineLearningHub from './components/v3/modules/ml/MachineLearningHubV29';
+import MachineLearningHub from './components/v3/modules/ml/MachineLearningHub';
 import DesignSystemPage from './components/v3/pages/system/DesignSystemPage';
 
 // New features from main integrated into V3 architecture

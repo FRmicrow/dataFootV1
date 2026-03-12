@@ -24,7 +24,9 @@ import {
     syncUpcomingOdds,
     syncAdvancedOdds,
     runOddsCatchup,
-    predictFixtureAll
+    predictFixtureAll,
+    getMLClubEvaluation,
+    getUpcomingPredictions
 } from '../../controllers/v3/mlController.js';
 import {
     triggerSimulation,

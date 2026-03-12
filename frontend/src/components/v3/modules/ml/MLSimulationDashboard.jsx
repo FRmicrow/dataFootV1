@@ -139,7 +139,7 @@ const MLSimulationDashboard = () => {
         const fetchOverview = async () => {
             try {
                 const res = await api.getMLSimulationOverview();
-                setOverviewData(res.data || []);
+                setOverviewData(res || []);
             } catch (err) {
                 console.error("Failed to load generic overview", err);
                 setError("Failed to fetch simulation overview.");
@@ -332,7 +332,7 @@ const MLSimulationDashboard = () => {
                     label="Algorithmic Confidence"
                     value={`${(avgHitRate * 100).toFixed(1)}%`}
                     subValue="Mean Hit Rate across all leagues"
-                    variant="primary"
+                    variant="featured"
                 />
                 <MetricCard
                     label="Model Calibration"

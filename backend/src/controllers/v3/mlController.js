@@ -90,8 +90,8 @@ const formatSimulationResults = (lsStats) => {
     return Object.values(lsStats).map(s => ({
         league_id: s.league_id,
         league_name: s.league_name,
-        league_importance_rank: s.league_importance,
-        country_importance_rank: s.country_importance,
+        league_importance_rank: s.league_importance || 999,
+        country_importance_rank: s.country_importance || 999,
         season_year: s.season_year,
         global_hit_rate: s.total > 0 ? s.hits / s.total : 0,
         brier_score: s.total > 0 ? s.brier / s.total : null,
@@ -240,10 +240,20 @@ export const getMLSimulationOverview = async (req, res) => {
 export const getMLRecommendations = async (req, res) => {
     try {
         const recommendations = await dbModule.all(`
-            SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability, r.fair_odd, r.bookmaker_odd, r.edge, f.date, f.round, l.name as league_name, l.logo_url as league_logo, ht.name as home_team, ht.logo_url as home_logo, at.name as away_team, at.logo_url as away_logo
+            SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability, r.fair_odd, r.bookmaker_odd, r.edge, 
+                   f.date, f.round, l.name as league_name, l.logo_url as league_logo, 
+                   ht.name as home_team, ht.logo_url as home_logo, 
+                   at.name as away_team, at.logo_url as away_logo,
+                   l.importance_rank as league_importance,
+                   c.importance_rank as country_importance
             FROM V3_Risk_Analysis r
-            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id JOIN V3_Leagues l ON f.league_id = l.league_id JOIN V3_Teams ht ON f.home_team_id = ht.team_id JOIN V3_Teams at ON f.away_team_id = at.team_id
-            WHERE f.status_short = 'NS' ORDER BY r.ml_probability DESC
+            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id 
+            JOIN V3_Leagues l ON f.league_id = l.league_id 
+            LEFT JOIN V3_Countries c ON l.country_id = c.country_id
+            JOIN V3_Teams ht ON f.home_team_id = ht.team_id 
+            JOIN V3_Teams at ON f.away_team_id = at.team_id
+            WHERE f.status_short = 'NS' AND f.date >= datetime('now') 
+            ORDER BY c.importance_rank ASC, l.importance_rank ASC, r.ml_probability DESC
         `);
         res.json({
             success: true,
@@ -268,18 +278,21 @@ export const getMLClubEvaluation = async (req, res) => {
         const rows = await dbModule.all(`
             SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability, 
                    f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away,
-                   l.name as league_name, ht.team_id as home_id, ht.name as home_team, 
+                   l.league_id, l.name as league_name, l.importance_rank as league_importance,
+                   c.importance_rank as country_importance,
+                   ht.team_id as home_id, ht.name as home_team, 
                    at.team_id as away_id, at.name as away_team, f.date,
                    SUM(fs.corner_kicks) as total_corners,
                    SUM(fs.yellow_cards + fs.red_cards) as total_cards
             FROM V3_Risk_Analysis r
             JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id 
             JOIN V3_Leagues l ON f.league_id = l.league_id 
+            LEFT JOIN V3_Countries c ON l.country_id = c.country_id
             JOIN V3_Teams ht ON f.home_team_id = ht.team_id 
             JOIN V3_Teams at ON f.away_team_id = at.team_id
             LEFT JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id AND fs.half = 'FT'
             WHERE ${whereClause} 
-            GROUP BY r.risk_id, f.fixture_id, l.league_id, ht.team_id, at.team_id
+            GROUP BY r.risk_id, f.fixture_id, l.league_id, c.country_id, ht.team_id, at.team_id
         `, queryParams);
 
         const clubStats = {};
@@ -290,7 +303,15 @@ export const getMLClubEvaluation = async (req, res) => {
 
             // Update stats for both home and away clubs
             [ {id: r.home_id, name: r.home_team}, {id: r.away_id, name: r.away_team} ].forEach(c => {
-                if (!clubStats[c.id]) clubStats[c.id] = { team_id: c.id, team_name: c.name, hits: 0, total: 0, by_market: {} };
+                if (!clubStats[c.id]) {
+                    clubStats[c.id] = { 
+                        team_id: c.id, 
+                        team_name: c.name, 
+                        hits: 0, total: 0, by_market: {},
+                        league_importance: r.league_importance || 999,
+                        country_importance: r.country_importance || 999
+                    };
+                }
                 const s = clubStats[c.id];
                 s.total++; if (isHit) s.hits++;
                 if (!s.by_market[r.market_type]) s.by_market[r.market_type] = { h: 0, t: 0 };
@@ -301,7 +322,11 @@ export const getMLClubEvaluation = async (req, res) => {
         const data = Object.values(clubStats).map(c => ({
             ...c,
             hit_rate: c.total > 0 ? c.hits / c.total : 0
-        })).sort((a, b) => b.hit_rate - a.hit_rate);
+        })).sort((a, b) => 
+            a.country_importance - b.country_importance ||
+            a.league_importance - b.league_importance ||
+            b.hit_rate - a.hit_rate
+        );
 
         res.json({ success: true, data });
     } catch (err) {
@@ -311,18 +336,37 @@ export const getMLClubEvaluation = async (req, res) => {
 
 export const getUpcomingPredictions = async (req, res) => {
     try {
+        const { leagues, maxDate } = req.query;
+        let queryParams = [];
+        let whereClause = "f.status_short = 'NS' AND f.date >= NOW()";
+
+        if (leagues) {
+            const leagueList = leagues.split(',').map(l => l.trim());
+            const leagueFilters = leagueList.map((_, i) => `l.name ILIKE $${queryParams.length + i + 1}`).join(' OR ');
+            whereClause += ` AND (${leagueFilters})`;
+            queryParams.push(...leagueList.map(l => `%${l}%`));
+        }
+
+        if (maxDate) {
+            whereClause += ` AND f.date::date <= $${queryParams.length + 1}::date`;
+            queryParams.push(maxDate);
+        }
+
         const rows = await dbModule.all(`
             SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability, r.fair_odd, r.bookmaker_odd, 
-                   f.date, f.round, l.name as league_name, ht.name as home_team, ht.logo_url as home_logo, 
+                   f.date, f.round, l.name as league_name, l.importance_rank as league_importance,
+                   c.importance_rank as country_importance,
+                   ht.name as home_team, ht.logo_url as home_logo, 
                    at.name as away_team, at.logo_url as away_logo
             FROM V3_Risk_Analysis r
             JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id 
             JOIN V3_Leagues l ON f.league_id = l.league_id 
+            LEFT JOIN V3_Countries c ON l.country_id = c.country_id
             JOIN V3_Teams ht ON f.home_team_id = ht.team_id 
             JOIN V3_Teams at ON f.away_team_id = at.team_id
-            WHERE f.status_short = 'NS' 
-            ORDER BY f.date ASC, r.ml_probability DESC
-        `);
+            WHERE ${whereClause}
+            ORDER BY c.importance_rank ASC, l.importance_rank ASC, f.date ASC, r.ml_probability DESC
+        `, queryParams);
         res.json({ success: true, data: rows });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

@@ -7,17 +7,28 @@ import api from '../../../../../services/api';
 const processLeagues = (data) => {
     const flattened = [];
     if (data.international) {
-        data.international.world?.forEach(l => flattened.push({ id: l.id, name: l.name, type: 'World', display: `🌍 ${l.name}` }));
+        data.international.world?.forEach(l => flattened.push({ 
+            id: l.id, name: l.name, type: 'World', display: `🌍 ${l.name}`,
+            rank: l.rank || 999, country_rank: 0 
+        }));
         Object.entries(data.international.continental || {}).forEach(([continent, list]) => {
-            list.forEach(l => flattened.push({ id: l.id, name: l.name, type: continent, display: `🌐 ${l.name}` }));
+            list.forEach(l => flattened.push({ 
+                id: l.id, name: l.name, type: continent, display: `🌐 ${l.name}`,
+                rank: l.rank || 999, country_rank: 1 
+            }));
         });
     }
     if (data.national) {
         data.national.forEach(country => {
-            country.leagues.forEach(l => flattened.push({ id: l.id, name: l.name, type: country.name, display: `${l.name}` }));
+            country.leagues.forEach(l => flattened.push({ 
+                id: l.id, name: l.name, type: country.name, display: `${l.name}`,
+                rank: l.rank || 999, country_rank: country.rank || 999 
+            }));
         });
     }
-    return flattened;
+    
+    // Sort by Country Rank then League Rank
+    return flattened.sort((a, b) => a.country_rank - b.country_rank || a.rank - b.rank);
 };
 
 const ForgeControlCard = ({ searchTerm, setSearchTerm, columns, filteredLeagues, status, loading, cancelForge }) => (
@@ -59,7 +70,7 @@ ForgeControlCard.propTypes = {
     status: PropTypes.shape({
         is_building: PropTypes.bool,
         league_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        progress: PropTypes.number,
+        progress: PropTypes.oneOfType([PropTypes.number, PropTypes.object]),
         logs: PropTypes.arrayOf(PropTypes.string)
     }).isRequired,
     loading: PropTypes.bool.isRequired,
@@ -83,7 +94,7 @@ const ForgeTelemetryCard = ({ status }) => (
 
 ForgeTelemetryCard.propTypes = {
     status: PropTypes.shape({
-        progress: PropTypes.number,
+        progress: PropTypes.oneOfType([PropTypes.number, PropTypes.object]),
         logs: PropTypes.arrayOf(PropTypes.string)
     }).isRequired
 };
@@ -95,10 +106,34 @@ const MLModelFactory = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        api.getStructuredLeagues().then(res => setLeagues(processLeagues(res.data || res))).catch(e => console.error(e));
-        const fetchStatus = () => api.getForgeBuildStatus().then(res => res && setStatus(res)).catch(e => console.error(e));
-        fetchStatus();
-        const interval = setInterval(fetchStatus, 3000);
+        const load = async () => {
+            try {
+                const [leaguesRes, modelsRes, statusRes] = await Promise.all([
+                    api.getStructuredLeagues(),
+                    api.getForgeModels(),
+                    api.getForgeBuildStatus()
+                ]);
+                
+                const activeModelLeagueIds = new Set((modelsRes.models || []).map(m => m.league_id));
+                const processed = processLeagues(leaguesRes.data || leaguesRes).map(l => ({
+                    ...l,
+                    has_models: activeModelLeagueIds.has(l.id)
+                }));
+                
+                setLeagues(processed);
+                if (statusRes) setStatus(statusRes);
+            } catch (e) {
+                console.error("Factory load failed", e);
+            }
+        };
+
+        load();
+        const interval = setInterval(async () => {
+            try {
+                const s = await api.getForgeBuildStatus();
+                if (s) setStatus(s);
+            } catch (e) {}
+        }, 3000);
         return () => clearInterval(interval);
     }, []);
 
@@ -107,16 +142,74 @@ const MLModelFactory = () => {
 
     const filteredLeagues = useMemo(() => searchTerm ? leagues.filter(l => l.name.toLowerCase().includes(searchTerm.toLowerCase()) || l.type.toLowerCase().includes(searchTerm.toLowerCase())) : leagues, [leagues, searchTerm]);
 
+    const calculateAverageProgress = (progressObj) => {
+        if (!progressObj || typeof progressObj !== 'object') return 0;
+        const horizons = Object.values(progressObj);
+        if (horizons.length === 0) return 0;
+        const completed = horizons.filter(h => h === 'completed').length;
+        const total = 3; // Standard set of horizons: FULL, 5Y, 3Y
+        return Math.round((completed / total) * 100);
+    };
+
+    const displayProgress = useMemo(() => {
+        if (typeof status.progress === 'number') return status.progress;
+        return calculateAverageProgress(status.progress);
+    }, [status.progress]);
+
     const columns = [
         { dataIndex: 'type', title: 'Region', render: (type) => <Badge variant="neutral">{type}</Badge> },
-        { dataIndex: 'name', title: 'Competition', render: (_, row) => <span className="ds-font-bold">{row.display}</span> },
-        { dataIndex: 'action', title: 'Command', render: (_, row) => <Button size="sm" variant="primary" onClick={() => startForge(row.id)} disabled={status.is_building || loading} loading={loading && status.league_id === row.id}>Build Models</Button> }
+        { 
+            dataIndex: 'name', 
+            title: 'Competition', 
+            render: (_, row) => (
+                <Stack gap="none">
+                    <span className="ds-font-bold ds-text-main">{row.display}</span>
+                    <span className="ds-text-xs ds-text-dim">Importance: {row.rank}</span>
+                </Stack>
+            )
+        },
+        {
+            dataIndex: 'has_models',
+            title: 'Model Status',
+            render: (has) => (
+                <Badge variant={has ? 'success' : 'neutral'}>
+                    {has ? 'Active Models' : 'Awaiting Forge'}
+                </Badge>
+            )
+        },
+        { 
+            dataIndex: 'action', 
+            title: 'Command', 
+            render: (_, row) => (
+                <Button 
+                    size="sm" 
+                    variant={row.has_models ? 'surface' : 'primary'} 
+                    onClick={() => startForge(row.id)} 
+                    disabled={status.is_building || loading} 
+                    loading={loading && status.league_id === row.id}
+                >
+                    {row.has_models ? 'Rebuild' : 'Build Models'}
+                </Button>
+            )
+        }
     ];
+
+    const sortedLeagues = useMemo(() => {
+        const filtered = searchTerm ? leagues.filter(l => l.name.toLowerCase().includes(searchTerm.toLowerCase()) || l.type.toLowerCase().includes(searchTerm.toLowerCase())) : leagues;
+        return [...filtered].sort((a, b) => {
+            // Unbuilt models first
+            if (a.has_models !== b.has_models) return a.has_models ? 1 : -1;
+            // Then by country rank
+            if (a.country_rank !== b.country_rank) return a.country_rank - b.country_rank;
+            // Then by league rank
+            return a.rank - b.rank;
+        });
+    }, [leagues, searchTerm]);
 
     return (
         <Stack gap="xl">
-            <ForgeControlCard searchTerm={searchTerm} setSearchTerm={setSearchTerm} columns={columns} filteredLeagues={filteredLeagues} status={status} loading={loading} cancelForge={cancelForge} />
-            {status.is_building && <ForgeTelemetryCard status={status} />}
+            <ForgeControlCard searchTerm={searchTerm} setSearchTerm={setSearchTerm} columns={columns} filteredLeagues={sortedLeagues} status={status} loading={loading} cancelForge={cancelForge} />
+            {status.is_building && <ForgeTelemetryCard status={{ ...status, progress: displayProgress }} />}
         </Stack>
     );
 };

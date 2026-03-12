@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg2
 import pandas as pd
 import numpy as np
 import json
@@ -88,7 +88,10 @@ class ContextAdapter(FeatureAdapter):
         cur = conn.cursor(); cur.execute(query, (team_id, team_id, match_date))
         row = cur.fetchone()
         if not row: return 14.0
-        diff = (pd.to_datetime(match_date) - pd.to_datetime(row[0])).days
+        # Ensure both are naive to avoid "Cannot subtract tz-naive and tz-aware"
+        dt_current = pd.to_datetime(match_date).replace(tzinfo=None)
+        dt_prev = pd.to_datetime(row[0]).replace(tzinfo=None)
+        diff = (dt_current - dt_prev).days
         return float(min(max(diff, 0), 14))
 
     def _get_venue_stats(self, conn, team_id: int, match_date: str) -> Dict[str, float]:
@@ -303,7 +306,10 @@ class TemporalFeatureFactory:
         self.feature_columns = [
             "mom_gd_h3", "mom_gd_h5", "mom_gd_h10", "mom_gd_h20",
             "mom_pts_h3", "mom_pts_h5", "mom_pts_h10", "mom_pts_h20",
+            "mom_gd_a3", "mom_gd_a5", "mom_gd_a10", "mom_gd_a20",
+            "mom_pts_a3", "mom_pts_a5", "mom_pts_a10", "mom_pts_a20",
             "win_rate_h5", "win_rate_h10", "cs_rate_h5", "cs_rate_h10",
+            "win_rate_a5", "win_rate_a10", "cs_rate_a5", "cs_rate_a10",
             "mom_xg_f_h3", "mom_xg_f_h5", "mom_xg_f_h10",
             "mom_xg_a_h3", "mom_xg_a_h5", "mom_xg_a_h10",
             "xg_eff_h5",
@@ -335,7 +341,12 @@ class TemporalFeatureFactory:
             cur.execute("SELECT date, home_team_id, away_team_id, round FROM V3_Fixtures WHERE fixture_id = %s", (fixture_id,))
             fix = cur.fetchone()
             if not fix: raise ValueError(f"Fixture {fixture_id} not found.")
-            morning_of = fix[0].split('T')[0]
+            dt = fix[0]
+            if isinstance(dt, str):
+                morning_of = dt.split('T')[0]
+            else:
+                morning_of = dt.strftime('%Y-%m-%d')
+                
             vector = {}
             for adapter in self.adapters:
                 # Use explicit keyword arguments to avoid mismatch

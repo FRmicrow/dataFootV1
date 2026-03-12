@@ -12,7 +12,7 @@ Usage:
     rows = cursor.fetchall()
     conn.close()
 
-psycopg2 differences vs sqlite3:
+psycopg2 differences:
   - Placeholders use %s instead of ?
   - conn.execute() is NOT available directly; use cursor = conn.cursor()
   - row_factory: psycopg2 returns tuples by default;
@@ -22,6 +22,10 @@ psycopg2 differences vs sqlite3:
 import os
 import psycopg2
 import psycopg2.extras
+import warnings
+
+# Suppress pandas warning about non-SQLAlchemy connections (which mentions sqlite by default)
+warnings.filterwarnings('ignore', category=UserWarning, module='pandas')
 
 DATABASE_URL = os.getenv(
     'DATABASE_URL',

@@ -126,8 +126,9 @@ def run_bulk_forge_backfill():
     # Serialize to JSON vectors
     print("   💾 Serializing and Saving to Database...")
     
+    cur = conn.cursor()
     # We only want to insert features that are NOT in the DB yet, or just clear and dump all for consistency
-    conn.execute("DELETE FROM V3_ML_Feature_Store")
+    cur.execute("DELETE FROM V3_ML_Feature_Store")
     conn.commit()
     
     insert_data = []
@@ -135,15 +136,16 @@ def run_bulk_forge_backfill():
         vec = {col: float(row[col]) for col in feature_columns}
         insert_data.append((int(row['fixture_id']), int(row['league_id']), json.dumps(vec)))
         
-    sql = "INSERT INTO V3_ML_Feature_Store (fixture_id, league_id, feature_vector) VALUES (?, ?, ?)"
+    sql = "INSERT INTO V3_ML_Feature_Store (fixture_id, league_id, feature_vector) VALUES (%s, %s, %s)"
     
     chunk_size = 10000
     for i in range(0, len(insert_data), chunk_size):
         chunk = insert_data[i:i+chunk_size]
-        conn.executemany(sql, chunk)
+        cur.executemany(sql, chunk)
         print(f"      Stored {min(i+chunk_size, len(insert_data))}/{len(insert_data)} Forge features...")
         
     conn.commit()
+    cur.close()
     conn.close()
     
     elapsed = time.time() - start_time

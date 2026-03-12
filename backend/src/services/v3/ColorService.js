@@ -6,7 +6,9 @@ import db from '../../config/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const TEMP_DIR = path.join(__dirname, '..', '..', '..', 'temp_logos');
+import os from 'node:os';
+
+const TEMP_DIR = path.join(os.tmpdir(), 'statfoot_logos');
 
 // Helper to convert RGB to Hex
 function rgbToHex(r, g, b) {
