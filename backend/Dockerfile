@@ -1,7 +1,7 @@
 # --- Stage 1: Build ---
 FROM node:20-bookworm-slim AS build
 
-# Install native build dependencies for better-sqlite3 and canvas (Debian versions)
+# Install native build dependencies for canvas and native Node modules
 RUN apt-get update && apt-get install -y \
     python3 \
     make \

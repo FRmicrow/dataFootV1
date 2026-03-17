@@ -3,7 +3,6 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     overflow: hidden;
-    margin-bottom: var(--spacing-md);
 }
 
 .ds-accordion-header {

@@ -55,9 +55,9 @@ const PageHeader = ({ title, subtitle, actions, breadcrumbs, badge, extra, class
         <header
             className={`sf-page-header ${className}`}
             style={{
-                marginBottom: 'var(--spacing-xl)',
+                marginBottom: 0,
                 borderBottom: '1px solid var(--color-border)',
-                paddingBottom: 'var(--spacing-md)',
+                paddingBottom: 'var(--spacing-sm)',
                 ...style
             }}
         >

@@ -313,13 +313,6 @@ INSERT INTO competition_country_mapping VALUES
 INSERT INTO competition_country_mapping VALUES
 (47674, 'Prva Liga', 'Serbia', 'Europe');
 
--- ISRAEL
-INSERT INTO competition_country_mapping VALUES
-(47526, 'Ligat Ha\'al', 'Israel', 'Asia'),
-(47571, 'Liga Leumit', 'Israel', 'Asia'),
-(47527, 'State Cup', 'Israel', 'Asia'),
-(47501, 'Toto Cup Ligat Al', 'Israel', 'Asia');
-
 -- SOUTH KOREA
 INSERT INTO competition_country_mapping VALUES
 (47586, 'K League 1', 'South Korea', 'Asia');

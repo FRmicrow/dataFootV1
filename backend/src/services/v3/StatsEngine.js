@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import footballApi from '../footballApi.js';
+import logger from '../../utils/logger.js';
 /**
  * Stats Engine Service V3
  * Handles high-performance aggregation for dynamic standings and statistics.
@@ -34,13 +35,13 @@ class StatsEngine {
 
         if (!matches || matches.length === 0) return [];
 
-        // 2. Helper to parse round
+        // 2. Helper to parse round — only matches "Name - N" patterns (league/regular season rounds).
+        // "1st Qualifying Round" would naively parse as 1 via parseInt; using a regex prevents that.
         const parseRound = (r) => {
             if (!r || typeof r !== 'string') return 999;
-            const parts = r.split('-');
-            const lastPart = parts[parts.length - 1].trim();
-            const num = Number.parseInt(lastPart);
-            return Number.isNaN(num) ? 999 : num;
+            const m = r.match(/\s*-\s*(\d+)\s*$/);
+            if (m) return Number.parseInt(m[1]);
+            return 999;
         };
 
         // 3. Aggregate Stats
@@ -184,7 +185,7 @@ class StatsEngine {
                 const localTeamId = teamsMap.get(apiTeamId);
 
                 if (!localTeamId) {
-                    console.warn(`[Sync] Could not map API Team ID ${apiTeamId} to Local Team ID. Skipping lineup.`);
+                    logger.warn({ apiTeamId, fixtureId }, 'Could not map API Team ID to Local Team ID. Skipping lineup');
                     continue;
                 }
 
@@ -217,7 +218,7 @@ class StatsEngine {
                 ]);
             }
         } catch (e) {
-            console.error(`[Sync] Error inserting lineups for fixture ${fixtureId}:`, e.message);
+            logger.error({ err: e, fixtureId }, 'Error inserting lineups for fixture');
             throw e;
         }
 

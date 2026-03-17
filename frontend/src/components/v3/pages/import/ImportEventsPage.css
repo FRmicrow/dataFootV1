@@ -1,31 +1,4 @@
-.import-events-page {
-    padding: var(--spacing-lg);
-    color: var(--color-text-main);
-    font-family: var(--font-family);
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.page-header {
-    margin-bottom: var(--spacing-xl);
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: var(--spacing-md);
-}
-
-.page-header h1 {
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-black);
-    margin: 0 0 var(--spacing-2xs) 0;
-    background: linear-gradient(90deg, white, var(--color-text-muted));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.page-header p {
-    color: var(--color-text-muted);
-    margin: 0;
-}
+/* Layout handled by PageLayout + PageHeader */
 
 .loading-spinner {
     text-align: center;

@@ -35,11 +35,12 @@ const Step4_Export = () => {
     const getChartTitle = (season) => {
         const statName = formatStat(filters.stat);
         const leagueName = chartData?.meta?.league_name || filters.contextLabel || "League";
+        const resolvedSeason = chartData?.meta?.season || season;
 
         if (chartData?.meta?.type === 'league_rankings' || chartData?.meta?.type === 'player_stat_standing') {
-            return `${leagueName}: Ranking Pulse (${season}/${season + 1})`;
+            return `${leagueName}: Ranking Pulse (${resolvedSeason}/${Number(resolvedSeason) + 1})`;
         }
-        return `Top ${statName} in ${leagueName} (${season})`;
+        return `Top ${statName} in ${leagueName} (${resolvedSeason})`;
     };
 
 
@@ -82,93 +83,6 @@ const Step4_Export = () => {
             }, 1000);
         }
     };
-
-    // Render Mass Dashboard
-    if (isMassGeneration) {
-        return (
-            <div className="step-container animate-fade-in">
-                <div className="flex items-center justify-between mb-lg">
-                    <h2 className="step-title-v2 m-0">Production Dashboard</h2>
-                    <div className="stats-pill">
-                        <span className="text-white/40 mr-2">CAPACITY:</span>
-                        <span className="text-white font-bold">{stats.completed}/{stats.total} UNLOCKS</span>
-                    </div>
-                </div>
-
-                <div className="production-controls p-md bg-white/5 rounded-xl border border-white/10 mb-lg flex items-center justify-between">
-                    <div>
-                        <h4 className="text-white font-semibold">Ready for Mass Generation</h4>
-                        <p className="text-white/60 text-sm">System will process {stats.total} assets across all verified years and formats.</p>
-                    </div>
-                    {isProducing ? (
-                        <div className="flex items-center gap-3">
-                            <div className="production-loader"></div>
-                            <span className="text-indigo-400 font-bold animate-pulse">GENERATING ASSETS...</span>
-                        </div>
-                    ) : (
-                        <button
-                            className="btn-primary-v2"
-                            disabled={stats.completed === stats.total}
-                            onClick={startMassProduction}
-                        >
-                            🚀 COMMENCE MASS PRODUCTION
-                        </button>
-                    )}
-                </div>
-
-                <div className="production-table-container">
-                    <table className="production-table">
-                        <thead>
-                            <tr>
-                                <th>Year</th>
-                                <th>Format</th>
-                                <th>Asset Title</th>
-                                <th>Status</th>
-                                <th style={{ textAlign: 'right' }}>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {productionQueue.map((item) => (
-                                <tr key={item.id} className={item.status}>
-                                    <td>{item.year}</td>
-                                    <td><span className="format-tag">{item.format}</span></td>
-                                    <td>
-                                        <div className="flex flex-col">
-                                            <span className="text-white text-sm font-medium">{getChartTitle(item.year)}</span>
-                                            <span className="text-white/30 text-xs">statfoot_studio_{filters.stat}_{item.year}_{item.format}.webm</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="status-cell">
-                                            {item.status === 'pending' && <span className="status-icon pending">⚪</span>}
-                                            {item.status === 'processing' && <span className="status-icon processing animate-spin">⏳</span>}
-                                            {item.status === 'success' && <span className="status-icon success">✅</span>}
-                                            {item.status === 'failed' && <span className="status-icon failed" title={item.error}>❌</span>}
-                                            <span className="status-text">{item.status.toUpperCase()}</span>
-                                        </div>
-                                    </td>
-                                    <td style={{ textAlign: 'right' }}>
-                                        {item.status === 'success' && (
-                                            <a href={item.downloadUrl} download className="btn-small-download">
-                                                Download
-                                            </a>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="nav-actions-v2 mt-xl">
-                    <button className="btn-secondary-v2" onClick={() => goToStep(2)} disabled={isProducing}>
-                        ← Adjust Parameters
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     // Render Standard Export
     return (
         <div className="step-container animate-fade-in">

@@ -2,6 +2,7 @@ import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import { CompetitionRanker } from '../../utils/v3/CompetitionRanker.js';
 import ColorService from './ColorService.js';
+import logger from '../../utils/logger.js';
 
 export const Mappers = {
     country: (api) => ({
@@ -221,6 +222,9 @@ export const Mappers = {
 
 export const ImportRepository = {
     getOrInsertCountry: async (data) => {
+        if (data.name === 'Israel') {
+            throw new Error(`Data from Israel is restricted and cannot be imported.`);
+        }
         let country = await db.get("SELECT country_id FROM V3_Countries WHERE name = ?", cleanParams([data.name]));
         if (!country) {
             const info = await db.run("INSERT INTO V3_Countries (name, code, flag_url) VALUES (?, ?, ?) RETURNING country_id", cleanParams([data.name, data.code, data.flag_url]));
@@ -239,6 +243,9 @@ export const ImportRepository = {
         return venue.venue_id;
     },
     upsertLeague: async (data, countryId, countryName) => {
+        if (countryName === 'Israel') {
+            throw new Error(`Leagues from Israel are restricted and cannot be imported.`);
+        }
         // 1. Primary Check: API ID
         let league = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([data.api_id]));
         if (league) {
@@ -265,10 +272,15 @@ export const ImportRepository = {
         }
 
         // 4. Create New Discovered League
-        const rank = CompetitionRanker.calculate({ name: finalName, type: data.type, country_name: countryName });
+        const countryData = await db.get("SELECT importance_rank FROM V3_Countries WHERE country_id = ?", cleanParams([countryId]));
+        const countryRank = countryData?.importance_rank || 999;
+        const typeNormalized = CompetitionRanker.detectType({ name: finalName, type: data.type });
+        const leagueRank = CompetitionRanker.calculate({ name: finalName, type: typeNormalized, country_name: countryName });
+        const globalScore = CompetitionRanker.calculateGlobalScore(countryRank, leagueRank, finalName, typeNormalized === 'Cup');
+
         const info = await db.run(
-            "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered, importance_rank) VALUES (?, ?, ?, ?, ?, TRUE, ?) RETURNING league_id",
-            cleanParams([data.api_id, finalName, data.type, data.logo_url, countryId, rank])
+            "INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, is_discovered, importance_rank, global_importance_rank) VALUES (?, ?, ?, ?, ?, TRUE, ?, ?) RETURNING league_id",
+            cleanParams([data.api_id, finalName, typeNormalized, data.logo_url, countryId, leagueRank, globalScore])
         );
         return info.lastInsertRowid || info.league_id || info[0]?.league_id;
     },
@@ -299,7 +311,9 @@ export const ImportRepository = {
 
             if (logoChanged || needsColors) {
                 // Fire and forget color extraction to not block import
-                ColorService.processTeamColors(team.team_id, data.logo_url).catch(console.error);
+                ColorService.processTeamColors(team.team_id, data.logo_url).catch((err) => {
+                    logger.error({ err, teamId: team.team_id }, 'Failed to process team colors after team update');
+                });
             }
             return team.team_id;
         } else {
@@ -308,7 +322,9 @@ export const ImportRepository = {
 
             const newTeamId = info.lastInsertRowid || info.team_id || info[0]?.team_id;
             // Extract colors for new team
-            ColorService.processTeamColors(newTeamId, data.logo_url).catch(console.error);
+            ColorService.processTeamColors(newTeamId, data.logo_url).catch((err) => {
+                logger.error({ err, teamId: newTeamId }, 'Failed to process team colors after team insert');
+            });
 
             return newTeamId;
         }

@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Stack, Grid, Badge } from '../index';
 import './FixtureRow.css';
 
 /**
- * Reusable FixtureRow for match lists and schedules.
+ * FixtureRow — compact single-line layout:
+ * [name] [logo] [xG] | [score H – score A] | [xG] [logo] [name]
+ * compact=true → hides xG columns, allows name wrapping (for narrow contexts)
  */
 const FixtureRow = ({
     homeTeam,
@@ -18,20 +19,22 @@ const FixtureRow = ({
     active = false,
     onClick,
     aggregate,
-    winner
+    winner,
+    compact = false,
 }) => {
     const isFinished = status === 'FT';
-    const isLive = ['1H', '2H', 'HT', 'LIVE', 'P'].includes(status);
+    const isLive     = ['1H', '2H', 'HT', 'LIVE', 'P'].includes(status);
 
-    const getStatusVariant = (s) => {
-        if (s === 'FT') return 'neutral';
-        if (isLive) return 'danger';
-        return 'primary';
-    };
+    const hasXg = !compact && xgHome != null && xgAway != null;
+
+    const isNS = status === 'NS' || status === 'TBD';
+    const kickoffTime = isNS
+        ? new Date(date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        : null;
 
     return (
         <div
-            className={`ds-fixture-row ${active ? 'is-active' : ''}`}
+            className={`ds-fixture-row${active ? ' is-active' : ''}${compact ? ' ds-fixture-row--compact' : ''}`}
             onClick={onClick}
             onKeyDown={(e) => {
                 if (onClick && (e.key === 'Enter' || e.key === ' ')) {
@@ -43,46 +46,49 @@ const FixtureRow = ({
             tabIndex={0}
             aria-expanded={active}
         >
-            <Grid columns="1fr 120px 1fr" gap="var(--spacing-md)" align="center">
-                {/* Home Team */}
-                <Stack direction="row" gap="var(--spacing-sm)" align="center" justify="flex-end" className="ds-fixture-team home">
-                    <span className="ds-fixture-team-name">{homeTeam.name}</span>
-                    <img src={homeTeam.logo} alt="" className="ds-fixture-logo" />
-                </Stack>
+            <div className="ds-fr-grid">
+                {/* Home name */}
+                <span className="ds-fr-name ds-fr-name--home">{homeTeam.name}</span>
 
-                {/* Match Center */}
-                <Stack align="center" gap="4px" className="ds-fixture-center">
-                    <div className="ds-fixture-score-wrap">
-                        {status === 'NS' || status === 'TBD' ? (
-                            <span className="ds-fixture-time">
-                                {new Date(date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                {/* Home logo */}
+                <img src={homeTeam.logo} alt="" className="ds-fr-logo" />
+
+                {/* Home xG */}
+                <span className="ds-fr-xg ds-fr-xg--home">
+                    {hasXg ? xgHome.toFixed(2) : ''}
+                </span>
+
+                {/* Score / time — no badge, status communicated via color/dot */}
+                <div className="ds-fr-center">
+                    {isNS ? (
+                        <span className="ds-fr-time">{kickoffTime}</span>
+                    ) : (
+                        <span className="ds-fr-score">
+                            <span className={isFinished && scoreHome > scoreAway ? 'ds-fr-score__winner' : ''}>
+                                {scoreHome ?? '–'}
                             </span>
-                        ) : (
-                            <div className="ds-fixture-score-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <div className="ds-fixture-score">
-                                    <span className={isFinished && scoreHome > scoreAway ? 'is-winner' : ''}>{scoreHome ?? '-'}</span>
-                                    <span className="sep">:</span>
-                                    <span className={isFinished && scoreAway > scoreHome ? 'is-winner' : ''}>{scoreAway ?? '-'}</span>
-                                </div>
-                                {(xgHome !== undefined && xgHome !== null && xgAway !== undefined && xgAway !== null) && (
-                                    <div className="ds-fixture-xg" style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                                        xG: {xgHome.toFixed(2)} - {xgAway.toFixed(2)}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                    <Badge variant={getStatusVariant(status)} size="xs">
-                        {status}
-                    </Badge>
-                </Stack>
+                            <span className="ds-fr-score__sep">:</span>
+                            <span className={isFinished && scoreAway > scoreHome ? 'ds-fr-score__winner' : ''}>
+                                {scoreAway ?? '–'}
+                            </span>
+                        </span>
+                    )}
+                    {isLive && (
+                        <span className="ds-fr-live-label">{status}</span>
+                    )}
+                </div>
 
-                {/* Away Team */}
-                <Stack direction="row" gap="var(--spacing-sm)" align="center" className="ds-fixture-team away">
-                    <img src={awayTeam.logo} alt="" className="ds-fixture-logo" />
-                    <span className="ds-fixture-team-name">{awayTeam.name}</span>
-                </Stack>
-            </Grid>
+                {/* Away xG */}
+                <span className="ds-fr-xg ds-fr-xg--away">
+                    {hasXg ? xgAway.toFixed(2) : ''}
+                </span>
+
+                {/* Away logo */}
+                <img src={awayTeam.logo} alt="" className="ds-fr-logo" />
+
+                {/* Away name */}
+                <span className="ds-fr-name ds-fr-name--away">{awayTeam.name}</span>
+            </div>
 
             {aggregate && (
                 <div className="ds-fixture-extra">
@@ -97,20 +103,23 @@ const FixtureRow = ({
 FixtureRow.propTypes = {
     homeTeam: PropTypes.shape({
         name: PropTypes.string.isRequired,
-        logo: PropTypes.string
+        logo: PropTypes.string,
     }).isRequired,
     awayTeam: PropTypes.shape({
         name: PropTypes.string.isRequired,
-        logo: PropTypes.string
+        logo: PropTypes.string,
     }).isRequired,
     scoreHome: PropTypes.number,
     scoreAway: PropTypes.number,
-    status: PropTypes.string,
-    date: PropTypes.string,
-    active: PropTypes.bool,
-    onClick: PropTypes.func,
+    xgHome:    PropTypes.number,
+    xgAway:    PropTypes.number,
+    status:    PropTypes.string,
+    date:      PropTypes.string,
+    active:    PropTypes.bool,
+    onClick:   PropTypes.func,
     aggregate: PropTypes.string,
-    winner: PropTypes.string
+    winner:    PropTypes.string,
+    compact:   PropTypes.bool,
 };
 
 export default FixtureRow;

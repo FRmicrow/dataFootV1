@@ -1,6 +1,7 @@
 import LeagueRepository from '../../repositories/v3/LeagueRepository.js';
 import DashboardRepository from '../../repositories/v3/DashboardRepository.js';
 import { HealthIntelligenceService } from '../../services/v3/HealthIntelligenceService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * V3 Dashboard Controller
@@ -36,7 +37,7 @@ export const getV3Stats = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error("Error fetching V3 Intelligence Hub stats:", error);
+        logger.error({ err: error }, 'Error fetching V3 Intelligence Hub stats');
         res.status(500).json({ success: false, message: "Failed to fetch aggregated intelligence" });
     }
 };
@@ -62,7 +63,7 @@ export const getImportedLeagues = async (req, res) => {
 
         res.json({ success: true, data: leagues });
     } catch (error) {
-        console.error("Error fetching imported leagues:", error);
+        logger.error({ err: error }, 'Error fetching imported leagues');
         res.status(500).json({ success: false, message: "Failed to fetch imported leagues" });
     }
 };
@@ -99,7 +100,7 @@ export const getDiscoveredLeagues = async (req, res) => {
             data: Object.values(byCountry).sort((a, b) => a.name.localeCompare(b.name))
         });
     } catch (error) {
-        console.error("Error fetching discovered leagues:", error);
+        logger.error({ err: error }, 'Error fetching discovered leagues');
         res.status(500).json({ success: false, message: "Failed to fetch discovered leagues" });
     }
 };

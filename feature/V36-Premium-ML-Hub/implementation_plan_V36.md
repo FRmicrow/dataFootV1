@@ -1,46 +1,76 @@
-# Implementation Plan - V36: Premium ML Hub Rework
+# Implementation Plan - V36: Data & ML Foundations Refactor
 
-This feature transforms the ML Hub into a high-end intelligence center, providing deep transparency into model performance at the league and club levels, and clear visibility into upcoming predictions.
+## Delivery Order
+1. Audit remediation
+2. Unified runtime and contract definition
+3. Feature store redesign
+4. Reference market pipeline `1X2_FT`
+5. Extension to `GOALS_OU`
+6. Extension to `1X2_HT`
+7. Extension to `CORNERS_OU` and `CARDS_OU`
+8. Real historical windows `full / 5y / 3y`
+9. League-specific eligibility policy
+6. Unified orchestration and evaluation
+7. Observability and QA evidence
 
-## Proposed Changes
+## Blocking Rules
+- No implementation of new pipelines before US-3601 to US-3606 are closed
+- No market pipeline before feature blocks and persistence contracts are specified
+- No trusted risk analysis before market mapping and evaluation are aligned
 
-### [Component] Backend - ML Analytics Extensions
+## Work Breakdown
+### Phase 0 - Audit remediation
+- US-3601 to US-3606
+- Deliver a remediation summary with proof points
 
-#### [MODIFY] [mlController.js](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/backend/src/controllers/v3/mlController.js)
-- Implement `getMLClubEvaluation`: Group simulation results by club to show hit rate/accuracy per team.
-- Implement `getUpcomingPredictions`: A unified list of matches in status `NS` (Not Started) with their processed ML risk analysis.
+### Phase 1 - Contract and feature store target
+- US-3610 to US-3617
+- Produce the target catalog, persistence contract, and feature block map
+- Freeze the contract stabilization method before any retraining
+- Prioritize team feature enrichment on:
+  - Premier League
+  - La Liga
+  - Bundesliga
+  - Serie A
+  - Ligue 1
+  - Champions League
+  - Europa League
+  - then Primeira Liga, Eredivisie, Belgian Pro League, Europa Conference League
 
-#### [MODIFY] [ml_routes.js](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/backend/src/routes/v3/ml_routes.js)
-- Register `GET /ml-platform/simulations/club-evaluation`.
-- Register `GET /ml-platform/predictions/upcoming`.
+### Phase 2 - Reference pipelines
+- US-3620 to US-3626
+- Rebuild one clean vertical slice, then extend market by market in this order:
+  1. `1X2_FT`
+  2. `GOALS_OU`
+  3. `1X2_HT`
+  4. `CORNERS_OU`
+  5. `CARDS_OU`
+- Activate league-specific variants only after real `full / 5y / 3y` horizons exist
 
----
+### Phase 3 - Orchestration and observability
+- US-3630 to US-3633
+- Unify outputs, evaluation, and monitoring
 
-### [Component] Frontend - Premium ML Dashboard
+## Roles Activated
+- Product Owner
+- Product Architect
+- Machine Learning Engineer
+- Backend Engineer
+- FullStack Engineer
 
-#### [MODIFY] [MachineLearningHub.jsx](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/frontend/src/components/v3/modules/ml/MachineLearningHub.jsx)
-- Update navigation to prioritize the new "Intelligence" view.
+## Skills Activated By Feature
+- `project-context`
+- `machine-learning`
+- `data-analyzer`
+- `code-quality`
+- `docs`
+- `testing`
+- `productivity`
+- `web-dev`
+- `design`
 
-#### [NEW] [MLIntelligenceDashboard.jsx](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/frontend/src/components/v3/modules/ml/submodules/MLIntelligenceDashboard.jsx)
-- The main entry point using a clean, professional grid layout.
-- Integration of "Status Metrics" (Model Health, Training status).
-
-#### [NEW] [ModelDossier.jsx](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/frontend/src/components/v3/modules/ml/submodules/ModelDossier.jsx)
-- Displays "What the models do": Feature importance, target descriptions (1X2, Corners, Cards).
-
-#### [NEW] [ClubPerformanceMatrix.jsx](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/frontend/src/components/v3/modules/ml/submodules/ClubPerformanceMatrix.jsx)
-- A table/grid showing accuracy metrics per club.
-
-#### [NEW] [PredictionCalendar.jsx](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/frontend/src/components/v3/modules/ml/submodules/PredictionCalendar.jsx)
-- A timeline of future matches with their ML labels and probabilities.
-
-## Verification Plan
-
-### Automated Tests
-- Test new endpoints for JSON structure and data filtering.
-- Ensure the frontend builds without errors after adding new components.
-
-### Manual Verification
-- Verify the new "Intelligence" page in the browser.
-- Check club performance metrics for consistency with individual match results.
-- Ensure future predictions appear correctly for upcoming fixtures.
+## Validation Strategy
+- Each US includes explicit QA scenarios
+- PostgreSQL is the only runtime considered valid for this feature
+- No destructive DB operations are allowed
+- Global generic models are the baseline; league-specific models must prove superiority before activation

@@ -1,156 +1,91 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { Card, Stack, Grid } from '../../../../design-system';
+import { Grid } from '../../../../design-system';
+import './LeagueLeaders.css';
 
-const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) => {
+const RANK_COLORS = {
+    1: { bg: 'var(--color-accent-500)', color: '#000' },
+    2: { bg: 'rgba(203,213,225,0.18)', color: 'var(--color-text-muted)' },
+    3: { bg: 'rgba(148,163,184,0.12)', color: 'var(--color-text-dim)' }
+};
 
-    const LeaderCard = ({ player, rank, label, value, secondaryLabel, secondaryValue }) => (
-        <Link
-            to={`/player/${player.player_id}`}
-            style={{ textDecoration: 'none', color: 'inherit' }}
-        >
-            <div
-                style={{
-                    padding: 'var(--spacing-xs)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--spacing-xs)',
-                    background: 'var(--glass-bg)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: 'var(--radius-sm)',
-                    transition: 'var(--transition-fast)',
-                    cursor: 'pointer'
-                }}
-                className="ds-card-hover-effect"
-            >
-                <div style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '10px',
-                    fontWeight: 'var(--font-weight-bold)',
-                    background: (() => {
-                        if (rank === 1) return 'var(--color-accent-500)';
-                        if (rank === 2) return '#cbd5e1';
-                        if (rank === 3) return '#94a3b8';
-                        return 'var(--color-border)';
-                    })(),
-                    color: rank === 1 ? 'black' : 'inherit'
-                }}>
-                    {rank}
-                </div>
-
-                <img
-                    src={player.photo_url}
-                    alt=""
-                    style={{ width: '32px', height: '32px', borderRadius: 'var(--radius-sm)', objectFit: 'cover' }}
-                />
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-bold)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-text-main)' }}>
-                        {player.player_name || player.name}
-                    </div>
-                    <div style={{ fontSize: '10px', color: 'var(--color-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {player.team_name}
-                    </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary-400)' }}>{value}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--color-text-dim)', textTransform: 'uppercase' }}>{label}</div>
-                    {secondaryValue !== undefined && (
-                        <div style={{ fontSize: '9px', color: 'var(--color-text-dim)', marginTop: '2px' }}>
-                            {secondaryValue?.toFixed(2)} <span style={{ fontSize: '8px', opacity: 0.7 }}>{secondaryLabel}</span>
-                        </div>
-                    )}
-                </div>
+const LeaderRow = ({ player, rank, value, secondaryLabel, secondaryValue }) => {
+    const rankStyle = RANK_COLORS[rank] || { bg: 'transparent', color: 'var(--color-text-dim)' };
+    return (
+        <Link to={`/player/${player.player_id}`} className="ll-row">
+            <span className="ll-rank" style={{ background: rankStyle.bg, color: rankStyle.color }}>
+                {rank}
+            </span>
+            <img
+                src={player.photo_url}
+                alt=""
+                className="ll-photo"
+                onError={(e) => { e.target.style.display = 'none'; }}
+            />
+            <div className="ll-info">
+                <span className="ll-name">{player.player_name || player.name}</span>
+                <span className="ll-club">{player.team_name}</span>
+            </div>
+            <div className="ll-stat">
+                <span className="ll-value">{value}</span>
+                {secondaryValue !== undefined && (
+                    <span className="ll-secondary">
+                        {typeof secondaryValue === 'number' ? secondaryValue.toFixed(2) : secondaryValue}
+                        <span className="ll-secondary-label"> {secondaryLabel}</span>
+                    </span>
+                )}
             </div>
         </Link>
     );
+};
 
-    LeaderCard.propTypes = {
-        player: PropTypes.object.isRequired,
-        rank: PropTypes.number.isRequired,
-        label: PropTypes.string.isRequired,
-        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    };
+const LeaderSection = ({ icon, title, data, dataKey, secondaryLabel, secondaryKey }) => (
+    <div className="ll-section">
+        <div className="ll-section-header">
+            <span className="ll-section-icon">{icon}</span>
+            <span className="ll-section-title">{title}</span>
+        </div>
+        <div className="ll-section-body">
+            {(data || []).slice(0, 3).map((player, idx) => (
+                <LeaderRow
+                    key={player.player_id}
+                    player={player}
+                    rank={idx + 1}
+                    value={player[dataKey]}
+                    secondaryLabel={secondaryLabel}
+                    secondaryValue={secondaryKey ? player[secondaryKey] : undefined}
+                />
+            ))}
+        </div>
+    </div>
+);
 
-    const Section = ({ title, subtitle, data, playerLabel, dataKey, secondaryLabel, secondaryKey }) => (
-        <Card title={title} subtitle={subtitle} ghost={layout === 'vertical'}>
-            <Stack gap="var(--spacing-2xs)">
-                {data.slice(0, 3).map((player, idx) => (
-                    <LeaderCard
-                        key={player.player_id}
-                        player={player}
-                        rank={idx + 1}
-                        label={playerLabel}
-                        value={player[dataKey]}
-                        secondaryLabel={secondaryLabel}
-                        secondaryValue={secondaryKey ? player[secondaryKey] : undefined}
-                    />
-                ))}
-            </Stack>
-        </Card>
-    );
-
-    Section.propTypes = {
-        title: PropTypes.string.isRequired,
-        subtitle: PropTypes.string,
-        data: PropTypes.array.isRequired,
-        playerLabel: PropTypes.string.isRequired,
-        dataKey: PropTypes.string.isRequired
-    };
-
+const LeagueLeaders = ({ topScorers, topAssists, topRated, layout = 'grid' }) => {
     if (layout === 'vertical') {
         return (
-            <Stack gap="var(--spacing-lg)">
-                <Section title="Golden Boot" subtitle="Goal leaders" data={topScorers} playerLabel="Goals" dataKey="goals_total" secondaryLabel="xG" secondaryKey="xg" />
-                <Section title="Playmakers" subtitle="Assist leaders" data={topAssists} playerLabel="Assists" dataKey="goals_assists" secondaryLabel="xA" secondaryKey="xa" />
-                <Section title="MVP Track" subtitle="Avg Ratings" data={topRated || []} playerLabel="Rating" dataKey="games_rating" />
-            </Stack>
+            <div className="ll-vertical">
+                <LeaderSection icon="🎯" title="Golden Boot" data={topScorers} dataKey="goals_total" secondaryLabel="xG" secondaryKey="xg" />
+                <LeaderSection icon="👟" title="Top Assists" data={topAssists} dataKey="goals_assists" secondaryLabel="xA" secondaryKey="xa" />
+                <LeaderSection icon="⭐" title="MVP Track" data={topRated || []} dataKey="games_rating" />
+            </div>
         );
     }
 
     return (
-        <Grid columns="repeat(auto-fit, minmax(280px, 1fr))" gap="var(--spacing-lg)">
-            <Section title="Golden Boot" data={topScorers} playerLabel="Goals" dataKey="goals_total" secondaryLabel="xG" secondaryKey="xg" />
-            <Section title="Top Playmakers" data={topAssists} playerLabel="Assists" dataKey="goals_assists" secondaryLabel="xA" secondaryKey="xa" />
-            <Section title="MVP Candidates" data={topRated || []} playerLabel="Rating" dataKey="games_rating" />
+        <Grid columns="repeat(3, 1fr)" gap="var(--spacing-md)">
+            <LeaderSection icon="🎯" title="Golden Boot" data={topScorers} dataKey="goals_total" secondaryLabel="xG" secondaryKey="xg" />
+            <LeaderSection icon="👟" title="Top Assists" data={topAssists} dataKey="goals_assists" secondaryLabel="xA" secondaryKey="xa" />
+            <LeaderSection icon="⭐" title="MVP Track" data={topRated || []} dataKey="games_rating" />
         </Grid>
     );
 };
 
 LeagueLeaders.propTypes = {
-    topScorers: PropTypes.arrayOf(PropTypes.shape({
-        player_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        player_name: PropTypes.string,
-        name: PropTypes.string,
-        team_name: PropTypes.string,
-        photo_url: PropTypes.string,
-        goals_total: PropTypes.number
-    })).isRequired,
-    topAssists: PropTypes.arrayOf(PropTypes.shape({
-        player_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        player_name: PropTypes.string,
-        name: PropTypes.string,
-        team_name: PropTypes.string,
-        photo_url: PropTypes.string,
-        goals_assists: PropTypes.number
-    })).isRequired,
-    topRated: PropTypes.arrayOf(PropTypes.shape({
-        player_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        player_name: PropTypes.string,
-        name: PropTypes.string,
-        team_name: PropTypes.string,
-        photo_url: PropTypes.string,
-        games_rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    })),
+    topScorers: PropTypes.array.isRequired,
+    topAssists: PropTypes.array.isRequired,
+    topRated: PropTypes.array,
     layout: PropTypes.oneOf(['grid', 'vertical'])
 };
-
 
 export default LeagueLeaders;

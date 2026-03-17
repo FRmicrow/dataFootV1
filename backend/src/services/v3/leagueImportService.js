@@ -25,26 +25,43 @@ const resolveLeagueAndSeason = async (leagueId, seasonYear, sendLog, forceApiId)
         throw new Error(`League ID ${targetApiId} / Season ${seasonYear} not found in API.`);
     }
     const apiData = leagueResponse.response[0];
+    if (apiData.country?.name === 'Israel') {
+        throw new Error(`Import of Israeli data is restricted for this project (League ${apiData.league.name}).`);
+    }
     const countryId = await DB.getOrInsertCountry(Mappers.country(apiData.country));
+    const countryRow = await db.get("SELECT importance_rank FROM V3_Countries WHERE country_id = ?", cleanParams([countryId]));
+    const countryRank = countryRow?.importance_rank || 999;
+
+    const typeNormalized = CompetitionRanker.detectType({
+        name: apiData.league.name,
+        type: apiData.league.type
+    });
 
     const importanceRank = CompetitionRanker.calculate({
         name: apiData.league.name,
-        type: apiData.league.type,
+        type: typeNormalized,
         country_name: apiData.country.name
     });
+
+    const globalScore = CompetitionRanker.calculateGlobalScore(
+        countryRank,
+        importanceRank,
+        apiData.league.name,
+        typeNormalized === 'Cup'
+    );
 
     let localLeague = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([targetApiId]));
     let localLeagueId;
 
     if (!localLeague) {
-        const info = await db.run("INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, importance_rank) VALUES (?,?,?,?,?,?)",
-            cleanParams([apiData.league.id, apiData.league.name, apiData.league.type, apiData.league.logo, countryId, importanceRank]));
+        const info = await db.run("INSERT INTO V3_Leagues (api_id, name, type, logo_url, country_id, importance_rank, global_importance_rank) VALUES (?,?,?,?,?,?,?)",
+            cleanParams([apiData.league.id, apiData.league.name, typeNormalized, apiData.league.logo, countryId, importanceRank, globalScore]));
         localLeagueId = info.lastInsertRowid;
         sendLog(`✅ Created League: ${apiData.league.name}`, 'success');
     } else {
         localLeagueId = localLeague.league_id;
-        await db.run("UPDATE V3_Leagues SET name=?, logo_url=?, type=?, importance_rank=? WHERE league_id=?",
-            cleanParams([apiData.league.name, apiData.league.logo, apiData.league.type, importanceRank, localLeagueId]));
+        await db.run("UPDATE V3_Leagues SET name=?, logo_url=?, type=?, importance_rank=?, global_importance_rank=? WHERE league_id=?",
+            cleanParams([apiData.league.name, apiData.league.logo, typeNormalized, importanceRank, globalScore, localLeagueId]));
     }
 
     const apiSeason = apiData.seasons[0];

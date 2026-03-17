@@ -23,15 +23,12 @@ api.interceptors.response.use(
         // Error state: { success: false, message: "..." }
         if (body && typeof body === 'object' && body.success === false) {
             const errorMsg = body.message || body.error || 'API Command Failed';
-            console.error('API Business Error:', errorMsg);
             return Promise.reject(new Error(errorMsg));
         }
         // Fallback for raw data (V1, V2, or legacy endpoints)
         return body;
     },
     (error) => {
-        const message = error.response?.data?.error || error.response?.data?.message || error.message;
-        console.error('API Network/System Error:', message);
         return Promise.reject(error);
     }
 );
@@ -124,7 +121,11 @@ export default {
     // --- Studio ---
     getStudioStats: () => api.get('/studio/meta/stats'),
     getStudioLeagues: () => api.get('/studio/meta/leagues'),
+    getStudioNationalities: () => api.get('/studio/meta/nationalities'),
+    searchStudioPlayers: (search) => api.get(`/studio/meta/players?search=${encodeURIComponent(search)}`),
+    searchStudioTeams: (search) => api.get(`/studio/meta/teams?search=${encodeURIComponent(search)}`),
     queryStudio: (data) => api.post('/studio/query', data),
+    queryStudioLeagueRankings: (data) => api.post('/studio/query/league-rankings', data),
     // --- Import Matrix (US_040, US_042, US_270) ---
     getImportMatrixStatus: (params) => api.get('/import/matrix-status', { params }),
     triggerAuditScan: () => api.post('/import/audit-scan'),
@@ -141,10 +142,13 @@ export default {
 
     // --- Forge Simulation Engine (V8) ---
     startSimulation: (data) => api.post('/simulation/start', data),
-    getSimulationStatus: (leagueId, seasonYear, horizon) => api.get(`/simulation/status?leagueId=${leagueId}&seasonYear=${seasonYear}${horizon ? `&horizon=${horizon}` : ''}`),
+    getSimulationStatus: (leagueId, seasonYear, horizon, simId) => api.get(
+        `/simulation/status?leagueId=${leagueId}&seasonYear=${seasonYear}${horizon ? `&horizon=${horizon}` : ''}${simId ? `&simId=${simId}` : ''}`
+    ),
     getSimulationReadiness: (leagueId, seasonYear) => api.get(`/simulation/readiness?leagueId=${leagueId}&seasonYear=${seasonYear}`),
     getSimulationResults: (simId) => api.get(`/simulation/results/${simId}`),
     getLeagueSimulations: (leagueId) => api.get(`/simulation/league/${leagueId}`),
+    getAllSimulationJobs: () => api.get('/simulation/all'),
     triggerBulkSimulation: () => api.post('/simulation/bulk', {}),
 
     // --- ML Management (V8) ---

@@ -50,7 +50,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
             dataIndex: 'name',
             width: '180px',
             render: (name, player) => (
-                <Link to={`/player/${player.player_id}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+                <Link to={`/player/${player.player_id}`} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', textDecoration: 'none' }}>
                     <img src={player.photo_url} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--color-border)' }} />
                     <span style={{ fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-main)' }}>{name}</span>
                 </Link>
@@ -62,7 +62,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
             dataIndex: 'team_name',
             width: '140px',
             render: (name, player) => (
-                <Link to={`/club/${player.team_id}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+                <Link to={`/club/${player.team_id}`} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2xs)', textDecoration: 'none' }}>
                     <img src={player.team_logo} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
                     <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                 </Link>
@@ -86,7 +86,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '4px'
+                        gap: 'var(--spacing-2xs)'
                     }}>
                         {v}
                         {isTopScorer && <span title="Golden Boot Candidate">👑</span>}
@@ -124,6 +124,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                         })()}
                         onChange={(opt) => setTeamId(opt.value)}
                         placeholder="Team"
+                        isSearchable
                         aria-label="Filter by Team"
                     />
 
@@ -173,14 +174,14 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '4px',
+                                    gap: 'var(--spacing-2xs)',
                                     justifyContent: col.align === 'center' ? 'center' : 'flex-start',
                                     width: '100%'
                                 }}
                             >
                                 {col.title}
                                 {sortConfig.key === col.key && (
-                                    <span style={{ fontSize: '8px', color: 'var(--color-primary-400)' }}>
+                                    <span style={{ fontSize: 'var(--font-size-2xs, 10px)', color: 'var(--color-primary-400)' }}>
                                         {sortConfig.direction === 'DESC' ? '▼' : '▲'}
                                     </span>
                                 )}
@@ -195,7 +196,7 @@ const SquadExplorer = ({ leagueId, season, teams }) => {
             </div>
 
             <footer style={{ marginTop: 'var(--spacing-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '10px', color: 'var(--color-text-dim)', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)', textTransform: 'uppercase' }}>
                     {players.length} Profiles Analyzing
                 </span>
                 <Badge variant="success" size="sm">LIVE DATA</Badge>

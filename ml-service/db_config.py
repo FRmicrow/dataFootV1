@@ -24,7 +24,7 @@ import psycopg2
 import psycopg2.extras
 import warnings
 
-# Suppress pandas warning about non-SQLAlchemy connections (which mentions sqlite by default)
+# Suppress pandas warning about non-SQLAlchemy connections.
 warnings.filterwarnings('ignore', category=UserWarning, module='pandas')
 
 DATABASE_URL = os.getenv(

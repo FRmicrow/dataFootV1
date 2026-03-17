@@ -17,6 +17,21 @@ import MatchesTab from '../../modules/ClubProfile/Tabs/MatchesTab';
 import StatsTab from '../../modules/ClubProfile/Tabs/StatsTab';
 import LineupTab from '../../modules/ClubProfile/Tabs/LineupTab';
 
+const FLAG_MAP = {
+    'england': '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'france': '🇫🇷', 'spain': '🇪🇸', 'germany': '🇩🇪',
+    'italy': '🇮🇹', 'portugal': '🇵🇹', 'netherlands': '🇳🇱', 'belgium': '🇧🇪',
+    'brazil': '🇧🇷', 'argentina': '🇦🇷', 'usa': '🇺🇸', 'scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+    'wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿', 'turkey': '🇹🇷', 'greece': '🇬🇷', 'mexico': '🇲🇽',
+    'russia': '🇷🇺', 'japan': '🇯🇵', 'australia': '🇦🇺', 'ukraine': '🇺🇦',
+    'austria': '🇦🇹', 'switzerland': '🇨🇭', 'croatia': '🇭🇷', 'denmark': '🇩🇰',
+    'sweden': '🇸🇪', 'norway': '🇳🇴', 'poland': '🇵🇱', 'czech republic': '🇨🇿',
+    'serbia': '🇷🇸', 'romania': '🇷🇴', 'hungary': '🇭🇺', 'slovakia': '🇸🇰',
+    'colombia': '🇨🇴', 'chile': '🇨🇱', 'uruguay': '🇺🇾', 'morocco': '🇲🇦',
+    'south africa': '🇿🇦', 'nigeria': '🇳🇬', 'senegal': '🇸🇳', 'china': '🇨🇳',
+    'south korea': '🇰🇷', 'saudi arabia': '🇸🇦', 'world': '🌍',
+};
+const countryFlag = (country) => FLAG_MAP[country?.toLowerCase()] || '🌐';
+
 const ClubProfilePageV3 = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -125,15 +140,16 @@ const ClubProfilePageV3 = () => {
                 accentColor={club.accent_color}
                 secondaryColor={club.secondary_color}
                 tertiaryColor={club.tertiary_color}
-                subtitles={[club.country, club.venue_name, club.venue_city]}
-                badges={[
-                    { label: 'Verified Hub', variant: 'success' },
-                    { label: `Rank #${club.rank || 'N/A'}`, variant: 'primary' }
-                ]}
+                subtitles={[
+                    club.country ? `${countryFlag(club.country)} ${club.country}` : null,
+                    club.venue_name,
+                    club.venue_city
+                ].filter(Boolean)}
+                badges={club.rank ? [{ label: `Rank #${club.rank}`, variant: 'primary' }] : []}
                 stats={[
-                    { label: 'Founded', value: club.founded || 'N/A' },
-                    { label: 'Manager', value: club.manager || 'N/A' },
-                    { label: 'Capacity', value: club.venue_capacity?.toLocaleString() || 'N/A' }
+                    { label: 'Founded', value: club.founded || '—' },
+                    { label: 'Coach', value: club.coach || '—' },
+                    { label: 'Capacity', value: club.venue_capacity?.toLocaleString() || '—' }
                 ]}
             />
 

@@ -86,7 +86,9 @@ const StandingsTable = ({
     rangeEnd,
     setRangeEnd,
     handleRangeUpdate,
-    loading
+    loading,
+    isSplitView,
+    onToggleSplit
 }) => {
     const groupMap = (standings || []).reduce((acc, curr) => {
         const group = curr.group_name || 'General Standings';
@@ -97,7 +99,7 @@ const StandingsTable = ({
 
     const groups = Object.entries(groupMap);
 
-    const columns = [
+    const allColumns = [
         {
             title: '#',
             dataIndex: 'rank',
@@ -163,6 +165,10 @@ const StandingsTable = ({
         }
     ];
 
+    const columns = isSplitView
+        ? allColumns.filter(c => c.key !== 'form')
+        : allColumns;
+
     if (standings.length === 0) {
         return (
             <Card style={{ minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -210,6 +216,30 @@ const StandingsTable = ({
                                 style={{ width: '48px', textAlign: 'center', padding: '4px' }}
                             />
                             <Button size="xs" variant="ghost" onClick={handleRangeUpdate} loading={loading} style={{ padding: '2px 8px' }}>APPLY</Button>
+                            {onToggleSplit && (
+                                <button
+                                    type="button"
+                                    onClick={onToggleSplit}
+                                    title={isSplitView ? 'Close split view' : 'Open split view'}
+                                    style={{
+                                        marginLeft: 'var(--spacing-xs)',
+                                        background: isSplitView ? 'var(--color-primary-600)' : 'transparent',
+                                        border: `1px solid ${isSplitView ? 'var(--color-primary-400)' : 'rgba(255,255,255,0.1)'}`,
+                                        color: isSplitView ? 'white' : 'var(--color-text-dim)',
+                                        borderRadius: 'var(--radius-sm)',
+                                        width: '28px',
+                                        height: '28px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'var(--transition-fast)'
+                                    }}
+                                >
+                                    {isSplitView ? '▣' : '◫'}
+                                </button>
+                            )}
                         </div>
                     )}
                 >
@@ -242,7 +272,9 @@ StandingsTable.propTypes = {
     rangeEnd: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     setRangeEnd: PropTypes.func,
     handleRangeUpdate: PropTypes.func,
-    loading: PropTypes.bool
+    loading: PropTypes.bool,
+    isSplitView: PropTypes.bool,
+    onToggleSplit: PropTypes.func
 };
 
 export default StandingsTable;

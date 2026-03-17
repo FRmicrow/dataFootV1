@@ -1,6 +1,6 @@
 .ds-table-container {
     width: 100%;
-    height: 100%;
+    max-height: var(--table-max-height, 480px);
     min-height: 0;
     overflow: auto;
     background: var(--color-bg-card);

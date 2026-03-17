@@ -12,14 +12,14 @@ const PageLayout = ({ children, className = '', style = {}, animate = true }) =>
         <div
             className={`sf-page-layout ${animate ? 'animate-fade-in' : ''} ${className}`}
             style={{
-                padding: 'var(--spacing-xl)',
-                maxWidth: '1400px',
+                padding: 'var(--spacing-md)',
+                maxWidth: 'var(--layout-max-width, 1400px)',
                 margin: '0 auto',
                 minHeight: 'calc(100vh - 80px)', // Account for possible header/sidebar
                 ...style
             }}
         >
-            <Stack gap="var(--spacing-xl)">
+            <Stack gap="var(--spacing-md)">
                 {children}
             </Stack>
         </div>

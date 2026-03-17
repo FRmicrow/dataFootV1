@@ -15,7 +15,10 @@ const getLayoutConfig = (visual, chartData) => {
 const getChartTitle = (chartData, filters) => {
     const statName = filters.stat?.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Data';
     const range = filters.years[0] === filters.years[1] ? filters.years[0] : `${filters.years[0]} - ${filters.years[1]}`;
-    if (chartData.meta.type === 'league_rankings') return `${chartData.meta.league_name || filters.contextLabel || "League"}: Ranking Pulse (${chartData.meta.season}/${chartData.meta.season + 1})`;
+    if (chartData.meta.type === 'league_rankings') {
+        const season = chartData.meta.season || filters.years[1];
+        return `${chartData.meta.league_name || filters.contextLabel || "League"}: Ranking Pulse (${season}/${season + 1})`;
+    }
     const titles = { league: `Top ${statName} in ${filters.contextLabel}`, country: `Best ${statName} from ${filters.contextLabel}`, specific: `Comparing ${statName}: ${filters.contextLabel}` };
     return `${titles[filters.contextType] || `Who had the most ${statName}`} (${range})`;
 };

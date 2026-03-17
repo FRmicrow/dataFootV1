@@ -1,0 +1,72 @@
+.ml-surface__hero {
+    border: 1px solid var(--glass-border);
+    background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 30%),
+        radial-gradient(circle at left center, rgba(245, 158, 11, 0.12), transparent 24%),
+        linear-gradient(145deg, rgba(15, 23, 42, 0.94), rgba(17, 24, 39, 0.84));
+    box-shadow: var(--shadow-premium);
+}
+
+.ml-surface__hero-title,
+.ml-surface__section-title {
+    font-family: 'Space Grotesk', var(--font-family);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.03em;
+    color: var(--color-text-main);
+}
+
+.ml-surface__hero-title {
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    line-height: 1;
+}
+
+.ml-surface__controlbar {
+    margin-top: 0;
+}
+
+.ml-surface__filters-grid {
+    width: 100%;
+}
+
+.ml-surface__filter {
+    min-width: 0;
+}
+
+.ml-surface__filter-label {
+    display: block;
+    margin-bottom: var(--space-2xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-dim);
+}
+
+.ml-surface__metrics {
+    width: 100%;
+}
+
+.ml-surface__section {
+    border: 1px solid var(--glass-border);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+        rgba(15, 23, 42, 0.7);
+    backdrop-filter: var(--glass-blur);
+}
+
+.ml-surface__empty {
+    border: 1px dashed var(--color-border);
+    background: rgba(15, 23, 42, 0.35);
+}
+
+.ml-surface__empty-title {
+    color: var(--color-text-main);
+    font-family: 'Space Grotesk', var(--font-family);
+}
+
+.ml-surface__empty-message {
+    max-width: 48ch;
+    text-align: center;
+    color: var(--color-text-muted);
+    line-height: 1.7;
+}

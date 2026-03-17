@@ -7,9 +7,9 @@ const SimHeader = () => (
         </button>
         <div className="header-main-wrap">
             <div className="header-content">
-                <span className="badge">V10 Forge Optimization</span>
-                <h1>Alpha Analytics — Forge Control Center</h1>
-                <p>Build league-scoped ML models and run chronological backtesting to validate prediction accuracy.</p>
+                <span className="badge">Season Simulation</span>
+                <h1>Alpha Analytics — Simulation Control Center</h1>
+                <p>Run PostgreSQL-backed season replays and validate prediction accuracy on chronological match flows.</p>
             </div>
         </div>
     </header>

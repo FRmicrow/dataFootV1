@@ -49,16 +49,27 @@ export class HealthPrescriptionService {
      * Detects missing seasons (data gaps)
      */
     static async detectMissingPlayerSeasons() {
+        const minSeasonYear = new Date().getFullYear() - 6;
+
         // Find players who have a gap in their season history for the same league
         const sql = `
-            SELECT s1.player_id, p.name, s1.league_id, l.name as league_name, MAX(s1.season_year) as year_max, MIN(s1.season_year) as year_min
+            SELECT
+                s1.player_id,
+                p.name,
+                s1.league_id,
+                l.name as league_name,
+                MAX(s1.season_year) as year_max,
+                MIN(s1.season_year) as year_min
             FROM V3_Player_Stats s1
             JOIN V3_Players p ON s1.player_id = p.player_id
             JOIN V3_Leagues l ON s1.league_id = l.league_id
-            GROUP BY s1.player_id, s1.league_id
-            HAVING year_max > year_min + (COUNT(DISTINCT s1.season_year) - 1)
+            WHERE s1.season_year >= ?
+            GROUP BY s1.player_id, p.name, s1.league_id, l.name
+            HAVING MAX(s1.season_year) > MIN(s1.season_year) + (COUNT(DISTINCT s1.season_year) - 1)
+            ORDER BY MAX(s1.season_year) DESC
+            LIMIT 150
         `;
-        const gaps = await db.all(sql);
+        const gaps = await db.all(sql, cleanParams([minSeasonYear]));
         const results = [];
 
         for (const gap of gaps) {
@@ -81,7 +92,7 @@ export class HealthPrescriptionService {
 
     static async detectDuplicateCandidates() {
         const threshold = 85;
-        const candidates = await ResolutionService.findGlobalDuplicates(threshold);
+        const candidates = await ResolutionService.findGlobalDuplicates(threshold, { pairLimit: 250 });
         return candidates.map(c => ({
             type: 'DUPLICATE_CANDIDATE',
             priority: 'HIGH',
@@ -101,7 +112,7 @@ export class HealthPrescriptionService {
             LEFT JOIN V3_Fixture_Events e ON f.fixture_id = e.fixture_id
             WHERE f.status_short IN ('FT', 'AET', 'PEN')
             AND e.id IS NULL
-            GROUP BY f.league_id, f.season_year
+            GROUP BY f.league_id, f.season_year, l.name
         `;
         const fixtures = await db.all(sql);
 

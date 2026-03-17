@@ -6,6 +6,7 @@ import {
     ProfileHeader, Progress,
     Skeleton, CardSkeleton, TableSkeleton
 } from '../../../../design-system';
+import { PageLayout, PageContent } from '../../layouts';
 import './PlayerProfilePageV3.css';
 
 const PlayerProfilePageV3 = () => {
@@ -125,33 +126,23 @@ const PlayerProfilePageV3 = () => {
     }, [careerView, clubCareer]);
 
     if (loading) return (
-        <div className="v3-player-page">
-            {/* Profile header skeleton */}
-            <div style={{ padding: 'var(--spacing-xl)', marginBottom: 'var(--spacing-lg)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
-                    <Skeleton width="100px" height="100px" circle />
-                    <div style={{ flex: 1 }}>
-                        <Skeleton width="260px" height="28px" style={{ marginBottom: 'var(--spacing-sm)' }} />
-                        <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
-                            <Skeleton width="80px" height="14px" />
-                            <Skeleton width="60px" height="14px" />
-                            <Skeleton width="70px" height="14px" />
-                        </div>
-                        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                            <Skeleton width="100px" height="24px" />
-                            <Skeleton width="80px" height="24px" />
-                        </div>
+        <PageLayout>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
+                <Skeleton width="100px" height="100px" circle />
+                <div style={{ flex: 1 }}>
+                    <Skeleton width="260px" height="28px" style={{ marginBottom: 'var(--spacing-sm)' }} />
+                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
+                        <Skeleton width="80px" height="14px" />
+                        <Skeleton width="60px" height="14px" />
+                        <Skeleton width="70px" height="14px" />
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                        <Skeleton width="100px" height="24px" />
+                        <Skeleton width="80px" height="24px" />
                     </div>
                 </div>
-                {/* Stats row skeleton */}
-                <div style={{ display: 'flex', gap: 'var(--spacing-xl)', marginTop: 'var(--spacing-lg)' }}>
-                    <Skeleton width="80px" height="40px" />
-                    <Skeleton width="80px" height="40px" />
-                    <Skeleton width="100px" height="40px" />
-                </div>
             </div>
-            {/* Main content skeleton: career table + sidebar */}
-            <Grid columns="2.5fr 1fr" gap="var(--spacing-xl)" className="mb-xl">
+            <Grid columns="2.5fr 1fr" gap="var(--spacing-xl)">
                 <Stack gap="var(--spacing-xl)">
                     <CardSkeleton />
                     <TableSkeleton rows={6} cols={5} />
@@ -161,17 +152,17 @@ const PlayerProfilePageV3 = () => {
                     <CardSkeleton />
                 </Stack>
             </Grid>
-        </div>
+        </PageLayout>
     );
 
     if (error || !data) return (
-        <div style={{ padding: '80px', textAlign: 'center' }}>
-            <Card style={{ maxWidth: '400px', margin: '0 auto' }}>
+        <PageLayout>
+            <Card style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
                 <span style={{ fontSize: '48px' }}>⚠️</span>
                 <h2 style={{ margin: '24px 0 12px' }}>Data Link Lost</h2>
                 <Button variant="primary" onClick={() => navigate(-1)}>Return</Button>
             </Card>
-        </div>
+        </PageLayout>
     );
 
     const { player, careerTotals, currentContext } = data;
@@ -180,7 +171,7 @@ const PlayerProfilePageV3 = () => {
 
 
     return (
-        <div className="v3-player-page animate-fade-in">
+        <PageLayout>
             <ProfileHeader
                 title={player?.name || 'Unknown Player'}
                 image={player?.photo_url || ''}
@@ -221,7 +212,8 @@ const PlayerProfilePageV3 = () => {
                 }
             />
 
-            <Grid columns="2.5fr 1fr" gap="var(--spacing-xl)" className="mb-xl">
+            <PageContent>
+            <Grid columns="2.5fr 1fr" gap="var(--spacing-xl)">
                 <Stack gap="var(--spacing-xl)">
                     <Card title="Career Snapshot" subtitle="Consolidated performance metrics by club">
                         <Table
@@ -309,7 +301,7 @@ const PlayerProfilePageV3 = () => {
                                                     key: 'league',
                                                     render: (_, row) => (
                                                         <Link to={`/league/${row.league_id}/season/${row.season_year}`} className="ds-link">
-                                                            <Stack direction="row" gap="8px" align="center">
+                                                            <Stack direction="row" gap="var(--spacing-xs)" align="center">
                                                                 <img src={`https://media.api-sports.io/football/leagues/${row.league_id}.png`} alt="" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
                                                                 {row.league_name}
                                                             </Stack>
@@ -380,8 +372,8 @@ const PlayerProfilePageV3 = () => {
                                                 </span>
                                             </Grid>
                                              <div style={{ marginTop: 'var(--spacing-xs)', paddingTop: 'var(--spacing-xs)', borderTop: '1px solid var(--color-border)' }}>
-                                                <span style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--color-text-dim)', display: 'block' }}>Current League Efficiency</span>
-                                                <Stack direction="row" justify="space-between" align="center" style={{ marginTop: '4px' }}>
+                                                <span style={{ fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', color: 'var(--color-text-dim)', display: 'block' }}>Current League Efficiency</span>
+                                                <Stack direction="row" justify="space-between" align="center" style={{ marginTop: 'var(--spacing-2xs)' }}>
                                                      <Badge variant="neutral" size="xs">Season xG: {latestSeason.xg ? latestSeason.xg.toFixed(1) : '0.0'}</Badge>
                                                      <Badge variant="primary" size="xs">Goals: {latestSeason.goals_total || 0}</Badge>
                                                 </Stack>
@@ -405,7 +397,7 @@ const PlayerProfilePageV3 = () => {
                                                     </Badge>
                                                 </div>
                                                 <div className="honor-main">
-                                                    <Stack direction="row" gap="8px" align="center">
+                                                    <Stack direction="row" gap="var(--spacing-xs)" align="center">
                                                         <img src={`https://media.api-sports.io/football/leagues/${t.league_id}.png`} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
                                                         <span className="honor-league">{t.league_name || t.trophy}</span>
                                                     </Stack>
@@ -433,7 +425,8 @@ const PlayerProfilePageV3 = () => {
                     </Stack>
                 </aside>
             </Grid>
-        </div>
+            </PageContent>
+        </PageLayout>
     );
 };
 

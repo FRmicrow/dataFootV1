@@ -1,0 +1,3913 @@
+{
+  "generated_at": "2026-03-14T22:45:34.530023+00:00",
+  "source_window_start": "2021-03-15",
+  "markets": {
+    "goals_ou": {
+      "2": {
+        "league_id": 2,
+        "league_name": "Premier League",
+        "sample_size": 1681,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.889946460440214,
+          "xg_per_match": 3.0285858111605624,
+          "shots_per_match": 25.60083283759667,
+          "shots_on_goal_per_match": 8.889351576442595,
+          "corners_per_match": 10.252825698988698,
+          "fouls_per_match": 8.165972635336109,
+          "cards_per_match": 3.8328375966686496,
+          "pass_accuracy_pct_avg": 30.78078524687686,
+          "possession_gap_avg": 10.24330755502677,
+          "second_half_shots_per_match": 8.619869125520523
+        },
+        "indices": {
+          "goal_openness_index": 0.823546,
+          "tempo_index": 0.958829,
+          "control_index": -0.920591,
+          "discipline_index": -1.376939,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.175355,
+        "recommended_over_2_5_delta": 0.03,
+        "recommended_adjustment_cap": 0.03
+      },
+      "15": {
+        "league_id": 15,
+        "league_name": "Serie A",
+        "sample_size": 1670,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.644311377245509,
+          "xg_per_match": 2.783853790378142,
+          "shots_per_match": 25.120359281437125,
+          "shots_on_goal_per_match": 8.511377245508982,
+          "corners_per_match": 9.358682634730538,
+          "fouls_per_match": 9.417365269461078,
+          "cards_per_match": 4.298203592814371,
+          "pass_accuracy_pct_avg": 30.140419161676647,
+          "possession_gap_avg": 8.566467065868263,
+          "second_half_shots_per_match": 8.676646706586826
+        },
+        "indices": {
+          "goal_openness_index": 0.291749,
+          "tempo_index": 0.753289,
+          "control_index": -1.03229,
+          "discipline_index": -0.836247,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.111048,
+        "recommended_over_2_5_delta": 0.02012,
+        "recommended_adjustment_cap": 0.03
+      },
+      "11": {
+        "league_id": 11,
+        "league_name": "La Liga",
+        "sample_size": 1659,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5726341169379143,
+          "xg_per_match": 2.7940226756642565,
+          "shots_per_match": 24.12959614225437,
+          "shots_on_goal_per_match": 8.258589511754069,
+          "corners_per_match": 9.491862567811935,
+          "fouls_per_match": 9.12115732368897,
+          "cards_per_match": 4.805907172995781,
+          "pass_accuracy_pct_avg": 29.640446051838456,
+          "possession_gap_avg": 9.710669077757686,
+          "second_half_shots_per_match": 8.384569017480409
+        },
+        "indices": {
+          "goal_openness_index": 0.101391,
+          "tempo_index": 0.67532,
+          "control_index": -0.983975,
+          "discipline_index": -0.347956,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.084278,
+        "recommended_over_2_5_delta": 0.015302,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1": {
+        "league_id": 1,
+        "league_name": "Ligue 1",
+        "sample_size": 1509,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8250497017892644,
+          "xg_per_match": 2.938215274460036,
+          "shots_per_match": 24.46653412856196,
+          "shots_on_goal_per_match": 8.849569251159709,
+          "corners_per_match": 9.447978793903248,
+          "fouls_per_match": 8.202120609675282,
+          "cards_per_match": 3.760106030483764,
+          "pass_accuracy_pct_avg": 27.907886017229952,
+          "possession_gap_avg": 9.384360503644798,
+          "second_half_shots_per_match": 8.767395626242545
+        },
+        "indices": {
+          "goal_openness_index": 0.655897,
+          "tempo_index": 0.743855,
+          "control_index": -1.0536,
+          "discipline_index": -1.447274,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.151485,
+        "recommended_over_2_5_delta": 0.027498,
+        "recommended_adjustment_cap": 0.03
+      },
+      "19": {
+        "league_id": 19,
+        "league_name": "Bundesliga",
+        "sample_size": 1332,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.1674174174174174,
+          "xg_per_match": 3.1637729017047196,
+          "shots_per_match": 25.88963963963964,
+          "shots_on_goal_per_match": 9.457207207207206,
+          "corners_per_match": 9.633633633633634,
+          "fouls_per_match": 8.007507507507507,
+          "cards_per_match": 3.8543543543543546,
+          "pass_accuracy_pct_avg": 29.93243243243243,
+          "possession_gap_avg": 8.17942942942943,
+          "second_half_shots_per_match": 8.726726726726726
+        },
+        "indices": {
+          "goal_openness_index": 1.414241,
+          "tempo_index": 0.90963,
+          "control_index": -1.059864,
+          "discipline_index": -1.365167,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.18,
+        "recommended_over_2_5_delta": 0.03,
+        "recommended_adjustment_cap": 0.03
+      },
+      "3": {
+        "league_id": 3,
+        "league_name": "Championship (England)",
+        "sample_size": 926,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4956803455723544,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.2548596112311,
+          "shots_on_goal_per_match": 7.815334773218143,
+          "corners_per_match": 10.184665226781858,
+          "fouls_per_match": 22.264578833693303,
+          "cards_per_match": 3.898488120950324,
+          "pass_accuracy_pct_avg": 77.42386609071275,
+          "possession_gap_avg": 9.002159827213823,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.554525,
+          "tempo_index": 0.066316,
+          "control_index": 0.399993,
+          "discipline_index": -0.449377,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.073682,
+        "recommended_over_2_5_delta": -0.01376,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1154": {
+        "league_id": 1154,
+        "league_name": "Serie A",
+        "sample_size": 772,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5038860103626943,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.435233160621763,
+          "shots_on_goal_per_match": 8.950777202072539,
+          "corners_per_match": 10.053108808290155,
+          "fouls_per_match": 26.541450777202073,
+          "cards_per_match": 5.347150259067358,
+          "pass_accuracy_pct_avg": 82.39054404145078,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.298975,
+          "tempo_index": 0.125265,
+          "control_index": 0.050638,
+          "discipline_index": 1.257089,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.02865,
+        "recommended_over_2_5_delta": -0.005382,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1168": {
+        "league_id": 1168,
+        "league_name": "J1 League",
+        "sample_size": 770,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5376623376623377,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.187012987012988,
+          "shots_on_goal_per_match": 8.115584415584415,
+          "corners_per_match": 9.822077922077922,
+          "fouls_per_match": 22.94935064935065,
+          "cards_per_match": 2.6077922077922078,
+          "pass_accuracy_pct_avg": 77.17402597402598,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.407775,
+          "tempo_index": 0.084136,
+          "control_index": -0.104722,
+          "discipline_index": -1.694896,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.03646,
+        "recommended_over_2_5_delta": -0.006645,
+        "recommended_adjustment_cap": 0.03
+      },
+      "12": {
+        "league_id": 12,
+        "league_name": "Segunda Divisi\u00f3n (Spain)",
+        "sample_size": 741,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.534412955465587,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.464237516869098,
+          "shots_on_goal_per_match": 8.282051282051283,
+          "corners_per_match": 9.345479082321187,
+          "fouls_per_match": 26.39271255060729,
+          "cards_per_match": 5.221322537112011,
+          "pass_accuracy_pct_avg": 78.90283400809717,
+          "possession_gap_avg": 8.40620782726046,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.411031,
+          "tempo_index": -0.155935,
+          "control_index": 0.41112,
+          "discipline_index": 1.122489,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.069455,
+        "recommended_over_2_5_delta": -0.012757,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1402": {
+        "league_id": 1402,
+        "league_name": "Primera Divisi\u00f3n (Peru)",
+        "sample_size": 622,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6382636655948555,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.141479099678456,
+          "shots_on_goal_per_match": 8.461414790996784,
+          "corners_per_match": 8.958199356913184,
+          "fouls_per_match": 23.606109324758844,
+          "cards_per_match": 4.893890675241158,
+          "pass_accuracy_pct_avg": 76.72588424437299,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.185248,
+          "tempo_index": -0.059702,
+          "control_index": -0.118069,
+          "discipline_index": 0.625505,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.01864,
+        "recommended_over_2_5_delta": -0.003238,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1162": {
+        "league_id": 1162,
+        "league_name": "1. Lig",
+        "sample_size": 618,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7346278317152106,
+          "xg_per_match": 0.0,
+          "shots_per_match": 22.902912621359224,
+          "shots_on_goal_per_match": 8.325242718446601,
+          "corners_per_match": 8.637540453074434,
+          "fouls_per_match": 24.72653721682848,
+          "cards_per_match": 4.79126213592233,
+          "pass_accuracy_pct_avg": 78.4635922330097,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.112771,
+          "tempo_index": -0.351724,
+          "control_index": -0.066316,
+          "discipline_index": 0.59165,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.027338,
+        "recommended_over_2_5_delta": -0.004539,
+        "recommended_adjustment_cap": 0.03
+      },
+      "16": {
+        "league_id": 16,
+        "league_name": "Serie B",
+        "sample_size": 618,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4676375404530746,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.699029126213592,
+          "shots_on_goal_per_match": 8.177993527508091,
+          "corners_per_match": 9.215210355987056,
+          "fouls_per_match": 30.39644012944984,
+          "cards_per_match": 5.06957928802589,
+          "pass_accuracy_pct_avg": 78.78802588996764,
+          "possession_gap_avg": 8.525889967637541,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.501413,
+          "tempo_index": -0.178616,
+          "control_index": 0.414312,
+          "discipline_index": 1.215948,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.080659,
+        "recommended_over_2_5_delta": -0.014772,
+        "recommended_adjustment_cap": 0.03
+      },
+      "24": {
+        "league_id": 24,
+        "league_name": "Major League Soccer",
+        "sample_size": 564,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.00177304964539,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.430851063829788,
+          "shots_on_goal_per_match": 9.308510638297872,
+          "corners_per_match": 9.634751773049645,
+          "fouls_per_match": 24.391843971631207,
+          "cards_per_match": 4.3953900709219855,
+          "pass_accuracy_pct_avg": 83.38120567375887,
+          "possession_gap_avg": 7.693262411347518,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.572182,
+          "tempo_index": 0.037389,
+          "control_index": 0.505115,
+          "discipline_index": 0.176326,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.044605,
+        "recommended_over_2_5_delta": 0.007702,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1399": {
+        "league_id": 1399,
+        "league_name": "Liga Pro",
+        "sample_size": 553,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5280289330922243,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.924050632911392,
+          "shots_on_goal_per_match": 8.397830018083182,
+          "corners_per_match": 9.439421338155515,
+          "fouls_per_match": 24.01084990958409,
+          "cards_per_match": 4.775768535262206,
+          "pass_accuracy_pct_avg": 76.24231464737794,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.389735,
+          "tempo_index": -0.026286,
+          "control_index": -0.132471,
+          "discipline_index": 0.532434,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.038886,
+        "recommended_over_2_5_delta": -0.006945,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1412": {
+        "league_id": 1412,
+        "league_name": "Liga MX",
+        "sample_size": 552,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8405797101449277,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.8768115942029,
+          "shots_on_goal_per_match": 8.905797101449275,
+          "corners_per_match": 9.632246376811594,
+          "fouls_per_match": 24.304347826086957,
+          "cards_per_match": 4.733695652173913,
+          "pass_accuracy_pct_avg": 81.29166666666667,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.250454,
+          "tempo_index": 0.082239,
+          "control_index": 0.017911,
+          "discipline_index": 0.508415,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.030945,
+        "recommended_over_2_5_delta": 0.005524,
+        "recommended_adjustment_cap": 0.03
+      },
+      "30": {
+        "league_id": 30,
+        "league_name": "Eredivisie",
+        "sample_size": 517,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0735009671179885,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.940038684719536,
+          "shots_on_goal_per_match": 9.620889748549324,
+          "corners_per_match": 10.133462282398453,
+          "fouls_per_match": 21.406189555125724,
+          "cards_per_match": 3.458413926499033,
+          "pass_accuracy_pct_avg": 79.89651837524178,
+          "possession_gap_avg": 8.613152804642166,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.789823,
+          "tempo_index": 0.341506,
+          "control_index": 0.452146,
+          "discipline_index": -0.940812,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.08587,
+        "recommended_over_2_5_delta": 0.014911,
+        "recommended_adjustment_cap": 0.03
+      },
+      "32": {
+        "league_id": 32,
+        "league_name": "Jupiler Pro League",
+        "sample_size": 506,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.683794466403162,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.280632411067195,
+          "shots_on_goal_per_match": 9.061264822134387,
+          "corners_per_match": 9.99209486166008,
+          "fouls_per_match": 22.3300395256917,
+          "cards_per_match": 4.179841897233201,
+          "pass_accuracy_pct_avg": 79.1798418972332,
+          "possession_gap_avg": 8.812252964426877,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.019585,
+          "tempo_index": 0.230846,
+          "control_index": 0.4418,
+          "discipline_index": -0.164742,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.003975,
+        "recommended_over_2_5_delta": -0.001296,
+        "recommended_adjustment_cap": 0.03
+      },
+      "7": {
+        "league_id": 7,
+        "league_name": "Ligue 2 (France)",
+        "sample_size": 504,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5317460317460316,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.275793650793652,
+          "shots_on_goal_per_match": 8.18452380952381,
+          "corners_per_match": 9.353174603174603,
+          "fouls_per_match": 26.628968253968253,
+          "cards_per_match": 4.2063492063492065,
+          "pass_accuracy_pct_avg": 79.70833333333333,
+          "possession_gap_avg": 9.369047619047619,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.468145,
+          "tempo_index": -0.275409,
+          "control_index": 0.488297,
+          "discipline_index": 0.124562,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.084798,
+        "recommended_over_2_5_delta": -0.015473,
+        "recommended_adjustment_cap": 0.03
+      },
+      "20": {
+        "league_id": 20,
+        "league_name": "2. Bundesliga",
+        "sample_size": 497,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.9637826961770624,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.985915492957748,
+          "shots_on_goal_per_match": 9.154929577464788,
+          "corners_per_match": 10.323943661971832,
+          "fouls_per_match": 24.3943661971831,
+          "cards_per_match": 5.066398390342052,
+          "pass_accuracy_pct_avg": 79.76659959758551,
+          "possession_gap_avg": 8.203219315895373,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.533539,
+          "tempo_index": 0.280853,
+          "control_index": 0.425633,
+          "discipline_index": 0.84577,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.055707,
+        "recommended_over_2_5_delta": 0.009513,
+        "recommended_adjustment_cap": 0.03
+      },
+      "34": {
+        "league_id": 34,
+        "league_name": "Primeira Liga",
+        "sample_size": 491,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6476578411405294,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.087576374745417,
+          "shots_on_goal_per_match": 8.230142566191446,
+          "corners_per_match": 9.34623217922607,
+          "fouls_per_match": 28.020366598778004,
+          "cards_per_match": 5.358452138492872,
+          "pass_accuracy_pct_avg": 79.84725050916497,
+          "possession_gap_avg": 9.152749490835031,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.237816,
+          "tempo_index": -0.241507,
+          "control_index": 0.480486,
+          "discipline_index": 1.358793,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.057455,
+        "recommended_over_2_5_delta": -0.010532,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1152": {
+        "league_id": 1152,
+        "league_name": "Allsvenskan",
+        "sample_size": 484,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8326446280991737,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.109504132231404,
+          "shots_on_goal_per_match": 8.880165289256198,
+          "corners_per_match": 10.867768595041323,
+          "fouls_per_match": 24.770661157024794,
+          "cards_per_match": 3.68801652892562,
+          "pass_accuracy_pct_avg": 80.04338842975207,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.272215,
+          "tempo_index": 0.356308,
+          "control_index": -0.019266,
+          "discipline_index": -0.506072,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.04853,
+        "recommended_over_2_5_delta": 0.008449,
+        "recommended_adjustment_cap": 0.03
+      },
+      "36": {
+        "league_id": 36,
+        "league_name": "Segunda Liga",
+        "sample_size": 480,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4854166666666666,
+          "xg_per_match": 0.0,
+          "shots_per_match": 6.104166666666667,
+          "shots_on_goal_per_match": 2.3520833333333333,
+          "corners_per_match": 2.1416666666666666,
+          "fouls_per_match": 6.945833333333333,
+          "cards_per_match": 4.46875,
+          "pass_accuracy_pct_avg": 16.34375,
+          "possession_gap_avg": 41.202083333333334,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -1.97775,
+          "tempo_index": -2.307776,
+          "control_index": 0.359587,
+          "discipline_index": -0.817263,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.18,
+        "recommended_over_2_5_delta": -0.03,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1148": {
+        "league_id": 1148,
+        "league_name": "Ekstraklasa",
+        "sample_size": 480,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.779166666666667,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.5875,
+          "shots_on_goal_per_match": 8.783333333333333,
+          "corners_per_match": 9.860416666666667,
+          "fouls_per_match": 24.439583333333335,
+          "cards_per_match": 4.241666666666667,
+          "pass_accuracy_pct_avg": 79.39895833333334,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.181546,
+          "tempo_index": 0.272754,
+          "control_index": -0.038458,
+          "discipline_index": 0.025916,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.035146,
+        "recommended_over_2_5_delta": 0.006121,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1671": {
+        "league_id": 1671,
+        "league_name": "Czech Liga",
+        "sample_size": 475,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.606315789473684,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.362105263157893,
+          "shots_on_goal_per_match": 8.412631578947368,
+          "corners_per_match": 10.111578947368422,
+          "fouls_per_match": 24.36842105263158,
+          "cards_per_match": 4.197894736842105,
+          "pass_accuracy_pct_avg": 74.35052631578948,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.240102,
+          "tempo_index": 0.097465,
+          "control_index": -0.188813,
+          "discipline_index": -0.022095,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.013986,
+        "recommended_over_2_5_delta": -0.002512,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1146": {
+        "league_id": 1146,
+        "league_name": "Super Liga (Serbia)",
+        "sample_size": 465,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.81505376344086,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.954838709677418,
+          "shots_on_goal_per_match": 8.952688172043011,
+          "corners_per_match": 9.03010752688172,
+          "fouls_per_match": 30.032258064516128,
+          "cards_per_match": 4.432258064516129,
+          "pass_accuracy_pct_avg": 77.19247311827957,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.184748,
+          "tempo_index": -0.264026,
+          "control_index": -0.104173,
+          "discipline_index": 0.557991,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.011288,
+        "recommended_over_2_5_delta": 0.002416,
+        "recommended_adjustment_cap": 0.03
+      },
+      "63": {
+        "league_id": 63,
+        "league_name": "World Cup - Qualification Europe",
+        "sample_size": 433,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0993071593533488,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.64203233256351,
+          "shots_on_goal_per_match": 8.912240184757506,
+          "corners_per_match": 9.251732101616629,
+          "fouls_per_match": 23.51732101616628,
+          "cards_per_match": 3.81986143187067,
+          "pass_accuracy_pct_avg": 79.44572748267899,
+          "possession_gap_avg": 15.198614318706698,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.653269,
+          "tempo_index": -0.064032,
+          "control_index": 0.802498,
+          "discipline_index": -0.451202,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.036558,
+        "recommended_over_2_5_delta": 0.006133,
+        "recommended_adjustment_cap": 0.03
+      },
+      "26": {
+        "league_id": 26,
+        "league_name": "Pro League (Saudi-Arabia)",
+        "sample_size": 431,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.965197215777262,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.79582366589327,
+          "shots_on_goal_per_match": 9.125290023201856,
+          "corners_per_match": 9.8584686774942,
+          "fouls_per_match": 23.52204176334107,
+          "cards_per_match": 4.424593967517401,
+          "pass_accuracy_pct_avg": 82.67517401392111,
+          "possession_gap_avg": 9.45475638051044,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.461847,
+          "tempo_index": 0.034359,
+          "control_index": 0.581391,
+          "discipline_index": 0.15227,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": 0.029266,
+        "recommended_over_2_5_delta": 0.004861,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1386": {
+        "league_id": 1386,
+        "league_name": "Premier League",
+        "sample_size": 423,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.07565011820331,
+          "xg_per_match": 0.0,
+          "shots_per_match": 21.170212765957448,
+          "shots_on_goal_per_match": 6.794326241134752,
+          "corners_per_match": 8.877068557919621,
+          "fouls_per_match": 23.55791962174941,
+          "cards_per_match": 4.4349881796690305,
+          "pass_accuracy_pct_avg": 73.32505910165484,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -1.523538,
+          "tempo_index": -0.448092,
+          "control_index": -0.219354,
+          "discipline_index": 0.164831,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_goals_delta": -0.18,
+        "recommended_over_2_5_delta": -0.03,
+        "recommended_adjustment_cap": 0.03
+      },
+      "1215": {
+        "league_id": 1215,
+        "league_name": "Premier League (Russia)",
+        "sample_size": 385,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6415584415584417,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.397402597402596,
+          "shots_on_goal_per_match": 8.511688311688312,
+          "corners_per_match": 9.524675324675325,
+          "fouls_per_match": 27.11168831168831,
+          "cards_per_match": 4.6337662337662335,
+          "pass_accuracy_pct_avg": 75.27272727272727,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.16387,
+          "tempo_index": -0.064171,
+          "control_index": -0.161348,
+          "discipline_index": 0.580401,
+          "sample_confidence": 0.981071
+        },
+        "recommended_total_goals_delta": -0.014501,
+        "recommended_over_2_5_delta": -0.002453,
+        "recommended_adjustment_cap": 0.029716
+      },
+      "1298": {
+        "league_id": 1298,
+        "league_name": "Premier Division",
+        "sample_size": 369,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.3468834688346885,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.395663956639567,
+          "shots_on_goal_per_match": 8.168021680216802,
+          "corners_per_match": 9.872628726287262,
+          "fouls_per_match": 23.528455284552845,
+          "cards_per_match": 5.1138211382113825,
+          "pass_accuracy_pct_avg": 71.15311653116531,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.718431,
+          "tempo_index": 0.093313,
+          "control_index": -0.28404,
+          "discipline_index": 0.840124,
+          "sample_confidence": 0.960469
+        },
+        "recommended_total_goals_delta": -0.06051,
+        "recommended_over_2_5_delta": -0.010901,
+        "recommended_adjustment_cap": 0.029407
+      },
+      "1106": {
+        "league_id": 1106,
+        "league_name": "Super League (Switzerland)",
+        "sample_size": 366,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0956284153005464,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.887978142076502,
+          "shots_on_goal_per_match": 9.743169398907105,
+          "corners_per_match": 10.183060109289617,
+          "fouls_per_match": 24.781420765027324,
+          "cards_per_match": 4.713114754098361,
+          "pass_accuracy_pct_avg": 76.94945355191257,
+          "possession_gap_avg": 7.923497267759563,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.876226,
+          "tempo_index": 0.335553,
+          "control_index": 0.326279,
+          "discipline_index": 0.517058,
+          "sample_confidence": 0.956556
+        },
+        "recommended_total_goals_delta": 0.095762,
+        "recommended_over_2_5_delta": 0.016834,
+        "recommended_adjustment_cap": 0.029348
+      },
+      "1150": {
+        "league_id": 1150,
+        "league_name": "Superliga",
+        "sample_size": 307,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.1563517915309447,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.136807817589577,
+          "shots_on_goal_per_match": 9.342019543973942,
+          "corners_per_match": 9.889250814332248,
+          "fouls_per_match": 21.4885993485342,
+          "cards_per_match": 3.5146579804560263,
+          "pass_accuracy_pct_avg": 82.82410423452768,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.863231,
+          "tempo_index": 0.228642,
+          "control_index": 0.063551,
+          "discipline_index": -0.879673,
+          "sample_confidence": 0.876071
+        },
+        "recommended_total_goals_delta": 0.090976,
+        "recommended_over_2_5_delta": 0.016282,
+        "recommended_adjustment_cap": 0.028141
+      },
+      "1388": {
+        "league_id": 1388,
+        "league_name": "A-League",
+        "sample_size": 277,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0938628158844765,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.870036101083034,
+          "shots_on_goal_per_match": 9.505415162454874,
+          "corners_per_match": 10.03971119133574,
+          "fouls_per_match": 20.054151624548737,
+          "cards_per_match": 3.5523465703971118,
+          "pass_accuracy_pct_avg": 80.70397111913357,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.836575,
+          "tempo_index": 0.458555,
+          "control_index": 0.000408,
+          "discipline_index": -0.929792,
+          "sample_confidence": 0.832166
+        },
+        "recommended_total_goals_delta": 0.095645,
+        "recommended_over_2_5_delta": 0.016973,
+        "recommended_adjustment_cap": 0.027482
+      },
+      "1144": {
+        "league_id": 1144,
+        "league_name": "HNL",
+        "sample_size": 275,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4509090909090907,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.541818181818183,
+          "shots_on_goal_per_match": 7.5636363636363635,
+          "corners_per_match": 9.069090909090908,
+          "fouls_per_match": 25.505454545454544,
+          "cards_per_match": 4.6872727272727275,
+          "pass_accuracy_pct_avg": 77.02363636363637,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.6917,
+          "tempo_index": -0.254965,
+          "control_index": -0.109201,
+          "discipline_index": 0.535555,
+          "sample_confidence": 0.829156
+        },
+        "recommended_total_goals_delta": -0.070037,
+        "recommended_over_2_5_delta": -0.012437,
+        "recommended_adjustment_cap": 0.027437
+      },
+      "1137": {
+        "league_id": 1137,
+        "league_name": "Premiership",
+        "sample_size": 269,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7137546468401488,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.524163568773233,
+          "shots_on_goal_per_match": 8.576208178438662,
+          "corners_per_match": 10.531598513011152,
+          "fouls_per_match": 23.524163568773233,
+          "cards_per_match": 4.271375464684015,
+          "pass_accuracy_pct_avg": 75.40148698884758,
+          "possession_gap_avg": 11.54275092936803,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.026971,
+          "tempo_index": 0.196789,
+          "control_index": 0.480103,
+          "discipline_index": -0.000426,
+          "sample_confidence": 0.820061
+        },
+        "recommended_total_goals_delta": -0.010113,
+        "recommended_over_2_5_delta": -0.002301,
+        "recommended_adjustment_cap": 0.027301
+      },
+      "1112": {
+        "league_id": 1112,
+        "league_name": "Bundesliga (Austria)",
+        "sample_size": 258,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7248062015503876,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.523255813953487,
+          "shots_on_goal_per_match": 8.271317829457365,
+          "corners_per_match": 9.465116279069768,
+          "fouls_per_match": 23.065891472868216,
+          "cards_per_match": 4.903100775193798,
+          "pass_accuracy_pct_avg": 75.87209302325581,
+          "possession_gap_avg": 10.089147286821705,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.086198,
+          "tempo_index": -0.032058,
+          "control_index": 0.413822,
+          "discipline_index": 0.601659,
+          "sample_confidence": 0.803119
+        },
+        "recommended_total_goals_delta": -0.022196,
+        "recommended_over_2_5_delta": -0.004249,
+        "recommended_adjustment_cap": 0.027047
+      },
+      "1195": {
+        "league_id": 1195,
+        "league_name": "Thai League 1",
+        "sample_size": 210,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.942857142857143,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.614285714285714,
+          "shots_on_goal_per_match": 9.347619047619048,
+          "corners_per_match": 9.666666666666666,
+          "fouls_per_match": 24.65714285714286,
+          "cards_per_match": 4.314285714285714,
+          "pass_accuracy_pct_avg": 78.88095238095238,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.483505,
+          "tempo_index": 0.05118,
+          "control_index": -0.053886,
+          "discipline_index": 0.111652,
+          "sample_confidence": 0.724569
+        },
+        "recommended_total_goals_delta": 0.041953,
+        "recommended_over_2_5_delta": 0.007616,
+        "recommended_adjustment_cap": 0.025869
+      },
+      "1209": {
+        "league_id": 1209,
+        "league_name": "Super Liga (Slovakia)",
+        "sample_size": 208,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8125,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.29326923076923,
+          "shots_on_goal_per_match": 8.875,
+          "corners_per_match": 10.086538461538462,
+          "fouls_per_match": 26.25,
+          "cards_per_match": 4.3701923076923075,
+          "pass_accuracy_pct_avg": 76.12259615384616,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.211146,
+          "tempo_index": 0.125261,
+          "control_index": -0.136036,
+          "discipline_index": 0.264813,
+          "sample_confidence": 0.72111
+        },
+        "recommended_total_goals_delta": 0.025189,
+        "recommended_over_2_5_delta": 0.004553,
+        "recommended_adjustment_cap": 0.025817
+      },
+      "58": {
+        "league_id": 58,
+        "league_name": "AFC Champions League",
+        "sample_size": 196,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.9030612244897958,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.153061224489797,
+          "shots_on_goal_per_match": 8.892857142857142,
+          "corners_per_match": 9.341836734693878,
+          "fouls_per_match": 22.75,
+          "cards_per_match": 3.693877551020408,
+          "pass_accuracy_pct_avg": 81.28571428571429,
+          "possession_gap_avg": 8.678571428571429,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.332007,
+          "tempo_index": 0.020608,
+          "control_index": 0.497134,
+          "discipline_index": -0.623782,
+          "sample_confidence": 0.7
+        },
+        "recommended_total_goals_delta": 0.012366,
+        "recommended_over_2_5_delta": 0.00198,
+        "recommended_adjustment_cap": 0.0255
+      },
+      "1216": {
+        "league_id": 1216,
+        "league_name": "First League (Russia)",
+        "sample_size": 189,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.2698412698412698,
+          "xg_per_match": 0.0,
+          "shots_per_match": 0.0,
+          "shots_on_goal_per_match": 0.021164021164021163,
+          "corners_per_match": 0.031746031746031744,
+          "fouls_per_match": 0.1693121693121693,
+          "cards_per_match": 3.947089947089947,
+          "pass_accuracy_pct_avg": 0.0,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -2.892906,
+          "tempo_index": -2.974274,
+          "control_index": -2.403152,
+          "discipline_index": -1.751946,
+          "sample_confidence": 0.687386
+        },
+        "recommended_total_goals_delta": -0.18,
+        "recommended_over_2_5_delta": -0.03,
+        "recommended_adjustment_cap": 0.025311
+      },
+      "1108": {
+        "league_id": 1108,
+        "league_name": "League Cup",
+        "sample_size": 185,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0216216216216214,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.0972972972973,
+          "shots_on_goal_per_match": 8.654054054054054,
+          "corners_per_match": 9.989189189189188,
+          "fouls_per_match": 21.52972972972973,
+          "cards_per_match": 3.2864864864864867,
+          "pass_accuracy_pct_avg": 79.77027027027027,
+          "possession_gap_avg": 11.854054054054053,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.496129,
+          "tempo_index": 0.142085,
+          "control_index": 0.627412,
+          "discipline_index": -1.104745,
+          "sample_confidence": 0.680074
+        },
+        "recommended_total_goals_delta": 0.024878,
+        "recommended_over_2_5_delta": 0.004108,
+        "recommended_adjustment_cap": 0.025201
+      },
+      "1312": {
+        "league_id": 1312,
+        "league_name": "Indian Super League",
+        "sample_size": 185,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.72972972972973,
+          "shots_on_goal_per_match": 8.41081081081081,
+          "corners_per_match": 10.14054054054054,
+          "fouls_per_match": 21.237837837837837,
+          "cards_per_match": 4.762162162162162,
+          "pass_accuracy_pct_avg": 75.69459459459459,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.133284,
+          "tempo_index": 0.327579,
+          "control_index": -0.148783,
+          "discipline_index": 0.349303,
+          "sample_confidence": 0.680074
+        },
+        "recommended_total_goals_delta": 0.025157,
+        "recommended_over_2_5_delta": 0.004405,
+        "recommended_adjustment_cap": 0.025201
+      },
+      "1111": {
+        "league_id": 1111,
+        "league_name": "Euro Championship - Qualification",
+        "sample_size": 183,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8469945355191255,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.650273224043715,
+          "shots_on_goal_per_match": 8.404371584699454,
+          "corners_per_match": 8.923497267759563,
+          "fouls_per_match": 21.92896174863388,
+          "cards_per_match": 4.262295081967213,
+          "pass_accuracy_pct_avg": 78.64207650273224,
+          "possession_gap_avg": 14.87431693989071,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 0.114551,
+          "tempo_index": -0.155406,
+          "control_index": 0.76065,
+          "discipline_index": -0.107024,
+          "sample_confidence": 0.676387
+        },
+        "recommended_total_goals_delta": -0.017313,
+        "recommended_over_2_5_delta": -0.003407,
+        "recommended_adjustment_cap": 0.025146
+      },
+      "61": {
+        "league_id": 61,
+        "league_name": "UEFA Nations League",
+        "sample_size": 176,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.721590909090909,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.77840909090909,
+          "shots_on_goal_per_match": 8.619318181818182,
+          "corners_per_match": 9.051136363636363,
+          "fouls_per_match": 24.551136363636363,
+          "cards_per_match": 4.778409090909091,
+          "pass_accuracy_pct_avg": 81.92613636363636,
+          "possession_gap_avg": 10.028409090909092,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.030773,
+          "tempo_index": -0.110365,
+          "control_index": 0.590771,
+          "discipline_index": 0.568104,
+          "sample_confidence": 0.663325
+        },
+        "recommended_total_goals_delta": -0.021581,
+        "recommended_over_2_5_delta": -0.004129,
+        "recommended_adjustment_cap": 0.02495
+      },
+      "1665": {
+        "league_id": 1665,
+        "league_name": "First League",
+        "sample_size": 137,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.343065693430657,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.029197080291972,
+          "shots_on_goal_per_match": 8.24087591240876,
+          "corners_per_match": 9.481751824817518,
+          "fouls_per_match": 23.277372262773724,
+          "cards_per_match": 4.700729927007299,
+          "pass_accuracy_pct_avg": 79.26277372262774,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.789098,
+          "tempo_index": -0.178678,
+          "control_index": -0.042514,
+          "discipline_index": 0.412738,
+          "sample_confidence": 0.585235
+        },
+        "recommended_total_goals_delta": -0.055032,
+        "recommended_over_2_5_delta": -0.009874,
+        "recommended_adjustment_cap": 0.023779
+      },
+      "1409": {
+        "league_id": 1409,
+        "league_name": "Division Profesional - Clausura",
+        "sample_size": 132,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5833333333333335,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.992424242424242,
+          "shots_on_goal_per_match": 8.136363636363637,
+          "corners_per_match": 9.037878787878787,
+          "fouls_per_match": 25.477272727272727,
+          "cards_per_match": 5.659090909090909,
+          "pass_accuracy_pct_avg": 72.08712121212122,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": -0.332946,
+          "tempo_index": -0.120107,
+          "control_index": -0.256223,
+          "discipline_index": 1.50316,
+          "sample_confidence": 0.574456
+        },
+        "recommended_total_goals_delta": -0.018601,
+        "recommended_over_2_5_delta": -0.0032,
+        "recommended_adjustment_cap": 0.023617
+      },
+      "1326": {
+        "league_id": 1326,
+        "league_name": "Stars League",
+        "sample_size": 122,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.401639344262295,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.024590163934427,
+          "shots_on_goal_per_match": 10.524590163934427,
+          "corners_per_match": 10.278688524590164,
+          "fouls_per_match": 25.868852459016395,
+          "cards_per_match": 4.401639344262295,
+          "pass_accuracy_pct_avg": 82.23770491803279,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "goal_openness_index": 1.489031,
+          "tempo_index": 0.233205,
+          "control_index": 0.046086,
+          "discipline_index": 0.272873,
+          "sample_confidence": 0.552268
+        },
+        "recommended_total_goals_delta": 0.095879,
+        "recommended_over_2_5_delta": 0.017274,
+        "recommended_adjustment_cap": 0.023284
+      }
+    },
+    "cards_ou": {
+      "2": {
+        "league_id": 2,
+        "league_name": "Premier League",
+        "sample_size": 1681,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.889946460440214,
+          "xg_per_match": 3.0285858111605624,
+          "shots_per_match": 25.60083283759667,
+          "shots_on_goal_per_match": 8.889351576442595,
+          "corners_per_match": 10.252825698988698,
+          "fouls_per_match": 8.165972635336109,
+          "cards_per_match": 3.8328375966686496,
+          "pass_accuracy_pct_avg": 30.78078524687686,
+          "possession_gap_avg": 10.24330755502677,
+          "second_half_shots_per_match": 8.619869125520523
+        },
+        "indices": {
+          "discipline_index": -1.376939,
+          "tempo_index": 0.958829,
+          "control_index": -0.920591,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.144751,
+        "recommended_over_4_5_delta": -0.021229,
+        "recommended_adjustment_cap": 0.04
+      },
+      "15": {
+        "league_id": 15,
+        "league_name": "Serie A",
+        "sample_size": 1670,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.644311377245509,
+          "xg_per_match": 2.783853790378142,
+          "shots_per_match": 25.120359281437125,
+          "shots_on_goal_per_match": 8.511377245508982,
+          "corners_per_match": 9.358682634730538,
+          "fouls_per_match": 9.417365269461078,
+          "cards_per_match": 4.298203592814371,
+          "pass_accuracy_pct_avg": 30.140419161676647,
+          "possession_gap_avg": 8.566467065868263,
+          "second_half_shots_per_match": 8.676646706586826
+        },
+        "indices": {
+          "discipline_index": -0.836247,
+          "tempo_index": 0.753289,
+          "control_index": -1.03229,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.065166,
+        "recommended_over_4_5_delta": -0.008686,
+        "recommended_adjustment_cap": 0.04
+      },
+      "11": {
+        "league_id": 11,
+        "league_name": "La Liga",
+        "sample_size": 1659,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5726341169379143,
+          "xg_per_match": 2.7940226756642565,
+          "shots_per_match": 24.12959614225437,
+          "shots_on_goal_per_match": 8.258589511754069,
+          "corners_per_match": 9.491862567811935,
+          "fouls_per_match": 9.12115732368897,
+          "cards_per_match": 4.805907172995781,
+          "pass_accuracy_pct_avg": 29.640446051838456,
+          "possession_gap_avg": 9.710669077757686,
+          "second_half_shots_per_match": 8.384569017480409
+        },
+        "indices": {
+          "discipline_index": -0.347956,
+          "tempo_index": 0.67532,
+          "control_index": -0.983975,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.007612,
+        "recommended_over_4_5_delta": 0.002608,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1": {
+        "league_id": 1,
+        "league_name": "Ligue 1",
+        "sample_size": 1509,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8250497017892644,
+          "xg_per_match": 2.938215274460036,
+          "shots_per_match": 24.46653412856196,
+          "shots_on_goal_per_match": 8.849569251159709,
+          "corners_per_match": 9.447978793903248,
+          "fouls_per_match": 8.202120609675282,
+          "cards_per_match": 3.760106030483764,
+          "pass_accuracy_pct_avg": 27.907886017229952,
+          "possession_gap_avg": 9.384360503644798,
+          "second_half_shots_per_match": 8.767395626242545
+        },
+        "indices": {
+          "discipline_index": -1.447274,
+          "tempo_index": 0.743855,
+          "control_index": -1.0536,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.162763,
+        "recommended_over_4_5_delta": -0.023909,
+        "recommended_adjustment_cap": 0.04
+      },
+      "19": {
+        "league_id": 19,
+        "league_name": "Bundesliga",
+        "sample_size": 1332,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.1674174174174174,
+          "xg_per_match": 3.1637729017047196,
+          "shots_per_match": 25.88963963963964,
+          "shots_on_goal_per_match": 9.457207207207206,
+          "corners_per_match": 9.633633633633634,
+          "fouls_per_match": 8.007507507507507,
+          "cards_per_match": 3.8543543543543546,
+          "pass_accuracy_pct_avg": 29.93243243243243,
+          "possession_gap_avg": 8.17942942942943,
+          "second_half_shots_per_match": 8.726726726726726
+        },
+        "indices": {
+          "discipline_index": -1.365167,
+          "tempo_index": 0.90963,
+          "control_index": -1.059864,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.141149,
+        "recommended_over_4_5_delta": -0.020493,
+        "recommended_adjustment_cap": 0.04
+      },
+      "3": {
+        "league_id": 3,
+        "league_name": "Championship (England)",
+        "sample_size": 926,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4956803455723544,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.2548596112311,
+          "shots_on_goal_per_match": 7.815334773218143,
+          "corners_per_match": 10.184665226781858,
+          "fouls_per_match": 22.264578833693303,
+          "cards_per_match": 3.898488120950324,
+          "pass_accuracy_pct_avg": 77.42386609071275,
+          "possession_gap_avg": 9.002159827213823,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.449377,
+          "tempo_index": 0.066316,
+          "control_index": 0.399993,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.080584,
+        "recommended_over_4_5_delta": -0.013104,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1154": {
+        "league_id": 1154,
+        "league_name": "Serie A",
+        "sample_size": 772,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5038860103626943,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.435233160621763,
+          "shots_on_goal_per_match": 8.950777202072539,
+          "corners_per_match": 10.053108808290155,
+          "fouls_per_match": 26.541450777202073,
+          "cards_per_match": 5.347150259067358,
+          "pass_accuracy_pct_avg": 82.39054404145078,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 1.257089,
+          "tempo_index": 0.125265,
+          "control_index": 0.050638,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.205878,
+        "recommended_over_4_5_delta": 0.032126,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1168": {
+        "league_id": 1168,
+        "league_name": "J1 League",
+        "sample_size": 770,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5376623376623377,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.187012987012988,
+          "shots_on_goal_per_match": 8.115584415584415,
+          "corners_per_match": 9.822077922077922,
+          "fouls_per_match": 22.94935064935065,
+          "cards_per_match": 2.6077922077922078,
+          "pass_accuracy_pct_avg": 77.17402597402598,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -1.694896,
+          "tempo_index": 0.084136,
+          "control_index": -0.104722,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.263835,
+        "recommended_over_4_5_delta": -0.04,
+        "recommended_adjustment_cap": 0.04
+      },
+      "12": {
+        "league_id": 12,
+        "league_name": "Segunda Divisi\u00f3n (Spain)",
+        "sample_size": 741,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.534412955465587,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.464237516869098,
+          "shots_on_goal_per_match": 8.282051282051283,
+          "corners_per_match": 9.345479082321187,
+          "fouls_per_match": 26.39271255060729,
+          "cards_per_match": 5.221322537112011,
+          "pass_accuracy_pct_avg": 78.90283400809717,
+          "possession_gap_avg": 8.40620782726046,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 1.122489,
+          "tempo_index": -0.155935,
+          "control_index": 0.41112,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.159468,
+        "recommended_over_4_5_delta": 0.024348,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1402": {
+        "league_id": 1402,
+        "league_name": "Primera Divisi\u00f3n (Peru)",
+        "sample_size": 622,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6382636655948555,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.141479099678456,
+          "shots_on_goal_per_match": 8.461414790996784,
+          "corners_per_match": 8.958199356913184,
+          "fouls_per_match": 23.606109324758844,
+          "cards_per_match": 4.893890675241158,
+          "pass_accuracy_pct_avg": 76.72588424437299,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.625505,
+          "tempo_index": -0.059702,
+          "control_index": -0.118069,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.100638,
+        "recommended_over_4_5_delta": 0.015868,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1162": {
+        "league_id": 1162,
+        "league_name": "1. Lig",
+        "sample_size": 618,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7346278317152106,
+          "xg_per_match": 0.0,
+          "shots_per_match": 22.902912621359224,
+          "shots_on_goal_per_match": 8.325242718446601,
+          "corners_per_match": 8.637540453074434,
+          "fouls_per_match": 24.72653721682848,
+          "cards_per_match": 4.79126213592233,
+          "pass_accuracy_pct_avg": 78.4635922330097,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.59165,
+          "tempo_index": -0.351724,
+          "control_index": -0.066316,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.079067,
+        "recommended_over_4_5_delta": 0.012375,
+        "recommended_adjustment_cap": 0.04
+      },
+      "16": {
+        "league_id": 16,
+        "league_name": "Serie B",
+        "sample_size": 618,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4676375404530746,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.699029126213592,
+          "shots_on_goal_per_match": 8.177993527508091,
+          "corners_per_match": 9.215210355987056,
+          "fouls_per_match": 30.39644012944984,
+          "cards_per_match": 5.06957928802589,
+          "pass_accuracy_pct_avg": 78.78802588996764,
+          "possession_gap_avg": 8.525889967637541,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 1.215948,
+          "tempo_index": -0.178616,
+          "control_index": 0.414312,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.173192,
+        "recommended_over_4_5_delta": 0.026484,
+        "recommended_adjustment_cap": 0.04
+      },
+      "24": {
+        "league_id": 24,
+        "league_name": "Major League Soccer",
+        "sample_size": 564,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.00177304964539,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.430851063829788,
+          "shots_on_goal_per_match": 9.308510638297872,
+          "corners_per_match": 9.634751773049645,
+          "fouls_per_match": 24.391843971631207,
+          "cards_per_match": 4.3953900709219855,
+          "pass_accuracy_pct_avg": 83.38120567375887,
+          "possession_gap_avg": 7.693262411347518,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.176326,
+          "tempo_index": 0.037389,
+          "control_index": 0.505115,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.014928,
+        "recommended_over_4_5_delta": 0.001677,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1399": {
+        "league_id": 1399,
+        "league_name": "Liga Pro",
+        "sample_size": 553,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5280289330922243,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.924050632911392,
+          "shots_on_goal_per_match": 8.397830018083182,
+          "corners_per_match": 9.439421338155515,
+          "fouls_per_match": 24.01084990958409,
+          "cards_per_match": 4.775768535262206,
+          "pass_accuracy_pct_avg": 76.24231464737794,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.532434,
+          "tempo_index": -0.026286,
+          "control_index": -0.132471,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.087849,
+        "recommended_over_4_5_delta": 0.013895,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1412": {
+        "league_id": 1412,
+        "league_name": "Liga MX",
+        "sample_size": 552,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8405797101449277,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.8768115942029,
+          "shots_on_goal_per_match": 8.905797101449275,
+          "corners_per_match": 9.632246376811594,
+          "fouls_per_match": 24.304347826086957,
+          "cards_per_match": 4.733695652173913,
+          "pass_accuracy_pct_avg": 81.29166666666667,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.508415,
+          "tempo_index": 0.082239,
+          "control_index": 0.017911,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.084921,
+        "recommended_over_4_5_delta": 0.013261,
+        "recommended_adjustment_cap": 0.04
+      },
+      "30": {
+        "league_id": 30,
+        "league_name": "Eredivisie",
+        "sample_size": 517,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0735009671179885,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.940038684719536,
+          "shots_on_goal_per_match": 9.620889748549324,
+          "corners_per_match": 10.133462282398453,
+          "fouls_per_match": 21.406189555125724,
+          "cards_per_match": 3.458413926499033,
+          "pass_accuracy_pct_avg": 79.89651837524178,
+          "possession_gap_avg": 8.613152804642166,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.940812,
+          "tempo_index": 0.341506,
+          "control_index": 0.452146,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.147019,
+        "recommended_over_4_5_delta": -0.023501,
+        "recommended_adjustment_cap": 0.04
+      },
+      "32": {
+        "league_id": 32,
+        "league_name": "Jupiler Pro League",
+        "sample_size": 506,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.683794466403162,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.280632411067195,
+          "shots_on_goal_per_match": 9.061264822134387,
+          "corners_per_match": 9.99209486166008,
+          "fouls_per_match": 22.3300395256917,
+          "cards_per_match": 4.179841897233201,
+          "pass_accuracy_pct_avg": 79.1798418972332,
+          "possession_gap_avg": 8.812252964426877,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.164742,
+          "tempo_index": 0.230846,
+          "control_index": 0.4418,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.02807,
+        "recommended_over_4_5_delta": -0.004923,
+        "recommended_adjustment_cap": 0.04
+      },
+      "7": {
+        "league_id": 7,
+        "league_name": "Ligue 2 (France)",
+        "sample_size": 504,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5317460317460316,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.275793650793652,
+          "shots_on_goal_per_match": 8.18452380952381,
+          "corners_per_match": 9.353174603174603,
+          "fouls_per_match": 26.628968253968253,
+          "cards_per_match": 4.2063492063492065,
+          "pass_accuracy_pct_avg": 79.70833333333333,
+          "possession_gap_avg": 9.369047619047619,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.124562,
+          "tempo_index": -0.275409,
+          "control_index": 0.488297,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.008489,
+        "recommended_over_4_5_delta": -0.002019,
+        "recommended_adjustment_cap": 0.04
+      },
+      "20": {
+        "league_id": 20,
+        "league_name": "2. Bundesliga",
+        "sample_size": 497,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.9637826961770624,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.985915492957748,
+          "shots_on_goal_per_match": 9.154929577464788,
+          "corners_per_match": 10.323943661971832,
+          "fouls_per_match": 24.3943661971831,
+          "cards_per_match": 5.066398390342052,
+          "pass_accuracy_pct_avg": 79.76659959758551,
+          "possession_gap_avg": 8.203219315895373,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.84577,
+          "tempo_index": 0.280853,
+          "control_index": 0.425633,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.136597,
+        "recommended_over_4_5_delta": 0.020837,
+        "recommended_adjustment_cap": 0.04
+      },
+      "34": {
+        "league_id": 34,
+        "league_name": "Primeira Liga",
+        "sample_size": 491,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6476578411405294,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.087576374745417,
+          "shots_on_goal_per_match": 8.230142566191446,
+          "corners_per_match": 9.34623217922607,
+          "fouls_per_match": 28.020366598778004,
+          "cards_per_match": 5.358452138492872,
+          "pass_accuracy_pct_avg": 79.84725050916497,
+          "possession_gap_avg": 9.152749490835031,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 1.358793,
+          "tempo_index": -0.241507,
+          "control_index": 0.480486,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.190917,
+        "recommended_over_4_5_delta": 0.029155,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1152": {
+        "league_id": 1152,
+        "league_name": "Allsvenskan",
+        "sample_size": 484,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8326446280991737,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.109504132231404,
+          "shots_on_goal_per_match": 8.880165289256198,
+          "corners_per_match": 10.867768595041323,
+          "fouls_per_match": 24.770661157024794,
+          "cards_per_match": 3.68801652892562,
+          "pass_accuracy_pct_avg": 80.04338842975207,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.506072,
+          "tempo_index": 0.356308,
+          "control_index": -0.019266,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.062578,
+        "recommended_over_4_5_delta": -0.009686,
+        "recommended_adjustment_cap": 0.04
+      },
+      "36": {
+        "league_id": 36,
+        "league_name": "Segunda Liga",
+        "sample_size": 480,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4854166666666666,
+          "xg_per_match": 0.0,
+          "shots_per_match": 6.104166666666667,
+          "shots_on_goal_per_match": 2.3520833333333333,
+          "corners_per_match": 2.1416666666666666,
+          "fouls_per_match": 6.945833333333333,
+          "cards_per_match": 4.46875,
+          "pass_accuracy_pct_avg": 16.34375,
+          "possession_gap_avg": 41.202083333333334,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.817263,
+          "tempo_index": -2.307776,
+          "control_index": 0.359587,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.256938,
+        "recommended_over_4_5_delta": -0.04,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1148": {
+        "league_id": 1148,
+        "league_name": "Ekstraklasa",
+        "sample_size": 480,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.779166666666667,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.5875,
+          "shots_on_goal_per_match": 8.783333333333333,
+          "corners_per_match": 9.860416666666667,
+          "fouls_per_match": 24.439583333333335,
+          "cards_per_match": 4.241666666666667,
+          "pass_accuracy_pct_avg": 79.39895833333334,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.025916,
+          "tempo_index": 0.272754,
+          "control_index": -0.038458,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.018938,
+        "recommended_over_4_5_delta": 0.003061,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1671": {
+        "league_id": 1671,
+        "league_name": "Czech Liga",
+        "sample_size": 475,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.606315789473684,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.362105263157893,
+          "shots_on_goal_per_match": 8.412631578947368,
+          "corners_per_match": 10.111578947368422,
+          "fouls_per_match": 24.36842105263158,
+          "cards_per_match": 4.197894736842105,
+          "pass_accuracy_pct_avg": 74.35052631578948,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.022095,
+          "tempo_index": 0.097465,
+          "control_index": -0.188813,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.007002,
+        "recommended_over_4_5_delta": 0.00136,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1146": {
+        "league_id": 1146,
+        "league_name": "Super Liga (Serbia)",
+        "sample_size": 465,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.81505376344086,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.954838709677418,
+          "shots_on_goal_per_match": 8.952688172043011,
+          "corners_per_match": 9.03010752688172,
+          "fouls_per_match": 30.032258064516128,
+          "cards_per_match": 4.432258064516129,
+          "pass_accuracy_pct_avg": 77.19247311827957,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.557991,
+          "tempo_index": -0.264026,
+          "control_index": -0.104173,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.079202,
+        "recommended_over_4_5_delta": 0.012463,
+        "recommended_adjustment_cap": 0.04
+      },
+      "63": {
+        "league_id": 63,
+        "league_name": "World Cup - Qualification Europe",
+        "sample_size": 433,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0993071593533488,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.64203233256351,
+          "shots_on_goal_per_match": 8.912240184757506,
+          "corners_per_match": 9.251732101616629,
+          "fouls_per_match": 23.51732101616628,
+          "cards_per_match": 3.81986143187067,
+          "pass_accuracy_pct_avg": 79.44572748267899,
+          "possession_gap_avg": 15.198614318706698,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.451202,
+          "tempo_index": -0.064032,
+          "control_index": 0.802498,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": -0.099469,
+        "recommended_over_4_5_delta": -0.016607,
+        "recommended_adjustment_cap": 0.04
+      },
+      "26": {
+        "league_id": 26,
+        "league_name": "Pro League (Saudi-Arabia)",
+        "sample_size": 431,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.965197215777262,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.79582366589327,
+          "shots_on_goal_per_match": 9.125290023201856,
+          "corners_per_match": 9.8584686774942,
+          "fouls_per_match": 23.52204176334107,
+          "cards_per_match": 4.424593967517401,
+          "pass_accuracy_pct_avg": 82.67517401392111,
+          "possession_gap_avg": 9.45475638051044,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.15227,
+          "tempo_index": 0.034359,
+          "control_index": 0.581391,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.008639,
+        "recommended_over_4_5_delta": 0.000593,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1386": {
+        "league_id": 1386,
+        "league_name": "Premier League",
+        "sample_size": 423,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.07565011820331,
+          "xg_per_match": 0.0,
+          "shots_per_match": 21.170212765957448,
+          "shots_on_goal_per_match": 6.794326241134752,
+          "corners_per_match": 8.877068557919621,
+          "fouls_per_match": 23.55791962174941,
+          "cards_per_match": 4.4349881796690305,
+          "pass_accuracy_pct_avg": 73.32505910165484,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.164831,
+          "tempo_index": -0.448092,
+          "control_index": -0.219354,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_cards_delta": 0.010549,
+        "recommended_over_4_5_delta": 0.001852,
+        "recommended_adjustment_cap": 0.04
+      },
+      "1215": {
+        "league_id": 1215,
+        "league_name": "Premier League (Russia)",
+        "sample_size": 385,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6415584415584417,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.397402597402596,
+          "shots_on_goal_per_match": 8.511688311688312,
+          "corners_per_match": 9.524675324675325,
+          "fouls_per_match": 27.11168831168831,
+          "cards_per_match": 4.6337662337662335,
+          "pass_accuracy_pct_avg": 75.27272727272727,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.580401,
+          "tempo_index": -0.064171,
+          "control_index": -0.161348,
+          "sample_confidence": 0.981071
+        },
+        "recommended_total_cards_delta": 0.092707,
+        "recommended_over_4_5_delta": 0.014681,
+        "recommended_adjustment_cap": 0.039621
+      },
+      "1298": {
+        "league_id": 1298,
+        "league_name": "Premier Division",
+        "sample_size": 369,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.3468834688346885,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.395663956639567,
+          "shots_on_goal_per_match": 8.168021680216802,
+          "corners_per_match": 9.872628726287262,
+          "fouls_per_match": 23.528455284552845,
+          "cards_per_match": 5.1138211382113825,
+          "pass_accuracy_pct_avg": 71.15311653116531,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.840124,
+          "tempo_index": 0.093313,
+          "control_index": -0.28404,
+          "sample_confidence": 0.960469
+        },
+        "recommended_total_cards_delta": 0.141772,
+        "recommended_over_4_5_delta": 0.022527,
+        "recommended_adjustment_cap": 0.039209
+      },
+      "1106": {
+        "league_id": 1106,
+        "league_name": "Super League (Switzerland)",
+        "sample_size": 366,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0956284153005464,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.887978142076502,
+          "shots_on_goal_per_match": 9.743169398907105,
+          "corners_per_match": 10.183060109289617,
+          "fouls_per_match": 24.781420765027324,
+          "cards_per_match": 4.713114754098361,
+          "pass_accuracy_pct_avg": 76.94945355191257,
+          "possession_gap_avg": 7.923497267759563,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.517058,
+          "tempo_index": 0.335553,
+          "control_index": 0.326279,
+          "sample_confidence": 0.956556
+        },
+        "recommended_total_cards_delta": 0.085821,
+        "recommended_over_4_5_delta": 0.01306,
+        "recommended_adjustment_cap": 0.039131
+      },
+      "1150": {
+        "league_id": 1150,
+        "league_name": "Superliga",
+        "sample_size": 307,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.1563517915309447,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.136807817589577,
+          "shots_on_goal_per_match": 9.342019543973942,
+          "corners_per_match": 9.889250814332248,
+          "fouls_per_match": 21.4885993485342,
+          "cards_per_match": 3.5146579804560263,
+          "pass_accuracy_pct_avg": 82.82410423452768,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.879673,
+          "tempo_index": 0.228642,
+          "control_index": 0.063551,
+          "sample_confidence": 0.876071
+        },
+        "recommended_total_cards_delta": -0.11496,
+        "recommended_over_4_5_delta": -0.017998,
+        "recommended_adjustment_cap": 0.037521
+      },
+      "1388": {
+        "league_id": 1388,
+        "league_name": "A-League",
+        "sample_size": 277,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0938628158844765,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.870036101083034,
+          "shots_on_goal_per_match": 9.505415162454874,
+          "corners_per_match": 10.03971119133574,
+          "fouls_per_match": 20.054151624548737,
+          "cards_per_match": 3.5523465703971118,
+          "pass_accuracy_pct_avg": 80.70397111913357,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.929792,
+          "tempo_index": 0.458555,
+          "control_index": 0.000408,
+          "sample_confidence": 0.832166
+        },
+        "recommended_total_cards_delta": -0.104729,
+        "recommended_over_4_5_delta": -0.016293,
+        "recommended_adjustment_cap": 0.036643
+      },
+      "1144": {
+        "league_id": 1144,
+        "league_name": "HNL",
+        "sample_size": 275,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4509090909090907,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.541818181818183,
+          "shots_on_goal_per_match": 7.5636363636363635,
+          "corners_per_match": 9.069090909090908,
+          "fouls_per_match": 25.505454545454544,
+          "cards_per_match": 4.6872727272727275,
+          "pass_accuracy_pct_avg": 77.02363636363637,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.535555,
+          "tempo_index": -0.254965,
+          "control_index": -0.109201,
+          "sample_confidence": 0.829156
+        },
+        "recommended_total_cards_delta": 0.063195,
+        "recommended_over_4_5_delta": 0.009953,
+        "recommended_adjustment_cap": 0.036583
+      },
+      "1137": {
+        "league_id": 1137,
+        "league_name": "Premiership",
+        "sample_size": 269,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7137546468401488,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.524163568773233,
+          "shots_on_goal_per_match": 8.576208178438662,
+          "corners_per_match": 10.531598513011152,
+          "fouls_per_match": 23.524163568773233,
+          "cards_per_match": 4.271375464684015,
+          "pass_accuracy_pct_avg": 75.40148698884758,
+          "possession_gap_avg": 11.54275092936803,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.000426,
+          "tempo_index": 0.196789,
+          "control_index": 0.480103,
+          "sample_confidence": 0.820061
+        },
+        "recommended_total_cards_delta": -0.003798,
+        "recommended_over_4_5_delta": -0.00108,
+        "recommended_adjustment_cap": 0.036401
+      },
+      "1112": {
+        "league_id": 1112,
+        "league_name": "Bundesliga (Austria)",
+        "sample_size": 258,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7248062015503876,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.523255813953487,
+          "shots_on_goal_per_match": 8.271317829457365,
+          "corners_per_match": 9.465116279069768,
+          "fouls_per_match": 23.065891472868216,
+          "cards_per_match": 4.903100775193798,
+          "pass_accuracy_pct_avg": 75.87209302325581,
+          "possession_gap_avg": 10.089147286821705,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.601659,
+          "tempo_index": -0.032058,
+          "control_index": 0.413822,
+          "sample_confidence": 0.803119
+        },
+        "recommended_total_cards_delta": 0.066055,
+        "recommended_over_4_5_delta": 0.00988,
+        "recommended_adjustment_cap": 0.036062
+      },
+      "1195": {
+        "league_id": 1195,
+        "league_name": "Thai League 1",
+        "sample_size": 210,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.942857142857143,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.614285714285714,
+          "shots_on_goal_per_match": 9.347619047619048,
+          "corners_per_match": 9.666666666666666,
+          "fouls_per_match": 24.65714285714286,
+          "cards_per_match": 4.314285714285714,
+          "pass_accuracy_pct_avg": 78.88095238095238,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.111652,
+          "tempo_index": 0.05118,
+          "control_index": -0.053886,
+          "sample_confidence": 0.724569
+        },
+        "recommended_total_cards_delta": 0.015969,
+        "recommended_over_4_5_delta": 0.002553,
+        "recommended_adjustment_cap": 0.034491
+      },
+      "1209": {
+        "league_id": 1209,
+        "league_name": "Super Liga (Slovakia)",
+        "sample_size": 208,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8125,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.29326923076923,
+          "shots_on_goal_per_match": 8.875,
+          "corners_per_match": 10.086538461538462,
+          "fouls_per_match": 26.25,
+          "cards_per_match": 4.3701923076923075,
+          "pass_accuracy_pct_avg": 76.12259615384616,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.264813,
+          "tempo_index": 0.125261,
+          "control_index": -0.136036,
+          "sample_confidence": 0.72111
+        },
+        "recommended_total_cards_delta": 0.038013,
+        "recommended_over_4_5_delta": 0.006085,
+        "recommended_adjustment_cap": 0.034422
+      },
+      "58": {
+        "league_id": 58,
+        "league_name": "AFC Champions League",
+        "sample_size": 196,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.9030612244897958,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.153061224489797,
+          "shots_on_goal_per_match": 8.892857142857142,
+          "corners_per_match": 9.341836734693878,
+          "fouls_per_match": 22.75,
+          "cards_per_match": 3.693877551020408,
+          "pass_accuracy_pct_avg": 81.28571428571429,
+          "possession_gap_avg": 8.678571428571429,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.623782,
+          "tempo_index": 0.020608,
+          "control_index": 0.497134,
+          "sample_confidence": 0.7
+        },
+        "recommended_total_cards_delta": -0.079582,
+        "recommended_over_4_5_delta": -0.012889,
+        "recommended_adjustment_cap": 0.034
+      },
+      "1216": {
+        "league_id": 1216,
+        "league_name": "First League (Russia)",
+        "sample_size": 189,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.2698412698412698,
+          "xg_per_match": 0.0,
+          "shots_per_match": 0.0,
+          "shots_on_goal_per_match": 0.021164021164021163,
+          "corners_per_match": 0.031746031746031744,
+          "fouls_per_match": 0.1693121693121693,
+          "cards_per_match": 3.947089947089947,
+          "pass_accuracy_pct_avg": 0.0,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -1.751946,
+          "tempo_index": -2.974274,
+          "control_index": -2.403152,
+          "sample_confidence": 0.687386
+        },
+        "recommended_total_cards_delta": -0.245349,
+        "recommended_over_4_5_delta": -0.036551,
+        "recommended_adjustment_cap": 0.033748
+      },
+      "1108": {
+        "league_id": 1108,
+        "league_name": "League Cup",
+        "sample_size": 185,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0216216216216214,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.0972972972973,
+          "shots_on_goal_per_match": 8.654054054054054,
+          "corners_per_match": 9.989189189189188,
+          "fouls_per_match": 21.52972972972973,
+          "cards_per_match": 3.2864864864864867,
+          "pass_accuracy_pct_avg": 79.77027027027027,
+          "possession_gap_avg": 11.854054054054053,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -1.104745,
+          "tempo_index": 0.142085,
+          "control_index": 0.627412,
+          "sample_confidence": 0.680074
+        },
+        "recommended_total_cards_delta": -0.128178,
+        "recommended_over_4_5_delta": -0.02057,
+        "recommended_adjustment_cap": 0.033601
+      },
+      "1312": {
+        "league_id": 1312,
+        "league_name": "Indian Super League",
+        "sample_size": 185,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.72972972972973,
+          "shots_on_goal_per_match": 8.41081081081081,
+          "corners_per_match": 10.14054054054054,
+          "fouls_per_match": 21.237837837837837,
+          "cards_per_match": 4.762162162162162,
+          "pass_accuracy_pct_avg": 75.69459459459459,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.349303,
+          "tempo_index": 0.327579,
+          "control_index": -0.148783,
+          "sample_confidence": 0.680074
+        },
+        "recommended_total_cards_delta": 0.052183,
+        "recommended_over_4_5_delta": 0.008328,
+        "recommended_adjustment_cap": 0.033601
+      },
+      "1111": {
+        "league_id": 1111,
+        "league_name": "Euro Championship - Qualification",
+        "sample_size": 183,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8469945355191255,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.650273224043715,
+          "shots_on_goal_per_match": 8.404371584699454,
+          "corners_per_match": 8.923497267759563,
+          "fouls_per_match": 21.92896174863388,
+          "cards_per_match": 4.262295081967213,
+          "pass_accuracy_pct_avg": 78.64207650273224,
+          "possession_gap_avg": 14.87431693989071,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": -0.107024,
+          "tempo_index": -0.155406,
+          "control_index": 0.76065,
+          "sample_confidence": 0.676387
+        },
+        "recommended_total_cards_delta": -0.032273,
+        "recommended_over_4_5_delta": -0.005738,
+        "recommended_adjustment_cap": 0.033528
+      },
+      "61": {
+        "league_id": 61,
+        "league_name": "UEFA Nations League",
+        "sample_size": 176,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.721590909090909,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.77840909090909,
+          "shots_on_goal_per_match": 8.619318181818182,
+          "corners_per_match": 9.051136363636363,
+          "fouls_per_match": 24.551136363636363,
+          "cards_per_match": 4.778409090909091,
+          "pass_accuracy_pct_avg": 81.92613636363636,
+          "possession_gap_avg": 10.028409090909092,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.568104,
+          "tempo_index": -0.110365,
+          "control_index": 0.590771,
+          "sample_confidence": 0.663325
+        },
+        "recommended_total_cards_delta": 0.044877,
+        "recommended_over_4_5_delta": 0.006484,
+        "recommended_adjustment_cap": 0.033266
+      },
+      "1665": {
+        "league_id": 1665,
+        "league_name": "First League",
+        "sample_size": 137,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.343065693430657,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.029197080291972,
+          "shots_on_goal_per_match": 8.24087591240876,
+          "corners_per_match": 9.481751824817518,
+          "fouls_per_match": 23.277372262773724,
+          "cards_per_match": 4.700729927007299,
+          "pass_accuracy_pct_avg": 79.26277372262774,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.412738,
+          "tempo_index": -0.178678,
+          "control_index": -0.042514,
+          "sample_confidence": 0.585235
+        },
+        "recommended_total_cards_delta": 0.034166,
+        "recommended_over_4_5_delta": 0.005351,
+        "recommended_adjustment_cap": 0.031705
+      },
+      "1409": {
+        "league_id": 1409,
+        "league_name": "Division Profesional - Clausura",
+        "sample_size": 132,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5833333333333335,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.992424242424242,
+          "shots_on_goal_per_match": 8.136363636363637,
+          "corners_per_match": 9.037878787878787,
+          "fouls_per_match": 25.477272727272727,
+          "cards_per_match": 5.659090909090909,
+          "pass_accuracy_pct_avg": 72.08712121212122,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 1.50316,
+          "tempo_index": -0.120107,
+          "control_index": -0.256223,
+          "sample_confidence": 0.574456
+        },
+        "recommended_total_cards_delta": 0.139126,
+        "recommended_over_4_5_delta": 0.021919,
+        "recommended_adjustment_cap": 0.031489
+      },
+      "1326": {
+        "league_id": 1326,
+        "league_name": "Stars League",
+        "sample_size": 122,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.401639344262295,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.024590163934427,
+          "shots_on_goal_per_match": 10.524590163934427,
+          "corners_per_match": 10.278688524590164,
+          "fouls_per_match": 25.868852459016395,
+          "cards_per_match": 4.401639344262295,
+          "pass_accuracy_pct_avg": 82.23770491803279,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "discipline_index": 0.272873,
+          "tempo_index": 0.233205,
+          "control_index": 0.046086,
+          "sample_confidence": 0.552268
+        },
+        "recommended_total_cards_delta": 0.029788,
+        "recommended_over_4_5_delta": 0.004645,
+        "recommended_adjustment_cap": 0.031045
+      }
+    },
+    "corners_ou": {
+      "2": {
+        "league_id": 2,
+        "league_name": "Premier League",
+        "sample_size": 1681,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.889946460440214,
+          "xg_per_match": 3.0285858111605624,
+          "shots_per_match": 25.60083283759667,
+          "shots_on_goal_per_match": 8.889351576442595,
+          "corners_per_match": 10.252825698988698,
+          "fouls_per_match": 8.165972635336109,
+          "cards_per_match": 3.8328375966686496,
+          "pass_accuracy_pct_avg": 30.78078524687686,
+          "possession_gap_avg": 10.24330755502677,
+          "second_half_shots_per_match": 8.619869125520523
+        },
+        "indices": {
+          "corner_pressure_index": 0.536771,
+          "tempo_index": 0.958829,
+          "control_index": -0.920591,
+          "goal_openness_index": 0.823546,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.222414,
+        "recommended_over_9_5_delta": 0.030141,
+        "recommended_adjustment_cap": 0.035
+      },
+      "15": {
+        "league_id": 15,
+        "league_name": "Serie A",
+        "sample_size": 1670,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.644311377245509,
+          "xg_per_match": 2.783853790378142,
+          "shots_per_match": 25.120359281437125,
+          "shots_on_goal_per_match": 8.511377245508982,
+          "corners_per_match": 9.358682634730538,
+          "fouls_per_match": 9.417365269461078,
+          "cards_per_match": 4.298203592814371,
+          "pass_accuracy_pct_avg": 30.140419161676647,
+          "possession_gap_avg": 8.566467065868263,
+          "second_half_shots_per_match": 8.676646706586826
+        },
+        "indices": {
+          "corner_pressure_index": 0.248698,
+          "tempo_index": 0.753289,
+          "control_index": -1.03229,
+          "goal_openness_index": 0.291749,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.145945,
+        "recommended_over_9_5_delta": 0.02069,
+        "recommended_adjustment_cap": 0.035
+      },
+      "11": {
+        "league_id": 11,
+        "league_name": "La Liga",
+        "sample_size": 1659,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5726341169379143,
+          "xg_per_match": 2.7940226756642565,
+          "shots_per_match": 24.12959614225437,
+          "shots_on_goal_per_match": 8.258589511754069,
+          "corners_per_match": 9.491862567811935,
+          "fouls_per_match": 9.12115732368897,
+          "cards_per_match": 4.805907172995781,
+          "pass_accuracy_pct_avg": 29.640446051838456,
+          "possession_gap_avg": 9.710669077757686,
+          "second_half_shots_per_match": 8.384569017480409
+        },
+        "indices": {
+          "corner_pressure_index": 0.201813,
+          "tempo_index": 0.67532,
+          "control_index": -0.983975,
+          "goal_openness_index": 0.101391,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.127944,
+        "recommended_over_9_5_delta": 0.018308,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1": {
+        "league_id": 1,
+        "league_name": "Ligue 1",
+        "sample_size": 1509,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8250497017892644,
+          "xg_per_match": 2.938215274460036,
+          "shots_per_match": 24.46653412856196,
+          "shots_on_goal_per_match": 8.849569251159709,
+          "corners_per_match": 9.447978793903248,
+          "fouls_per_match": 8.202120609675282,
+          "cards_per_match": 3.760106030483764,
+          "pass_accuracy_pct_avg": 27.907886017229952,
+          "possession_gap_avg": 9.384360503644798,
+          "second_half_shots_per_match": 8.767395626242545
+        },
+        "indices": {
+          "corner_pressure_index": 0.27316,
+          "tempo_index": 0.743855,
+          "control_index": -1.0536,
+          "goal_openness_index": 0.655897,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.151211,
+        "recommended_over_9_5_delta": 0.021409,
+        "recommended_adjustment_cap": 0.035
+      },
+      "19": {
+        "league_id": 19,
+        "league_name": "Bundesliga",
+        "sample_size": 1332,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.1674174174174174,
+          "xg_per_match": 3.1637729017047196,
+          "shots_per_match": 25.88963963963964,
+          "shots_on_goal_per_match": 9.457207207207206,
+          "corners_per_match": 9.633633633633634,
+          "fouls_per_match": 8.007507507507507,
+          "cards_per_match": 3.8543543543543546,
+          "pass_accuracy_pct_avg": 29.93243243243243,
+          "possession_gap_avg": 8.17942942942943,
+          "second_half_shots_per_match": 8.726726726726726
+        },
+        "indices": {
+          "corner_pressure_index": 0.456247,
+          "tempo_index": 0.90963,
+          "control_index": -1.059864,
+          "goal_openness_index": 1.414241,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.204941,
+        "recommended_over_9_5_delta": 0.02823,
+        "recommended_adjustment_cap": 0.035
+      },
+      "3": {
+        "league_id": 3,
+        "league_name": "Championship (England)",
+        "sample_size": 926,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4956803455723544,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.2548596112311,
+          "shots_on_goal_per_match": 7.815334773218143,
+          "corners_per_match": 10.184665226781858,
+          "fouls_per_match": 22.264578833693303,
+          "cards_per_match": 3.898488120950324,
+          "pass_accuracy_pct_avg": 77.42386609071275,
+          "possession_gap_avg": 9.002159827213823,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.124383,
+          "tempo_index": 0.066316,
+          "control_index": 0.399993,
+          "goal_openness_index": -0.554525,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.02067,
+        "recommended_over_9_5_delta": 0.001746,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1154": {
+        "league_id": 1154,
+        "league_name": "Serie A",
+        "sample_size": 772,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5038860103626943,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.435233160621763,
+          "shots_on_goal_per_match": 8.950777202072539,
+          "corners_per_match": 10.053108808290155,
+          "fouls_per_match": 26.541450777202073,
+          "cards_per_match": 5.347150259067358,
+          "pass_accuracy_pct_avg": 82.39054404145078,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.36625,
+          "tempo_index": 0.125265,
+          "control_index": 0.050638,
+          "goal_openness_index": -0.298975,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.089077,
+        "recommended_over_9_5_delta": 0.011204,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1168": {
+        "league_id": 1168,
+        "league_name": "J1 League",
+        "sample_size": 770,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5376623376623377,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.187012987012988,
+          "shots_on_goal_per_match": 8.115584415584415,
+          "corners_per_match": 9.822077922077922,
+          "fouls_per_match": 22.94935064935065,
+          "cards_per_match": 2.6077922077922078,
+          "pass_accuracy_pct_avg": 77.17402597402598,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.186641,
+          "tempo_index": 0.084136,
+          "control_index": -0.104722,
+          "goal_openness_index": -0.407775,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.050934,
+        "recommended_over_9_5_delta": 0.006696,
+        "recommended_adjustment_cap": 0.035
+      },
+      "12": {
+        "league_id": 12,
+        "league_name": "Segunda Divisi\u00f3n (Spain)",
+        "sample_size": 741,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.534412955465587,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.464237516869098,
+          "shots_on_goal_per_match": 8.282051282051283,
+          "corners_per_match": 9.345479082321187,
+          "fouls_per_match": 26.39271255060729,
+          "cards_per_match": 5.221322537112011,
+          "pass_accuracy_pct_avg": 78.90283400809717,
+          "possession_gap_avg": 8.40620782726046,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.055943,
+          "tempo_index": -0.155935,
+          "control_index": 0.41112,
+          "goal_openness_index": -0.411031,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.037116,
+        "recommended_over_9_5_delta": -0.005592,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1402": {
+        "league_id": 1402,
+        "league_name": "Primera Divisi\u00f3n (Peru)",
+        "sample_size": 622,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6382636655948555,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.141479099678456,
+          "shots_on_goal_per_match": 8.461414790996784,
+          "corners_per_match": 8.958199356913184,
+          "fouls_per_match": 23.606109324758844,
+          "cards_per_match": 4.893890675241158,
+          "pass_accuracy_pct_avg": 76.72588424437299,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.020858,
+          "tempo_index": -0.059702,
+          "control_index": -0.118069,
+          "goal_openness_index": -0.185248,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.005823,
+        "recommended_over_9_5_delta": -0.000473,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1162": {
+        "league_id": 1162,
+        "league_name": "1. Lig",
+        "sample_size": 618,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7346278317152106,
+          "xg_per_match": 0.0,
+          "shots_per_match": 22.902912621359224,
+          "shots_on_goal_per_match": 8.325242718446601,
+          "corners_per_match": 8.637540453074434,
+          "fouls_per_match": 24.72653721682848,
+          "cards_per_match": 4.79126213592233,
+          "pass_accuracy_pct_avg": 78.4635922330097,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.249281,
+          "tempo_index": -0.351724,
+          "control_index": -0.066316,
+          "goal_openness_index": -0.112771,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.08099,
+        "recommended_over_9_5_delta": -0.010099,
+        "recommended_adjustment_cap": 0.035
+      },
+      "16": {
+        "league_id": 16,
+        "league_name": "Serie B",
+        "sample_size": 618,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4676375404530746,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.699029126213592,
+          "shots_on_goal_per_match": 8.177993527508091,
+          "corners_per_match": 9.215210355987056,
+          "fouls_per_match": 30.39644012944984,
+          "cards_per_match": 5.06957928802589,
+          "pass_accuracy_pct_avg": 78.78802588996764,
+          "possession_gap_avg": 8.525889967637541,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.036565,
+          "tempo_index": -0.178616,
+          "control_index": 0.414312,
+          "goal_openness_index": -0.501413,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.034763,
+        "recommended_over_9_5_delta": -0.005296,
+        "recommended_adjustment_cap": 0.035
+      },
+      "24": {
+        "league_id": 24,
+        "league_name": "Major League Soccer",
+        "sample_size": 564,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.00177304964539,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.430851063829788,
+          "shots_on_goal_per_match": 9.308510638297872,
+          "corners_per_match": 9.634751773049645,
+          "fouls_per_match": 24.391843971631207,
+          "cards_per_match": 4.3953900709219855,
+          "pass_accuracy_pct_avg": 83.38120567375887,
+          "possession_gap_avg": 7.693262411347518,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.152694,
+          "tempo_index": 0.037389,
+          "control_index": 0.505115,
+          "goal_openness_index": 0.572182,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.02143,
+        "recommended_over_9_5_delta": 0.001619,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1399": {
+        "league_id": 1399,
+        "league_name": "Liga Pro",
+        "sample_size": 553,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5280289330922243,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.924050632911392,
+          "shots_on_goal_per_match": 8.397830018083182,
+          "corners_per_match": 9.439421338155515,
+          "fouls_per_match": 24.01084990958409,
+          "cards_per_match": 4.775768535262206,
+          "pass_accuracy_pct_avg": 76.24231464737794,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.097328,
+          "tempo_index": -0.026286,
+          "control_index": -0.132471,
+          "goal_openness_index": -0.389735,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.023283,
+        "recommended_over_9_5_delta": 0.003257,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1412": {
+        "league_id": 1412,
+        "league_name": "Liga MX",
+        "sample_size": 552,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8405797101449277,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.8768115942029,
+          "shots_on_goal_per_match": 8.905797101449275,
+          "corners_per_match": 9.632246376811594,
+          "fouls_per_match": 24.304347826086957,
+          "cards_per_match": 4.733695652173913,
+          "pass_accuracy_pct_avg": 81.29166666666667,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.221784,
+          "tempo_index": 0.082239,
+          "control_index": 0.017911,
+          "goal_openness_index": 0.250454,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.054834,
+        "recommended_over_9_5_delta": 0.006925,
+        "recommended_adjustment_cap": 0.035
+      },
+      "30": {
+        "league_id": 30,
+        "league_name": "Eredivisie",
+        "sample_size": 517,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0735009671179885,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.940038684719536,
+          "shots_on_goal_per_match": 9.620889748549324,
+          "corners_per_match": 10.133462282398453,
+          "fouls_per_match": 21.406189555125724,
+          "cards_per_match": 3.458413926499033,
+          "pass_accuracy_pct_avg": 79.89651837524178,
+          "possession_gap_avg": 8.613152804642166,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.407954,
+          "tempo_index": 0.341506,
+          "control_index": 0.452146,
+          "goal_openness_index": 0.789823,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.103506,
+        "recommended_over_9_5_delta": 0.012125,
+        "recommended_adjustment_cap": 0.035
+      },
+      "32": {
+        "league_id": 32,
+        "league_name": "Jupiler Pro League",
+        "sample_size": 506,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.683794466403162,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.280632411067195,
+          "shots_on_goal_per_match": 9.061264822134387,
+          "corners_per_match": 9.99209486166008,
+          "fouls_per_match": 22.3300395256917,
+          "cards_per_match": 4.179841897233201,
+          "pass_accuracy_pct_avg": 79.1798418972332,
+          "possession_gap_avg": 8.812252964426877,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.284758,
+          "tempo_index": 0.230846,
+          "control_index": 0.4418,
+          "goal_openness_index": 0.019585,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.06786,
+        "recommended_over_9_5_delta": 0.007631,
+        "recommended_adjustment_cap": 0.035
+      },
+      "7": {
+        "league_id": 7,
+        "league_name": "Ligue 2 (France)",
+        "sample_size": 504,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5317460317460316,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.275793650793652,
+          "shots_on_goal_per_match": 8.18452380952381,
+          "corners_per_match": 9.353174603174603,
+          "fouls_per_match": 26.628968253968253,
+          "cards_per_match": 4.2063492063492065,
+          "pass_accuracy_pct_avg": 79.70833333333333,
+          "possession_gap_avg": 9.369047619047619,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.138764,
+          "tempo_index": -0.275409,
+          "control_index": 0.488297,
+          "goal_openness_index": -0.468145,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.06721,
+        "recommended_over_9_5_delta": -0.009569,
+        "recommended_adjustment_cap": 0.035
+      },
+      "20": {
+        "league_id": 20,
+        "league_name": "2. Bundesliga",
+        "sample_size": 497,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.9637826961770624,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.985915492957748,
+          "shots_on_goal_per_match": 9.154929577464788,
+          "corners_per_match": 10.323943661971832,
+          "fouls_per_match": 24.3943661971831,
+          "cards_per_match": 5.066398390342052,
+          "pass_accuracy_pct_avg": 79.76659959758551,
+          "possession_gap_avg": 8.203219315895373,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.425138,
+          "tempo_index": 0.280853,
+          "control_index": 0.425633,
+          "goal_openness_index": 0.533539,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.10323,
+        "recommended_over_9_5_delta": 0.012159,
+        "recommended_adjustment_cap": 0.035
+      },
+      "34": {
+        "league_id": 34,
+        "league_name": "Primeira Liga",
+        "sample_size": 491,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6476578411405294,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.087576374745417,
+          "shots_on_goal_per_match": 8.230142566191446,
+          "corners_per_match": 9.34623217922607,
+          "fouls_per_match": 28.020366598778004,
+          "cards_per_match": 5.358452138492872,
+          "pass_accuracy_pct_avg": 79.84725050916497,
+          "possession_gap_avg": 9.152749490835031,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.092203,
+          "tempo_index": -0.241507,
+          "control_index": 0.480486,
+          "goal_openness_index": -0.237816,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.05402,
+        "recommended_over_9_5_delta": -0.00788,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1152": {
+        "league_id": 1152,
+        "league_name": "Allsvenskan",
+        "sample_size": 484,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8326446280991737,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.109504132231404,
+          "shots_on_goal_per_match": 8.880165289256198,
+          "corners_per_match": 10.867768595041323,
+          "fouls_per_match": 24.770661157024794,
+          "cards_per_match": 3.68801652892562,
+          "pass_accuracy_pct_avg": 80.04338842975207,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.63265,
+          "tempo_index": 0.356308,
+          "control_index": -0.019266,
+          "goal_openness_index": 0.272215,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.168266,
+        "recommended_over_9_5_delta": 0.021393,
+        "recommended_adjustment_cap": 0.035
+      },
+      "36": {
+        "league_id": 36,
+        "league_name": "Segunda Liga",
+        "sample_size": 480,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4854166666666666,
+          "xg_per_match": 0.0,
+          "shots_per_match": 6.104166666666667,
+          "shots_on_goal_per_match": 2.3520833333333333,
+          "corners_per_match": 2.1416666666666666,
+          "fouls_per_match": 6.945833333333333,
+          "cards_per_match": 4.46875,
+          "pass_accuracy_pct_avg": 16.34375,
+          "possession_gap_avg": 41.202083333333334,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -3.551158,
+          "tempo_index": -2.307776,
+          "control_index": 0.359587,
+          "goal_openness_index": -1.97775,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.6,
+        "recommended_over_9_5_delta": -0.035,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1148": {
+        "league_id": 1148,
+        "league_name": "Ekstraklasa",
+        "sample_size": 480,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.779166666666667,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.5875,
+          "shots_on_goal_per_match": 8.783333333333333,
+          "corners_per_match": 9.860416666666667,
+          "fouls_per_match": 24.439583333333335,
+          "cards_per_match": 4.241666666666667,
+          "pass_accuracy_pct_avg": 79.39895833333334,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.373916,
+          "tempo_index": 0.272754,
+          "control_index": -0.038458,
+          "goal_openness_index": 0.181546,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.105236,
+        "recommended_over_9_5_delta": 0.013428,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1671": {
+        "league_id": 1671,
+        "league_name": "Czech Liga",
+        "sample_size": 475,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.606315789473684,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.362105263157893,
+          "shots_on_goal_per_match": 8.412631578947368,
+          "corners_per_match": 10.111578947368422,
+          "fouls_per_match": 24.36842105263158,
+          "cards_per_match": 4.197894736842105,
+          "pass_accuracy_pct_avg": 74.35052631578948,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.317288,
+          "tempo_index": 0.097465,
+          "control_index": -0.188813,
+          "goal_openness_index": -0.240102,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.083265,
+        "recommended_over_9_5_delta": 0.010992,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1146": {
+        "league_id": 1146,
+        "league_name": "Super Liga (Serbia)",
+        "sample_size": 465,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.81505376344086,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.954838709677418,
+          "shots_on_goal_per_match": 8.952688172043011,
+          "corners_per_match": 9.03010752688172,
+          "fouls_per_match": 30.032258064516128,
+          "cards_per_match": 4.432258064516129,
+          "pass_accuracy_pct_avg": 77.19247311827957,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.031494,
+          "tempo_index": -0.264026,
+          "control_index": -0.104173,
+          "goal_openness_index": 0.184748,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.011068,
+        "recommended_over_9_5_delta": -0.001133,
+        "recommended_adjustment_cap": 0.035
+      },
+      "63": {
+        "league_id": 63,
+        "league_name": "World Cup - Qualification Europe",
+        "sample_size": 433,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0993071593533488,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.64203233256351,
+          "shots_on_goal_per_match": 8.912240184757506,
+          "corners_per_match": 9.251732101616629,
+          "fouls_per_match": 23.51732101616628,
+          "cards_per_match": 3.81986143187067,
+          "pass_accuracy_pct_avg": 79.44572748267899,
+          "possession_gap_avg": 15.198614318706698,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.081606,
+          "tempo_index": -0.064032,
+          "control_index": 0.802498,
+          "goal_openness_index": 0.653269,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.047151,
+        "recommended_over_9_5_delta": -0.00774,
+        "recommended_adjustment_cap": 0.035
+      },
+      "26": {
+        "league_id": 26,
+        "league_name": "Pro League (Saudi-Arabia)",
+        "sample_size": 431,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.965197215777262,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.79582366589327,
+          "shots_on_goal_per_match": 9.125290023201856,
+          "corners_per_match": 9.8584686774942,
+          "fouls_per_match": 23.52204176334107,
+          "cards_per_match": 4.424593967517401,
+          "pass_accuracy_pct_avg": 82.67517401392111,
+          "possession_gap_avg": 9.45475638051044,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.151263,
+          "tempo_index": 0.034359,
+          "control_index": 0.581391,
+          "goal_openness_index": 0.461847,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": 0.018585,
+        "recommended_over_9_5_delta": 0.001091,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1386": {
+        "league_id": 1386,
+        "league_name": "Premier League",
+        "sample_size": 423,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.07565011820331,
+          "xg_per_match": 0.0,
+          "shots_per_match": 21.170212765957448,
+          "shots_on_goal_per_match": 6.794326241134752,
+          "corners_per_match": 8.877068557919621,
+          "fouls_per_match": 23.55791962174941,
+          "cards_per_match": 4.4349881796690305,
+          "pass_accuracy_pct_avg": 73.32505910165484,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.388184,
+          "tempo_index": -0.448092,
+          "control_index": -0.219354,
+          "goal_openness_index": -1.523538,
+          "sample_confidence": 1.0
+        },
+        "recommended_total_corners_delta": -0.114667,
+        "recommended_over_9_5_delta": -0.014034,
+        "recommended_adjustment_cap": 0.035
+      },
+      "1215": {
+        "league_id": 1215,
+        "league_name": "Premier League (Russia)",
+        "sample_size": 385,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.6415584415584417,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.397402597402596,
+          "shots_on_goal_per_match": 8.511688311688312,
+          "corners_per_match": 9.524675324675325,
+          "fouls_per_match": 27.11168831168831,
+          "cards_per_match": 4.6337662337662335,
+          "pass_accuracy_pct_avg": 75.27272727272727,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.161245,
+          "tempo_index": -0.064171,
+          "control_index": -0.161348,
+          "goal_openness_index": -0.16387,
+          "sample_confidence": 0.981071
+        },
+        "recommended_total_corners_delta": 0.034515,
+        "recommended_over_9_5_delta": 0.004841,
+        "recommended_adjustment_cap": 0.034716
+      },
+      "1298": {
+        "league_id": 1298,
+        "league_name": "Premier Division",
+        "sample_size": 369,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.3468834688346885,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.395663956639567,
+          "shots_on_goal_per_match": 8.168021680216802,
+          "corners_per_match": 9.872628726287262,
+          "fouls_per_match": 23.528455284552845,
+          "cards_per_match": 5.1138211382113825,
+          "pass_accuracy_pct_avg": 71.15311653116531,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.246924,
+          "tempo_index": 0.093313,
+          "control_index": -0.28404,
+          "goal_openness_index": -0.718431,
+          "sample_confidence": 0.960469
+        },
+        "recommended_total_corners_delta": 0.06753,
+        "recommended_over_9_5_delta": 0.009551,
+        "recommended_adjustment_cap": 0.034407
+      },
+      "1106": {
+        "league_id": 1106,
+        "league_name": "Super League (Switzerland)",
+        "sample_size": 366,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0956284153005464,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.887978142076502,
+          "shots_on_goal_per_match": 9.743169398907105,
+          "corners_per_match": 10.183060109289617,
+          "fouls_per_match": 24.781420765027324,
+          "cards_per_match": 4.713114754098361,
+          "pass_accuracy_pct_avg": 76.94945355191257,
+          "possession_gap_avg": 7.923497267759563,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.504406,
+          "tempo_index": 0.335553,
+          "control_index": 0.326279,
+          "goal_openness_index": 0.876226,
+          "sample_confidence": 0.956556
+        },
+        "recommended_total_corners_delta": 0.122463,
+        "recommended_over_9_5_delta": 0.015521,
+        "recommended_adjustment_cap": 0.034348
+      },
+      "1150": {
+        "league_id": 1150,
+        "league_name": "Superliga",
+        "sample_size": 307,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.1563517915309447,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.136807817589577,
+          "shots_on_goal_per_match": 9.342019543973942,
+          "corners_per_match": 9.889250814332248,
+          "fouls_per_match": 21.4885993485342,
+          "cards_per_match": 3.5146579804560263,
+          "pass_accuracy_pct_avg": 82.82410423452768,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.33856,
+          "tempo_index": 0.228642,
+          "control_index": 0.063551,
+          "goal_openness_index": 0.863231,
+          "sample_confidence": 0.876071
+        },
+        "recommended_total_corners_delta": 0.079607,
+        "recommended_over_9_5_delta": 0.011385,
+        "recommended_adjustment_cap": 0.033141
+      },
+      "1388": {
+        "league_id": 1388,
+        "league_name": "A-League",
+        "sample_size": 277,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0938628158844765,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.870036101083034,
+          "shots_on_goal_per_match": 9.505415162454874,
+          "corners_per_match": 10.03971119133574,
+          "fouls_per_match": 20.054151624548737,
+          "cards_per_match": 3.5523465703971118,
+          "pass_accuracy_pct_avg": 80.70397111913357,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.497575,
+          "tempo_index": 0.458555,
+          "control_index": 0.000408,
+          "goal_openness_index": 0.836575,
+          "sample_confidence": 0.832166
+        },
+        "recommended_total_corners_delta": 0.121612,
+        "recommended_over_9_5_delta": 0.018515,
+        "recommended_adjustment_cap": 0.032482
+      },
+      "1144": {
+        "league_id": 1144,
+        "league_name": "HNL",
+        "sample_size": 275,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.4509090909090907,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.541818181818183,
+          "shots_on_goal_per_match": 7.5636363636363635,
+          "corners_per_match": 9.069090909090908,
+          "fouls_per_match": 25.505454545454544,
+          "cards_per_match": 4.6872727272727275,
+          "pass_accuracy_pct_avg": 77.02363636363637,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.158166,
+          "tempo_index": -0.254965,
+          "control_index": -0.109201,
+          "goal_openness_index": -0.6917,
+          "sample_confidence": 0.829156
+        },
+        "recommended_total_corners_delta": -0.043048,
+        "recommended_over_9_5_delta": -0.006323,
+        "recommended_adjustment_cap": 0.032437
+      },
+      "1137": {
+        "league_id": 1137,
+        "league_name": "Premiership",
+        "sample_size": 269,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7137546468401488,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.524163568773233,
+          "shots_on_goal_per_match": 8.576208178438662,
+          "corners_per_match": 10.531598513011152,
+          "fouls_per_match": 23.524163568773233,
+          "cards_per_match": 4.271375464684015,
+          "pass_accuracy_pct_avg": 75.40148698884758,
+          "possession_gap_avg": 11.54275092936803,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.343179,
+          "tempo_index": 0.196789,
+          "control_index": 0.480103,
+          "goal_openness_index": -0.026971,
+          "sample_confidence": 0.820061
+        },
+        "recommended_total_corners_delta": 0.063013,
+        "recommended_over_9_5_delta": 0.008696,
+        "recommended_adjustment_cap": 0.032301
+      },
+      "1112": {
+        "league_id": 1112,
+        "league_name": "Bundesliga (Austria)",
+        "sample_size": 258,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.7248062015503876,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.523255813953487,
+          "shots_on_goal_per_match": 8.271317829457365,
+          "corners_per_match": 9.465116279069768,
+          "fouls_per_match": 23.065891472868216,
+          "cards_per_match": 4.903100775193798,
+          "pass_accuracy_pct_avg": 75.87209302325581,
+          "possession_gap_avg": 10.089147286821705,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.021177,
+          "tempo_index": -0.032058,
+          "control_index": 0.413822,
+          "goal_openness_index": -0.086198,
+          "sample_confidence": 0.803119
+        },
+        "recommended_total_corners_delta": -0.015772,
+        "recommended_over_9_5_delta": -0.003396,
+        "recommended_adjustment_cap": 0.032047
+      },
+      "1195": {
+        "league_id": 1195,
+        "league_name": "Thai League 1",
+        "sample_size": 210,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.942857142857143,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.614285714285714,
+          "shots_on_goal_per_match": 9.347619047619048,
+          "corners_per_match": 9.666666666666666,
+          "fouls_per_match": 24.65714285714286,
+          "cards_per_match": 4.314285714285714,
+          "pass_accuracy_pct_avg": 78.88095238095238,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.269817,
+          "tempo_index": 0.05118,
+          "control_index": -0.053886,
+          "goal_openness_index": 0.483505,
+          "sample_confidence": 0.724569
+        },
+        "recommended_total_corners_delta": 0.047148,
+        "recommended_over_9_5_delta": 0.00839,
+        "recommended_adjustment_cap": 0.030869
+      },
+      "1209": {
+        "league_id": 1209,
+        "league_name": "Super Liga (Slovakia)",
+        "sample_size": 208,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8125,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.29326923076923,
+          "shots_on_goal_per_match": 8.875,
+          "corners_per_match": 10.086538461538462,
+          "fouls_per_match": 26.25,
+          "cards_per_match": 4.3701923076923075,
+          "pass_accuracy_pct_avg": 76.12259615384616,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.392807,
+          "tempo_index": 0.125261,
+          "control_index": -0.136036,
+          "goal_openness_index": 0.211146,
+          "sample_confidence": 0.72111
+        },
+        "recommended_total_corners_delta": 0.072486,
+        "recommended_over_9_5_delta": 0.013067,
+        "recommended_adjustment_cap": 0.030817
+      },
+      "58": {
+        "league_id": 58,
+        "league_name": "AFC Champions League",
+        "sample_size": 196,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.9030612244897958,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.153061224489797,
+          "shots_on_goal_per_match": 8.892857142857142,
+          "corners_per_match": 9.341836734693878,
+          "fouls_per_match": 22.75,
+          "cards_per_match": 3.693877551020408,
+          "pass_accuracy_pct_avg": 81.28571428571429,
+          "possession_gap_avg": 8.678571428571429,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.020518,
+          "tempo_index": 0.020608,
+          "control_index": 0.497134,
+          "goal_openness_index": 0.332007,
+          "sample_confidence": 0.7
+        },
+        "recommended_total_corners_delta": -0.006126,
+        "recommended_over_9_5_delta": -0.002202,
+        "recommended_adjustment_cap": 0.0305
+      },
+      "1216": {
+        "league_id": 1216,
+        "league_name": "First League (Russia)",
+        "sample_size": 189,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.2698412698412698,
+          "xg_per_match": 0.0,
+          "shots_per_match": 0.0,
+          "shots_on_goal_per_match": 0.021164021164021163,
+          "corners_per_match": 0.031746031746031744,
+          "fouls_per_match": 0.1693121693121693,
+          "cards_per_match": 3.947089947089947,
+          "pass_accuracy_pct_avg": 0.0,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -4.200381,
+          "tempo_index": -2.974274,
+          "control_index": -2.403152,
+          "goal_openness_index": -2.892906,
+          "sample_confidence": 0.687386
+        },
+        "recommended_total_corners_delta": -0.6,
+        "recommended_over_9_5_delta": -0.035,
+        "recommended_adjustment_cap": 0.030311
+      },
+      "1108": {
+        "league_id": 1108,
+        "league_name": "League Cup",
+        "sample_size": 185,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.0216216216216214,
+          "xg_per_match": 0.0,
+          "shots_per_match": 25.0972972972973,
+          "shots_on_goal_per_match": 8.654054054054054,
+          "corners_per_match": 9.989189189189188,
+          "fouls_per_match": 21.52972972972973,
+          "cards_per_match": 3.2864864864864867,
+          "pass_accuracy_pct_avg": 79.77027027027027,
+          "possession_gap_avg": 11.854054054054053,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.152653,
+          "tempo_index": 0.142085,
+          "control_index": 0.627412,
+          "goal_openness_index": 0.496129,
+          "sample_confidence": 0.680074
+        },
+        "recommended_total_corners_delta": 0.017769,
+        "recommended_over_9_5_delta": 0.001931,
+        "recommended_adjustment_cap": 0.030201
+      },
+      "1312": {
+        "league_id": 1312,
+        "league_name": "Indian Super League",
+        "sample_size": 185,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8,
+          "xg_per_match": 0.0,
+          "shots_per_match": 26.72972972972973,
+          "shots_on_goal_per_match": 8.41081081081081,
+          "corners_per_match": 10.14054054054054,
+          "fouls_per_match": 21.237837837837837,
+          "cards_per_match": 4.762162162162162,
+          "pass_accuracy_pct_avg": 75.69459459459459,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.390768,
+          "tempo_index": 0.327579,
+          "control_index": -0.148783,
+          "goal_openness_index": 0.133284,
+          "sample_confidence": 0.680074
+        },
+        "recommended_total_corners_delta": 0.079323,
+        "recommended_over_9_5_delta": 0.01511,
+        "recommended_adjustment_cap": 0.030201
+      },
+      "1111": {
+        "league_id": 1111,
+        "league_name": "Euro Championship - Qualification",
+        "sample_size": 183,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.8469945355191255,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.650273224043715,
+          "shots_on_goal_per_match": 8.404371584699454,
+          "corners_per_match": 8.923497267759563,
+          "fouls_per_match": 21.92896174863388,
+          "cards_per_match": 4.262295081967213,
+          "pass_accuracy_pct_avg": 78.64207650273224,
+          "possession_gap_avg": 14.87431693989071,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.264004,
+          "tempo_index": -0.155406,
+          "control_index": 0.76065,
+          "goal_openness_index": 0.114551,
+          "sample_confidence": 0.676387
+        },
+        "recommended_total_corners_delta": -0.063129,
+        "recommended_over_9_5_delta": -0.01351,
+        "recommended_adjustment_cap": 0.030146
+      },
+      "61": {
+        "league_id": 61,
+        "league_name": "UEFA Nations League",
+        "sample_size": 176,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.721590909090909,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.77840909090909,
+          "shots_on_goal_per_match": 8.619318181818182,
+          "corners_per_match": 9.051136363636363,
+          "fouls_per_match": 24.551136363636363,
+          "cards_per_match": 4.778409090909091,
+          "pass_accuracy_pct_avg": 81.92613636363636,
+          "possession_gap_avg": 10.028409090909092,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.120515,
+          "tempo_index": -0.110365,
+          "control_index": 0.590771,
+          "goal_openness_index": -0.030773,
+          "sample_confidence": 0.663325
+        },
+        "recommended_total_corners_delta": -0.0352,
+        "recommended_over_9_5_delta": -0.008023,
+        "recommended_adjustment_cap": 0.02995
+      },
+      "1665": {
+        "league_id": 1665,
+        "league_name": "First League",
+        "sample_size": 137,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.343065693430657,
+          "xg_per_match": 0.0,
+          "shots_per_match": 23.029197080291972,
+          "shots_on_goal_per_match": 8.24087591240876,
+          "corners_per_match": 9.481751824817518,
+          "fouls_per_match": 23.277372262773724,
+          "cards_per_match": 4.700729927007299,
+          "pass_accuracy_pct_avg": 79.26277372262774,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.020919,
+          "tempo_index": -0.178678,
+          "control_index": -0.042514,
+          "goal_openness_index": -0.789098,
+          "sample_confidence": 0.585235
+        },
+        "recommended_total_corners_delta": -0.010312,
+        "recommended_over_9_5_delta": -0.002117,
+        "recommended_adjustment_cap": 0.028779
+      },
+      "1409": {
+        "league_id": 1409,
+        "league_name": "Division Profesional - Clausura",
+        "sample_size": 132,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 2.5833333333333335,
+          "xg_per_match": 0.0,
+          "shots_per_match": 24.992424242424242,
+          "shots_on_goal_per_match": 8.136363636363637,
+          "corners_per_match": 9.037878787878787,
+          "fouls_per_match": 25.477272727272727,
+          "cards_per_match": 5.659090909090909,
+          "pass_accuracy_pct_avg": 72.08712121212122,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": -0.012829,
+          "tempo_index": -0.120107,
+          "control_index": -0.256223,
+          "goal_openness_index": -0.332946,
+          "sample_confidence": 0.574456
+        },
+        "recommended_total_corners_delta": -0.002725,
+        "recommended_over_9_5_delta": -2.3e-05,
+        "recommended_adjustment_cap": 0.028617
+      },
+      "1326": {
+        "league_id": 1326,
+        "league_name": "Stars League",
+        "sample_size": 122,
+        "window": "5Y_ROLLING_STYLE_BASELINE",
+        "style_metrics": {
+          "goals_per_match": 3.401639344262295,
+          "xg_per_match": 0.0,
+          "shots_per_match": 27.024590163934427,
+          "shots_on_goal_per_match": 10.524590163934427,
+          "corners_per_match": 10.278688524590164,
+          "fouls_per_match": 25.868852459016395,
+          "cards_per_match": 4.401639344262295,
+          "pass_accuracy_pct_avg": 82.23770491803279,
+          "possession_gap_avg": 0.0,
+          "second_half_shots_per_match": 0.0
+        },
+        "indices": {
+          "corner_pressure_index": 0.603871,
+          "tempo_index": 0.233205,
+          "control_index": 0.046086,
+          "goal_openness_index": 1.489031,
+          "sample_confidence": 0.552268
+        },
+        "recommended_total_corners_delta": 0.082909,
+        "recommended_over_9_5_delta": 0.018964,
+        "recommended_adjustment_cap": 0.028284
+      }
+    }
+  }
+}

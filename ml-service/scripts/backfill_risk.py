@@ -1,6 +1,5 @@
 import os
 import sys
-import psycopg2
 from db_config import get_connection
 import time
 
@@ -14,7 +13,10 @@ def run_risk_backfill():
     
     print("Querying for fixtures with calculated ML probabilities...")
     query = "SELECT DISTINCT fixture_id FROM V3_Submodel_Outputs ORDER BY fixture_id ASC"
-    fixtures = [row[0] for row in conn.execute(query).fetchall()]
+    cur = conn.cursor()
+    cur.execute(query)
+    fixtures = [row[0] for row in cur.fetchall()]
+    cur.close()
     conn.close()
     
     total = len(fixtures)

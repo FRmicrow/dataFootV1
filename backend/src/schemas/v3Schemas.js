@@ -219,7 +219,30 @@ export const simulationStatusSchema = z.object({
     query: z.object({
         leagueId: z.coerce.number().positive(),
         seasonYear: z.coerce.number().min(2000).max(2030),
-        horizon: z.enum(['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING']).optional()
+        horizon: z.enum(['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING']).optional(),
+        simId: z.coerce.number().positive().optional(),
+    })
+});
+
+export const simulationStartSchema = z.object({
+    body: z.object({
+        leagueId: z.coerce.number().positive(),
+        seasonYear: z.coerce.number().min(2000).max(2030),
+        mode: z.enum(['STATIC', 'WALK_FORWARD']).optional(),
+        horizon: z.enum(['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING']).optional(),
+    })
+});
+
+export const simulationReadinessSchema = z.object({
+    query: z.object({
+        leagueId: z.coerce.number().positive(),
+        seasonYear: z.coerce.number().min(2000).max(2030),
+    })
+});
+
+export const simulationIdParamSchema = z.object({
+    params: z.object({
+        simId: z.coerce.number().positive(),
     })
 });
 

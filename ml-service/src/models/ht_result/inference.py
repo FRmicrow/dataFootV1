@@ -1,13 +1,22 @@
 import os
 import json
 import math
-from db_config import get_connection
 import numpy as np
 import pandas as pd
 from catboost import CatBoostRegressor
+import sys
 
-MODEL_DIR = os.path.dirname(__file__)
-BASE_DIR = os.path.abspath(os.path.join(MODEL_DIR, '..', '..', '..'))
+MODEL_DIR = os.path.dirname(os.path.abspath(__file__))
+ML_SERVICE_ROOT = os.path.abspath(os.path.join(MODEL_DIR, "..", "..", ".."))
+if ML_SERVICE_ROOT not in sys.path:
+    sys.path.insert(0, ML_SERVICE_ROOT)
+
+from db_config import get_connection
+from feature_schema import GLOBAL_1X2_FEATURE_COLUMNS, normalize_feature_vector
+from model_paths import get_ht_poisson_paths
+from src.models.model_utils import get_logger, poisson_prob
+
+logger = get_logger(__name__)
 
 # Global cache for loaded models
 _MODELS = {}
@@ -18,23 +27,19 @@ def get_db_connection():
 def load_models(version='v0'):
     """Loads and caches the CatBoost models for a given version."""
     if version not in _MODELS:
-        home_path = os.path.join(BASE_DIR, 'models', 'ht_result', f'catboost_baseline_{version}_home.cbm')
-        away_path = os.path.join(BASE_DIR, 'models', 'ht_result', f'catboost_baseline_{version}_away.cbm')
+        poisson_paths = get_ht_poisson_paths(version)
         
-        if os.path.exists(home_path) and os.path.exists(away_path):
+        if os.path.exists(poisson_paths["home"]) and os.path.exists(poisson_paths["away"]):
             home_model = CatBoostRegressor()
-            home_model.load_model(home_path)
+            home_model.load_model(poisson_paths["home"])
             away_model = CatBoostRegressor()
-            away_model.load_model(away_path)
+            away_model.load_model(poisson_paths["away"])
             _MODELS[version] = {"type": "poisson", "home": home_model, "away": away_model}
         else:
             _MODELS[version] = {"type": "heuristic"}
             
     return _MODELS[version]
 
-def poisson_prob(mu, k):
-    """Calculates the Poisson probability of k events given expected value mu."""
-    return (np.exp(-mu) * (mu**k)) / math.factorial(k)
 
 def fetch_features_for_inference(fixture_id, include_process=False):
     """
@@ -53,7 +58,6 @@ def fetch_features_for_inference(fixture_id, include_process=False):
     league_id = int(fixture_row.iloc[0]['league_id'])
     h_tid = int(fixture_row.iloc[0]['home_team_id'])
     a_tid = int(fixture_row.iloc[0]['away_team_id'])
-    round_name = fixture_row.iloc[0]['round'] or ""
     
     baseline_query = "SELECT team_id, features_json FROM V3_Team_Features_PreMatch WHERE fixture_id = %s AND feature_set_id = 'BASELINE_V1'"
     b_df = pd.read_sql_query(baseline_query, conn, params=(fixture_id,))
@@ -129,6 +133,30 @@ def fetch_features_for_inference(fixture_id, include_process=False):
     cols_v1 = cols_v0 + ['diff_possession_l5', 'diff_control_l5', 'home_p_possession_avg_5', 'away_p_possession_avg_5', 'home_p_control_index_5', 'away_p_control_index_5']
     return pd.DataFrame([features], columns=cols_v1 if include_process else cols_v0)
 
+
+def fetch_features_for_inference_v2(fixture_id):
+    conn = get_db_connection()
+    try:
+        feature_query = "SELECT feature_vector FROM V3_ML_Feature_Store WHERE fixture_id = %s"
+        feature_row = pd.read_sql_query(feature_query, conn, params=(fixture_id,))
+        if len(feature_row) == 0:
+            raise ValueError(f"HT feature vector not found for fixture {fixture_id}.")
+        vector = normalize_feature_vector(json.loads(feature_row.iloc[0]["feature_vector"]))
+        return pd.DataFrame([vector], columns=GLOBAL_1X2_FEATURE_COLUMNS)
+    finally:
+        conn.close()
+
+def _get_ht_heuristic_mu(fixture_id, version):
+    try:
+        from time_travel import TemporalFeatureFactory
+        factory = TemporalFeatureFactory()
+        vector = factory.get_vector(fixture_id)
+        h_mu = float(vector.get('mom_gf_h10', 1.3)) * 0.4
+        a_mu = float(vector.get('mom_gf_a10', 1.2)) * 0.4
+        return max(0.1, h_mu), max(0.1, a_mu)
+    except Exception:
+        return 0.5, 0.4
+
 def predict_ht_result(fixture_id, version='v0'):
     """
     Predicts the half-time result for a given fixture.
@@ -137,15 +165,16 @@ def predict_ht_result(fixture_id, version='v0'):
     model_data = load_models(version)
     
     if model_data["type"] == "poisson":
-        df = fetch_features_for_inference(fixture_id, include_process=(version=='v1'))
-        home_model, away_model = model_data["home"], model_data["away"]
-        h_mu = max(0.01, home_model.predict(df)[0])
-        a_mu = max(0.01, away_model.predict(df)[0])
+        if version == 'v2':
+            df = fetch_features_for_inference_v2(fixture_id)
+        else:
+            df = fetch_features_for_inference(fixture_id, include_process=(version=='v1'))
+        h_mu = max(0.01, model_data["home"].predict(df)[0])
+        a_mu = max(0.01, model_data["away"].predict(df)[0])
         res_version = version
     else:
-        # Heuristic: 1.1 total HT goals baseline
-        h_mu, a_mu = 0.6, 0.5
-        res_version = f"heuristic_{version}"
+        h_mu, a_mu = _get_ht_heuristic_mu(fixture_id, version)
+        res_version = f"dynamic_heuristic_{version}"
     
     p_1, p_n, p_2 = 0.0, 0.0, 0.0
     exact_scores = {}
@@ -162,9 +191,11 @@ def predict_ht_result(fixture_id, version='v0'):
     
     return {
         "fixture_id": fixture_id, "model_version": res_version,
+        "prediction_status": "success_model" if model_data["type"] == "poisson" else "success_fallback",
+        "is_fallback": model_data["type"] != "poisson",
         "expected_goals_ht": {"home": float(h_mu), "away": float(a_mu)},
-        "probabilities_1n2": {"1": p_1 / total, "N": p_n / total, "2": p_2 / total},
-        "exact_score_probabilities": {k: v / total for k, v in exact_scores.items()}
+        "probabilities_1n2": {"1": float(p_1 / total), "N": float(p_n / total), "2": float(p_2 / total)},
+        "exact_score_probabilities": {k: float(v / total) for k, v in exact_scores.items()}
     }
 
 if __name__ == "__main__":

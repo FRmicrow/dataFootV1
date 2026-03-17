@@ -126,7 +126,9 @@ def reconstruct_all_standings(update_db=False):
         CHUNK_SIZE = 50000
         for i in range(0, len(final_history), CHUNK_SIZE):
             chunk = final_history[i:i+CHUNK_SIZE]
-            conn.executemany(sql, chunk)
+            cur = conn.cursor()
+            cur.executemany(sql, chunk)
+            cur.close()
             conn.commit()
             print(f"      Inserted {min(i+CHUNK_SIZE, len(final_history))}/{len(final_history)} records...")
 

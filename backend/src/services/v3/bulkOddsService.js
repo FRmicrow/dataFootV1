@@ -171,9 +171,9 @@ export const bulkIngestOddsByDate = async (date) => {
     const fixtures = await db.all(`
         SELECT fixture_id 
         FROM V3_Fixtures 
-        WHERE date LIKE ? 
+        WHERE date::date = ?::date
           AND status_short NOT IN ('FT', 'AET', 'PEN')
-    `, [`${date}%`]);
+    `, [date]);
 
     logger.info(`🔍 Found ${fixtures.length} fixtures to process depth ingestion.`);
 

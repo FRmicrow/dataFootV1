@@ -24,7 +24,7 @@ export const getStudioStats = (req, res) => {
         { key: 'games_appearences', label: 'Apps', category: 'General', unit: 'integer' },
         { key: 'games_rating', label: 'Rating', category: 'General', unit: 'decimal' }
     ];
-    res.json(stats);
+    res.json({ success: true, data: stats });
 };
 
 /**
@@ -50,10 +50,10 @@ export const getStudioNationalities = async (req, res) => {
             ORDER BY group_rank ASC, nationality ASC
         `;
         const rows = await db.all(sql);
-        res.json(rows.map(r => r.nationality));
+        res.json({ success: true, data: rows.map(r => r.nationality) });
     } catch (error) {
         logger.error({ err: error }, 'Error fetching nationalities');
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -99,10 +99,10 @@ export const getStudioLeagues = async (req, res) => {
             return acc;
         }, {});
 
-        res.json(Object.values(grouped));
+        res.json({ success: true, data: Object.values(grouped) });
     } catch (error) {
         logger.error({ err: error }, 'Error fetching studio leagues');
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -114,7 +114,7 @@ export const searchStudioPlayers = async (req, res) => {
     const { search, league_id, season } = req.query;
 
     if (!search || search.length < 3) {
-        return res.json([]);
+        return res.json({ success: true, data: [] });
     }
 
     try {
@@ -149,10 +149,10 @@ export const searchStudioPlayers = async (req, res) => {
 
         sql += ` GROUP BY p.player_id ORDER BY COALESCE(p.scout_rank, 0) DESC, last_season DESC, p.name ASC LIMIT 20`;
         const rows = await db.all(sql, params);
-        res.json(rows);
+        res.json({ success: true, data: rows });
     } catch (error) {
         logger.error({ err: error }, 'Error searching studio players');
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -164,7 +164,7 @@ export const searchStudioTeams = async (req, res) => {
     const { search } = req.query;
 
     if (!search || search.length < 2) {
-        return res.json([]);
+        return res.json({ success: true, data: [] });
     }
 
     try {
@@ -178,10 +178,10 @@ export const searchStudioTeams = async (req, res) => {
         `;
         const params = [`%${search}%`];
         const rows = await db.all(sql, params);
-        res.json(rows);
+        res.json({ success: true, data: rows });
     } catch (error) {
         logger.error({ err: error }, 'Error searching studio teams');
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -221,7 +221,7 @@ const buildStudioWhereClause = (filters, selection, stat) => {
             JOIN V3_Players p ON s.player_id = p.player_id
             JOIN V3_Teams t ON s.team_id = t.team_id
             WHERE ${whereClauses.join(' AND ')}
-            GROUP BY s.season_year, s.player_id
+            GROUP BY s.season_year, s.player_id, p.name, p.photo_url, t.name, t.logo_url
             ORDER BY s.season_year ASC
         `,
         params
@@ -233,10 +233,10 @@ const buildStudioWhereClause = (filters, selection, stat) => {
  */
 export const queryStudioData = async (req, res) => {
     const { stat, filters, selection, options } = req.body;
-    if (!stat || !filters?.years || filters.years.length !== 2) return res.status(400).json({ error: 'Stat key and Years range required' });
+    if (!stat || !filters?.years || filters.years.length !== 2) return res.status(400).json({ success: false, error: 'Stat key and Years range required' });
 
     const allowedStats = ['goals_total', 'goals_assists', 'shots_total', 'shots_on', 'dribbles_success', 'passes_key', 'tackles_total', 'duels_won', 'duels_total', 'cards_yellow', 'cards_red', 'games_minutes', 'games_appearences', 'games_rating', 'passes_accuracy'];
-    if (!allowedStats.includes(stat)) return res.status(400).json({ error: 'Invalid stat key' });
+    if (!allowedStats.includes(stat)) return res.status(400).json({ success: false, error: 'Invalid stat key' });
 
     try {
         const { sql, params } = buildStudioWhereClause(filters, selection, stat);
@@ -268,10 +268,10 @@ export const queryStudioData = async (req, res) => {
             timeline.push({ year, records: frameRecords.slice(0, topN) });
         });
 
-        res.json({ meta: { stat, cumulative, count: rows.length }, timeline });
+        res.json({ success: true, data: { meta: { stat, cumulative, count: rows.length }, timeline } });
     } catch (error) {
         logger.error({ err: error }, "Error in queryStudioData");
-        res.status(500).json({ error: 'Data aggregation failed' });
+        res.status(500).json({ success: false, error: 'Data aggregation failed' });
     }
 };
 
@@ -280,7 +280,7 @@ export const queryStudioData = async (req, res) => {
  */
 export const queryLeagueRankings = async (req, res) => {
     const { league_id, season } = req.body;
-    if (!league_id || !season) return res.status(400).json({ error: 'league_id and season required' });
+    if (!league_id || !season) return res.status(400).json({ success: false, error: 'league_id and season required' });
 
     try {
         const fixtures = await db.all(`
@@ -290,7 +290,7 @@ export const queryLeagueRankings = async (req, res) => {
         `, [league_id, season]);
 
         const league = await db.get(`SELECT name, logo_url FROM V3_Leagues WHERE league_id = ?`, [league_id]);
-        if (fixtures.length === 0) return res.json({ meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline: [] });
+        if (fixtures.length === 0) return res.json({ success: true, data: { meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline: [] } });
 
         const teamsStats = {};
         const roundsData = {};
@@ -321,9 +321,9 @@ export const queryLeagueRankings = async (req, res) => {
             timeline.push({ round: rd, records: frameRecords.map((r, idx) => ({ ...r, rank: idx + 1 })) });
         });
 
-        res.json({ meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline });
+        res.json({ success: true, data: { meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline } });
     } catch (error) {
         logger.error({ err: error }, "Error in queryLeagueRankings");
-        res.status(500).json({ error: 'League processing failed' });
+        res.status(500).json({ success: false, error: 'League processing failed' });
     }
 };

@@ -1,0 +1,123 @@
+/* ─── LeagueHeader scoped overrides ─────────────────────────────────────────
+ * Scoped to .lh-wrapper so they don't affect ProfileHeader used elsewhere.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.lh-wrapper .ds-profile-header {
+    padding: 6px var(--spacing-xl);
+    margin-bottom: 0;
+}
+
+.lh-wrapper .ds-profile-avatar-container {
+    width: 48px;
+    height: 48px;
+}
+
+.lh-wrapper .ds-profile-title {
+    font-size: var(--font-size-xl);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lh-wrapper .ds-profile-subtitle {
+    font-size: var(--font-size-xs);
+}
+
+/* ── Right slot layout ──────────────────────────────────────────────────── */
+.lh-right-slot {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* Meta block: badge + cycles */
+.lh-right-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    padding-left: var(--spacing-sm);
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.lh-right-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.lh-right-stat-value {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-black);
+    color: var(--header-secondary, #ffffff);
+    line-height: 1;
+}
+
+.lh-right-stat-label {
+    font-size: 9px;
+    font-weight: var(--font-weight-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1;
+}
+
+/* ── Year selector ──────────────────────────────────────────────────────── */
+.lh-year-select {
+    appearance: none;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-sm);
+    color: rgba(255, 255, 255, 0.9);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    outline: none;
+}
+
+.lh-year-select:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.lh-year-select option {
+    background: var(--color-bg-card);
+    color: var(--color-text-main);
+}
+
+/* ── Sync icon button ───────────────────────────────────────────────────── */
+.lh-sync-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    transition: background var(--transition-fast);
+    outline: none;
+}
+
+.lh-sync-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.lh-sync-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lh-sync-btn.is-syncing {
+    animation: lh-spin 1s linear infinite;
+}
+
+@keyframes lh-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}

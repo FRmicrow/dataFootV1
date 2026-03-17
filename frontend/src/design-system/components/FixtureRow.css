@@ -1,8 +1,17 @@
+/* ── FixtureRow ──────────────────────────────────────────────────────────────
+ * Compact single-line layout:
+ * [name] [logo] [xG] | [score] | [xG] [logo] [name]
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 .ds-fixture-row {
-    padding: var(--spacing-sm);
-    border-bottom: 1px solid var(--color-border);
-    transition: var(--transition-base);
+    flex: 1;
+    min-height: 34px;
+    padding: 0 var(--spacing-md);
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     cursor: pointer;
+    transition: background var(--transition-fast);
     position: relative;
     overflow: hidden;
 }
@@ -14,57 +23,109 @@
 .ds-fixture-row.is-active {
     background: var(--color-primary-bg);
     border-left: 3px solid var(--color-primary-500);
+    padding-left: calc(var(--spacing-md) - 3px);
+    padding-right: var(--spacing-md);
 }
 
-.ds-fixture-team-name {
+/* 7-column grid: name | logo | xg | center | xg | logo | name */
+.ds-fr-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 22px 44px 96px 44px 22px 1fr;
+    align-items: center;
+    gap: 0 var(--spacing-xs);
+}
+
+/* ── Team names ── */
+.ds-fr-name {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-bold);
     color: var(--color-text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1;
 }
 
-.ds-fixture-logo {
-    width: 28px;
-    height: 28px;
+.ds-fr-name--home { text-align: right; }
+.ds-fr-name--away { text-align: left; }
+
+/* ── Logos ── */
+.ds-fr-logo {
+    width: 22px;
+    height: 22px;
     object-fit: contain;
     flex-shrink: 0;
+    display: block;
 }
 
-.ds-fixture-score-wrap {
-    min-height: 24px;
+/* ── xG values ── */
+.ds-fr-xg {
+    font-size: 10px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-dim);
+    letter-spacing: 0.01em;
+    line-height: 1;
+}
+
+.ds-fr-xg--home { text-align: right; }
+.ds-fr-xg--away { text-align: left; }
+
+/* ── Center: score + badge ── */
+.ds-fr-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.ds-fr-score {
     display: flex;
     align-items: center;
-    justify-content: center;
-}
-
-.ds-fixture-score {
-    display: flex;
-    gap: 8px;
-    font-family: 'Inter', monospace;
-    font-size: var(--font-size-lg);
+    gap: 5px;
+    font-size: var(--font-size-base);
     font-weight: 900;
     color: var(--color-text-main);
+    letter-spacing: -0.01em;
+    line-height: 1;
 }
 
-.ds-fixture-score .sep {
+.ds-fr-score__sep {
     color: var(--color-text-dim);
-    opacity: 0.5;
+    opacity: 0.4;
+    font-weight: 400;
 }
 
-.ds-fixture-score .is-winner {
+.ds-fr-score__winner {
     color: var(--color-primary-400);
 }
 
-.ds-fixture-time {
+.ds-fr-time {
     font-size: var(--font-size-xs);
     font-weight: 800;
     color: var(--color-text-dim);
+    line-height: 1;
 }
 
+/* Live match indicator — pulsing dot + minute label */
+.ds-fr-live-label {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-danger-500);
+    line-height: 1;
+    animation: ds-fr-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ds-fr-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+
+/* ── Aggregate/winner line (2-leg ties) ── */
 .ds-fixture-extra {
-    margin-top: 4px;
+    margin-top: 3px;
     display: flex;
     justify-content: center;
     gap: var(--spacing-md);
@@ -73,16 +134,30 @@
     font-weight: 800;
 }
 
-.ds-fixture-extra .agg {
-    color: var(--color-primary-400);
+.ds-fixture-extra .agg    { color: var(--color-primary-400); }
+.ds-fixture-extra .winner { color: var(--color-text-main); }
+
+/* ── Compact mode: no xG, 5-column grid, wrappable names ─────────────────── */
+.ds-fixture-row--compact .ds-fr-grid {
+    grid-template-columns: 1fr 22px 96px 22px 1fr;
 }
 
-.ds-fixture-extra .winner {
-    color: var(--color-text-main);
+.ds-fixture-row--compact .ds-fr-xg {
+    display: none;
 }
 
-@media (max-width: 640px) {
-    .ds-fixture-team-name {
-        display: none;
+.ds-fixture-row--compact .ds-fr-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+/* ── Responsive: hide names on very small screens ── */
+@media (max-width: 480px) {
+    .ds-fr-name { display: none; }
+    .ds-fr-grid {
+        grid-template-columns: 22px 96px 22px;
     }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, Badge } from '../../../../design-system';
 import './MLGlossary.css';
 
@@ -23,7 +23,7 @@ const SECTIONS = [
             },
             {
                 term: '🧬 Sub-Models',
-                definition: 'Constructeur de modèles spécialisés sur mesure. Permet de créer un modèle scopé sur une ligue précise, un type de marché, et un horizon temporel. Le nom est auto-généré au format standardisé (ex: PL-FT-FULL pour Premier League / Full Time / Historique complet). Utilise le pipeline Forge existant pour l\'entraînement.'
+                definition: 'Constructeur de modèles spécialisés sur mesure. Permet de créer un modèle scopé sur une ligue précise, un type de marché, et un horizon temporel. Le nom est auto-généré au format standardisé (ex: PL-FT-FULL pour Premier League / Full Time / Historique complet). S\'appuie sur le pipeline d\'entraînement PostgreSQL actuel.'
             },
             {
                 term: '📖 Glossaire',
@@ -142,12 +142,12 @@ const SECTIONS = [
         color: 'var(--color-warning)',
         terms: [
             {
-                term: 'Forge',
-                definition: 'Pipeline d\'entraînement et d\'évaluation des modèles par ligue. Forge = Orchestrateur qui sélectionne les données, entraîne le modèle, évalue ses performances et l\'enregistre dans V3_Model_Registry.',
+                term: 'Simulation saisonnière',
+                definition: 'Pipeline de replay chronologique branché sur PostgreSQL et V3_ML_Feature_Store. Il exécute un run sur une ligue/saison, écrit les résultats dans V3_Forge_Simulations et V3_Forge_Results, puis expose les métriques de validation au ML Hub.',
             },
             {
-                term: 'LeagueReplayEngine',
-                definition: 'Moteur de simulation chronologique. Rejoue une saison entière match par match en temps réel pour évaluer les performances sans data leakage. Génère les métriques Hit Rate et Brier Score du Performance Lab.',
+                term: 'Season Simulation Runner',
+                definition: 'Runner de simulation chronologique. Rejoue une saison entière match par match en s\'appuyant sur les features pré-match déjà calculées, puis enregistre accuracy, log loss et Brier Score pour le hub de validation.',
             },
             {
                 term: 'Backfill',
@@ -218,37 +218,20 @@ const GlossaryTerm = ({ term, definition, formula }) => (
     </div>
 );
 
-const MLGlossary = () => {
-    const [activeSection, setActiveSection] = useState(null);
+const MLGlossary = () => (
+    <div className="ml-glossary">
+        <div className="ml-glossary__header">
+            <h2 className="ml-glossary__title">Glossaire ML</h2>
+            <p className="ml-glossary__subtitle">Guide de référence — {SECTIONS.reduce((acc, s) => acc + s.terms.length, 0)} termes en {SECTIONS.length} sections</p>
+        </div>
 
-    return (
-        <div className="ml-glossary">
-            <div className="ml-glossary__header">
-                <h2 className="ml-glossary__title">📖 Glossaire ML</h2>
-                <p className="ml-glossary__subtitle">Guide de référence personnel — {SECTIONS.reduce((acc, s) => acc + s.terms.length, 0)} termes</p>
-            </div>
-
-            <div className="ml-glossary__nav">
-                {SECTIONS.map(s => (
-                    <button
-                        key={s.id}
-                        className={`ml-glossary__nav-btn ${activeSection === s.id ? 'ml-glossary__nav-btn--active' : ''}`}
-                        style={{ '--section-color': s.color }}
-                        onClick={() => setActiveSection(activeSection === s.id ? null : s.id)}
-                    >
-                        {s.icon} {s.title}
-                        <span className="ml-glossary__nav-count">{s.terms.length}</span>
-                    </button>
-                ))}
-            </div>
-
-            <div className="ml-glossary__sections">
-                {SECTIONS.filter(s => activeSection === null || s.id === activeSection).map(section => (
+        <div className="ml-glossary__sections">
+            {SECTIONS.map(section => (
                     <section key={section.id} className="ml-glossary__section">
                         <div className="ml-glossary__section-header" style={{ '--section-color': section.color }}>
                             <span className="ml-glossary__section-icon">{section.icon}</span>
                             <h3 className="ml-glossary__section-title">{section.title}</h3>
-                            <Badge style={{ background: section.color, color: '#fff', border: 'none' }}>
+                            <Badge className="ml-glossary__section-badge">
                                 {section.terms.length}
                             </Badge>
                         </div>
@@ -261,10 +244,9 @@ const MLGlossary = () => {
                             ))}
                         </Card>
                     </section>
-                ))}
-            </div>
+            ))}
         </div>
-    );
-};
+    </div>
+);
 
 export default MLGlossary;

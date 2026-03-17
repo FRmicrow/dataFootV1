@@ -6,14 +6,27 @@ import Badge from './Badge';
 import './ProfileHeader.css';
 
 const LEAGUE_COLOR_MAP = {
-    '1': '#37003c', // Premier League
-    '39': '#37003c', // Premier League api-id
-    '140': '#ee1d23', // La Liga
-    '61': '#dae025', // Ligue 1
-    '78': '#d20222', // Bundesliga
-    '135': '#008fd7', // Serie A
-    '2': '#003399', // Champions League
-    '3': '#003399', // Europa League
+    '1':   '#37003c', // Premier League — purple
+    '39':  '#37003c',
+    '140': '#ee1d23', // La Liga — red
+    '61':  '#091c3e', // Ligue 1 — navy
+    '78':  '#d20222', // Bundesliga — red
+    '135': '#1d3657', // Serie A — blue
+    '2':   '#001d6c', // Champions League — dark blue
+    '3':   '#f47b20', // Europa League — orange
+    '4':   '#1a1a2e', // Europa Conference League
+};
+
+const LEAGUE_SECONDARY_MAP = {
+    '1':   '#00b8e5', // Premier League — cyan
+    '39':  '#00b8e5',
+    '140': '#ffd700', // La Liga — gold
+    '61':  '#d4af37', // Ligue 1 — gold
+    '78':  '#f0c040', // Bundesliga — yellow
+    '135': '#009246', // Serie A — green (Italian flag)
+    '2':   '#c8a951', // Champions League — gold
+    '3':   '#c8102e', // Europa League — red
+    '4':   '#00a676', // Europa Conference — teal
 };
 
 /**
@@ -34,32 +47,34 @@ const ProfileHeader = ({
     stats = [],
     genericData = []
 }) => {
+    const leagueKey = leagueId ? String(leagueId) : null;
     const finalAccentColor = accentColor ||
-        (leagueId && LEAGUE_COLOR_MAP[String(leagueId)]) ||
-        'var(--color-primary-500)';
+        (leagueKey && LEAGUE_COLOR_MAP[leagueKey]) ||
+        'var(--color-primary-600)';
+    const finalSecondaryColor = secondaryColor ||
+        (leagueKey && LEAGUE_SECONDARY_MAP[leagueKey]) ||
+        finalAccentColor;
 
     return (
         <div
             className="ds-profile-header"
             style={{
                 '--header-accent': finalAccentColor,
-                '--header-accent-alpha': `${finalAccentColor}33`,
-                '--header-secondary': secondaryColor || finalAccentColor,
-                '--header-tertiary': tertiaryColor || secondaryColor || finalAccentColor
+                '--header-secondary': finalSecondaryColor,
             }}
         >
             <div className="ds-profile-header-content">
-                <Grid columns="auto 1fr auto" gap="var(--spacing-md)" align="center">
-                    {/* Avatar/Logo Slot */}
+                <div className="ds-profile-layout">
+                    {/* Avatar/Logo — square, height = text block height */}
                     {image && (
                         <div className="ds-profile-avatar-container">
                             <img src={image} alt={title} className="ds-profile-avatar" />
                         </div>
                     )}
 
-                    {/* Info Slot - Compact Column */}
+                    {/* Info Slot */}
                     <div className="ds-profile-info">
-                        <Stack gap="2px">
+                        <Stack gap="6px">
                             <div className="ds-profile-badges">
                                 {badges.map((b, i) => (
                                     <Badge key={`${b.label}-${i}`} variant={b.variant || 'neutral'} size="xs">
@@ -80,7 +95,6 @@ const ProfileHeader = ({
                             </div>
                         </Stack>
 
-                        {/* Integrated Stats for density */}
                         {stats.length > 0 && (
                             <div className="ds-profile-compact-stats">
                                 {stats.map((st) => (
@@ -93,16 +107,16 @@ const ProfileHeader = ({
                         )}
                     </div>
 
-                    {/* Venue/Right Slot */}
-                    <Stack direction="row" gap="var(--spacing-md)" align="center">
+                    {/* Right Slot */}
+                    <div className="ds-profile-right">
                         {coverImage && (
                             <div className="ds-profile-venue-preview">
                                 <img src={coverImage} alt="Venue" />
                             </div>
                         )}
                         {actions && <div className="ds-profile-actions">{actions}</div>}
-                    </Stack>
-                </Grid>
+                    </div>
+                </div>
             </div>
         </div>
     );

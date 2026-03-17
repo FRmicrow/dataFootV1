@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import {
-    Stack, Grid, Badge, Button,
+    Stack, Grid, Badge,
     MetricCard, PlayerCard, TeamSelector
 } from '../../../../design-system';
 import './SquadList.css';
@@ -15,6 +16,7 @@ const SquadList = ({
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [teamSearch, setTeamSearch] = useState('');
+    const [positionFilter, setPositionFilter] = useState(null);
 
     useEffect(() => {
         if (!selectedTeamId && teams.length > 0) {
@@ -90,36 +92,48 @@ const SquadList = ({
                                     <img src={activeTeam?.team_logo} alt="" />
                                 </div>
                                 <div>
-                                    <h2 className="ds-squad-title">{activeTeam?.team_name}</h2>
+                                    <Link to={`/club/${selectedTeamId}`} className="ds-squad-title-link">
+                                        <h2 className="ds-squad-title">{activeTeam?.team_name}</h2>
+                                    </Link>
                                     <Stack direction="row" gap="var(--spacing-xs)" align="center" style={{ marginTop: 'var(--spacing-2xs)' }}>
                                         <Badge variant="primary">{counts.total} Players</Badge>
-                                        <Badge variant="neutral">Tier {activeTeam?.rank}</Badge>
                                     </Stack>
                                 </div>
                             </Stack>
-                            <Stack direction="row" gap="var(--spacing-md)" align="center">
-                                <div className="ds-squad-search-wrap">
-                                    <input
-                                        type="text"
-                                        className="ds-squad-input"
-                                        placeholder="Find operative..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                                <Button variant="secondary" onClick={() => window.location.href = `/club/${selectedTeamId}`}>
-                                    Intelligence Profile
-                                </Button>
-                            </Stack>
+                            <div className="ds-squad-search-wrap">
+                                <input
+                                    type="text"
+                                    className="ds-squad-input"
+                                    placeholder="Rechercher un joueur..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
                         </div>
 
                         <div className="ds-squad-content scrollbar-custom">
-                            <Grid columns="repeat(4, 1fr)" gap="var(--spacing-md)" className="mb-xl">
-                                <MetricCard label="Goalkeepers" value={counts.GK} icon="🧤" />
-                                <MetricCard label="Defenders" value={counts.DF} icon="🛡️" />
-                                <MetricCard label="Midfielders" value={counts.MF} icon="⚙️" />
-                                <MetricCard label="Attackers" value={counts.FW} icon="⚔️" />
-                            </Grid>
+                            <div className="ds-squad-position-filters">
+                                <button
+                                    className={`ds-pos-filter ${positionFilter === 'Goalkeepers' ? 'active' : ''}`}
+                                    data-category="goalkeepers"
+                                    onClick={() => setPositionFilter(p => p === 'Goalkeepers' ? null : 'Goalkeepers')}
+                                >🧤 GK <span>{counts.GK}</span></button>
+                                <button
+                                    className={`ds-pos-filter ${positionFilter === 'Defenders' ? 'active' : ''}`}
+                                    data-category="defenders"
+                                    onClick={() => setPositionFilter(p => p === 'Defenders' ? null : 'Defenders')}
+                                >🛡️ DF <span>{counts.DF}</span></button>
+                                <button
+                                    className={`ds-pos-filter ${positionFilter === 'Midfielders' ? 'active' : ''}`}
+                                    data-category="midfielders"
+                                    onClick={() => setPositionFilter(p => p === 'Midfielders' ? null : 'Midfielders')}
+                                >⚙️ MF <span>{counts.MF}</span></button>
+                                <button
+                                    className={`ds-pos-filter ${positionFilter === 'Attackers' ? 'active' : ''}`}
+                                    data-category="attackers"
+                                    onClick={() => setPositionFilter(p => p === 'Attackers' ? null : 'Attackers')}
+                                >⚔️ FW <span>{counts.FW}</span></button>
+                            </div>
 
                             {squadLoading ? (
                                 <div className="ds-squad-loader">
@@ -128,11 +142,8 @@ const SquadList = ({
                                 </div>
                             ) : (
                                 Object.entries(categorizedSquad).map(([category, players]) => (
-                                    players.length > 0 && (
+                                    players.length > 0 && (!positionFilter || positionFilter === category) && (
                                         <section key={category} className="ds-squad-category">
-                                            <h4 className="ds-category-title" data-category={category.toLowerCase()}>
-                                                {category}
-                                            </h4>
                                             <Grid columns="repeat(auto-fill, minmax(300px, 1fr))" gap="var(--spacing-md)">
                                                 {players.map(player => (
                                                     <PlayerCard

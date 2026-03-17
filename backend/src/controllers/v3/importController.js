@@ -16,11 +16,11 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  */
 export const getCountries = async (req, res) => {
     try {
-        const countries = db.all("SELECT * FROM V3_Countries ORDER BY name ASC");
-        res.json(countries);
+        const countries = await db.all("SELECT * FROM V3_Countries ORDER BY name ASC");
+        res.json({ success: true, data: countries });
     } catch (error) {
         logger.error({ err: error }, "Error fetching countries from DB");
-        res.status(500).json({ error: "Failed to fetch countries" });
+        res.status(500).json({ success: false, error: "Failed to fetch countries" });
     }
 };
 
@@ -36,10 +36,10 @@ export const getLeagues = async (req, res) => {
         if (season) params.season = season;
 
         const response = await footballApi.client.get('/leagues', { params });
-        res.json(response.data.response);
+        res.json({ success: true, data: response.data.response });
     } catch (error) {
         logger.error({ err: error }, "Error fetching leagues");
-        res.status(500).json({ error: "Failed to fetch leagues" });
+        res.status(500).json({ success: false, error: "Failed to fetch leagues" });
     }
 };
 
@@ -249,7 +249,7 @@ export const importLeagueData = async (req, res) => {
     const { leagueId, season } = req.body;
 
     if (!leagueId || !season) {
-        return res.status(400).json({ error: "Missing leagueId or season" });
+        return res.status(400).json({ success: false, error: "Missing leagueId or season" });
     }
 
     try {
@@ -262,7 +262,7 @@ export const importLeagueData = async (req, res) => {
 
         const leagueData = leagueResponse.data.response[0];
         if (!leagueData) {
-            return res.status(404).json({ error: "League not found in API" });
+            return res.status(404).json({ success: false, error: "League not found in API" });
         }
 
         const { league, country, seasons } = leagueData;
@@ -303,12 +303,14 @@ export const importLeagueData = async (req, res) => {
 
         res.json({
             success: true,
-            message: `Successfully imported ${totalTeams} teams and ${totalPlayers} players into V3 schema.`,
-            stats: { teams: totalTeams, players: totalPlayers }
+            data: {
+                message: `Successfully imported ${totalTeams} teams and ${totalPlayers} players into V3 schema.`,
+                stats: { teams: totalTeams, players: totalPlayers }
+            }
         });
 
     } catch (error) {
         logger.error({ err: error }, "V3 Import Error");
-        res.status(500).json({ error: "Import failed: " + error.message });
+        res.status(500).json({ success: false, error: "Import failed: " + error.message });
     }
 };

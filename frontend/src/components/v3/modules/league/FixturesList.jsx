@@ -2,12 +2,60 @@ import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Stack, Badge, FixtureRow } from '../../../../design-system';
 import InlineFixtureDetails from '../match/InlineFixtureDetails';
+import './FixturesList.css';
 
-const FixturesList = ({
-    fixturesData,
-    selectedRound,
-    setSelectedRound
-}) => {
+const getRoundLabel = (round) => {
+    if (!round) return round;
+    let m = round.match(/^League Stage\s*-\s*(\d+)$/i);
+    if (m) return `MD ${m[1]}`;
+    m = round.match(/^Regular Season\s*-\s*(\d+)$/i);
+    if (m) return `MD ${m[1]}`;
+    m = round.match(/^Group\s+(.+)$/i);
+    if (m) return `GP ${m[1]}`;
+    m = round.match(/^(\d+)(?:st|nd|rd|th)\s+Qualifying Round$/i);
+    if (m) return `Q${m[1]}`;
+    if (/play.?off/i.test(round)) return 'Play-off';
+    m = round.match(/^Round of\s*(\d+)$/i);
+    if (m) return `R${m[1]}`;
+    if (/^Final$/i.test(round)) return 'Final';
+    if (/semi.?final/i.test(round)) return 'Semi';
+    if (/quarter.?final/i.test(round)) return 'QF';
+    return round.replace(/^Regular Season\s*-\s*/i, 'MD ').replace(/^League Stage\s*-\s*/i, 'MD ');
+};
+
+const getRoundPhase = (round) => {
+    if (!round) return 'OTHER';
+    if (/qualifying/i.test(round)) return 'QUAL';
+    if (/play.?off/i.test(round)) return 'PLAYOFF';
+    if (/^League Stage/i.test(round) || /^Regular Season/i.test(round) || /^Group/i.test(round)) return 'LEAGUE';
+    if (/round of|semi.?final|quarter.?final|final/i.test(round)) return 'KNOCKOUT';
+    return 'OTHER';
+};
+
+const PHASE_LABELS = {
+    QUAL: 'Qualification',
+    PLAYOFF: 'Play-offs',
+    LEAGUE: 'Phase de Ligue',
+    KNOCKOUT: 'Élimination Directe',
+    OTHER: 'Autres',
+};
+
+const formatDate = (dateStr) =>
+    new Date(dateStr).toLocaleDateString('fr-FR', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+
+const formatDateShort = (dateStr) =>
+    new Date(dateStr).toLocaleDateString('fr-FR', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+    });
+
+const FixturesList = ({ fixturesData, selectedRound, setSelectedRound, compact = false }) => {
     const [expandedFixtureId, setExpandedFixtureId] = useState(null);
 
     const filteredFixtures = useMemo(() => {
@@ -23,14 +71,20 @@ const FixturesList = ({
         const groups = [];
         const processedIds = new Set();
 
-        filteredFixtures.forEach(f => {
+        const sorted = [...filteredFixtures].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        sorted.forEach(f => {
             if (processedIds.has(f.fixture_id)) return;
 
-            const companion = filteredFixtures.find(other =>
+            // Only look for two-leg ties in knockout/playoff rounds — never in league phase
+            const isTwoLegRound = ['KNOCKOUT', 'PLAYOFF'].includes(getRoundPhase(f.round));
+
+            const companion = isTwoLegRound ? sorted.find(other =>
                 other.fixture_id !== f.fixture_id &&
-                ((other.home_team_id === f.away_team_id && other.away_team_id === f.home_team_id)) &&
+                other.home_team_id === f.away_team_id &&
+                other.away_team_id === f.home_team_id &&
                 !processedIds.has(other.fixture_id)
-            );
+            ) : null;
 
             if (companion) {
                 const isFinalLeg = new Date(f.date) > new Date(companion.date);
@@ -50,9 +104,8 @@ const FixturesList = ({
                     type: 'TIE',
                     fixtures: [firstLeg, secondLeg],
                     aggregate: `${score1} - ${score2}`,
-                    winner: winnerName
+                    winner: winnerName,
                 });
-
                 processedIds.add(firstLeg.fixture_id);
                 processedIds.add(secondLeg.fixture_id);
             } else {
@@ -71,149 +124,137 @@ const FixturesList = ({
     }, [fixturesData]);
 
     return (
-        <Stack gap="var(--spacing-lg)" className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <div className="ds-md-selector-wrap">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--color-primary-400)', letterSpacing: '0.1em' }}>
-                        Operational Phase Selection
-                    </span>
-                    <Badge variant="neutral" size="xs">{selectedRound}</Badge>
-                </div>
-                <div
-                    style={{
-                        display: 'flex',
-                        gap: '6px',
-                        overflowX: 'auto',
-                        padding: 'var(--spacing-2xs) 0',
-                        scrollbarWidth: 'none',
-                        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent 100%)',
-                        WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent 100%)'
-                    }}
-                    className="hide-scrollbar"
-                >
-                    <button
-                        onClick={() => setSelectedRound('ALL')}
-                        type="button"
-                        aria-pressed={selectedRound === 'ALL'}
-                        style={{
-                            flexShrink: 0,
-                            padding: '6px 16px',
-                            borderRadius: 'var(--radius-full)',
-                            fontSize: '11px',
-                            fontWeight: '800',
-                            cursor: 'pointer',
-                            background: selectedRound === 'ALL' ? 'var(--color-primary-600)' : 'var(--glass-bg)',
-                            color: selectedRound === 'ALL' ? 'white' : 'var(--color-primary-400)',
-                            border: `1px solid ${selectedRound === 'ALL' ? 'var(--color-primary-400)' : 'var(--color-primary-900)'}`,
-                            transition: 'var(--transition-fast)',
-                            whiteSpace: 'nowrap',
-                            fontFamily: 'inherit',
-                            outline: 'none'
-                        }}
-                    >
-                        ALL ROUNDS
-                    </button>
-                    {(fixturesData.rounds || []).map(round => {
-                        const isCurrent = round === currentRound;
+        <Card
+            padding="0"
+            className="animate-fade-in"
+            style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+        >
+            {/* Round selector — integrated inside the card */}
+            <div className="ds-fixtures-header">
+                <div className="ds-md-selector-row">
+                    <div className="ds-md-selector-anchor">
+                        <span className="ds-md-selector-label">Journée</span>
+                        <Badge variant="neutral" size="xs">
+                            {(!selectedRound || selectedRound === 'ALL')
+                                ? 'Tout'
+                                : (getRoundLabel(selectedRound) || selectedRound)}
+                        </Badge>
+                    </div>
+                    <div className="ds-md-selector-scroll">
+                    {(fixturesData.rounds || []).reduce((acc, round, idx, arr) => {
                         const isSelected = round === selectedRound;
-                        const shortLabel = round.replace('Regular Season - ', 'MD ').replace('Group ', 'GP ').replace('Round of ', 'R');
+                        const isCurrent = round === currentRound;
+                        const phase = getRoundPhase(round);
+                        const prevPhase = idx > 0 ? getRoundPhase(arr[idx - 1]) : phase;
 
-                        return (
+                        if (idx === 0 && phase !== 'LEAGUE') {
+                            acc.push(<span key="sep-first" className="ds-md-phase-sep">{PHASE_LABELS[phase]}</span>);
+                        } else if (idx > 0 && phase !== prevPhase) {
+                            acc.push(<span key={`sep-${idx}`} className="ds-md-phase-sep">{PHASE_LABELS[phase]}</span>);
+                        }
+
+                        acc.push(
                             <button
                                 key={round}
                                 onClick={() => setSelectedRound(round)}
                                 type="button"
                                 aria-pressed={isSelected}
-                                style={{
-                                    flexShrink: 0,
-                                    padding: '6px 16px',
-                                    borderRadius: 'var(--radius-full)',
-                                    fontSize: '11px',
-                                    fontWeight: '800',
-                                    cursor: 'pointer',
-                                    background: isSelected ? 'var(--color-primary-600)' : isCurrent ? 'var(--glass-bg)' : 'transparent',
-                                    color: isSelected ? 'white' : isCurrent ? 'var(--color-primary-400)' : 'var(--color-text-dim)',
-                                    border: `1px solid ${isSelected ? 'var(--color-primary-400)' : isCurrent ? 'var(--color-primary-900)' : 'transparent'}`,
-                                    transition: 'var(--transition-fast)',
-                                    whiteSpace: 'nowrap',
-                                    fontFamily: 'inherit',
-                                    outline: 'none'
-                                }}
+                                className={`ds-md-round-pill ${isSelected ? 'ds-md-round-pill--selected' : isCurrent ? 'ds-md-round-pill--current' : ''}`}
                                 title={round}
                             >
-                                {shortLabel}
+                                {getRoundLabel(round)}
                             </button>
                         );
-                    })}
+                        return acc;
+                    }, [])}
+                    </div>
                 </div>
             </div>
 
-            <Card padding="0" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            {/* Fixture list — scrolls independently */}
+            <div className="ds-fixtures-body scrollbar-custom">
                 {groupedFixtures.length === 0 ? (
                     <Stack align="center" gap="var(--spacing-sm)" style={{ padding: 'var(--spacing-2xl)' }}>
-                        <div style={{ fontSize: '11px', fontWeight: 'black', color: 'var(--color-text-dim)', letterSpacing: '0.2em' }}>NO DATA RECORDED</div>
-                        <p style={{ color: 'var(--color-text-dim)', textTransform: 'uppercase', fontWeight: 'bold' }}>Schedule Empty</p>
+                        <div className="ds-fixtures-empty-label">NO DATA RECORDED</div>
+                        <p style={{ color: 'var(--color-text-dim)', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                            Schedule Empty
+                        </p>
                     </Stack>
                 ) : (
-                    <Stack gap="0" style={{ flex: 1, overflowY: 'auto' }} className="scrollbar-custom">
-                        {groupedFixtures.map((group) => (
-                            <div key={group.fixtures[0].fixture_id} className={group.type === 'TIE' ? 'ds-fixture-tie-group' : ''}>
-                                {group.fixtures.map((f, fIdx) => {
-                                    const isExpanded = expandedFixtureId === f.fixture_id;
-                                    return (
-                                        <React.Fragment key={f.fixture_id}>
-                                            <FixtureRow
-                                                homeTeam={{ name: f.home_team_name, logo: f.home_team_logo }}
-                                                awayTeam={{ name: f.away_team_name, logo: f.away_team_logo }}
-                                                scoreHome={f.goals_home}
-                                                scoreAway={f.goals_away}
-                                                xgHome={f.xg_home}
-                                                xgAway={f.xg_away}
-                                                status={f.status_short}
-                                                date={f.date}
-                                                active={isExpanded}
-                                                aggregate={group.type === 'TIE' && fIdx === 1 ? group.aggregate : null}
-                                                winner={group.type === 'TIE' && fIdx === 1 ? group.winner : null}
-                                                onClick={() => handleFixtureToggle(f.fixture_id)}
-                                            />
-                                            {isExpanded && (
-                                                <div
-                                                    className="ds-fixture-expansion-panel animate-fade-in"
-                                                    onClick={e => e.stopPropagation()}
-                                                    onKeyDown={e => {
-                                                        if (e.key === 'Enter' || e.key === ' ') {
-                                                            e.stopPropagation();
-                                                        }
-                                                    }}
-                                                    tabIndex="0"
-                                                    role="button"
-                                                >
-                                                    <InlineFixtureDetails
-                                                        fixtureId={f.fixture_id}
-                                                        homeTeamId={f.home_team_id}
-                                                        awayTeamId={f.away_team_id}
+                    groupedFixtures.map((group, idx) => {
+                        const groupDate = formatDate(group.fixtures[0].date);
+                        const prevDate = idx > 0 ? formatDate(groupedFixtures[idx - 1].fixtures[0].date) : null;
+                        const nextDate = idx < groupedFixtures.length - 1 ? formatDate(groupedFixtures[idx + 1].fixtures[0].date) : null;
+                        const isFirstGroupOfDay = groupDate !== prevDate;
+                        const isLastGroupOfDay = groupDate !== nextDate;
+
+                        return (
+                            <React.Fragment key={group.fixtures[0].fixture_id}>
+                                <div className={group.type === 'TIE' ? 'ds-fixture-tie-group' : ''}>
+                                    {group.fixtures.map((f, fIdx) => {
+                                        const isExpanded = expandedFixtureId === f.fixture_id;
+                                        const dateLabel = isFirstGroupOfDay && fIdx === 0
+                                            ? formatDateShort(group.fixtures[0].date)
+                                            : null;
+                                        return (
+                                            <React.Fragment key={f.fixture_id}>
+                                                <div className="ds-fixture-date-row">
+                                                    <span className="ds-fixture-date-col">{dateLabel}</span>
+                                                    <FixtureRow
+                                                        homeTeam={{ name: f.home_team_name, logo: f.home_team_logo }}
+                                                        awayTeam={{ name: f.away_team_name, logo: f.away_team_logo }}
+                                                        scoreHome={f.goals_home}
+                                                        scoreAway={f.goals_away}
+                                                        xgHome={f.xg_home}
+                                                        xgAway={f.xg_away}
+                                                        status={f.status_short}
+                                                        date={f.date}
+                                                        active={isExpanded}
+                                                        aggregate={group.type === 'TIE' && fIdx === 1 ? group.aggregate : null}
+                                                        winner={group.type === 'TIE' && fIdx === 1 ? group.winner : null}
+                                                        onClick={() => handleFixtureToggle(f.fixture_id)}
+                                                        compact={compact}
                                                     />
                                                 </div>
-                                            )}
-                                        </React.Fragment>
-                                    );
-                                })}
-                            </div>
-                        ))}
-                    </Stack>
+                                                {isExpanded && (
+                                                    <div
+                                                        className="ds-fixture-expansion-panel animate-fade-in"
+                                                        onClick={e => e.stopPropagation()}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+                                                        }}
+                                                        tabIndex="0"
+                                                        role="button"
+                                                    >
+                                                        <InlineFixtureDetails
+                                                            fixtureId={f.fixture_id}
+                                                            homeTeamId={f.home_team_id}
+                                                            awayTeamId={f.away_team_id}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </div>
+                                {isLastGroupOfDay && <div className="ds-fixture-day-sep" />}
+                            </React.Fragment>
+                        );
+                    })
                 )}
-            </Card>
-        </Stack>
+            </div>
+        </Card>
     );
 };
 
 FixturesList.propTypes = {
     fixturesData: PropTypes.shape({
         fixtures: PropTypes.array,
-        rounds: PropTypes.array
+        rounds: PropTypes.array,
     }).isRequired,
     selectedRound: PropTypes.string,
-    setSelectedRound: PropTypes.func.isRequired
+    setSelectedRound: PropTypes.func.isRequired,
+    compact: PropTypes.bool,
 };
 
 export default FixturesList;

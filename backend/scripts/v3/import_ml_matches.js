@@ -280,7 +280,7 @@ async function importLeague(league) {
                 n(at.HSOFFFT), n(at.ASOFFFT), n(at.HSOFF1H), n(at.ASOFF1H), n(at.HSOFF2H), n(at.ASOFF2H),
                 // Corners & Cards
                 n(cc.HCFT), n(cc.ACFT), n(cc.HC1H), n(cc.AC1H), n(cc.HC2H), n(cc.AC2H),
-                n(cc.HYCFT), n(cc.AYCFT), n(cc.HYC1H), n(cc.AYC1H), n(cc.HYC2H), n(cc.AYCFT)
+                n(cc.HYCFT), n(cc.AYCFT), n(cc.HYC1H), n(cc.AYC1H), n(cc.HYC2H), n(cc.AYC2H)
             ]);
             inserted++;
         } catch (err) {

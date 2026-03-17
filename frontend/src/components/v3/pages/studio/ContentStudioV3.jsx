@@ -1,23 +1,21 @@
 import React from 'react';
 import { StudioProvider } from '../../modules/studio/StudioContext';
 import StudioWizard from '../../modules/studio/StudioWizard';
-import './ContentStudioV3.css';
+import { PageLayout, PageHeader, PageContent } from '../../layouts';
 
 const ContentStudioV3 = () => {
     return (
         <StudioProvider>
-            <div className="content-studio-page animate-fade-in">
-                <header className="v3-header studio">
-                    <div className="header-meta">
-                        <span className="hub-badge">CONTENT PRODUCTION</span>
-                        <h1 className="hub-title">Data Studio</h1>
-                        <p className="hub-subtitle">Engineered for viral professional data visualization</p>
-                    </div>
-                </header>
-                <main>
+            <PageLayout className="animate-fade-in">
+                <PageHeader
+                    title="Studio"
+                    subtitle="Engineered for viral professional data visualization"
+                    badge={{ label: 'CONTENT', variant: 'accent' }}
+                />
+                <PageContent>
                     <StudioWizard />
-                </main>
-            </div>
+                </PageContent>
+            </PageLayout>
         </StudioProvider>
     );
 };

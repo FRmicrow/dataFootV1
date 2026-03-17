@@ -1,6 +1,5 @@
 import os
 import sys
-import psycopg2
 from db_config import get_connection
 import time
 
@@ -24,7 +23,10 @@ def run_backfill():
         ORDER BY f.date ASC
     """
     
-    fixtures = [row[0] for row in conn.execute(query).fetchall()]
+    cur = conn.cursor()
+    cur.execute(query)
+    fixtures = [row[0] for row in cur.fetchall()]
+    cur.close()
     conn.close()
     
     total = len(fixtures)

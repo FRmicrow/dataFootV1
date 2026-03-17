@@ -183,7 +183,7 @@ export const getUpcomingByLeaguesService = async (leagueIds = []) => {
         const results = [];
 
         for (const meta of leagueMetas) {
-            const fixturesRes = await footballApi.getFixturesByLeague(meta.api_id, { next: 10 });
+            const fixturesRes = await footballApi.getNextFixturesByLeague(meta.api_id, 10);
             const fixtures = fixturesRes.response || [];
             if (fixtures.length === 0) continue;
 
@@ -251,7 +251,17 @@ async function resolveMatchH2H(predictionData, fixtureData) {
 function computePredictiveFeatures(fixtureData, predictionData, injuriesData, h2h) {
     const features = { fatigue: { home: null, away: null }, momentum: { home_gd: null, away_gd: null }, squad_health: { home: 'Optimal', away: 'Optimal' }, psychological_edge: 'Neutral' };
     try {
-        const getMom = (last5) => last5 ? last5.split('').reduce((acc, r) => acc + (r === 'W' ? 3 : r === 'D' ? 1 : 0), 0) : null;
+        const getMom = (last5) => {
+            if (!last5) return null;
+            const form = Array.isArray(last5)
+                ? last5
+                : typeof last5 === 'string'
+                    ? last5.split('')
+                    : typeof last5 === 'object' && typeof last5.form === 'string'
+                        ? last5.form.split('')
+                        : [];
+            return form.reduce((acc, r) => acc + (r === 'W' ? 3 : r === 'D' ? 1 : 0), 0);
+        };
         features.momentum.home_gd = getMom(predictionData?.teams?.home?.last_5);
         features.momentum.away_gd = getMom(predictionData?.teams?.away?.last_5);
         const evalHealth = (tid) => { const count = injuriesData.filter(i => i.team.id === tid).length; return count === 0 ? 'Optimal' : (count <= 2 ? `Moderate (${count} missing)` : `Critical (${count} missing)`); };

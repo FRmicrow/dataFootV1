@@ -1,7 +1,17 @@
-from db_config import get_connection
-import pandas as pd
 import json
 import os
+import sys
+
+import pandas as pd
+
+
+MODEL_DIR = os.path.dirname(os.path.abspath(__file__))
+ML_SERVICE_ROOT = os.path.abspath(os.path.join(MODEL_DIR, "..", "..", ".."))
+if ML_SERVICE_ROOT not in sys.path:
+    sys.path.insert(0, ML_SERVICE_ROOT)
+
+from db_config import get_connection
+from feature_schema import GLOBAL_1X2_FEATURE_COLUMNS, normalize_feature_vector
 
 
 def get_db_connection():
@@ -25,8 +35,8 @@ def fetch_cards_dataset():
             f.date as match_date,
             f.home_team_id,
             f.away_team_id,
-            IFNULL(fs_home.yellow_cards, 0) + IFNULL(fs_home.red_cards, 0) as home_cards,
-            IFNULL(fs_away.yellow_cards, 0) + IFNULL(fs_away.red_cards, 0) as away_cards
+            COALESCE(fs_home.yellow_cards, 0) + COALESCE(fs_home.red_cards, 0) as home_cards,
+            COALESCE(fs_away.yellow_cards, 0) + COALESCE(fs_away.red_cards, 0) as away_cards
         FROM V3_Fixtures f
         JOIN V3_Fixture_Stats fs_home ON f.fixture_id = fs_home.fixture_id AND f.home_team_id = fs_home.team_id AND fs_home.half = 'FT'
         JOIN V3_Fixture_Stats fs_away ON f.fixture_id = fs_away.fixture_id AND f.away_team_id = fs_away.team_id AND fs_away.half = 'FT'
@@ -137,6 +147,51 @@ def fetch_cards_dataset():
     
     print(f"Final dataset shape: {matches_df.shape}")
     return matches_df
+
+
+def fetch_cards_dataset_v2():
+    """
+    Fetches the cards dataset from the enriched feature store v2.
+    """
+    conn = get_db_connection()
+    try:
+        query = """
+            SELECT
+                f.fixture_id,
+                f.league_id,
+                f.date AS match_date,
+                COALESCE(fs_home.yellow_cards, 0) + COALESCE(fs_home.red_cards, 0) AS home_cards,
+                COALESCE(fs_away.yellow_cards, 0) + COALESCE(fs_away.red_cards, 0) AS away_cards,
+                feature_store.feature_vector
+            FROM V3_Fixtures f
+            JOIN V3_Fixture_Stats fs_home
+              ON f.fixture_id = fs_home.fixture_id
+             AND f.home_team_id = fs_home.team_id
+             AND fs_home.half = 'FT'
+            JOIN V3_Fixture_Stats fs_away
+              ON f.fixture_id = fs_away.fixture_id
+             AND f.away_team_id = fs_away.team_id
+             AND fs_away.half = 'FT'
+            JOIN V3_ML_Feature_Store feature_store
+              ON f.fixture_id = feature_store.fixture_id
+            WHERE f.status_short IN ('FT', 'AET', 'PEN')
+              AND fs_home.yellow_cards IS NOT NULL
+              AND fs_away.yellow_cards IS NOT NULL
+            ORDER BY f.date ASC
+        """
+        df = pd.read_sql_query(query, conn)
+        df["match_date"] = pd.to_datetime(df["match_date"], utc=True)
+        raw_features = df["feature_vector"].apply(json.loads).tolist()
+        feature_frame = pd.DataFrame(
+            [normalize_feature_vector(vector) for vector in raw_features],
+            columns=GLOBAL_1X2_FEATURE_COLUMNS,
+        )
+        df = pd.concat([df.drop(columns=["feature_vector"]), feature_frame], axis=1)
+        df["target_home_cards"] = pd.to_numeric(df["home_cards"], errors="coerce").astype(int)
+        df["target_away_cards"] = pd.to_numeric(df["away_cards"], errors="coerce").astype(int)
+        return df
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     df = fetch_cards_dataset()

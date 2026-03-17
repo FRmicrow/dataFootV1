@@ -4,6 +4,7 @@ export { default as Badge } from './components/Badge';
 export { default as Table } from './components/Table';
 export { Grid, Stack } from './components/Grid';
 export { default as Navbar } from './components/Navbar';
+export { default as CollapsibleSidebar } from './components/CollapsibleSidebar';
 export { default as ControlBar } from './components/ControlBar';
 export { default as Tabs } from './components/Tabs';
 export { default as Progress } from './components/Progress';
@@ -16,6 +17,7 @@ export { default as TeamSelector } from './components/TeamSelector';
 export { default as LeagueHeader } from './components/LeagueHeader';
 export { default as Select } from './components/Select';
 export { default as Input } from './components/Input';
+export { default as Tooltip } from './components/Tooltip';
 export { default as Skeleton, CardSkeleton, MetricCardSkeleton, TableSkeleton } from './components/Skeleton';
 
 import './tokens.css';
@@ -28,5 +30,7 @@ import './components/LeagueCard.css';
 import './components/PlayerCard.css';
 import './components/FixtureRow.css';
 import './components/TeamSelector.css';
+import './components/LeagueHeader.css';
+import './components/Tooltip.css';
 
 export { default as Accordion } from './components/Accordion';

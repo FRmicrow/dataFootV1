@@ -504,6 +504,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -521,6 +528,14 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
         400:
           description: Erreur de validation
         500:
@@ -555,6 +570,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -578,6 +600,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -601,6 +630,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -624,6 +660,23 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      fixture_id:
+                        type: integer
+                      league_id:
+                        type: integer
+                      date:
+                        type: string
+                        format: date-time
+                      home_team_name:
+                        type: string
+                      away_team_name:
+                        type: string
         400:
           description: Erreur de validation
         500:
@@ -647,6 +700,21 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      source:
+                        type: string
+                      message:
+                        type: string
+                        nullable: true
+                      lineups:
+                        type: array
+                        items:
+                          type: object
         400:
           description: Erreur de validation
         500:
@@ -670,6 +738,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -687,6 +762,20 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      processed:
+                        type: integer
+                      success_count:
+                        type: integer
+                      failed:
+                        type: integer
         400:
           description: Erreur de validation
         500:
@@ -720,6 +809,26 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      player:
+                        type: object
+                      career:
+                        type: array
+                        items:
+                          type: object
+                      careerTotals:
+                        type: object
+                      currentContext:
+                        type: object
+                      trophies:
+                        type: array
+                        items:
+                          type: object
         400:
           description: Erreur de validation
         500:
@@ -767,41 +876,46 @@ paths:
               schema:
                 type: object
                 properties:
-                  players:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        player_id: { type: number }
-                        api_id: { type: number }
-                        name: { type: string }
-                        firstname: { type: string }
-                        lastname: { type: string }
-                        nationality: { type: string }
-                        nationality_flag:
-                          {
-                            type: string,
-                            format: uri,
-                            description: "URL du drapeau de la nationalité",
-                          }
-                        photo_url: { type: string, format: uri }
-                        age: { type: number }
-                  clubs:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        team_id: { type: number }
-                        api_id: { type: number }
-                        name: { type: string }
-                        logo_url: { type: string, format: uri }
-                        country: { type: string }
-                        country_flag:
-                          {
-                            type: string,
-                            format: uri,
-                            description: "URL du drapeau du pays",
-                          }
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      players:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            player_id: { type: number }
+                            api_id: { type: number }
+                            name: { type: string }
+                            firstname: { type: string }
+                            lastname: { type: string }
+                            nationality: { type: string }
+                            nationality_flag:
+                              {
+                                type: string,
+                                format: uri,
+                                description: "URL du drapeau de la nationalité",
+                              }
+                            photo_url: { type: string, format: uri }
+                            age: { type: number }
+                      clubs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            team_id: { type: number }
+                            api_id: { type: number }
+                            name: { type: string }
+                            logo_url: { type: string, format: uri }
+                            country: { type: string }
+                            country_flag:
+                              {
+                                type: string,
+                                format: uri,
+                                description: "URL du drapeau du pays",
+                              }
         400:
           description: Erreur de validation
         500:
@@ -835,13 +949,18 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name: { type: string }
-                    flag_url: { type: string, format: uri }
-                    importance_rank: { type: number }
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name: { type: string }
+                        flag_url: { type: string, format: uri }
+                        importance_rank: { type: number }
         500:
           description: Erreur serveur
   /club/{id}:
@@ -857,6 +976,32 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      club:
+                        type: object
+                      seasons:
+                        type: array
+                        items:
+                          type: object
+                      availableYears:
+                        type: array
+                        items:
+                          type: integer
+                      rosterYear:
+                        type: integer
+                        nullable: true
+                      roster:
+                        type: array
+                        items:
+                          type: object
+                      summary:
+                        type: object
+                        nullable: true
         400:
           description: Erreur de validation
         500:
@@ -880,6 +1025,11 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
         400:
           description: Erreur de validation
         500:
@@ -903,6 +1053,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -956,6 +1113,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -973,6 +1137,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -996,6 +1167,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -1013,6 +1191,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -1047,6 +1232,18 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      league:
+                        type: object
+                      seasons:
+                        type: array
+                        items:
+                          type: object
         400:
           description: Erreur de validation
         500:
@@ -1070,6 +1267,18 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      added:
+                        type: array
+                        items:
+                          type: integer
         400:
           description: Erreur de validation
         500:
@@ -1104,6 +1313,43 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      league:
+                        type: object
+                      isFinished:
+                        type: boolean
+                      hallOfFame:
+                        type: object
+                        nullable: true
+                      standings:
+                        type: array
+                        items:
+                          type: object
+                      topScorers:
+                        type: array
+                        items:
+                          type: object
+                      topAssists:
+                        type: array
+                        items:
+                          type: object
+                      topRated:
+                        type: array
+                        items:
+                          type: object
+                      availableYears:
+                        type: array
+                        items:
+                          type: integer
+                      xgStats:
+                        type: array
+                        items:
+                          type: object
         400:
           description: Erreur de validation
         500:
@@ -1132,12 +1378,188 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
           description: Erreur serveur
       parameters:
         - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+  /league/{id}/fixtures:
+    get:
+      operationId: getLeagueByIdFixtures
+      tags:
+        - Leagues
+      summary: Fixtures d'une ligue pour une saison
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      fixtures:
+                        type: array
+                        items:
+                          type: object
+                      rounds:
+                        type: array
+                        items:
+                          type: string
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: string
+  /league/{id}/sync-status:
+    get:
+      operationId: getLeagueByIdSyncStatus
+      tags:
+        - Leagues
+      summary: Statut de synchronisation simple d'une ligue
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        year:
+                          type: integer
+                        players:
+                          type: boolean
+                        fixtures:
+                          type: boolean
+                        standings:
+                          type: boolean
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+  /league/{leagueId}/season/{year}/club/{teamId}/squad:
+    get:
+      operationId: getLeagueByLeagueIdSeasonByYearClubByTeamIdSquad
+      tags:
+        - Leagues
+      summary: Effectif d'un club pour une saison de ligue
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: leagueId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+  /league/{apiId}/available-seasons:
+    get:
+      operationId: getLeagueByApiIdAvailableSeasons
+      tags:
+        - Leagues
+      summary: Saisons disponibles pour une ligue API
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      league:
+                        type: object
+                      seasons:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            year:
+                              type: integer
+                            start:
+                              type: string
+                              format: date
+                            end:
+                              type: string
+                              format: date
+                            is_current:
+                              type: boolean
+                            status:
+                              type: string
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+      parameters:
+        - name: apiId
           in: path
           required: true
           schema:
@@ -1155,6 +1577,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -1172,6 +1601,22 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          type: string
+                        label:
+                          type: string
+                        category:
+                          type: string
+                        unit:
+                          type: string
         400:
           description: Erreur de validation
         500:
@@ -1189,6 +1634,23 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        country:
+                          type: string
+                        flag:
+                          type: string
+                          nullable: true
+                        leagues:
+                          type: array
+                          items:
+                            type: object
         400:
           description: Erreur de validation
         500:
@@ -1206,6 +1668,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: string
         400:
           description: Erreur de validation
         500:
@@ -1223,6 +1692,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -1246,6 +1722,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -1362,6 +1845,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:
@@ -1379,6 +1869,11 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
         400:
           description: Erreur de validation
         500:
@@ -1396,6 +1891,11 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
         400:
           description: Erreur de validation
         500:
@@ -1483,6 +1983,70 @@ paths:
           description: Erreur de validation
         500:
           description: Erreur serveur
+  /ml-platform/simulations/filters:
+    get:
+      operationId: getMlPlatformSimulationsFilters
+      tags:
+        - Betting & ML
+      summary: Lister les ligues et saisons disponibles pour la console de simulation
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        league_id:
+                          type: integer
+                        league_name:
+                          type: string
+                        season_year:
+                          type: integer
+                        country_name:
+                          type: string
+                        flag_url:
+                          type: string
+                          nullable: true
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /predict/fixture/{id}:
+    get:
+      operationId: getPredictFixtureById
+      tags:
+        - Betting & ML
+      summary: Obtenir toutes les prédictions runtime pour une fixture
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
   /ml-platform/recommendations:
     get:
       operationId: getMlPlatformRecommendations
@@ -1500,6 +2064,74 @@ paths:
           description: Erreur de validation
         500:
           description: Erreur serveur
+  /ml-platform/models/catalog:
+    get:
+      operationId: getModelsCatalog
+      tags:
+        - Betting & ML
+      summary: Catalogue des modèles ML
+      responses:
+        200:
+          description: Succès
+  /ml-platform/performance/roi:
+    post:
+      operationId: calculatePerformanceROI
+      tags:
+        - Betting & ML
+      summary: Calculer le ROI de performance
+      responses:
+        200:
+          description: Succès
+  /ml-platform/edges/top:
+    get:
+      operationId: getTopEdges
+      tags:
+        - Betting & ML
+      summary: Meilleurs edges (valeurs)
+      responses:
+        200:
+          description: Succès
+  /ml-platform/submodels:
+    get:
+      operationId: getSubmodels
+      tags:
+        - Betting & ML
+      summary: Liste des sous-modèles
+      responses:
+        200:
+          description: Succès
+    post:
+      operationId: createSubmodel
+      tags:
+        - Betting & ML
+      summary: Créer un sous-modèle
+      responses:
+        200:
+          description: Succès
+  /ml-platform/submodels/{id}:
+    delete:
+      operationId: deleteSubmodel
+      tags:
+        - Betting & ML
+      summary: Supprimer un sous-modèle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+  /ml-platform/performance/leagues-with-odds:
+    get:
+      operationId: getLeaguesWithOdds
+      tags:
+        - Betting & ML
+      summary: Ligues avec cotes disponibles
+      responses:
+        200:
+          description: Succès
   /odds/fixture/{fixtureId}:
     get:
       operationId: getOddsFixtureByFixtureid
@@ -1519,6 +2151,20 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      fixtureId:
+                        type: integer
+                      count:
+                        type: integer
+                      items:
+                        type: array
+                        items:
+                          type: object
         400:
           description: Erreur de validation
         500:
@@ -1536,6 +2182,18 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                      items:
+                        type: array
+                        items:
+                          type: object
         400:
           description: Erreur de validation
         500:
@@ -1572,7 +2230,27 @@ paths:
       operationId: postSimulationStart
       tags:
         - Betting & ML
-      summary: Lancer une simulation
+      summary: Lancer une simulation saisonnière
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leagueId
+                - seasonYear
+              properties:
+                leagueId:
+                  type: integer
+                seasonYear:
+                  type: integer
+                mode:
+                  type: string
+                  enum: [STATIC, WALK_FORWARD]
+                horizon:
+                  type: string
+                  enum: [FULL_HISTORICAL, 5Y_ROLLING, 3Y_ROLLING]
       responses:
         200:
           description: Succès
@@ -1580,6 +2258,28 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      stats:
+                        type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                      simulation_id:
+                        type: integer
         400:
           description: Erreur de validation
         500:
@@ -1617,6 +2317,143 @@ paths:
           required: false
           schema:
             type: string
+        - name: simId
+          in: query
+          required: false
+          schema:
+            type: integer
+  /simulation/readiness:
+    get:
+      operationId: getSimulationReadiness
+      tags:
+        - Betting & ML
+      summary: Vérifier si une ligue/saison est prête pour une simulation
+      parameters:
+        - name: leagueId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: seasonYear
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                      total_fixtures:
+                        type: integer
+                      feature_coverage:
+                        type: string
+                        nullable: true
+                      has_model:
+                        type: boolean
+                      model_accuracy:
+                        type: string
+                        nullable: true
+                      message:
+                        type: string
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /simulation/results/{simId}:
+    get:
+      operationId: getSimulationResultsBySimId
+      tags:
+        - Betting & ML
+      summary: Lire les résultats match par match d'un run de simulation
+      parameters:
+        - name: simId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /simulation/league/{leagueId}:
+    get:
+      operationId: getSimulationLeagueByLeagueId
+      tags:
+        - Betting & ML
+      summary: Lister les runs de simulation d'une ligue
+      parameters:
+        - name: leagueId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
+  /simulation/all:
+    get:
+      operationId: getSimulationAll
+      tags:
+        - Betting & ML
+      summary: Lister les derniers runs de simulation disponibles
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+        400:
+          description: Erreur de validation
+        500:
+          description: Erreur serveur
   /resolution/duplicates:
     get:
       operationId: getResolutionDuplicates
@@ -1686,6 +2523,11 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
         400:
           description: Erreur de validation
         500:
@@ -1703,6 +2545,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
         400:
           description: Erreur de validation
         500:

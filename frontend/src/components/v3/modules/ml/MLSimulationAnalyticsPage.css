@@ -1,0 +1,457 @@
+.ml-sim-analytics {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+.ml-sim-analytics .ml-surface__section,
+.ml-sim-analytics__alert,
+.ml-sim-analytics__panel,
+.ml-sim-analytics__summary-card {
+    border: 1px solid var(--glass-border);
+    background: var(--gradient-surface), color-mix(in srgb, var(--color-bg-main) 72%, transparent);
+    backdrop-filter: var(--glass-blur);
+}
+
+.ml-sim-analytics__leaderboard-table {
+    --table-max-height: 520px;
+}
+
+.ml-sim-analytics__league-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ml-sim-analytics__league-cell strong {
+    color: var(--color-text-primary);
+}
+
+.ml-sim-analytics__league-cell span {
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+}
+
+.ml-sim-analytics__hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    padding: var(--space-xl);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--color-warning-500) 18%, transparent), transparent 30%),
+        radial-gradient(circle at right center, color-mix(in srgb, var(--color-blue-500) 14%, transparent), transparent 28%),
+        linear-gradient(145deg, color-mix(in srgb, var(--color-bg-main) 96%, transparent), color-mix(in srgb, var(--color-bg-main) 82%, transparent));
+    box-shadow: var(--shadow-premium);
+}
+
+.ml-sim-analytics__title {
+    margin: var(--space-sm) 0 0;
+    font-family: 'Space Grotesk', var(--font-family);
+    font-size: clamp(2rem, 3vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--color-text-primary);
+}
+
+.ml-sim-analytics__subtitle {
+    margin: var(--space-sm) 0 0;
+    max-width: 62ch;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+}
+
+.ml-sim-analytics__alert,
+.ml-sim-analytics__filters-card,
+.ml-sim-analytics__panel,
+.ml-sim-analytics__summary-card {
+    border: 1px solid var(--glass-border);
+    background: var(--gradient-surface), color-mix(in srgb, var(--color-bg-main) 72%, transparent);
+    backdrop-filter: var(--glass-blur);
+}
+
+.ml-sim-analytics__alert {
+    color: var(--color-danger-500);
+}
+
+.ml-sim-analytics__filters-grid,
+.ml-sim-analytics__summary,
+.ml-sim-analytics__grid,
+.ml-sim-analytics__quality-grid,
+.ml-sim-analytics__market-health,
+.ml-sim-analytics__confidence-list {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.ml-sim-analytics__filters-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ml-sim-analytics__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.ml-sim-analytics__field span,
+.ml-sim-analytics__summary-label,
+.ml-sim-analytics__kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-dim);
+}
+
+.ml-sim-analytics__field select {
+    min-height: 48px;
+    padding: 0 var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-slate-950) 65%, transparent);
+    color: var(--color-text-primary);
+    font-size: var(--text-sm);
+}
+
+.ml-sim-analytics__summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ml-sim-analytics__market-health {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.ml-sim-analytics__summary-card .ds-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.ml-sim-analytics__summary-value {
+    font-family: 'Space Grotesk', var(--font-family);
+    font-size: clamp(1.5rem, 2vw, 2.1rem);
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.ml-sim-analytics__summary-hint {
+    color: var(--color-text-secondary);
+    font-size: var(--text-xs);
+    line-height: 1.6;
+}
+
+.ml-sim-analytics__summary-card--danger {
+    border-color: color-mix(in srgb, var(--color-danger-500) 40%, transparent);
+}
+
+.ml-sim-analytics__summary-card--warning {
+    border-color: color-mix(in srgb, var(--color-warning-500) 45%, transparent);
+}
+
+.ml-sim-analytics__summary-card--primary {
+    border-color: color-mix(in srgb, var(--color-primary-500) 45%, transparent);
+}
+
+.ml-sim-analytics__health-card {
+    border: 1px solid var(--glass-border);
+    background: var(--gradient-surface), color-mix(in srgb, var(--color-bg-main) 66%, transparent);
+}
+
+.ml-sim-analytics__health-card--active {
+    border-color: color-mix(in srgb, var(--color-primary-500) 50%, transparent);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--color-blue-500) 12%, transparent), var(--glass-bg)),
+        color-mix(in srgb, var(--color-bg-main) 72%, transparent);
+}
+
+.ml-sim-analytics__health-head,
+.ml-sim-analytics__health-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.ml-sim-analytics__health-head {
+    margin-bottom: var(--space-sm);
+}
+
+.ml-sim-analytics__health-head strong,
+.ml-sim-analytics__health-row strong {
+    color: var(--color-text-primary);
+}
+
+.ml-sim-analytics__health-row {
+    padding: var(--space-xs) 0;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.ml-sim-analytics__health-row:last-child {
+    border-bottom: 0;
+}
+
+.ml-sim-analytics__health-row span {
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+}
+
+.ml-sim-analytics__grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+    align-items: start;
+}
+
+.ml-sim-analytics__panel--wide {
+    min-height: 100%;
+}
+
+.ml-sim-analytics__panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.ml-sim-analytics__panel-head h3 {
+    margin: 0;
+    font-family: 'Space Grotesk', var(--font-family);
+    font-size: var(--text-xl);
+    color: var(--color-text-primary);
+    letter-spacing: -0.03em;
+}
+
+.ml-sim-analytics__panel-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.ml-sim-analytics__fixture-actions {
+    margin-top: var(--space-xs);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ml-sim-analytics__table-wrap {
+    overflow: auto;
+    border-top: 1px solid var(--color-border);
+}
+
+.ml-sim-analytics__table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+}
+
+.ml-sim-analytics__table th,
+.ml-sim-analytics__table td {
+    padding: 12px var(--space-md);
+    border-bottom: 1px solid var(--glass-border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.ml-sim-analytics__table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 11px;
+    color: var(--color-text-dim);
+    background: color-mix(in srgb, var(--color-slate-950) 42%, transparent);
+}
+
+.ml-sim-analytics__table tbody tr {
+    cursor: pointer;
+}
+
+.ml-sim-analytics__table tbody tr:hover td,
+.ml-sim-analytics__table-row--active td {
+    background: var(--glass-bg);
+}
+
+.ml-sim-analytics__table td strong,
+.ml-sim-analytics__meta-row strong,
+.ml-sim-analytics__miss-head strong,
+.ml-sim-analytics__quality-item strong {
+    color: var(--color-text-primary);
+}
+
+.ml-sim-analytics__table td span,
+.ml-sim-analytics__meta-row span,
+.ml-sim-analytics__miss-detail,
+.ml-sim-analytics__miss-foot,
+.ml-sim-analytics__empty {
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+}
+
+.ml-sim-analytics__run-meta,
+.ml-sim-analytics__miss-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.ml-sim-analytics__meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.ml-sim-analytics__miss-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-slate-950) 28%, transparent);
+    text-align: left;
+    cursor: default;
+}
+
+.ml-sim-analytics__fixture-list,
+.ml-sim-analytics__variant-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.ml-sim-analytics__fixture-item,
+.ml-sim-analytics__variant-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-slate-950) 28%, transparent);
+}
+
+.ml-sim-analytics__fixture-item {
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.ml-sim-analytics__fixture-item:hover,
+.ml-sim-analytics__fixture-item--active {
+    border-color: color-mix(in srgb, var(--color-primary-500) 48%, transparent);
+    background: color-mix(in srgb, var(--color-blue-500) 8%, transparent);
+}
+
+.ml-sim-analytics__fixture-head,
+.ml-sim-analytics__fixture-foot,
+.ml-sim-analytics__variant-head,
+.ml-sim-analytics__miss-head,
+.ml-sim-analytics__miss-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.ml-sim-analytics__variant-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.ml-sim-analytics__variant-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-xs) 0;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.ml-sim-analytics__variant-row:last-child {
+    border-bottom: 0;
+}
+
+.ml-sim-analytics__variant-row span,
+.ml-sim-analytics__fixture-foot span {
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+}
+
+.ml-sim-analytics__variant-row strong,
+.ml-sim-analytics__variant-head strong,
+.ml-sim-analytics__fixture-head strong {
+    color: var(--color-text-primary);
+}
+
+.ml-sim-analytics__quality-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ml-sim-analytics__quality-item {
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    background: var(--glass-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ml-sim-analytics__confidence-panel {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--glass-border);
+}
+
+.ml-sim-analytics__confidence-title {
+    margin-bottom: var(--space-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-dim);
+}
+
+.ml-sim-analytics__confidence-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ml-sim-analytics__confidence-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    background: var(--glass-bg);
+}
+
+.ml-sim-analytics__confidence-item span,
+.ml-sim-analytics__confidence-item small {
+    color: var(--color-text-dim);
+}
+
+.ml-sim-analytics__confidence-item strong {
+    color: var(--color-text-primary);
+}
+
+.ml-sim-analytics__loading {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+@media (max-width: 1100px) {
+    .ml-sim-analytics__filters-grid,
+    .ml-sim-analytics__summary,
+    .ml-sim-analytics__grid,
+    .ml-sim-analytics__market-health,
+    .ml-sim-analytics__confidence-list {
+        grid-template-columns: 1fr;
+    }
+}

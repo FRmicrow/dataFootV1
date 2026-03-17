@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "cutoff_date": "2024-01-01",
+  "source_rows": 15357,
+  "persisted_rows": 92142,
+  "coverage": {
+    "ft": 31832,
+    "1h": 30714,
+    "2h": 30714
+  },
+  "elapsed_seconds": 2.5,
+  "updated_at": "2026-03-13T23:04:10.280260Z"
+}

@@ -31,7 +31,8 @@ class MomentumAdapter(FeatureAdapter):
             "mom_gd_a3": away_mom['gd_3'], "mom_gd_a5": away_mom['gd_5'], "mom_gd_a10": away_mom['gd_10'], "mom_gd_a20": away_mom['gd_20'],
             "mom_pts_a3": away_mom['pts_3'], "mom_pts_a5": away_mom['pts_5'], "mom_pts_a10": away_mom['pts_10'], "mom_pts_a20": away_mom['pts_20'],
             "win_rate_a5": away_mom['win_5'], "win_rate_a10": away_mom['win_10'], "cs_rate_a5": away_mom['cs_5'], "cs_rate_a10": away_mom['cs_10'],
-            "def_res_h": home_mom['ga_10'], "def_res_a": away_mom['ga_10']
+            "def_res_h": home_mom['ga_10'], "def_res_a": away_mom['ga_10'],
+            "mom_gf_h10": home_mom['gf_10'], "mom_gf_a10": away_mom['gf_10']
         }
 
     def _get_team_momentum(self, conn, team_id: int, match_date: str) -> Dict[str, float]:
@@ -47,19 +48,21 @@ class MomentumAdapter(FeatureAdapter):
         df = pd.read_sql_query(query, conn, params=(team_id, team_id, match_date))
         results = {f'{k}_{w}': 0.0 for k in ['gd', 'pts', 'win', 'cs'] for w in [3, 5, 10, 20]}
         results['ga_10'] = 0.0
+        results['gf_10'] = 0.0
         if df.empty: return results
         def process_row(row):
             is_home = row['home_team_id'] == team_id
             gf, ga = (row['goals_home'], row['goals_away']) if is_home else (row['goals_away'], row['goals_home'])
             gd = gf - ga
             pts = 3 if gd > 0 else (1 if gd == 0 else 0)
-            return pd.Series({'gd': gd, 'pts': pts, 'ga': ga, 'win': 1 if pts == 3 else 0, 'cs': 1 if ga == 0 else 0})
+            return pd.Series({'gd': gd, 'pts': pts, 'ga': ga, 'gf': gf, 'win': 1 if pts == 3 else 0, 'cs': 1 if ga == 0 else 0})
         stats = df.apply(process_row, axis=1)
         for w in [3, 5, 10, 20]:
             slice_df = stats.head(w)
             if len(slice_df) > 0:
                 for k in ['gd', 'pts', 'win', 'cs']: results[f'{k}_{w}'] = float(slice_df[k].mean())
-        results['ga_10'] = float(stats.head(10)['ga'].mean()) if not stats.empty else 0.0
+        results['ga_10'] = float(stats.head(10)['ga'].mean()) if not stats.empty else 1.2
+        results['gf_10'] = float(stats.head(10)['gf'].mean()) if not stats.empty else 1.3
         return results
 
 class ContextAdapter(FeatureAdapter):
@@ -330,6 +333,7 @@ class TemporalFeatureFactory:
             "elo_h", "elo_a",
             "venue_diff_h", "venue_diff_a",
             "def_res_h", "def_res_a",
+            "mom_gf_h10", "mom_gf_a10",
             "is_derby", "travel_km", "high_stakes"
         ]
 

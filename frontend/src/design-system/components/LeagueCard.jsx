@@ -3,6 +3,28 @@ import PropTypes from 'prop-types';
 import { Card, Badge, Stack } from '../index';
 import './LeagueCard.css';
 
+const CONFEDERATION_MAP = {
+    'UEFA':     'Europe',
+    'CONMEBOL': 'South America',
+    'AFC':      'Asia',
+    'CAF':      'Africa',
+    'CONCACAF': 'Americas',
+    'OFC':      'Oceania',
+    'SAFF':     'South Asia',
+    'FIFA':     'World',
+    'CECAFA':   'East Africa',
+    'COSAFA':   'Southern Africa',
+    'CAFA':     'Central Asia',
+    'AFF':      'Southeast Asia',
+};
+
+const extractConfederation = (name) => {
+    for (const prefix of Object.keys(CONFEDERATION_MAP)) {
+        if (name?.toUpperCase().startsWith(prefix)) return prefix;
+    }
+    return null;
+};
+
 /**
  * Reusable LeagueCard component for lists and featured grids.
  */
@@ -76,18 +98,29 @@ const LeagueCard = ({
                     <img src={logo} alt={name} loading="lazy" />
                 </div>
                 <div className="ds-league-card-info" style={{ flex: 1, overflow: 'hidden' }}>
+                    {(() => {
+                        const confederation = extractConfederation(name);
+                        const displayName = confederation
+                            ? name.slice(confederation.length).replace(/^[\s\-–]+/, '')
+                            : name;
+                        return (
+                            <>
+                                {confederation && (
+                                    <span className="ds-league-card-confederation">{confederation}</span>
+                                )}
+                                <Stack direction="row" gap="4px" align="flex-start">
+                                    {countryFlag && <img src={countryFlag} alt="" className="ds-league-card-flag" style={{ marginTop: '3px', flexShrink: 0 }} />}
+                                    <h4 className="ds-league-card-name" title={name}>{displayName}</h4>
+                                </Stack>
+                            </>
+                        );
+                    })()}
 
-                    <Stack direction="row" gap="4px" align="center">
-                        {countryFlag && <img src={countryFlag} alt="" className="ds-league-card-flag" />}
-                        <h4 className="ds-league-card-name" title={name}>{name}</h4>
-                    </Stack>
-
-                    {/* Bottom Meta */}
-                    <div style={{ marginTop: '6px' }}>
-                        <span className="ds-league-card-meta">
-                            {countryName || ''}
-                        </span>
-                    </div>
+                    {countryName && (
+                        <div style={{ marginTop: '4px' }}>
+                            <span className="ds-league-card-meta">{countryName}</span>
+                        </div>
+                    )}
                 </div>
                 {featured && (
                     <div className="ds-league-card-star" title="Featured Intelligence Module">⭐</div>

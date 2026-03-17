@@ -7,6 +7,7 @@ import * as ImportControl from '../../services/v3/importControlService.js';
 import ImportStatusService from '../../services/v3/importStatusService.js';
 import { IMPORT_STATUS } from '../../services/v3/importStatusConstants.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
+import logger from '../../utils/logger.js';
 
 import { buildStatusIndex, mapMatrixRow } from '../../utils/v3Helpers.js';
 
@@ -32,7 +33,7 @@ const setupSSEStream = (res) => {
             res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
             if (res.flush) res.flush();
         } catch (e) {
-            console.warn("SSE write failed:", e.message);
+            logger.warn({ err: e }, 'SSE write failed');
         }
     };
     sendLog.emit = (data) => {
@@ -40,7 +41,7 @@ const setupSSEStream = (res) => {
             res.write(`data: ${JSON.stringify(data)}\n\n`);
             if (res.flush) res.flush();
         } catch (e) {
-            console.warn("SSE emit failed:", e.message);
+            logger.warn({ err: e }, 'SSE emit failed');
         }
     };
     return sendLog;
@@ -150,7 +151,7 @@ export const getImportMatrixStatus = async (req, res) => {
         // Maintain the original order from leagueIds
         const orderedData = leagueIds.map(id => matrixMap[id]).filter(Boolean);
 
-        res.json({ success: true, leagues: orderedData, total, page, limit });
+        res.json({ success: true, data: { leagues: orderedData, total, page, limit } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -162,20 +163,20 @@ export const getImportMatrixStatus = async (req, res) => {
 export const triggerBatchDeepSync = async (req, res) => {
     const { leagueIds } = req.body;
     if (!leagueIds || !Array.isArray(leagueIds) || leagueIds.length === 0) {
-        return res.status(400).json({ error: 'No league IDs provided.' });
+        return res.status(400).json({ success: false, error: 'No league IDs provided.' });
     }
 
     const sendLog = setupSSEStream(res);
 
     req.on('close', () => {
         if (!res.writableEnded) {
-            console.log(`🔌 [SSE] Connection closed by client.`);
+            logger.info('SSE connection closed by client');
         }
     });
 
     try {
         ImportControl.resetImportState();
-        console.log(`📡 [SSE] Initiating batch deep sync for ${leagueIds.length} leagues`);
+        logger.info({ leagueCount: leagueIds.length }, 'Initiating batch deep sync');
         const batchStart = Date.now();
         sendLog(`🚀 Batch Deep Sync: ${leagueIds.length} league(s) queued`, 'info');
 
@@ -223,9 +224,9 @@ export const resetImportStatus = async (req, res) => {
     try {
         const { leagueId, seasonYear, pillar, reason, resetAll } = req.body;
         await ImportStatusService.resetStatus(leagueId, seasonYear, pillar, reason, !!resetAll);
-        res.json({ success: true });
+        res.json({ success: true, data: { reset: true } });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -234,17 +235,17 @@ export const resetImportStatus = async (req, res) => {
  */
 export const stopImport = (req, res) => {
     ImportControl.requestAbort();
-    res.json({ success: true, message: 'Import stop requested.' });
+    res.json({ success: true, data: { message: 'Import stop requested.' } });
 };
 
 export const pauseImport = (req, res) => {
     ImportControl.requestPause();
-    res.json({ success: true, message: 'Import paused.' });
+    res.json({ success: true, data: { message: 'Import paused.' } });
 };
 
 export const resumeImport = (req, res) => {
     ImportControl.requestResume();
-    res.json({ success: true, message: 'Import resumed.' });
+    res.json({ success: true, data: { message: 'Import resumed.' } });
 };
 
 export const getImportStateEndpoint = (req, res) => {
@@ -253,7 +254,7 @@ export const getImportStateEndpoint = (req, res) => {
 
 export const triggerDeepSync = async (req, res) => {
     const { id } = req.params;
-    if (!id) return res.status(400).json({ error: 'League ID is required.' });
+    if (!id) return res.status(400).json({ success: false, error: 'League ID is required.' });
 
     const sendLog = setupSSEStream(res);
 
@@ -269,7 +270,7 @@ export const triggerDeepSync = async (req, res) => {
 
 export const triggerAuditScan = async (req, res) => {
     const result = await performDiscoveryScan();
-    res.json(result);
+    res.json({ success: true, data: result });
 };
 
 export const getDiscoveryCountries = async (req, res) => {
@@ -286,7 +287,7 @@ export const getDiscoveryCountries = async (req, res) => {
 export const getDiscoveryLeagues = async (req, res) => {
     try {
         const { country } = req.query;
-        if (!country) return res.status(400).json({ error: 'Country is required.' });
+        if (!country) return res.status(400).json({ success: false, error: 'Country is required.' });
 
         const response = await footballApi.getLeagues({ country });
         const apiLeagues = response.response || [];
@@ -314,7 +315,7 @@ export const getDiscoveryLeagues = async (req, res) => {
 export const triggerDiscoveryImport = async (req, res) => {
     const { leagueId, seasonYear } = req.body;
     if (!leagueId || !seasonYear) {
-        return res.status(400).json({ error: 'leagueId and seasonYear are required.' });
+        return res.status(400).json({ success: false, error: 'leagueId and seasonYear are required.' });
     }
 
     const sendLog = setupSSEStream(res);
@@ -344,7 +345,7 @@ export const triggerDiscoveryImport = async (req, res) => {
 export const triggerDiscoveryBatchImport = async (req, res) => {
     const { selection } = req.body;
     if (!selection || !Array.isArray(selection) || selection.length === 0) {
-        return res.status(400).json({ error: 'Selection array is required.' });
+        return res.status(400).json({ success: false, error: 'Selection array is required.' });
     }
 
     const sendLog = setupSSEStream(res);

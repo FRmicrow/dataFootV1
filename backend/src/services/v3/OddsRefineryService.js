@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import logger from '../../utils/logger.js';
 
 /**
  * US-1917: Odds Refinery Service
@@ -13,13 +14,13 @@ class OddsRefineryService {
      */
     async refineAndStore(fixtureId, apiData, targetBookmakerId = 8) {
         if (!apiData || !apiData.bookmakers) {
-            console.warn(`[Refinery] No bookmaker data for fixture ${fixtureId}`);
+            logger.warn({ fixtureId }, 'No bookmaker data for fixture');
             return 0;
         }
 
         const bookmaker = apiData.bookmakers.find(b => b.id === targetBookmakerId);
         if (!bookmaker) {
-            console.warn(`[Refinery] Target bookmaker ${targetBookmakerId} not found for fixture ${fixtureId}`);
+            logger.warn({ fixtureId, targetBookmakerId }, 'Target bookmaker not found for fixture');
             return 0;
         }
 
@@ -48,7 +49,7 @@ class OddsRefineryService {
                     ]);
                     totalSaved++;
                 } catch (e) {
-                    console.error(`[Refinery] Error saving odd selection for fixture ${fixtureId}: ${e.message}`);
+                    logger.error({ err: e, fixtureId }, 'Error saving odd selection for fixture');
                 }
             }
         }

@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { Button, Stack } from '../../../../design-system';
+import { PageLayout, PageHeader, PageContent } from '../../layouts';
 import './ImportEventsPage.css';
 
 const ImportEventsPage = () => {
+    const navigate = useNavigate();
     const [candidates, setCandidates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState({}); // Map of leagueId -> boolean
@@ -139,16 +143,19 @@ const ImportEventsPage = () => {
     });
 
     return (
-        <div className="import-events-page">
-            <header className="page-header">
-                <h1>Fixture Events Import Manager</h1>
-                <p>Select leagues below to sync detailed match events (Goals, Cards, Subs). High API usage warning.</p>
-                <div className="sub-nav-links" style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                    <a href="/import" className="btn-v3-secondary btn-sm">League Import</a>
-                    <a href="/lineups-import" className="btn-v3-secondary btn-sm">Lineups Import</a>
-                </div>
-            </header>
-
+        <PageLayout>
+            <PageHeader
+                title="Events Import"
+                subtitle="Sync detailed match events — Goals, Cards, Substitutions"
+                badge={{ label: 'IMPORT', variant: 'warning' }}
+                extra={
+                    <Stack direction="row" gap="var(--spacing-sm)">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/import')}>League Import</Button>
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/lineups-import')}>Lineups Import</Button>
+                    </Stack>
+                }
+            />
+            <PageContent>
             {loading ? (
                 <div className="loading-spinner">Loading candidates...</div>
             ) : (
@@ -214,7 +221,8 @@ const ImportEventsPage = () => {
                     )}
                 </div>
             )}
-        </div>
+            </PageContent>
+        </PageLayout>
     );
 };
 

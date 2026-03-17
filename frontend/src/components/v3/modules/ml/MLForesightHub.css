@@ -1,231 +1,112 @@
-.ml-foresight { padding: 0 var(--space-xl) var(--space-2xl); display: flex; flex-direction: column; gap: var(--space-2xl); }
-
-.ml-foresight__header { margin-bottom: 0; }
-.ml-foresight__title {
-    font-family: 'Space Grotesk', var(--font-family);
-    font-size: var(--text-2xl);
-    font-weight: 700;
-    color: var(--color-text-primary);
-    margin: 0;
-}
-
-.ml-foresight__section { display: flex; flex-direction: column; gap: var(--space-lg); }
-.ml-foresight__section-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); }
-.ml-foresight__section-title {
-    font-family: 'Space Grotesk', var(--font-family);
-    font-size: var(--text-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0;
-}
-.ml-foresight__divider { border: none; border-top: 2px solid var(--color-border); }
-
-/* Fav selector */
-.ml-foresight__fav-btn {
-    background: none;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text-secondary);
-    font-size: var(--text-sm);
-    padding: var(--space-xs) var(--space-md);
-    cursor: pointer;
-    font-family: inherit;
-    transition: var(--transition-base);
-}
-.ml-foresight__fav-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
-.ml-foresight__fav-panel {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
-    box-shadow: var(--shadow-premium);
-    max-width: 400px;
-}
-.ml-foresight__fav-hint { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0 0 var(--space-md); }
-.ml-foresight__fav-list { display: flex; flex-direction: column; gap: var(--space-xs); max-height: 260px; overflow-y: auto; margin-bottom: var(--space-md); }
-.ml-foresight__fav-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    background: none;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text-secondary);
-    font-size: var(--text-sm);
-    padding: var(--space-sm) var(--space-md);
-    cursor: pointer;
-    font-family: inherit;
-    text-align: left;
-    transition: var(--transition-base);
-}
-.ml-foresight__fav-item:hover { border-color: var(--color-accent); }
-.ml-foresight__fav-item--active { border-color: var(--color-accent); color: var(--color-accent); background: rgba(var(--color-accent-rgb, 99, 102, 241), 0.08); }
-.ml-foresight__fav-logo { width: 18px; height: 18px; object-fit: contain; }
-.ml-foresight__fav-check { margin-left: auto; font-size: var(--text-sm); }
-.ml-foresight__fav-close {
-    width: 100%;
-    background: var(--color-surface-alt, var(--color-surface));
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-    padding: var(--space-sm);
-    cursor: pointer;
-    font-family: inherit;
-}
-
-/* Section A */
-.ml-foresight__section-a { display: flex; flex-direction: column; gap: var(--space-md); }
-.ml-foresight__fixture-list { display: flex; flex-direction: column; gap: var(--space-md); margin-top: var(--space-md); }
-.ml-foresight__section-empty {
+.ml-foresight {
     display: flex;
     flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.ml-foresight__league-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.ml-foresight__league-chip {
+    display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-2xl);
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-    text-align: center;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-card);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: var(--transition-base);
 }
-.ml-foresight__section-empty span { font-size: 2rem; }
 
-/* Fixture card */
-.ml-foresight__fixture-card { padding: var(--space-md) var(--space-lg); }
-.ml-foresight__fixture-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    margin-bottom: var(--space-sm);
+.ml-foresight__league-chip img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
 }
-.ml-foresight__fixture-date { font-size: var(--text-xs); color: var(--color-text-muted); font-style: italic; }
-.ml-foresight__fixture-round { font-size: var(--text-xs); color: var(--color-text-muted); }
-.ml-foresight__fixture-teams {
+
+.ml-foresight__league-chip.is-active {
+    border-color: var(--color-primary-500);
+    color: var(--color-primary-500);
+    background: color-mix(in srgb, var(--color-primary-500) 8%, transparent);
+}
+
+.ml-foresight__fixture-list {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.ml-foresight__fixture-card {
+    padding: var(--space-md);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+}
+
+.ml-foresight__fixture-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: var(--space-md);
     margin-bottom: var(--space-md);
 }
-.ml-foresight__team { display: flex; align-items: center; gap: var(--space-xs); flex: 1; }
-.ml-foresight__team--home { justify-content: flex-end; font-weight: 600; color: var(--color-text-primary); }
-.ml-foresight__team--away { justify-content: flex-start; font-weight: 600; color: var(--color-text-primary); }
-.ml-foresight__team-logo { width: 22px; height: 22px; object-fit: contain; }
-.ml-foresight__vs { font-size: var(--text-xs); color: var(--color-text-muted); flex-shrink: 0; }
 
-.ml-foresight__markets { display: flex; flex-direction: column; gap: var(--space-xs); }
-.ml-foresight__market-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-xs) 0;
-    border-top: 1px solid var(--color-border);
-}
-.ml-foresight__market-name { font-size: var(--text-xs); color: var(--color-text-muted); width: 70px; flex-shrink: 0; }
-.ml-foresight__market-probs { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
-.ml-foresight__prob {
-    font-size: var(--text-xs);
-    font-family: 'Courier New', monospace;
-    color: var(--color-text-secondary);
-    padding: 2px var(--space-xs);
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-}
-.ml-foresight__prob--best {
-    color: var(--color-accent);
-    border-color: var(--color-accent);
-    font-weight: 600;
-}
-
-.ml-foresight__edge-badge {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    margin-top: var(--space-sm);
-    padding: var(--space-xs) var(--space-sm);
-    background: rgba(var(--color-success-rgb, 34, 197, 94), 0.1);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    color: var(--color-success);
-    font-weight: 600;
-}
-.ml-foresight__edge-market { color: var(--color-text-muted); font-weight: 400; }
-
-/* Section B filters */
-.ml-foresight__section-b { display: flex; flex-direction: column; gap: var(--space-lg); }
-.ml-foresight__edge-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-lg);
-    padding: var(--space-lg);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-}
-.ml-foresight__filter-label {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    font-weight: 500;
-}
-.ml-foresight__filter-input {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+.ml-foresight__fixture-top strong {
+    display: block;
+    margin-bottom: 4px;
     color: var(--color-text-primary);
-    padding: var(--space-xs) var(--space-sm);
-    font-size: var(--text-sm);
-    width: 90px;
-    font-family: inherit;
-    outline: none;
 }
-.ml-foresight__filter-input:focus { border-color: var(--color-accent); }
-.ml-foresight__market-toggles { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
-.ml-foresight__mkt-toggle {
-    background: none;
+
+.ml-foresight__fixture-top span {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.ml-foresight__fixture-markets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-sm);
+}
+
+.ml-foresight__market-card {
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+}
+
+.ml-foresight__market-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.ml-foresight__market-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.ml-foresight__market-grid span {
+    display: block;
+    margin-bottom: 4px;
     color: var(--color-text-muted);
     font-size: var(--text-xs);
-    padding: 3px var(--space-sm);
-    cursor: pointer;
-    font-family: inherit;
-    transition: var(--transition-base);
 }
-.ml-foresight__mkt-toggle--on { border-color: var(--color-accent); color: var(--color-accent); background: rgba(99, 102, 241, 0.08); }
 
-.ml-foresight__edges-loading { display: flex; flex-direction: column; gap: var(--space-md); }
-.ml-foresight__empty-hint { font-size: var(--text-xs); color: var(--color-text-muted); }
-.ml-foresight__edges-list { display: flex; flex-direction: column; gap: var(--space-md); }
+.ml-foresight__market-grid strong {
+    color: var(--color-text-primary);
+}
 
-/* Edge cards */
-.ml-foresight__edge-card { padding: var(--space-md) var(--space-lg); border-left: 3px solid transparent; }
-.ml-foresight__edge-card--elite    { border-left-color: var(--color-error); }
-.ml-foresight__edge-card--strong   { border-left-color: var(--color-warning); }
-.ml-foresight__edge-card--moderate { border-left-color: var(--color-info); }
-.ml-foresight__edge-card--weak     { border-left-color: var(--color-border); }
-
-.ml-foresight__edge-header { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm); }
-.ml-foresight__edge-power-icon { font-size: 1.1rem; }
-.ml-foresight__edge-score { font-family: 'Courier New', monospace; font-size: var(--text-xs); color: var(--color-text-muted); margin-left: auto; }
-
-.ml-foresight__edge-fixture { margin-bottom: var(--space-sm); }
-.ml-foresight__edge-teams { display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; }
-.ml-foresight__edge-logo { width: 18px; height: 18px; object-fit: contain; }
-.ml-foresight__edge-team { font-weight: 600; font-size: var(--text-sm); color: var(--color-text-primary); }
-.ml-foresight__vs-sm { font-size: var(--text-xs); color: var(--color-text-muted); }
-.ml-foresight__edge-league { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
-
-.ml-foresight__edge-market-row { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm); flex-wrap: wrap; }
-.ml-foresight__edge-selection { font-family: 'Courier New', monospace; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); }
-.ml-foresight__edge-date { font-size: var(--text-xs); color: var(--color-text-muted); margin-left: auto; }
-
-.ml-foresight__edge-stats { display: flex; gap: var(--space-lg); flex-wrap: wrap; margin-bottom: var(--space-sm); }
-.ml-foresight__edge-stat { display: flex; flex-direction: column; gap: 2px; }
-.ml-foresight__edge-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); }
-.ml-foresight__edge-stat-value { font-family: 'Courier New', monospace; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); }
-.ml-foresight__edge-positive { color: var(--color-success); }
-
-.ml-foresight__power-bar-wrap {}
-.ml-foresight__power-bar-track { height: 4px; background: var(--color-border); border-radius: 2px; overflow: hidden; }
-.ml-foresight__power-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+@media (max-width: 720px) {
+    .ml-foresight__fixture-top {
+        flex-direction: column;
+    }
+}

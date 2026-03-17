@@ -10,6 +10,7 @@
     z-index: var(--z-index-sticky);
     backdrop-filter: var(--glass-blur);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
 }
 
 .ds-control-bar-content {
@@ -19,16 +20,26 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-lg);
+    min-width: 0;
 }
 
 .ds-control-bar-left {
     flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+
+.ds-control-bar-left::-webkit-scrollbar {
+    display: none;
 }
 
 .ds-control-bar-right {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    flex-shrink: 0;
 }
 
 /* Filter Box used in ControlBars */
@@ -72,5 +83,9 @@
     .ds-control-bar-content {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .ds-control-bar-right {
+        flex-wrap: wrap;
     }
 }

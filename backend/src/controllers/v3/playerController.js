@@ -1,4 +1,5 @@
 import PlayerRepository from '../../repositories/v3/PlayerRepository.js';
+import logger from '../../utils/logger.js';
 
 /**
  * US_V3-PLAYER-001: Comprehensive Player Profile
@@ -9,7 +10,7 @@ export const getPlayerProfileV3 = async (req, res) => {
         const player = await PlayerRepository.getPlayerProfile(id);
 
         if (!player) {
-            return res.status(404).json({ error: 'Player not found' });
+            return res.status(404).json({ success: false, error: 'Player not found' });
         }
 
         const career = await PlayerRepository.getPlayerStats(id);
@@ -18,15 +19,17 @@ export const getPlayerProfileV3 = async (req, res) => {
         const currentContext = await PlayerRepository.getCurrentContext(id);
 
         res.json({
-            player,
-            career,
-            careerTotals,
-            currentContext,
-            trophies
+            success: true,
+            data: {
+                player,
+                career,
+                careerTotals,
+                currentContext,
+                trophies
+            }
         });
     } catch (error) {
-        console.error('V3 Player Profile Error:', error);
-        res.status(500).json({ error: 'Failed to fetch player profile' });
+        logger.error({ err: error, playerId: req.params.id }, 'V3 Player Profile Error');
+        res.status(500).json({ success: false, error: 'Failed to fetch player profile' });
     }
 };
-

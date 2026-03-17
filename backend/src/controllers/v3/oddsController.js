@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import OddsService from '../../services/odds/OddsService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Controller for pre-match odds (V3)
@@ -25,12 +26,14 @@ export const getFixtureOdds = async (req, res) => {
 
         res.json({
             success: true,
-            fixtureId: Number.parseInt(fixtureId),
-            count: odds.length,
-            data: odds
+            data: {
+                fixtureId: Number.parseInt(fixtureId),
+                count: odds.length,
+                items: odds
+            }
         });
     } catch (error) {
-        console.error('Error in getFixtureOdds:', error);
+        logger.error({ err: error, fixtureId: req.params.fixtureId }, 'Error in getFixtureOdds');
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -61,11 +64,13 @@ export const getUpcomingOdds = async (req, res) => {
 
         res.json({
             success: true,
-            count: upcomingFixtures.length,
-            data: upcomingFixtures
+            data: {
+                count: upcomingFixtures.length,
+                items: upcomingFixtures
+            }
         });
     } catch (error) {
-        console.error('Error in getUpcomingOdds:', error);
+        logger.error({ err: error }, 'Error in getUpcomingOdds');
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -81,16 +86,18 @@ export const manualImportOdds = async (req, res) => {
             });
         }
 
-        console.log(`🚀 Manual import requested for L${leagueId}/S${seasonYear}`);
+        logger.info({ leagueId, seasonYear }, 'Manual odds import requested');
         const stats = await OddsService.importOddsByLeagueSeason(leagueId, seasonYear);
 
         res.json({
             success: true,
-            message: `Import finished for League ${leagueId}`,
-            data: stats
+            data: {
+                message: `Import finished for League ${leagueId}`,
+                stats
+            }
         });
     } catch (error) {
-        console.error('Error in manualImportOdds:', error);
+        logger.error({ err: error, leagueId: req.body?.leagueId, seasonYear: req.body?.seasonYear }, 'Error in manualImportOdds');
         res.status(500).json({ success: false, message: error.message });
     }
 };

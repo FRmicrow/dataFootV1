@@ -1,0 +1,265 @@
+/* ============================================
+   CollapsibleSidebar — Design System Component
+   ============================================ */
+
+/* --- Sidebar container --- */
+.sf-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--color-bg-sidebar);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-md) var(--spacing-sm);
+    z-index: var(--z-index-sticky);
+    transition: width var(--transition-base), padding var(--transition-base);
+    overflow: hidden;
+}
+
+/* --- Brand / Logo --- */
+.sf-sidebar__brand-link {
+    text-decoration: none;
+    display: block;
+    overflow: hidden;
+}
+
+.sf-sidebar__brand-text {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-black);
+    letter-spacing: -0.03em;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.sf-sidebar__brand-accent {
+    color: var(--color-primary-400);
+    font-style: italic;
+}
+
+/* --- Header (brand + toggle) --- */
+.sf-sidebar__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+    min-height: 44px;
+    gap: var(--spacing-xs);
+}
+
+.sf-sidebar__brand {
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+    transition: opacity var(--transition-base);
+}
+
+/* --- Burger / Toggle button --- */
+.sf-sidebar__burger {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: var(--spacing-2xs);
+    border-radius: var(--radius-xs);
+    line-height: 1;
+    flex-shrink: 0;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.sf-sidebar__burger:hover {
+    background: var(--glass-bg);
+    color: var(--color-text-main);
+}
+
+.sf-sidebar__burger:focus-visible {
+    box-shadow: var(--focus-ring);
+    outline: none;
+}
+
+.sf-sidebar__burger--mobile-close {
+    display: none;
+}
+
+/* --- Nav items --- */
+.sf-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.sf-sidebar__item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--spacing-xs);
+    width: 100%;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    text-align: left;
+}
+
+.sf-sidebar__item:hover {
+    background: var(--glass-bg);
+    color: var(--color-text-main);
+}
+
+.sf-sidebar__item--active {
+    background: var(--color-primary-bg);
+    color: var(--color-text-main);
+    border-left: 2px solid var(--color-primary-400);
+    padding-left: calc(var(--spacing-sm) - 2px);
+}
+
+.sf-sidebar__icon {
+    font-size: 15px;
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+}
+
+.sf-sidebar__label {
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity var(--transition-base);
+}
+
+/* --- Footer (debug) --- */
+.sf-sidebar__footer {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border);
+}
+
+.sf-sidebar__debug-btn {
+    opacity: 0.5;
+}
+
+.sf-sidebar__debug-btn:hover,
+.sf-sidebar__debug-btn.sf-sidebar__item--active {
+    opacity: 1;
+}
+
+/* --- Collapsed state (desktop) --- */
+.sf-sidebar--collapsed {
+    width: 52px;
+    padding: var(--spacing-md) var(--spacing-xs);
+}
+
+.sf-sidebar--collapsed .sf-sidebar__header {
+    justify-content: center;
+}
+
+.sf-sidebar--collapsed .sf-sidebar__brand {
+    display: none;
+}
+
+.sf-sidebar--collapsed .sf-sidebar__label {
+    display: none;
+}
+
+.sf-sidebar--collapsed .sf-sidebar__item {
+    justify-content: center;
+    padding-left: var(--spacing-xs);
+    padding-right: var(--spacing-xs);
+    border-left: none;
+}
+
+.sf-sidebar--collapsed .sf-sidebar__item--active {
+    border-left: none;
+    padding-left: var(--spacing-xs);
+}
+
+/* --- Overlay (mobile backdrop) --- */
+.sf-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 99;
+    border: none;
+    padding: 0;
+}
+
+/* --- Mobile sticky header (hidden on desktop) --- */
+.sf-mobile-header {
+    display: none;
+    height: 56px;
+    background: var(--color-bg-sidebar);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 var(--spacing-md);
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-index-navbar);
+    flex-shrink: 0;
+}
+
+/* --- Responsive --- */
+@media (max-width: 992px) {
+    .sf-mobile-header {
+        display: flex;
+    }
+
+    .sf-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 240px !important;
+        padding: var(--spacing-md) var(--spacing-sm) !important;
+        transform: translateX(-100%);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+        transition: transform var(--transition-base);
+    }
+
+    .sf-sidebar--mobile-open {
+        transform: translateX(0);
+    }
+
+    .sf-sidebar__burger--desktop {
+        display: none;
+    }
+
+    .sf-sidebar__burger--mobile-close {
+        display: block;
+    }
+
+    .sf-sidebar__brand {
+        display: flex !important;
+    }
+
+    .sf-sidebar__label {
+        display: block !important;
+    }
+
+    .sf-sidebar__item {
+        justify-content: flex-start !important;
+        border-left: none;
+    }
+
+    .sf-sidebar__item--active {
+        border-left: 2px solid var(--color-primary-400) !important;
+        padding-left: calc(var(--spacing-sm) - 2px) !important;
+    }
+}

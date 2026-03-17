@@ -55,18 +55,77 @@ export const getAvailableSeasons = async (req, res) => {
     try {
         const { apiId } = req.params;
         const numericApiId = Number.parseInt(apiId);
-        if (!numericApiId) return res.status(400).json({ error: "Missing/invalid apiId" });
+        if (!numericApiId) return res.status(400).json({ success: false, error: "Missing/invalid apiId" });
 
-        const leagueResponse = await footballApi.getLeagues({ id: numericApiId });
-        if (!leagueResponse.response?.length) return res.status(404).json({ error: "Not found" });
+        const localLeague = await db.get(
+            `SELECT league_id, api_id, name, logo_url
+             FROM V3_Leagues
+             WHERE api_id = ?`,
+            cleanParams([numericApiId])
+        );
 
-        const apiData = leagueResponse.response[0];
-        const localLeague = await db.get("SELECT league_id FROM V3_Leagues WHERE api_id = ?", cleanParams([numericApiId]));
-        const seasons = await Promise.all((apiData.seasons || []).map(async s => ({
-            year: s.year, start: s.start, end: s.end, is_current: s.current, status: await getSeasonStatus(localLeague, s.year)
+        try {
+            const leagueResponse = await footballApi.getLeagues({ id: numericApiId });
+            const apiData = leagueResponse.response?.[0];
+
+            if (apiData) {
+                const seasons = await Promise.all((apiData.seasons || []).map(async s => ({
+                    year: s.year,
+                    start: s.start,
+                    end: s.end,
+                    is_current: s.current,
+                    status: await getSeasonStatus(localLeague, s.year)
+                })));
+
+                return res.json({
+                    success: true,
+                    data: {
+                        league: {
+                            api_id: apiData.league.id,
+                            name: apiData.league.name,
+                            logo: apiData.league.logo
+                        },
+                        seasons: seasons.sort((a, b) => b.year - a.year),
+                        source: 'api'
+                    }
+                });
+            }
+        } catch (error) {
+            // Fallback to local data when API-Football is rate-limited or unavailable.
+        }
+
+        if (!localLeague) {
+            return res.status(404).json({ success: false, error: "Not found" });
+        }
+
+        const localSeasons = await db.all(
+            `SELECT season_year
+             FROM V3_League_Seasons
+             WHERE league_id = ?
+             ORDER BY season_year DESC`,
+            cleanParams([localLeague.league_id])
+        );
+
+        const seasons = await Promise.all(localSeasons.map(async ({ season_year }) => ({
+            year: season_year,
+            start: null,
+            end: null,
+            is_current: false,
+            status: await getSeasonStatus(localLeague, season_year)
         })));
 
-        res.json({ success: true, data: { league: { api_id: apiData.league.id, name: apiData.league.name, logo: apiData.league.logo }, seasons: seasons.sort((a, b) => b.year - a.year) } });
+        return res.json({
+            success: true,
+            data: {
+                league: {
+                    api_id: localLeague.api_id,
+                    name: localLeague.name,
+                    logo: localLeague.logo_url
+                },
+                seasons,
+                source: 'local'
+            }
+        });
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 };
 
@@ -105,14 +164,18 @@ export const importLeagueV3 = async (req, res) => {
     const sendLog = (message, type = 'info') => res.write(`data: ${JSON.stringify({ message, type })}\n\n`);
     try {
         ImportControl.resetImportState();
-        const leagueId = req.body.leagueId || req.params.id;
-        const season = req.body.season || req.params.year;
-        
+        const bodyLeagueId = req.body?.leagueId;
+        const leagueId = bodyLeagueId || req.params.id;
+        const season = req.body?.season || req.params.year;
+
         if (!leagueId || !season) {
             throw new Error("Missing leagueId or season");
         }
 
-        const meta = await runImportJob(leagueId, Number.parseInt(season), sendLog, { forceApiId: true, forceRefresh: req.body.forceRefresh || req.query.force === 'true' });
+        // If leagueId comes from the request body it's an api_id (forceApiId=true).
+        // If it comes from the URL param it's the internal league_id (forceApiId=false → DB lookup).
+        const forceApiId = !!bodyLeagueId;
+        const meta = await runImportJob(leagueId, Number.parseInt(season), sendLog, { forceApiId, forceRefresh: req.body?.forceRefresh || req.query.force === 'true' });
         res.write(`data: ${JSON.stringify({ type: 'complete', ...meta })}\n\n`);
         res.end();
     } catch (error) { sendLog(`❌ Error: ${error.message}`, 'error'); res.end(); }
@@ -131,10 +194,11 @@ export const importBatchV3 = async (req, res) => {
             for (const s of item.seasons) {
                 const year = typeof s === 'object' ? s.year : s;
                 const pillars = (typeof s === 'object' ? s.pillars : null) || ['core'];
+                const forceRefresh = typeof s === 'object' ? (s.forceRefresh || false) : false;
                 for (const pillar of pillars) {
                     current++;
                     sendLog.emit({ type: 'progress', step: 'overall', current, total, label: `Pillar ${pillar.toUpperCase()} - ${year}` });
-                    await processPillar(pillar, item.leagueId, year, sendLog, { forceApiId: false });
+                    await processPillar(pillar, item.leagueId, year, sendLog, { forceApiId: false, forceRefresh });
                 }
             }
         }

@@ -1,19 +1,27 @@
 import pandas as pd
 import numpy as np
 import os
+import sys
+from model_paths import get_ft_poisson_paths
 from catboost import CatBoostRegressor, Pool
 from sklearn.metrics import mean_squared_error, mean_poisson_deviance, log_loss
 
+MODEL_DIR = os.path.dirname(os.path.abspath(__file__))
+ML_SERVICE_ROOT = os.path.abspath(os.path.join(MODEL_DIR, "..", "..", ".."))
+if ML_SERVICE_ROOT not in sys.path:
+    sys.path.insert(0, ML_SERVICE_ROOT)
+
+from src.models.model_utils import get_valid_cat_features, poisson_prob
+
 # Import dataset loader
 from dataset import fetch_ft_dataset
-
-MODEL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'models', 'ft_result'))
 
 def train_poisson_model(X_train, y_train, X_test, y_test, cat_features, label):
     """
     Train a single CatBoost Poisson Regressor for Full-Time Outcomes.
     Using heavier parameters since dataset is huge (380k).
     """
+    valid_cat_features = get_valid_cat_features(X_train.columns, cat_features)
     model = CatBoostRegressor(
         loss_function='Poisson',
         iterations=1500,
@@ -26,8 +34,8 @@ def train_poisson_model(X_train, y_train, X_test, y_test, cat_features, label):
         verbose=100
     )
     
-    train_pool = Pool(X_train, y_train, cat_features=cat_features)
-    test_pool = Pool(X_test, y_test, cat_features=cat_features)
+    train_pool = Pool(X_train, y_train, cat_features=valid_cat_features)
+    test_pool = Pool(X_test, y_test, cat_features=valid_cat_features)
     
     print(f"\nTraining {label} model...")
     model.fit(train_pool, eval_set=test_pool, use_best_model=True)
@@ -39,9 +47,6 @@ def train_poisson_model(X_train, y_train, X_test, y_test, cat_features, label):
     print(f"{label} Performance - RMSE: {rmse:.4f} Goals | Poisson Deviance: {deviance:.4f}")
     
     return model, preds
-
-def poisson_prob(mu, k):
-    return (np.exp(-mu) * (mu**k)) / np.math.factorial(k)
 
 def calculate_1n2_probs(home_mu, away_mu, max_goals=8):
     """
@@ -63,7 +68,8 @@ def calculate_1n2_probs(home_mu, away_mu, max_goals=8):
     return p_1 / total, p_n / total, p_2 / total
 
 def run_training():
-    os.makedirs(MODEL_DIR, exist_ok=True)
+    model_paths = get_ft_poisson_paths()
+    os.makedirs(model_paths["dir"], exist_ok=True)
     
     # 1. Load Data
     df = fetch_ft_dataset()
@@ -124,12 +130,10 @@ def run_training():
         print(f"  {name}: {score:.2f}")
         
     # 6. Save Models
-    home_path = os.path.join(MODEL_DIR, f'catboost_baseline_v0_home.cbm')
-    away_path = os.path.join(MODEL_DIR, f'catboost_baseline_v0_away.cbm')
-    home_model.save_model(home_path)
-    away_model.save_model(away_path)
+    home_model.save_model(model_paths["home"])
+    away_model.save_model(model_paths["away"])
     
-    print(f"\nModels saved to {MODEL_DIR}")
+    print(f"\nModels saved to {model_paths['dir']}")
 
 if __name__ == "__main__":
     run_training()

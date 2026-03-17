@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Badge, Button, Skeleton, Stack } from '../../../../design-system';
 import api from '../../../../services/api';
+import MLHubGlossaryFooter from './shared/MLHubGlossaryFooter';
 import './MLSubModelBuilder.css';
 
 const BASE_MODEL_OPTIONS = [
@@ -291,6 +292,16 @@ const MLSubModelBuilder = () => {
 
     return (
         <div className="ml-submodel">
+            <Card
+                className="ml-submodel__error"
+                title="Atelier avancé"
+                subtitle="Toujours utile pour les expérimentations ciblées, mais désormais secondaire par rapport aux vues produit du ML Hub."
+            >
+                <p>
+                    Utilise cette page pour les sous-modèles expérimentaux. Pour comprendre le système, lire les runs et suivre les ligues,
+                    les pages principales sont maintenant plus adaptées.
+                </p>
+            </Card>
             <div className="ml-submodel__header">
                 <div>
                     <h2 className="ml-submodel__title">🧬 Sub-Models</h2>
@@ -340,6 +351,7 @@ const MLSubModelBuilder = () => {
                     ))}
                 </div>
             )}
+            <MLHubGlossaryFooter topic="models" />
         </div>
     );
 };

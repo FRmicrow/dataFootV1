@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import db from '../../config/database.js';
+import logger from '../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +34,7 @@ class ColorService {
         const tempFile = path.join(TEMP_DIR, `logo_${teamId}_${Date.now()}.png`);
 
         try {
-            console.log(`🎨 [ColorService] Extracting colors for team ${teamId}...`);
+            logger.info({ teamId }, 'Extracting colors for team');
             const response = await axios.get(logoUrl, {
                 responseType: 'arraybuffer',
                 timeout: 5000
@@ -55,11 +56,11 @@ class ColorService {
                     WHERE team_id = ?
                 `, [accent, secondary, tertiary, teamId]);
 
-                console.log(`  ✅ [ColorService] Colors updated for team ${teamId}: ${accent}, ${secondary}, ${tertiary}`);
+                logger.info({ teamId, accent, secondary, tertiary }, 'Colors updated for team');
                 return { accent, secondary, tertiary };
             }
         } catch (error) {
-            console.error(`  ❌ [ColorService] Error processing colors for team ${teamId}:`, error.message);
+            logger.error({ err: error, teamId }, 'Error processing colors for team');
         } finally {
             if (fs.existsSync(tempFile)) {
                 try { fs.unlinkSync(tempFile); } catch (e) { }
@@ -80,7 +81,7 @@ class ColorService {
             LIMIT ?
         `, [limit]);
 
-        console.log(`📋 [ColorService] Found ${teams.length} teams to process.`);
+        logger.info({ count: teams.length }, 'Found teams missing colors to process');
 
         for (const team of teams) {
             await this.processTeamColors(team.team_id, team.logo_url);

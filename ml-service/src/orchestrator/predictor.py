@@ -4,10 +4,14 @@ from db_config import get_connection
 import traceback
 
 # Import our four submodels
-from src.models.ft_result.inference import predict_ft_result
-from src.models.ht_result.inference import predict_ht_result
-from src.models.corners_total.inference import predict_total_corners
 from src.models.cards_total.inference import predict_total_cards
+from src.models.corners_total.inference import predict_total_corners
+from src.models.ft_result.inference import predict_ft_result
+from src.models.goals_total.inference import predict_total_goals
+from src.models.ht_result.inference import predict_ht_result
+from src.models.model_utils import get_logger
+
+logger = get_logger(__name__)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
@@ -39,9 +43,16 @@ def save_to_submodel_outputs(fixture_id, model_type, prediction_dict):
         conn.commit()
         cur.close()
     except Exception as e:
-        print(f"Failed to save {model_type} for {fixture_id}: {e}")
+        logger.error(f"Failed to save {model_type} for {fixture_id}: {e}")
     finally:
         conn.close()
+
+def is_persistable_model_prediction(prediction_dict):
+    return (
+        isinstance(prediction_dict, dict)
+        and prediction_dict.get("prediction_status") == "success_model"
+        and not prediction_dict.get("is_fallback", False)
+    )
 
 def generate_master_prediction(fixture_id):
     """
@@ -58,35 +69,52 @@ def generate_master_prediction(fixture_id):
     try:
         res_ft = predict_ft_result(fixture_id)
         results["models"]["FT_RESULT"] = res_ft
-        save_to_submodel_outputs(fixture_id, "FT_RESULT", res_ft)
+        if is_persistable_model_prediction(res_ft):
+            save_to_submodel_outputs(fixture_id, "FT_RESULT", res_ft)
     except Exception as e:
-        traceback.print_exc()
-        results["models"]["FT_RESULT"] = {"error": str(e)}
+        logger.error(f"Error in FT_RESULT model: {e}", exc_info=True)
+        results["models"]["FT_RESULT"] = {"error": str(e), "prediction_status": "error", "is_fallback": False}
         
     # HT_RESULT
     try:
-        res_ht = predict_ht_result(fixture_id, version='v0')
+        res_ht = predict_ht_result(fixture_id, version='v2')
         results["models"]["HT_RESULT"] = res_ht
-        save_to_submodel_outputs(fixture_id, "HT_RESULT", res_ht)
+        if is_persistable_model_prediction(res_ht):
+            save_to_submodel_outputs(fixture_id, "HT_RESULT", res_ht)
     except Exception as e:
-        results["models"]["HT_RESULT"] = {"error": str(e)}
+        logger.error(f"Error in HT_RESULT model: {e}", exc_info=True)
+        results["models"]["HT_RESULT"] = {"error": str(e), "prediction_status": "error", "is_fallback": False}
         
     # CORNERS_TOTAL
     try:
         res_corners = predict_total_corners(fixture_id)
         results["models"]["CORNERS_TOTAL"] = res_corners
-        save_to_submodel_outputs(fixture_id, "CORNERS_TOTAL", res_corners)
+        if is_persistable_model_prediction(res_corners):
+            save_to_submodel_outputs(fixture_id, "CORNERS_TOTAL", res_corners)
     except Exception as e:
-        results["models"]["CORNERS_TOTAL"] = {"error": str(e)}
+        logger.error(f"Error in CORNERS_TOTAL model: {e}", exc_info=True)
+        results["models"]["CORNERS_TOTAL"] = {"error": str(e), "prediction_status": "error", "is_fallback": False}
         
     # CARDS_TOTAL
     try:
         res_cards = predict_total_cards(fixture_id)
         results["models"]["CARDS_TOTAL"] = res_cards
-        save_to_submodel_outputs(fixture_id, "CARDS_TOTAL", res_cards)
+        if is_persistable_model_prediction(res_cards):
+            save_to_submodel_outputs(fixture_id, "CARDS_TOTAL", res_cards)
     except Exception as e:
-        results["models"]["CARDS_TOTAL"] = {"error": str(e)}
+        logger.error(f"Error in CARDS_TOTAL model: {e}", exc_info=True)
+        results["models"]["CARDS_TOTAL"] = {"error": str(e), "prediction_status": "error", "is_fallback": False}
         
+    # GOALS_TOTAL
+    try:
+        res_goals = predict_total_goals(fixture_id)
+        results["models"]["GOALS_TOTAL"] = res_goals
+        if is_persistable_model_prediction(res_goals):
+            save_to_submodel_outputs(fixture_id, "GOALS_TOTAL", res_goals)
+    except Exception as e:
+        logger.error(f"Error in GOALS_TOTAL model: {e}", exc_info=True)
+        results["models"]["GOALS_TOTAL"] = {"error": str(e), "prediction_status": "error", "is_fallback": False}
+
     # Run Risk Engine (Fair Odds calculations) based on the newly saved outputs
     try:
         from src.risk.engine import extract_and_save_fair_odds
@@ -96,7 +124,7 @@ def generate_master_prediction(fixture_id):
         results["models"]["RISK_ANALYSIS"] = {"error": str(e)}
         
     # If all core models failed, marking orchestrator as failed
-    core_models = ["FT_RESULT", "HT_RESULT", "CORNERS_TOTAL", "CARDS_TOTAL"]
+    core_models = ["FT_RESULT", "HT_RESULT", "CORNERS_TOTAL", "CARDS_TOTAL", "GOALS_TOTAL"]
     if all("error" in results["models"].get(v, {}) for v in core_models):
         results["success"] = False
         
@@ -105,6 +133,10 @@ def generate_master_prediction(fixture_id):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
-        f_id = int(sys.argv[1])
-        master = generate_master_prediction(f_id)
-        print(json.dumps(master, indent=2))
+        fixture_id = int(sys.argv[1])
+        try:
+            result = generate_master_prediction(fixture_id)
+            print(json.dumps(result, indent=2))
+        except Exception as e:
+            logger.error(f"Prediction failed: {e}", exc_info=True)
+            sys.exit(1)

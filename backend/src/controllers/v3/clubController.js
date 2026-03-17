@@ -1,4 +1,5 @@
 import ClubRepository from '../../repositories/v3/ClubRepository.js';
+import logger from '../../utils/logger.js';
 
 /**
  * US_V3-CLUB-001: Comprehensive Club Profile
@@ -10,7 +11,7 @@ export const getClubProfile = async (req, res) => {
 
         const club = await ClubRepository.getClubProfileWithVenue(id);
         if (!club) {
-            return res.status(404).json({ error: 'Club not found' });
+            return res.status(404).json({ success: false, error: 'Club not found' });
         }
 
         const seasons = await ClubRepository.getClubSeasons(id);
@@ -21,19 +22,23 @@ export const getClubProfile = async (req, res) => {
 
         const roster = rosterYear ? await ClubRepository.getClubRoster(id, rosterYear, activeLeagueId) : [];
         const summary = rosterYear ? await ClubRepository.getClubSummary(id, rosterYear, activeLeagueId) : null;
+        const coachRow = await ClubRepository.getLatestCoach(id);
 
         res.json({
-            club,
-            seasons,
-            availableYears,
-            rosterYear,
-            roster,
-            summary
+            success: true,
+            data: {
+                club: { ...club, coach: coachRow?.coach_name || null },
+                seasons,
+                availableYears,
+                rosterYear,
+                roster,
+                summary
+            }
         });
 
     } catch (error) {
-        console.error('V3 Club Profile Error:', error);
-        res.status(500).json({ error: 'Failed to fetch club profile' });
+        logger.error({ err: error, clubId: req.params.id }, 'V3 Club Profile Error');
+        res.status(500).json({ success: false, error: 'Failed to fetch club profile' });
     }
 };
 
@@ -46,9 +51,9 @@ export const getClubTacticalSummary = async (req, res) => {
             year: year ? Number.parseInt(year) : null,
             competition: competition
         });
-        res.json(summary);
+        res.json({ success: true, data: summary });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -61,10 +66,8 @@ export const getClubMatches = async (req, res) => {
             competition: competition,
             limit: limit ? Number.parseInt(limit) : 20
         });
-        res.json(matches);
+        res.json({ success: true, data: matches });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
-
-

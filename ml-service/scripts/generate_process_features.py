@@ -1,11 +1,18 @@
 import psycopg2
-from db_config import get_connection
 import pandas as pd
 import numpy as np
 import json
 import os
+import sys
 import time
 from datetime import datetime
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from db_config import get_connection
 
 # Database path
 
@@ -160,7 +167,9 @@ def run_process_features():
     CHUNK_SIZE = 10000
     for i in range(0, len(upsert_data), CHUNK_SIZE):
         chunk = upsert_data[i:i+CHUNK_SIZE]
-        conn.executemany(sql, chunk)
+        cur = conn.cursor()
+        cur.executemany(sql, chunk)
+        cur.close()
         print(f"      Stored {min(i+CHUNK_SIZE, len(upsert_data))}/{len(upsert_data)} feature records...")
         conn.commit()
 

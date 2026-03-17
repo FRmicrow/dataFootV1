@@ -33,14 +33,14 @@ def run_baseline_features_optimized():
     # Join stats with fixtures to get dates for proper ordering
     player_stats_raw = pd.read_sql_query("""
         SELECT fps.player_id, fps.fixture_id, f.date,
-               (2.0 * IFNULL(fps.goals_total, 0)) + 
-               (1.5 * IFNULL(fps.goals_assists, 0)) + 
-               (0.05 * IFNULL(fps.passes_key, 0)) + 
-               (0.03 * IFNULL(fps.duels_won, 0)) + 
-               (0.04 * IFNULL(fps.shots_on, 0)) + 
-               (0.02 * IFNULL(fps.tackles_total, 0)) - 
-               (0.5 * IFNULL(fps.cards_yellow, 0)) - 
-               (2.0 * IFNULL(fps.cards_red, 0)) as perf_score
+               (2.0 * COALESCE(fps.goals_total, 0)) + 
+               (1.5 * COALESCE(fps.goals_assists, 0)) + 
+               (0.05 * COALESCE(fps.passes_key, 0)) + 
+               (0.03 * COALESCE(fps.duels_won, 0)) + 
+               (0.04 * COALESCE(fps.shots_on, 0)) + 
+               (0.02 * COALESCE(fps.tackles_total, 0)) - 
+               (0.5 * COALESCE(fps.cards_yellow, 0)) - 
+               (2.0 * COALESCE(fps.cards_red, 0)) as perf_score
         FROM V3_Fixture_Player_Stats fps
         JOIN V3_Fixtures f ON fps.fixture_id = f.fixture_id
         ORDER BY fps.player_id, f.date ASC
@@ -58,14 +58,14 @@ def run_baseline_features_optimized():
     print("   📑 Pre-calculating Seasonal Player Scores...")
     seasonal_stats = pd.read_sql_query("""
         SELECT player_id, season_year,
-               ((2.0 * IFNULL(goals_total, 0)) + 
-                (1.5 * IFNULL(goals_assists, 0)) + 
-                (0.05 * IFNULL(passes_key, 0)) + 
-                (0.03 * IFNULL(duels_won, 0)) + 
-                (0.04 * IFNULL(shots_on, 0)) + 
-                (0.02 * IFNULL(tackles_total, 0)) - 
-                (0.5 * IFNULL(cards_yellow, 0)) - 
-                (2.0 * IFNULL(cards_red, 0))) / MAX(1, IFNULL(games_appearences, 1)) as seasonal_avg_score
+               ((2.0 * COALESCE(goals_total, 0)) + 
+                (1.5 * COALESCE(goals_assists, 0)) + 
+                (0.05 * COALESCE(passes_key, 0)) + 
+                (0.03 * COALESCE(duels_won, 0)) + 
+                (0.04 * COALESCE(shots_on, 0)) + 
+                (0.02 * COALESCE(tackles_total, 0)) - 
+                (0.5 * COALESCE(cards_yellow, 0)) - 
+                (2.0 * COALESCE(cards_red, 0))) / GREATEST(1, COALESCE(games_appearences, 1)) as seasonal_avg_score
         FROM V3_Player_Stats
     """, conn)
     
@@ -253,7 +253,9 @@ def run_baseline_features_optimized():
     CHUNK_SIZE = 50000
     for i in range(0, len(upsert_data), CHUNK_SIZE):
         chunk = upsert_data[i:i+CHUNK_SIZE]
-        conn.executemany(sql, chunk)
+        cur = conn.cursor()
+        cur.executemany(sql, chunk)
+        cur.close()
         print(f"      Stored {min(i+CHUNK_SIZE, len(upsert_data))}/{len(upsert_data)} BASELINE_V1 feature records...")
         conn.commit()
 

@@ -47,6 +47,11 @@
     border-bottom: 2px solid var(--section-color);
 }
 .ml-glossary__section-icon { font-size: 1.2rem; }
+.ml-glossary__section-badge.ds-badge {
+    background: var(--section-color);
+    color: var(--color-white, #fff);
+    border: none;
+}
 .ml-glossary__section-title {
     font-family: 'Space Grotesk', var(--font-family);
     font-size: var(--text-lg);

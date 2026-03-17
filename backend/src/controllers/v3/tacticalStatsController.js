@@ -4,6 +4,7 @@ import {
     syncLeaguePlayerStatsService,
     computePlayerSeasonNormalization
 } from '../../services/v3/tacticalStatsService.js';
+import logger from '../../utils/logger.js';
 
 const syncSchema = z.object({
     leagueId: z.union([z.string(), z.number()]).transform(v => Number.parseInt(v)),
@@ -38,7 +39,7 @@ export const triggerFixtureStatsSync = async (req, res) => {
         res.write(`data: ${JSON.stringify({ type: 'complete', ...result })}\n\n`);
         res.end();
     } catch (error) {
-        console.error("Fixture Stats sync failed:", error);
+        logger.error({ err: error, leagueId, season }, 'Fixture Stats sync failed');
         sendLog(`❌ sync failed: ${error.message}`, 'error');
         res.end();
     }
@@ -71,7 +72,7 @@ export const triggerPlayerStatsSync = async (req, res) => {
         res.write(`data: ${JSON.stringify({ type: 'complete', ...result })}\n\n`);
         res.end();
     } catch (error) {
-        console.error("Player Stats sync failed:", error);
+        logger.error({ err: error, leagueId, season }, 'Player Stats sync failed');
         sendLog(`❌ sync failed: ${error.message}`, 'error');
         res.end();
     }
@@ -84,8 +85,8 @@ export const triggerNormalization = async (req, res) => {
     const { leagueId, season } = req.body;
     try {
         await computePlayerSeasonNormalization(Number.parseInt(leagueId), Number.parseInt(season));
-        res.json({ success: true, message: "Normalization completed." });
+        res.json({ success: true, data: { message: "Normalization completed." } });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };

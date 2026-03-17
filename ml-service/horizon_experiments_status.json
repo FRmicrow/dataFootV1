@@ -1,0 +1,58 @@
+{
+  "updated_at": "2026-03-14T17:31:30.373086Z",
+  "status": "completed",
+  "stage": "done",
+  "report": [
+    {
+      "horizon": "FULL_HISTORICAL",
+      "version": "catboost_full_historical_v20260314_182604",
+      "is_active": false,
+      "schema_version": "global_1x2_v3",
+      "dataset_size_total": 537553,
+      "training_dataset_size": 456920,
+      "features_count": 130,
+      "horizon_min_date": null,
+      "horizon_max_date": "2026-03-13T11:00:00+00:00",
+      "metrics": {
+        "accuracy": 0.5901305916932273,
+        "log_loss": 0.8883826614471243,
+        "brier_score": 0.5239690504331694,
+        "f1_weighted": 0.5344606221867954
+      }
+    },
+    {
+      "horizon": "5Y_ROLLING",
+      "version": "catboost_5y_rolling_v20260314_182911",
+      "is_active": false,
+      "schema_version": "global_1x2_v3",
+      "dataset_size_total": 269712,
+      "training_dataset_size": 229255,
+      "features_count": 130,
+      "horizon_min_date": "2021-03-13T11:00:00+00:00",
+      "horizon_max_date": "2026-03-13T11:00:00+00:00",
+      "metrics": {
+        "accuracy": 0.5910225671700818,
+        "log_loss": 0.888672465161176,
+        "brier_score": 0.5234938508653304,
+        "f1_weighted": 0.5355956382104816
+      }
+    },
+    {
+      "horizon": "3Y_ROLLING",
+      "version": "catboost_3y_rolling_v20260314_183103",
+      "is_active": false,
+      "schema_version": "global_1x2_v3",
+      "dataset_size_total": 164286,
+      "training_dataset_size": 139643,
+      "features_count": 130,
+      "horizon_min_date": "2023-03-13T11:00:00+00:00",
+      "horizon_max_date": "2026-03-13T11:00:00+00:00",
+      "metrics": {
+        "accuracy": 0.5825589416872946,
+        "log_loss": 0.9007901710386339,
+        "brier_score": 0.5312360235026091,
+        "f1_weighted": 0.5285641738595934
+      }
+    }
+  ]
+}

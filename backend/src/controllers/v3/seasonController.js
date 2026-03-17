@@ -90,7 +90,7 @@ async function fetchSeasonLeaderboards(leagueId, season) {
 export const getSeasonOverview = async (req, res) => {
     try {
         const { id: leagueId, year: season } = req.params;
-        if (!leagueId || !season) return res.status(400).json({ error: "Missing leagueId or season year" });
+        if (!leagueId || !season) return res.status(400).json({ success: false, error: "Missing leagueId or season year" });
 
         logger.info(`📊 Fetching Season Overview for League ${leagueId}, Season ${season}`);
 
@@ -105,7 +105,7 @@ export const getSeasonOverview = async (req, res) => {
             WHERE l.league_id = ? AND ls.season_year = ?
         `, [leagueId, season]);
 
-        if (!leagueInfo) return res.status(404).json({ error: "League/Season not found in V3 database" });
+        if (!leagueInfo) return res.status(404).json({ success: false, error: "League/Season not found in V3 database" });
 
         const isFinished = new Date(leagueInfo.end_date) < new Date();
         const hallOfFame = await fetchHallOfFame(leagueId, season, leagueInfo);
@@ -253,7 +253,7 @@ export const getDynamicStandings = async (req, res) => {
         const { league_id, season, from_round, to_round } = req.query;
 
         if (!league_id || !season) {
-            return res.status(400).json({ error: "Missing league_id or season year" });
+            return res.status(400).json({ success: false, error: "Missing league_id or season year" });
         }
 
         logger.info(`📊 Fetching Dynamic Standings for League ${league_id}, Season ${season}, Rounds ${from_round}-${to_round}`);

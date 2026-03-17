@@ -1,4 +1,5 @@
 import { getPreferencesService, updatePreferencesService } from '../../services/v3/preferencesService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * GET /api/v3/preferences
@@ -7,10 +8,10 @@ import { getPreferencesService, updatePreferencesService } from '../../services/
 export const getPreferences = async (req, res) => {
     try {
         const prefs = await getPreferencesService();
-        res.json(prefs);
+        res.json({ success: true, data: prefs });
     } catch (error) {
-        console.error("Error fetching preferences:", error);
-        res.status(500).json({ error: "Failed to fetch preferences", details: error.message });
+        logger.error({ err: error }, 'Error fetching preferences');
+        res.status(500).json({ success: false, error: "Failed to fetch preferences", details: error.message });
     }
 };
 
@@ -23,9 +24,9 @@ export const updatePreferences = async (req, res) => {
     try {
         const { favorite_leagues, favorite_teams, tracked_leagues } = req.body;
         const updatedPrefs = await updatePreferencesService(favorite_leagues, favorite_teams, tracked_leagues);
-        res.json(updatedPrefs);
+        res.json({ success: true, data: updatedPrefs });
     } catch (error) {
-        console.error("Error updating preferences:", error);
-        res.status(500).json({ error: "Failed to update preferences", details: error.message });
+        logger.error({ err: error }, 'Error updating preferences');
+        res.status(500).json({ success: false, error: "Failed to update preferences", details: error.message });
     }
 };

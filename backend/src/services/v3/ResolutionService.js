@@ -69,6 +69,10 @@ export class ResolutionService {
      * Performs a Safe Merge of two duplicates.
      */
     static async performMerge(id1, id2) {
+        if (Number(id1) === Number(id2)) {
+            throw new Error('Cannot merge the same player record');
+        }
+
         const { masterId, ghostId } = await this.identifyMaster(id1, id2);
 
         logger.info(`🔄 Merging Ghost Player ${ghostId} into Master ${masterId}...`);
@@ -102,10 +106,16 @@ export class ResolutionService {
                 AND NOT EXISTS (
                     SELECT 1 FROM V3_Trophies t2 
                     WHERE t2.player_id = ? 
-                    AND t2.trophy_id = V3_Trophies.trophy_id
+                    AND t2.trophy = V3_Trophies.trophy
+                    AND t2.season = V3_Trophies.season
                 )
             `, cleanParams([masterId, ghostId, masterId]));
             await db.run("DELETE FROM V3_Trophies WHERE player_id = ?", cleanParams([ghostId]));
+
+            await db.run(
+                "UPDATE V3_Fixture_Player_Stats SET player_id = ? WHERE player_id = ?",
+                cleanParams([masterId, ghostId])
+            );
 
             // Delete Ghost Record
             await db.run("DELETE FROM V3_Players WHERE player_id = ?", cleanParams([ghostId]));
@@ -121,7 +131,8 @@ export class ResolutionService {
     /**
      * Scans for potential duplicates in the database.
      */
-    static async findGlobalDuplicates(threshold = 80) {
+    static async findGlobalDuplicates(threshold = 80, options = {}) {
+        const pairLimit = Number.isInteger(options.pairLimit) ? options.pairLimit : 5000;
         logger.info("🔍 Scanning for duplicate candidates via targeted SQL...");
 
         // Strategy: Narrow down candidates by finding exact name matches first.
@@ -130,8 +141,8 @@ export class ResolutionService {
             SELECT p1.player_id as id1, p2.player_id as id2
             FROM V3_Players p1
             JOIN V3_Players p2 ON p1.name = p2.name AND p1.player_id < p2.player_id
-            LIMIT 5000
-        `);
+            LIMIT ?
+        `, cleanParams([pairLimit]));
 
         logger.info(`📊 Found ${pairs.length} potential name matches to analyze...`);
 

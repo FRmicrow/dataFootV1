@@ -14,7 +14,7 @@ class LeagueRepository extends BaseRepository {
             SELECT l.*, c.name as country_name
             FROM V3_Leagues l
             LEFT JOIN V3_Countries c ON l.country_id = c.country_id
-            ORDER BY l.importance_rank ASC, l.name ASC
+            ORDER BY l.global_importance_rank ASC, l.name ASC
         `);
     }
 
@@ -31,13 +31,15 @@ class LeagueRepository extends BaseRepository {
     async getStructuredLeaguesData() {
         return await this.db.all(`
             SELECT 
-                l.league_id, 
-                l.api_id, 
-                l.name as league_name, 
-                l.type as league_type, 
-                l.logo_url, 
+                l.league_id,
+                l.api_id,
+                l.name as league_name,
+                l.type as league_type,
+                l.logo_url,
                 l.importance_rank as league_rank,
-                c.name as country_name, 
+                l.global_importance_rank,
+                COALESCE(l.competition_type, 'club') as competition_type,
+                c.name as country_name,
                 c.continent, 
                 c.importance_rank as country_rank, 
                 c.flag_url,
@@ -75,7 +77,11 @@ class LeagueRepository extends BaseRepository {
             FROM V3_Leagues l
             LEFT JOIN V3_Countries c ON l.country_id = c.country_id
             WHERE l.name NOT LIKE '%Consolidated%'
-            ORDER BY c.importance_rank ASC, l.type DESC, l.importance_rank ASC, l.name ASC
+              AND EXISTS (
+                  SELECT 1 FROM V3_League_Seasons ls
+                  WHERE ls.league_id = l.league_id
+              )
+            ORDER BY l.global_importance_rank ASC, l.name ASC
         `);
     }
 
@@ -92,8 +98,8 @@ class LeagueRepository extends BaseRepository {
             JOIN V3_Countries c ON l.country_id = c.country_id
             JOIN V3_League_Seasons ls ON l.league_id = ls.league_id
             WHERE ls.imported_players = true
-            GROUP BY l.league_id, l.api_id, l.name, l.type, l.logo_url, c.name, c.flag_url, c.importance_rank
-            ORDER BY c.importance_rank ASC, l.importance_rank ASC, l.name ASC
+            GROUP BY l.league_id, l.api_id, l.name, l.type, l.logo_url, c.name, c.flag_url, c.importance_rank, l.global_importance_rank
+            ORDER BY l.global_importance_rank ASC, l.name ASC
         `);
     }
 

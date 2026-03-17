@@ -3,6 +3,7 @@ import dbModule from '../../config/database.js';
 import axios from 'axios';
 import OddsSyncService from '../../services/v3/OddsSyncService.js';
 import OddsCrawlerService from '../../services/v3/OddsCrawlerService.js';
+import logger from '../../utils/logger.js';
 
 // --- Private Helpers for Evaluation & Simulation ---
 
@@ -18,16 +19,45 @@ const determineActualOutcome = (group) => {
         return 'N';
     }
     // Specialized markets
-    if (group.market_type === 'CORNERS') {
-        const total = parseFloat(group.total_corners || 0);
-        return total > 9.5 ? '1' : '0'; // Over=1, Under=0
-    }
-    if (group.market_type === 'CARDS') {
-        const total = parseFloat(group.total_cards || 0);
-        return total > 3.5 ? '1' : '0';
+    if (group.market_type === 'CORNERS_OU' || group.market_type === 'CARDS_OU' || group.market_type === 'GOALS_OU') {
+        const total = group.market_type === 'CORNERS_OU'
+            ? parseFloat(group.total_corners || 0)
+            : group.market_type === 'CARDS_OU'
+                ? parseFloat(group.total_cards || 0)
+                : parseFloat((group.goals_home || 0) + (group.goals_away || 0));
+        const selection = String(group.selection || '').trim();
+        const match = selection.match(/^(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
+        if (!match) return null;
+
+        const side = match[1].toLowerCase();
+        const line = parseFloat(match[2]);
+        if (Number.isNaN(line)) return null;
+
+        return side === 'over'
+            ? (total > line ? selection : null)
+            : (total < line ? selection : null);
     }
     return null;
 };
+
+const ROI_MARKET_SQL = `
+    CASE
+        WHEN ra.market_type IN ('1N2_FT', '1X2') AND ra.selection = '1' THEN mm.odds_h
+        WHEN ra.market_type IN ('1N2_FT', '1X2') AND ra.selection = 'N' THEN mm.odds_d
+        WHEN ra.market_type IN ('1N2_FT', '1X2') AND ra.selection = '2' THEN mm.odds_a
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 0.5' THEN mm.odds_o05
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 0.5' THEN mm.odds_u05
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 1.5' THEN mm.odds_o15
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 1.5' THEN mm.odds_u15
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 2.5' THEN mm.odds_o25
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 2.5' THEN mm.odds_u25
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 3.5' THEN mm.odds_o35
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 3.5' THEN mm.odds_u35
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 4.5' THEN mm.odds_o45
+        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 4.5' THEN mm.odds_u45
+        ELSE NULL
+    END
+`;
 
 const calculateGroupStats = (matchGroups) => {
     const stats = { overall_hit_rate: 0, by_market: {}, totalMatches: 0, totalHits: 0, brierSum: 0 };
@@ -110,7 +140,7 @@ const formatSimulationResults = (lsStats) => {
 export const triggerModelRetrain = async (req, res) => {
     try {
         const result = await mlService.triggerRetraining();
-        res.json(result);
+        res.json({ success: true, data: result });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -134,7 +164,7 @@ export const getMLOrchestratorStatus = async (req, res) => {
             const pyRes = await axios.get(`${mlServiceUrl}/health`, { timeout: 1500 });
             pythonStatus = pyRes.data;
         } catch (e) {
-            console.warn("ML service health check failed or timed out:", e.message);
+            logger.warn({ err: e }, 'ML service health check failed or timed out');
         }
 
         res.json({
@@ -169,10 +199,24 @@ export const getMLRecentAnalyses = async (req, res) => {
 export const getMLSimulationFilters = async (req, res) => {
     try {
         const rows = await dbModule.all(`
-            SELECT DISTINCT l.league_id, l.name as league_name, f.season_year
+            WITH enriched_countries AS (
+                SELECT DISTINCT source_country
+                FROM ml_matches
+                WHERE source_country IS NOT NULL
+            )
+            SELECT DISTINCT
+                l.league_id,
+                l.name as league_name,
+                f.season_year,
+                c.name as country_name,
+                c.flag_url
             FROM V3_Risk_Analysis r
-            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id JOIN V3_Leagues l ON f.league_id = l.league_id
-            ORDER BY l.name, f.season_year DESC
+            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id
+            JOIN V3_Leagues l ON f.league_id = l.league_id
+            JOIN V3_Countries c ON l.country_id = c.country_id
+            JOIN enriched_countries ec ON ec.source_country = c.name
+            WHERE f.status_short IN ('FT', 'AET', 'PEN')
+            ORDER BY c.name, l.name, f.season_year DESC
         `);
         res.json({ success: true, data: rows });
     } catch (err) {
@@ -188,10 +232,21 @@ export const getMLModelEvaluation = async (req, res) => {
         if (seasonYear) { whereClause += ` AND f.season_year = ?`; queryParams.push(seasonYear); }
 
         const rows = await dbModule.all(`
-            SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability, f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away, l.name as league_name, ht.name as home_team, ht.logo_url as home_logo, at.name as away_team, at.logo_url as away_logo, f.date
+            SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability,
+                   f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away,
+                   l.name as league_name, ht.name as home_team, ht.logo_url as home_logo,
+                   at.name as away_team, at.logo_url as away_logo, f.date,
+                   SUM(fs.corner_kicks) as total_corners,
+                   SUM(fs.yellow_cards + fs.red_cards) as total_cards
             FROM V3_Risk_Analysis r
-            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id JOIN V3_Leagues l ON f.league_id = l.league_id JOIN V3_Teams ht ON f.home_team_id = ht.team_id JOIN V3_Teams at ON f.away_team_id = at.team_id
-            WHERE ${whereClause} ORDER BY f.date DESC
+            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id
+            JOIN V3_Leagues l ON f.league_id = l.league_id
+            JOIN V3_Teams ht ON f.home_team_id = ht.team_id
+            JOIN V3_Teams at ON f.away_team_id = at.team_id
+            LEFT JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id AND fs.half = 'FT'
+            WHERE ${whereClause}
+            GROUP BY r.id, f.fixture_id, l.league_id, ht.team_id, at.team_id
+            ORDER BY f.date DESC
         `, queryParams);
 
         const matchGroups = {};
@@ -215,10 +270,19 @@ export const getMLModelEvaluation = async (req, res) => {
 export const getMLSimulationOverview = async (req, res) => {
     try {
         const rows = await dbModule.all(`
-            SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability, f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away, l.league_id, l.name as league_name, l.importance_rank as league_importance, c.importance_rank as country_importance, f.season_year
+            SELECT r.fixture_id, r.market_type, r.selection, r.ml_probability,
+                   f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away,
+                   l.league_id, l.name as league_name, l.importance_rank as league_importance,
+                   c.importance_rank as country_importance, f.season_year,
+                   SUM(fs.corner_kicks) as total_corners,
+                   SUM(fs.yellow_cards + fs.red_cards) as total_cards
             FROM V3_Risk_Analysis r
-            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id JOIN V3_Leagues l ON f.league_id = l.league_id LEFT JOIN V3_Countries c ON l.country_id = c.country_id
+            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id
+            JOIN V3_Leagues l ON f.league_id = l.league_id
+            LEFT JOIN V3_Countries c ON l.country_id = c.country_id
+            LEFT JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id AND fs.half = 'FT'
             WHERE f.status_short IN ('FT', 'AET', 'PEN')
+            GROUP BY r.id, f.fixture_id, l.league_id, c.country_id
         `);
 
         const matchGroups = {};
@@ -292,7 +356,7 @@ export const getMLClubEvaluation = async (req, res) => {
             JOIN V3_Teams at ON f.away_team_id = at.team_id
             LEFT JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id AND fs.half = 'FT'
             WHERE ${whereClause} 
-            GROUP BY r.risk_id, f.fixture_id, l.league_id, c.country_id, ht.team_id, at.team_id
+            GROUP BY r.id, f.fixture_id, l.league_id, c.country_id, ht.team_id, at.team_id
         `, queryParams);
 
         const clubStats = {};
@@ -377,7 +441,7 @@ export const getUpcomingPredictions = async (req, res) => {
 export const syncUpcomingOdds = async (req, res) => {
     try {
         const result = await OddsSyncService.syncUpcomingOdds();
-        res.json(result);
+        res.json({ success: true, data: result });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -406,7 +470,8 @@ export const buildForgeModels = async (req, res) => {
         const { leagueId, seasonYear } = req.body;
         if (!leagueId) return res.status(400).json({ success: false, message: 'Missing leagueId' });
         const result = await mlService.buildForgeModels(leagueId, seasonYear);
-        res.json(result);
+        const statusCode = result.disabled ? 410 : 200;
+        res.status(statusCode).json({ success: !result.disabled, data: result });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -415,16 +480,18 @@ export const buildForgeModels = async (req, res) => {
 export const getForgeBuildStatus = async (req, res) => {
     try {
         const status = await mlService.getForgeBuildStatus();
-        res.json(status);
+        const statusCode = status.disabled ? 410 : 200;
+        res.status(statusCode).json({ success: !status.disabled, data: status });
     } catch (err) {
-        res.status(500).json({ is_building: false, error: err.message });
+        res.status(500).json({ success: false, error: err.message, data: { is_building: false } });
     }
 };
 
 export const cancelForgeBuild = async (req, res) => {
     try {
         const result = await mlService.cancelForgeBuild();
-        res.json(result);
+        const statusCode = result.disabled ? 410 : 200;
+        res.status(statusCode).json({ success: !result.disabled, data: result });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -433,9 +500,10 @@ export const cancelForgeBuild = async (req, res) => {
 export const getForgeModels = async (req, res) => {
     try {
         const result = await mlService.getForgeModels();
-        res.json(result);
+        const statusCode = result.disabled ? 410 : 200;
+        res.status(statusCode).json({ success: !result.disabled, data: result });
     } catch (err) {
-        res.status(500).json({ success: false, models: [] });
+        res.status(500).json({ success: false, data: { models: [] } });
     }
 };
 
@@ -444,7 +512,8 @@ export const retrainModel = async (req, res) => {
         const { modelId, simulationId } = req.body;
         if (!modelId || !simulationId) return res.status(400).json({ success: false, message: 'Missing IDs' });
         const result = await mlService.retrainFromSimulation(modelId, simulationId);
-        res.json(result);
+        const statusCode = result.disabled ? 410 : 200;
+        res.status(statusCode).json({ success: !result.disabled, data: result });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -453,9 +522,10 @@ export const retrainModel = async (req, res) => {
 export const getRetrainStatus = async (req, res) => {
     try {
         const status = await mlService.getRetrainStatus();
-        res.json(status);
+        const statusCode = status.disabled ? 410 : 200;
+        res.status(statusCode).json({ success: !status.disabled, data: status });
     } catch (err) {
-        res.status(500).json({ is_retraining: false, error: err.message });
+        res.status(500).json({ success: false, error: err.message, data: { is_retraining: false } });
     }
 };
 
@@ -464,9 +534,10 @@ export const getEligibleHorizons = async (req, res) => {
         const { leagueId, seasonYear } = req.query;
         if (!leagueId || !seasonYear) return res.status(400).json({ success: false, message: 'Missing params' });
         const result = await mlService.getEligibleHorizons(leagueId, seasonYear);
-        res.json(result);
+        const statusCode = result.disabled ? 410 : 200;
+        res.status(statusCode).json({ success: !result.disabled, data: result });
     } catch (err) {
-        res.status(500).json({ success: false, eligible: ['FULL_HISTORICAL'] });
+        res.status(500).json({ success: false, data: { eligible: ['FULL_HISTORICAL'] } });
     }
 };
 
@@ -475,9 +546,10 @@ export const getLeagueModels = async (req, res) => {
         const { leagueId } = req.params;
         if (!leagueId) return res.status(400).json({ success: false, message: 'Missing leagueId' });
         const result = await mlService.getLeagueModels(leagueId);
-        res.json(result);
+        const statusCode = result.disabled ? 410 : 200;
+        res.status(statusCode).json({ success: !result.disabled, data: result });
     } catch (err) {
-        res.status(500).json({ success: false, models: [], has_models: false });
+        res.status(500).json({ success: false, data: { models: [], has_models: false } });
     }
 };
 
@@ -485,7 +557,7 @@ export const predictFixtureAll = async (req, res) => {
     try {
         const { id } = req.params;
         const result = await mlService.predictFixtureAll(id);
-        res.json(result);
+        res.json({ success: true, data: result });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -585,6 +657,28 @@ const MODEL_CATALOG_STATIC = {
                 { feature: 'aggression_index', impact: 'medium', direction: 'positive' },
             ]
         }
+    },
+    GOALS_TOTAL: {
+        label: 'Buts Over/Under 2.5',
+        description: 'Prédit si le total de buts dépassera 2.5. S\'appuie sur le volume offensif, les signaux xG récents, la qualité des occasions et le contexte de compétition.',
+        features: [
+            { name: 'xg_for_recent', description: 'xG offensif récent de chaque équipe', category: 'advanced' },
+            { name: 'xg_against_recent', description: 'xG défensif récent concédé', category: 'advanced' },
+            { name: 'shots_on_target_recent', description: 'Tirs cadrés récents', category: 'historical' },
+            { name: 'competition_stage', description: 'Importance et type de compétition', category: 'contextual' },
+            { name: 'style_openness', description: 'Indice d\'ouverture du match via contrôle et volume offensif', category: 'advanced' },
+            { name: 'strength_gap', description: 'Asymétrie de niveau entre les équipes', category: 'contextual' },
+        ],
+        example: {
+            fixtureLabel: 'PSG vs Chelsea (scénario type)',
+            homeTeam: 'Paris SG', awayTeam: 'Chelsea',
+            prediction: { over: 0.61, under: 0.39 },
+            topFeatures: [
+                { feature: 'xg_for_recent', impact: 'high', direction: 'positive' },
+                { feature: 'shots_on_target_recent', impact: 'high', direction: 'positive' },
+                { feature: 'competition_stage', impact: 'medium', direction: 'negative' },
+            ]
+        }
     }
 };
 
@@ -610,7 +704,10 @@ export const getModelsCatalog = async (req, res) => {
 
         // Leagues with completed simulations
         const simLeagues = await dbModule.all(`
-            SELECT DISTINCT f.league_id, l.name as league_name, l.logo_url,
+            SELECT
+                   f.league_id,
+                   l.name as league_name,
+                   l.logo_url,
                    COALESCE(l.importance_rank, 99) as league_importance,
                    COALESCE(c.importance_rank, 99) as country_importance,
                    co.name as country_name
@@ -620,7 +717,17 @@ export const getModelsCatalog = async (req, res) => {
             LEFT JOIN V3_Countries c ON l.country_id = c.country_id
             LEFT JOIN V3_Countries co ON l.country_id = co.country_id
             WHERE fs.status = 'COMPLETED' ${leagueFilter}
-            ORDER BY country_importance ASC, league_importance ASC
+            GROUP BY
+                f.league_id,
+                l.name,
+                l.logo_url,
+                COALESCE(l.importance_rank, 99),
+                COALESCE(c.importance_rank, 99),
+                co.name
+            ORDER BY
+                COALESCE(c.importance_rank, 99) ASC,
+                COALESCE(l.importance_rank, 99) ASC,
+                l.name ASC
         `, leagueParams);
 
         if (!simLeagues.length) {
@@ -663,12 +770,19 @@ export const getModelsCatalog = async (req, res) => {
 
         // Per-league sample team names for relevant example predictions
         const teamRows = await dbModule.all(`
-            SELECT DISTINCT f.league_id, ht.name as home_team, at.name as away_team
-            FROM V3_Fixtures f
-            JOIN V3_Teams ht ON f.home_team_id = ht.team_id
-            JOIN V3_Teams at ON f.away_team_id = at.team_id
-            WHERE f.status_short IN ('FT','AET','PEN')
-            ORDER BY f.date DESC
+            SELECT league_id, home_team, away_team
+            FROM (
+                SELECT
+                    f.league_id,
+                    ht.name as home_team,
+                    at.name as away_team,
+                    ROW_NUMBER() OVER (PARTITION BY f.league_id ORDER BY f.date DESC, f.fixture_id DESC) as row_num
+                FROM V3_Fixtures f
+                JOIN V3_Teams ht ON f.home_team_id = ht.team_id
+                JOIN V3_Teams at ON f.away_team_id = at.team_id
+                WHERE f.status_short IN ('FT','AET','PEN')
+            ) ranked
+            WHERE row_num = 1
         `);
 
         // Index metrics by leagueId+marketType
@@ -738,7 +852,7 @@ export const calculatePerformanceROI = async (req, res) => {
     try {
         const { portfolioSize, stakePerBet, leagueId, seasonYear, markets } = req.body;
 
-        let whereClause = `f.status_short IN ('FT', 'AET', 'PEN') AND ra.bookmaker_odd IS NOT NULL`;
+        let whereClause = `f.status_short IN ('FT', 'AET', 'PEN') AND mm.v3_fixture_id IS NOT NULL`;
         const params = [];
         if (leagueId) { whereClause += ` AND f.league_id = $${params.length + 1}`; params.push(leagueId); }
         if (seasonYear) { whereClause += ` AND f.season_year = $${params.length + 1}`; params.push(seasonYear); }
@@ -753,18 +867,33 @@ export const calculatePerformanceROI = async (req, res) => {
         }
 
         const rows = await dbModule.all(`
-            SELECT ra.fixture_id, ra.market_type, ra.selection, ra.ml_probability, ra.bookmaker_odd,
-                   f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away,
-                   f.date,
-                   SUM(fs.corner_kicks) as total_corners,
-                   SUM(fs.yellow_cards + fs.red_cards) as total_cards
-            FROM V3_Risk_Analysis ra
-            JOIN V3_Fixtures f ON ra.fixture_id = f.fixture_id
-            LEFT JOIN V3_Fixture_Stats fs ON f.fixture_id = fs.fixture_id AND fs.half = 'FT'
-            WHERE ${whereClause}
-            GROUP BY ra.id, ra.fixture_id, ra.market_type, ra.selection, ra.ml_probability, ra.bookmaker_odd,
-                     f.goals_home, f.goals_away, f.score_halftime_home, f.score_halftime_away, f.date
-            ORDER BY f.date ASC
+            WITH roi_candidates AS (
+                SELECT
+                    ra.fixture_id,
+                    ra.market_type,
+                    ra.selection,
+                    ra.ml_probability,
+                    ${ROI_MARKET_SQL} AS bookmaker_odd,
+                    f.league_id,
+                    l.name AS league_name,
+                    f.season_year,
+                    f.goals_home,
+                    f.goals_away,
+                    f.score_halftime_home,
+                    f.score_halftime_away,
+                    f.date,
+                    COALESCE(mm.h_corners_ft, 0) + COALESCE(mm.a_corners_ft, 0) AS total_corners,
+                    COALESCE(mm.h_yc_ft, 0) + COALESCE(mm.a_yc_ft, 0) AS total_cards
+                FROM v3_risk_analysis ra
+                JOIN v3_fixtures f ON ra.fixture_id = f.fixture_id
+                JOIN v3_leagues l ON f.league_id = l.league_id
+                JOIN ml_matches mm ON mm.v3_fixture_id = f.fixture_id
+                WHERE ${whereClause}
+            )
+            SELECT *
+            FROM roi_candidates
+            WHERE bookmaker_odd IS NOT NULL
+            ORDER BY date ASC
         `, params);
 
         // Group by fixture+market (take highest probability prediction per group)
@@ -773,6 +902,13 @@ export const calculatePerformanceROI = async (req, res) => {
             const k = `${r.fixture_id}_${r.market_type}`;
             if (!groups[k] || r.ml_probability > groups[k].ml_probability) groups[k] = r;
         }
+
+        const leagueMeta = leagueId ? await dbModule.get(`
+            SELECT l.league_id, l.name AS league_name, c.name AS country_name
+            FROM v3_leagues l
+            LEFT JOIN v3_countries c ON l.country_id = c.country_id
+            WHERE l.league_id = $1
+        `, [leagueId]) : null;
 
         // Simulate bets
         let portfolio = portfolioSize;
@@ -810,10 +946,23 @@ export const calculatePerformanceROI = async (req, res) => {
         const totalBets = wins + losses;
         const totalStaked = totalBets * stakePerBet;
         const profit = portfolio - portfolioSize;
+        const marketCoverage = Object.values(groups).reduce((acc, row) => {
+            acc[row.market_type] = (acc[row.market_type] || 0) + 1;
+            return acc;
+        }, {});
 
         res.json({
             success: true,
             data: {
+                scope: {
+                    leagueId: leagueId || null,
+                    leagueName: leagueMeta?.league_name || null,
+                    countryName: leagueMeta?.country_name || null,
+                    seasonYear: seasonYear || null,
+                    oddsSource: 'ml_matches',
+                    availableMarkets: Object.keys(marketCoverage),
+                    marketCoverage,
+                },
                 totalBets,
                 wins,
                 losses,
@@ -821,6 +970,7 @@ export const calculatePerformanceROI = async (req, res) => {
                 totalStaked: Math.round(totalStaked * 100) / 100,
                 totalReturned: Math.round(portfolio * 100) / 100,
                 profit: Math.round(profit * 100) / 100,
+                benefit: Math.round(profit * 100) / 100,
                 roi: totalStaked > 0 ? Math.round((profit / totalStaked) * 10000) / 100 : 0,
                 maxDrawdown: Math.round(maxDrawdown * 100) / 100,
                 bestStreak,
@@ -966,16 +1116,22 @@ export const createSubmodel = async (req, res) => {
 export const getLeaguesWithOdds = async (_req, res) => {
     try {
         const rows = await dbModule.all(`
-            SELECT DISTINCT f.league_id, l.name as league_name, l.logo_url,
-                   f.season_year,
-                   COUNT(*) as odds_count
-            FROM V3_Risk_Analysis ra
-            JOIN V3_Fixtures f ON ra.fixture_id = f.fixture_id
-            JOIN V3_Leagues l ON f.league_id = l.league_id
-            WHERE ra.bookmaker_odd IS NOT NULL
-              AND f.status_short IN ('FT', 'AET', 'PEN')
-            GROUP BY f.league_id, l.name, l.logo_url, f.season_year
-            HAVING COUNT(*) > 0
+            SELECT
+                f.league_id,
+                l.name AS league_name,
+                l.logo_url,
+                c.name AS country_name,
+                f.season_year,
+                COUNT(DISTINCT mm.v3_fixture_id)::int AS odds_count,
+                COUNT(DISTINCT CASE WHEN mm.odds_h IS NOT NULL AND mm.odds_d IS NOT NULL AND mm.odds_a IS NOT NULL THEN mm.v3_fixture_id END)::int AS ft_1x2_count,
+                COUNT(DISTINCT CASE WHEN mm.odds_o25 IS NOT NULL AND mm.odds_u25 IS NOT NULL THEN mm.v3_fixture_id END)::int AS goals_ou_count
+            FROM ml_matches mm
+            JOIN v3_fixtures f ON mm.v3_fixture_id = f.fixture_id
+            JOIN v3_leagues l ON f.league_id = l.league_id
+            LEFT JOIN v3_countries c ON l.country_id = c.country_id
+            WHERE f.status_short IN ('FT', 'AET', 'PEN')
+            GROUP BY f.league_id, l.name, l.logo_url, c.name, f.season_year
+            HAVING COUNT(DISTINCT mm.v3_fixture_id) > 0
             ORDER BY l.name ASC, f.season_year DESC
         `);
 
@@ -983,9 +1139,26 @@ export const getLeaguesWithOdds = async (_req, res) => {
         const byLeague = {};
         for (const r of rows) {
             if (!byLeague[r.league_id]) {
-                byLeague[r.league_id] = { leagueId: r.league_id, leagueName: r.league_name, leagueLogo: r.logo_url, seasons: [] };
+                byLeague[r.league_id] = {
+                    leagueId: r.league_id,
+                    leagueName: r.league_name,
+                    leagueLogo: r.logo_url,
+                    countryName: r.country_name || null,
+                    seasons: []
+                };
             }
-            byLeague[r.league_id].seasons.push({ year: r.season_year, oddsCount: parseInt(r.odds_count) });
+            const availableMarkets = [];
+            if (parseInt(r.ft_1x2_count, 10) > 0) availableMarkets.push('1N2_FT');
+            if (parseInt(r.goals_ou_count, 10) > 0) availableMarkets.push('GOALS_OU');
+            byLeague[r.league_id].seasons.push({
+                year: r.season_year,
+                oddsCount: parseInt(r.odds_count, 10),
+                availableMarkets,
+                marketCounts: {
+                    ft_1x2: parseInt(r.ft_1x2_count, 10),
+                    goals_ou: parseInt(r.goals_ou_count, 10),
+                }
+            });
         }
         res.json({ success: true, data: Object.values(byLeague) });
     } catch (err) {

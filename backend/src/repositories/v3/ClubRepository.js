@@ -16,6 +16,18 @@ class ClubRepository extends BaseRepository {
         `, cleanParams([id]));
     }
 
+    async getLatestCoach(teamId) {
+        return await this.db.get(`
+            SELECT fl.coach_name
+            FROM V3_Fixture_Lineups fl
+            JOIN V3_Fixtures f ON fl.fixture_id = f.fixture_id
+            WHERE fl.team_id = $1
+              AND fl.coach_name IS NOT NULL
+            ORDER BY f.date DESC
+            LIMIT 1
+        `, [teamId]);
+    }
+
     async getClubMatches(teamId, options = {}) {
         const { year, competition, limit = 20 } = options;
 

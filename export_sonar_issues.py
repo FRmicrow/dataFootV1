@@ -1,8 +1,9 @@
 import requests
 import csv
 import os
+import pandas as pd
 
-token = "squ_be8a389062712516545f65de85cd999f30feec73"
+token = "squ_bd6c174593674898db3fe56369dc2b36372b0bcf"
 project_key = "FRmicrow_dataFootV1"
 base_url = "http://localhost:9000/api/issues/search"
 
@@ -52,7 +53,29 @@ def export_to_csv(issues, filename):
                 issue.get("creationDate")
             ])
 
+def export_to_xlsx(issues, filename):
+    df = pd.DataFrame(issues)
+    if not df.empty:
+        # Keep only relevant columns if they exist
+        cols = ["key", "severity", "type", "component", "line", "message", "status", "author", "creationDate"]
+        df = df[[c for c in cols if c in df.columns]]
+    df.to_excel(filename, index=False)
+
 if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        token = sys.argv[1]
+    
+    version = "v10"
+    if len(sys.argv) > 2:
+        version = sys.argv[2]
+        
     issues = fetch_issues()
-    output_file = "/Users/dominiqueparsis/statFootV3/sonar_issues_report_v9.csv"
-    export_to_csv(issues, output_file)
+    csv_file = f"sonar_issues_report_{version}.csv"
+    xlsx_file = f"sonar_issues_report_{version}.xlsx"
+    
+    export_to_csv(issues, csv_file)
+    print(f"Exported to {csv_file}")
+    
+    export_to_xlsx(issues, xlsx_file)
+    print(f"Exported to {xlsx_file}")

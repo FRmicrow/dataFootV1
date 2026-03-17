@@ -9,6 +9,7 @@
 
 import db from '../../config/database.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
+import logger from '../../utils/logger.js';
 import {
     IMPORT_STATUS,
     PILLARS,
@@ -242,7 +243,7 @@ export async function resetStatus(leagueId, seasonYear, pillar, reason = null, r
         await db.run(`UPDATE V3_Import_Status SET status = ?, consecutive_failures = 0, failure_reason = NULL, updated_at = ? WHERE league_id = ? AND season_year = ? AND pillar = ?`, cleanParams([IMPORT_STATUS.NONE, now, leagueId, seasonYear, p]));
         await syncLegacyFlags(leagueId, seasonYear, p, IMPORT_STATUS.NONE);
     }
-    console.log(`⚠️ Manual override: ${resetAll ? 'ALL' : pillar.toUpperCase()} reset to NONE for ${leagueId}/${seasonYear}. Reason: ${reason || 'N/A'}`);
+    logger.warn({ leagueId, seasonYear, pillar, resetAll, reason }, 'Manual import status override reset to NONE');
 }
 
 // ─────────────────────────────────────────────
@@ -302,7 +303,7 @@ export async function bulkSetNoData(leagueId, pillar, seasonYears, reason) {
             failure_reason: reason
         });
     }
-    console.log(`⛔ Bulk NO_DATA: ${pillar.toUpperCase()} for League ${leagueId} — ${seasonYears.length} seasons blacklisted`);
+    logger.warn({ leagueId, pillar, seasonsCount: seasonYears.length, reason }, 'Bulk NO_DATA applied for league seasons');
 }
 
 // Export the service as a unified object for convenience

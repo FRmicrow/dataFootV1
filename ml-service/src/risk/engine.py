@@ -26,7 +26,8 @@ def extract_and_save_fair_odds(fixture_id):
         'FT_RESULT': ('1N2_FT', 'probabilities_1n2'),
         'HT_RESULT': ('1N2_HT', 'probabilities_1n2'),
         'CORNERS_TOTAL': ('CORNERS_OU', 'over_under_probabilities'),
-        'CARDS_TOTAL': ('CARDS_OU', 'over_under_probabilities')
+        'CARDS_TOTAL': ('CARDS_OU', 'over_under_probabilities'),
+        'GOALS_TOTAL': ('GOALS_OU', 'over_under_probabilities'),
     }
 
     try:
@@ -52,6 +53,8 @@ def extract_and_save_fair_odds(fixture_id):
                 continue
                 
             data = json.loads(json_str)
+            if data.get("prediction_status") != "success_model" or data.get("is_fallback", False):
+                continue
             market_type, data_key = MODEL_CONFIGS[model_type]
             save_risk_data(cur, insert_query, fixture_id, market_type, data, data_key)
             

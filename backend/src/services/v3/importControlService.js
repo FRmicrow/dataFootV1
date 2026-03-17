@@ -3,6 +3,8 @@
  * Manages abort/pause state across all long-running import tasks.
  */
 
+import logger from '../../utils/logger.js';
+
 let abortFlag = false;
 let paused = false;
 let pausePromiseResolve = null;
@@ -11,7 +13,7 @@ let pausePromiseResolve = null;
  * Request to stop all ongoing imports
  */
 export function requestAbort() {
-    console.log('🛑 [ImportControl] Abort requested.');
+    logger.warn('Import abort requested');
     abortFlag = true;
     resumeIfPaused();
 }
@@ -20,7 +22,7 @@ export function requestAbort() {
  * Request to pause all ongoing imports
  */
 export function requestPause() {
-    console.log('⏸️ [ImportControl] Pause requested.');
+    logger.info('Import pause requested');
     paused = true;
 }
 
@@ -28,7 +30,7 @@ export function requestPause() {
  * Request to resume paused imports
  */
 export function requestResume() {
-    console.log('▶️ [ImportControl] Resume requested.');
+    logger.info('Import resume requested');
     resumeIfPaused();
 }
 

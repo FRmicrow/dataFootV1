@@ -1,5 +1,6 @@
 import LeagueRepository from '../../repositories/v3/LeagueRepository.js';
 import LeagueSeasonRepository from '../../repositories/v3/LeagueSeasonRepository.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Get the status of all seasons for a specific league
@@ -11,24 +12,27 @@ export const getLeagueSeasonsStatus = async (req, res) => {
         // Verify League Exists
         const league = await LeagueRepository.findOne({ league_id: leagueId });
         if (!league) {
-            return res.status(404).json({ error: 'V3 League not found' });
+            return res.status(404).json({ success: false, error: 'V3 League not found' });
         }
 
         // Get Seasons Status
         const seasons = await LeagueSeasonRepository.getSeasonsStatusByLeague(leagueId);
 
         res.json({
-            league: {
-                id: league.league_id,
-                name: league.name,
-                country_id: league.country_id
-            },
-            seasons
+            success: true,
+            data: {
+                league: {
+                    id: league.league_id,
+                    name: league.name,
+                    country_id: league.country_id
+                },
+                seasons
+            }
         });
 
     } catch (error) {
-        console.error('V3 Error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        logger.error({ err: error, leagueId: req.params.id }, 'V3 league seasons status error');
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 };
 
@@ -48,10 +52,10 @@ export const getSyncStatus = async (req, res) => {
             standings: !!s.imported_standings
         }));
 
-        res.json(formatted);
+        res.json({ success: true, data: formatted });
     } catch (error) {
-        console.error('V3 Sync Status Error:', error);
-        res.status(500).json({ error: error.message });
+        logger.error({ err: error, leagueId: req.params.id }, 'V3 sync status error');
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -63,7 +67,7 @@ export const initializeSeasons = async (req, res) => {
         const { leagueId, startYear, endYear } = req.body;
 
         if (!leagueId || !startYear || !endYear) {
-            return res.status(400).json({ error: 'Missing parameters' });
+            return res.status(400).json({ success: false, error: 'Missing parameters' });
         }
 
         const added = [];
@@ -81,10 +85,10 @@ export const initializeSeasons = async (req, res) => {
             }
         }
 
-        res.json({ message: 'Seasons initialized', added });
+        res.json({ success: true, data: { message: 'Seasons initialized', added } });
 
     } catch (error) {
-        console.error('V3 Init Error:', error);
-        res.status(500).json({ error: 'Failed to initialize seasons' });
+        logger.error({ err: error, leagueId: req.body?.leagueId }, 'V3 seasons init error');
+        res.status(500).json({ success: false, error: 'Failed to initialize seasons' });
     }
 };

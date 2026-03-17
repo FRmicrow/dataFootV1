@@ -1,0 +1,37 @@
+[
+  {
+    "name": "global_1x2",
+    "version": "catboost_v20260313_135225",
+    "schema_version": "global_1x2_v2",
+    "metrics": {
+      "accuracy": 0.5933096103695901,
+      "log_loss": 0.8817182189413044,
+      "brier_score": 0.5196031473105461,
+      "f1_weighted": 0.5383353268562763
+    }
+  },
+  {
+    "name": "global_cards_ou",
+    "version": "catboost_cards_v20260314_014732",
+    "schema_version": "global_1x2_v2",
+    "metrics": null
+  },
+  {
+    "name": "global_corners_ou",
+    "version": "catboost_corners_v20260314_014706",
+    "schema_version": "global_1x2_v2",
+    "metrics": null
+  },
+  {
+    "name": "global_goals_ou",
+    "version": "catboost_goals_v20260314_014635",
+    "schema_version": "global_1x2_v2",
+    "metrics": null
+  },
+  {
+    "name": "global_ht_1x2",
+    "version": "catboost_ht_v20260314_014219",
+    "schema_version": "global_1x2_v2",
+    "metrics": null
+  }
+]

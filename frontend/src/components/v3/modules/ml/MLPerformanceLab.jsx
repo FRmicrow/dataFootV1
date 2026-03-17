@@ -1,367 +1,448 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, MetricCard, Skeleton, Stack, Tabs } from '../../../../design-system';
-import Accordion from '../../../../design-system/components/Accordion';
-import EquityCurve from '../../../../design-system/components/EquityCurve';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Input, Skeleton, Table } from '../../../../design-system';
 import api from '../../../../services/api';
+import { MLHubEmptyState, MLHubHero, MLHubSection } from './shared/MLHubSurface';
+import { fmtDecimal, fmtPct } from './shared/mlUtils';
 import './MLPerformanceLab.css';
 
-const MARKET_LABELS = {
-    '1N2_FT':      '1X2 Full Time',
-    '1N2_HT':      '1X2 Half Time',
-    'CORNERS_OU':  'Corners O/U 9.5',
-    'CARDS_OU':    'Cards O/U 3.5',
-};
-// MARKET_OPTIONS removed — replaced by MARKET_CHECKBOXES below
-const MARKET_CHECKBOXES = [
-    { value: '1N2_FT',      label: '1X2 FT' },
-    { value: '1N2_HT',      label: '1X2 HT' },
-    { value: 'CORNERS_OU',  label: 'Corners' },
-    { value: 'CARDS_OU',    label: 'Cards' },
+const DETAIL_MARKETS = [
+    { key: 'FT_1X2', label: '1X2 FT', type: '1X2' },
+    { key: 'HT_1X2', label: '1X2 HT', type: '1X2' },
+    { key: 'GOALS_OU', label: 'Goals O/U', type: 'TOTALS' },
+    { key: 'CORNERS_OU', label: 'Corners O/U', type: 'TOTALS' },
+    { key: 'CARDS_OU', label: 'Cards O/U', type: 'TOTALS' },
 ];
 
-const fmt = (n, digits = 1) => n != null ? `${n.toFixed(digits)}%` : '—';
-const fmtBrier = (n) => n != null ? n.toFixed(3) : '—';
-const fmtHR = (n) => n != null ? `${Math.round(n * 100)}%` : '—';
+const hasMetrics = (run) => {
+    const markets = run.metrics?.markets;
+    return markets && Object.keys(markets).length > 0;
+};
 
-// ── ROI Calculator ─────────────────────────────────────────────────────────────
-const ROICalculator = ({ onResult }) => {
-    const [portfolio, setPortfolio] = useState(1000);
-    const [stake, setStake] = useState(10);
-    const [activeMarkets, setActiveMarkets] = useState(new Set(MARKET_CHECKBOXES.map(m => m.value)));
-    const [leaguesWithOdds, setLeaguesWithOdds] = useState([]);
-    const [selectedLeague, setSelectedLeague] = useState('');
-    const [selectedSeason, setSelectedSeason] = useState('');
-    const [loading, setLoading] = useState(false);
+const getRunLeagueLabel = (run) => {
+    if (run?.league_name) return run.league_name;
+    if (run?.league_id != null) return `ID ${run.league_id}`;
+    return 'Nom indisponible';
+};
+
+const PerformanceLab = () => {
+    const [runs, setRuns] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [portfolioSize, setPortfolioSize] = useState(1000);
+    const [stakePerBet, setStakePerBet] = useState(10);
+    const [selectedLeagueId, setSelectedLeagueId] = useState('');
+    const [selectedSeasonYear, setSelectedSeasonYear] = useState('');
+    const [roi, setRoi] = useState(null);
+    const [roiLoading, setRoiLoading] = useState(false);
+    const [selectedRunId, setSelectedRunId] = useState(null);
 
     useEffect(() => {
-        api.getLeaguesWithOdds()
-            .then(data => setLeaguesWithOdds(Array.isArray(data) ? data : []))
-            .catch(() => {});
+        api.getAllSimulationJobs()
+            .then((rows) => setRuns(Array.isArray(rows) ? rows : []))
+            .catch((err) => setError(err.message || 'Impossible de charger la page performance.'))
+            .finally(() => setLoading(false));
     }, []);
 
-    const availableSeasons = selectedLeague
-        ? (leaguesWithOdds.find(l => String(l.leagueId) === selectedLeague)?.seasons ?? [])
-        : [];
+    const completedRuns = useMemo(
+        () => runs
+            .filter((run) => run.status === 'COMPLETED' && hasMetrics(run))
+            .sort((a, b) => Number(b.id) - Number(a.id)),
+        [runs]
+    );
 
-    const stakeTooHigh = stake > portfolio * 0.5;
+    const leagueOptions = useMemo(() => {
+        const seen = new Map();
+        completedRuns.forEach((run) => {
+            if (!seen.has(String(run.league_id))) {
+                seen.set(String(run.league_id), {
+                    id: String(run.league_id),
+                    name: getRunLeagueLabel(run),
+                    importanceRank: Number(run.importance_rank || 9999),
+                });
+            }
+        });
+        return [...seen.values()].sort((a, b) =>
+            a.importanceRank - b.importanceRank || a.name.localeCompare(b.name)
+        );
+    }, [completedRuns]);
 
-    const run = useCallback(() => {
-        if (!portfolio || !stake || portfolio <= 0 || stake <= 0) return;
-        setLoading(true);
-        const marketsArr = [...activeMarkets];
-        const markets = marketsArr.length === MARKET_CHECKBOXES.length ? 'all' : marketsArr.join(',');
+    const leagueSeasonCoverage = useMemo(() => {
+        const byLeague = new Map();
+        completedRuns.forEach((run) => {
+            const key = String(run.league_id);
+            if (!byLeague.has(key)) {
+                byLeague.set(key, {
+                    id: key,
+                    name: getRunLeagueLabel(run),
+                    importanceRank: Number(run.importance_rank || 9999),
+                    seasons: new Set(),
+                });
+            }
+            if (run.season_year != null) {
+                byLeague.get(key).seasons.add(String(run.season_year));
+            }
+        });
+
+        return [...byLeague.values()]
+            .map((league) => ({
+                ...league,
+                seasons: [...league.seasons].sort((a, b) => Number(b) - Number(a)),
+            }))
+            .sort((a, b) =>
+                a.importanceRank - b.importanceRank || a.name.localeCompare(b.name)
+            );
+    }, [completedRuns]);
+
+    const seasonOptions = useMemo(() => {
+        if (!selectedLeagueId) return [];
+        const years = new Set(
+            completedRuns
+                .filter((r) => String(r.league_id) === selectedLeagueId)
+                .map((r) => String(r.season_year))
+        );
+        return [...years].sort((a, b) => Number(b) - Number(a));
+    }, [completedRuns, selectedLeagueId]);
+
+    useEffect(() => {
+        if (!selectedLeagueId && leagueOptions.length) {
+            setSelectedLeagueId(leagueOptions[0].id);
+        }
+    }, [leagueOptions, selectedLeagueId]);
+
+    useEffect(() => {
+        if (!selectedSeasonYear && seasonOptions.length) {
+            setSelectedSeasonYear(seasonOptions[0]);
+        }
+    }, [seasonOptions, selectedSeasonYear]);
+
+    useEffect(() => {
+        if (selectedSeasonYear && !seasonOptions.includes(selectedSeasonYear)) {
+            setSelectedSeasonYear(seasonOptions[0] || '');
+        }
+    }, [seasonOptions, selectedSeasonYear]);
+
+    const filteredRuns = useMemo(() => completedRuns.filter((run) => {
+        if (selectedLeagueId && String(run.league_id) !== selectedLeagueId) return false;
+        if (selectedSeasonYear && String(run.season_year) !== selectedSeasonYear) return false;
+        return true;
+    }), [completedRuns, selectedLeagueId, selectedSeasonYear]);
+
+    useEffect(() => {
+        if (selectedRunId && !filteredRuns.some((run) => run.id === selectedRunId)) {
+            setSelectedRunId(null);
+        }
+    }, [filteredRuns, selectedRunId]);
+
+    useEffect(() => {
+        if (!selectedLeagueId || !selectedSeasonYear) {
+            setRoi(null);
+            return;
+        }
+        let cancelled = false;
+        setRoiLoading(true);
         api.calculateROI({
-            portfolioSize: portfolio,
-            stakePerBet: stake,
-            markets,
-            leagueId: selectedLeague ? parseInt(selectedLeague) : undefined,
-            seasonYear: selectedSeason ? parseInt(selectedSeason) : undefined,
+            portfolioSize: Number(portfolioSize),
+            stakePerBet: Number(stakePerBet),
+            leagueId: Number(selectedLeagueId),
+            seasonYear: Number(selectedSeasonYear),
+            markets: 'all',
         })
-            .then(data => onResult(data))
-            .catch(() => onResult(null))
-            .finally(() => setLoading(false));
-    }, [portfolio, stake, activeMarkets, selectedLeague, selectedSeason, onResult]);
+            .then((payload) => { if (!cancelled) setRoi(payload); })
+            .catch(() => { if (!cancelled) setRoi(null); })
+            .finally(() => { if (!cancelled) setRoiLoading(false); });
+        return () => { cancelled = true; };
+    }, [portfolioSize, stakePerBet, selectedLeagueId, selectedSeasonYear]);
 
-    useEffect(() => {
-        const t = setTimeout(run, 600);
-        return () => clearTimeout(t);
-    }, [run]);
+    const selectedRun = useMemo(
+        () => filteredRuns.find((r) => r.id === selectedRunId) || null,
+        [filteredRuns, selectedRunId]
+    );
 
-    const toggleMarket = (val) => setActiveMarkets(prev => {
-        const next = new Set(prev);
-        next.has(val) ? next.delete(val) : next.add(val);
-        return next;
-    });
-
-    return (
-        <Card className="ml-perf__roi-card">
-            <div className="ml-perf__roi-header">
-                <h3 className="ml-perf__roi-title">💰 ROI Calculator</h3>
-                <p className="ml-perf__roi-subtitle">Simulation sur l'historique · uniquement ligues avec odds disponibles</p>
-            </div>
-            <div className="ml-perf__roi-inputs">
-                <label className="ml-perf__label">
-                    Portefeuille (€)
-                    <input type="number" className="ml-perf__input" value={portfolio} min={1}
-                        onChange={e => setPortfolio(Number(e.target.value))} />
-                </label>
-                <label className="ml-perf__label">
-                    Mise / pari (€)
-                    <input type="number" className={`ml-perf__input ${stakeTooHigh ? 'ml-perf__input--warn' : ''}`}
-                        value={stake} min={1} onChange={e => setStake(Number(e.target.value))} />
-                    {stakeTooHigh && <span className="ml-perf__warn-text">⚠️ Mise &gt; 50% du portefeuille</span>}
-                </label>
-                <label className="ml-perf__label">
-                    Ligue
-                    <select className="ml-perf__input" value={selectedLeague}
-                        onChange={e => { setSelectedLeague(e.target.value); setSelectedSeason(''); }}>
-                        <option value="">— Toutes les ligues —</option>
-                        {leaguesWithOdds.map(l => (
-                            <option key={l.leagueId} value={l.leagueId}>{l.leagueName}</option>
-                        ))}
-                    </select>
-                </label>
-                {selectedLeague && (
-                    <label className="ml-perf__label">
-                        Saison
-                        <select className="ml-perf__input" value={selectedSeason} onChange={e => setSelectedSeason(e.target.value)}>
-                            <option value="">— Toutes les saisons —</option>
-                            {availableSeasons.map(s => (
-                                <option key={s.year} value={s.year}>{s.year} ({s.oddsCount} paris)</option>
-                            ))}
-                        </select>
-                    </label>
-                )}
-                <div className="ml-perf__label">
-                    Marchés
-                    <div className="ml-perf__market-toggles">
-                        {MARKET_CHECKBOXES.map(m => (
-                            <button key={m.value}
-                                className={`ml-perf__mkt-btn ${activeMarkets.has(m.value) ? 'ml-perf__mkt-btn--on' : ''}`}
-                                onClick={() => toggleMarket(m.value)}
-                                type="button">
-                                {m.label}
-                            </button>
-                        ))}
-                    </div>
+    const runColumns = [
+        {
+            key: 'competition',
+            title: 'Compétition',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong>{getRunLeagueLabel(row)}</strong>
+                    <span>Saison {row.season_year || '—'}</span>
                 </div>
-            </div>
-            {loading && <div className="ml-perf__roi-loading">Calcul en cours…</div>}
-        </Card>
-    );
-};
-
-// ── ROI Results ────────────────────────────────────────────────────────────────
-const ROIResults = ({ roi }) => {
-    if (!roi) return null;
-    const isProfit = roi.profit >= 0;
-
-    return (
-        <Card className="ml-perf__roi-results">
-            <div className="ml-perf__roi-grid">
-                <MetricCard label="Paris" value={roi.totalBets} icon="🎲" />
-                <MetricCard
-                    label="Hit Rate"
-                    value={`${Math.round(roi.hitRate * 100)}%`}
-                    icon="🎯"
-                    subValue={`${roi.wins}W / ${roi.losses}L`}
-                />
-                <MetricCard
-                    label="ROI"
-                    value={`${roi.roi >= 0 ? '+' : ''}${roi.roi.toFixed(1)}%`}
-                    icon={isProfit ? '📈' : '📉'}
-                    variant={isProfit ? 'featured' : 'default'}
-                    subValue={`${roi.profit >= 0 ? '+' : ''}${roi.profit.toFixed(0)}€`}
-                />
-                <MetricCard
-                    label="Drawdown max"
-                    value={`-${roi.maxDrawdown.toFixed(1)}%`}
-                    icon="⚠️"
-                    subValue={`Série noire: ${roi.worstStreak}`}
-                />
-            </div>
-            {roi.equityCurve?.length > 2 && (
-                <div className="ml-perf__equity-wrap">
-                    <p className="ml-perf__equity-label">Courbe d'équité</p>
-                    <EquityCurve
-                        data={roi.equityCurve}
-                        baseline={roi.equityCurve[0]?.portfolio}
-                        width={500}
-                        height={72}
-                    />
-                    <div className="ml-perf__equity-values">
-                        <span>Départ: {roi.equityCurve[0]?.portfolio.toFixed(0)}€</span>
-                        <span style={{ color: isProfit ? 'var(--color-success)' : 'var(--color-error)' }}>
-                            Final: {roi.equityCurve[roi.equityCurve.length - 1]?.portfolio.toFixed(0)}€
-                        </span>
-                    </div>
+            ),
+        },
+        {
+            key: 'horizon',
+            title: 'Horizon',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong>{row.horizon_type?.replaceAll('_', ' ') || '—'}</strong>
+                    <span>Run #{row.id}</span>
                 </div>
-            )}
-        </Card>
-    );
-};
+            ),
+        },
+        {
+            key: 'ft',
+            title: 'FT 1X2',
+            render: (_, row) => {
+                const m = row.metrics?.markets?.FT_1X2;
+                return m ? (
+                    <div className="ml-perf__league-cell">
+                        <strong>{fmtPct(m.accuracy)}</strong>
+                        <span>Brier {fmtDecimal(m.brier_score)}</span>
+                    </div>
+                ) : '—';
+            },
+        },
+        {
+            key: 'ht',
+            title: 'HT 1X2',
+            render: (_, row) => {
+                const m = row.metrics?.markets?.HT_1X2;
+                return m ? (
+                    <div className="ml-perf__league-cell">
+                        <strong>{fmtPct(m.accuracy)}</strong>
+                        <span>Brier {fmtDecimal(m.brier_score)}</span>
+                    </div>
+                ) : '—';
+            },
+        },
+        {
+            key: 'goals',
+            title: 'Goals',
+            render: (_, row) => {
+                const m = row.metrics?.markets?.GOALS_OU;
+                return m ? (
+                    <div className="ml-perf__league-cell">
+                        <strong>{fmtPct(m.hit_rate)}</strong>
+                        <span>MAE {fmtDecimal(m.mae_total)}</span>
+                    </div>
+                ) : '—';
+            },
+        },
+        {
+            key: 'corners',
+            title: 'Corners',
+            render: (_, row) => {
+                const m = row.metrics?.markets?.CORNERS_OU;
+                return m ? (
+                    <div className="ml-perf__league-cell">
+                        <strong>{fmtPct(m.hit_rate)}</strong>
+                        <span>MAE {fmtDecimal(m.mae_total)}</span>
+                    </div>
+                ) : '—';
+            },
+        },
+        {
+            key: 'cards',
+            title: 'Cards',
+            render: (_, row) => {
+                const m = row.metrics?.markets?.CARDS_OU;
+                return m ? (
+                    <div className="ml-perf__league-cell">
+                        <strong>{fmtPct(m.hit_rate)}</strong>
+                        <span>MAE {fmtDecimal(m.mae_total)}</span>
+                    </div>
+                ) : '—';
+            },
+        },
+    ];
 
-// ── League Tab ─────────────────────────────────────────────────────────────────
-const LeagueTab = () => {
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    if (loading) {
+        return (
+            <div className="ml-perf">
+                <Skeleton height="120px" />
+                <Skeleton height="160px" />
+                <Skeleton height="320px" />
+            </div>
+        );
+    }
 
-    useEffect(() => {
-        api.getMLSimulationOverview()
-            .then(rows => {
-                // Group by league_id, then season
-                const byLeague = {};
-                for (const row of (rows || [])) {
-                    const lk = `${row.league_id}`;
-                    if (!byLeague[lk]) byLeague[lk] = {
-                        leagueId: row.league_id,
-                        leagueName: row.league_name,
-                        importanceRank: row.league_importance_rank ?? 99,
-                        countryRank: row.country_importance_rank ?? 99,
-                        seasons: []
-                    };
-                    byLeague[lk].seasons.push(row);
-                }
-                setData(Object.values(byLeague).sort((a, b) =>
-                    a.countryRank - b.countryRank || a.importanceRank - b.importanceRank
-                ));
-            })
-            .catch(e => setError(e.message))
-            .finally(() => setLoading(false));
-    }, []);
+    if (error) {
+        return (
+            <div className="ml-perf">
+                <MLHubEmptyState title="Chargement impossible" message={error} />
+            </div>
+        );
+    }
 
-    if (loading) return <div className="ml-perf__tab-loading">{[1,2,3].map(i => <Skeleton key={i} height="60px" className="ds-mb-sm" />)}</div>;
-    if (error) return <p className="ml-perf__error">⚠️ {error}</p>;
-    if (!data?.length) return <p className="ml-perf__empty">Aucune simulation disponible.</p>;
-
-    return (
-        <div className="ml-perf__list">
-            {data.map(league => (
-                <Accordion
-                    key={league.leagueId}
-                    title={<span className="ml-perf__accordion-title">{league.leagueName}</span>}
-                    maxHeight="none"
-                >
-                    <table className="ml-perf__table">
-                        <thead>
-                            <tr>
-                                <th>Saison</th>
-                                <th>Hit Rate</th>
-                                <th>Brier</th>
-                                <th>1X2 FT</th>
-                                <th>1X2 HT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {league.seasons.sort((a, b) => b.season_year - a.season_year).map((s, i) => (
-                                <tr key={i}>
-                                    <td>{s.season_year}</td>
-                                    <td><span className="ml-perf__highlight">{fmtHR(s.global_hit_rate)}</span></td>
-                                    <td>{fmtBrier(s.brier_score)}</td>
-                                    <td>{s.market_1n2_ft != null ? `${Math.round(s.market_1n2_ft * 100)}%` : '—'}</td>
-                                    <td>{s.market_1n2_ht != null ? `${Math.round(s.market_1n2_ht * 100)}%` : '—'}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </Accordion>
-            ))}
-        </div>
-    );
-};
-
-// ── Club Tab ───────────────────────────────────────────────────────────────────
-const ClubTab = () => {
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        api.getMLClubEvaluation()
-            .then(rows => setData(rows || []))
-            .catch(e => setError(e.message))
-            .finally(() => setLoading(false));
-    }, []);
-
-    if (loading) return <div className="ml-perf__tab-loading">{[1,2,3].map(i => <Skeleton key={i} height="50px" className="ds-mb-sm" />)}</div>;
-    if (error) return <p className="ml-perf__error">⚠️ {error}</p>;
-    if (!data?.length) return <p className="ml-perf__empty">Aucune donnée par club disponible.</p>;
-
-    return (
-        <div className="ml-perf__list">
-            {data.slice(0, 50).map((club, i) => (
-                <Accordion
-                    key={club.team_id ?? i}
-                    title={
-                        <div className="ml-perf__club-title">
-                            <span>{club.team_name}</span>
-                            <span className="ml-perf__club-hr">HR: {Math.round((club.hit_rate ?? 0) * 100)}%</span>
-                        </div>
-                    }
-                    maxHeight="none"
-                >
-                    <table className="ml-perf__table">
-                        <thead>
-                            <tr><th>Marché</th><th>Correct</th><th>Total</th><th>Hit Rate</th></tr>
-                        </thead>
-                        <tbody>
-                            {Object.entries(club.by_market ?? {}).map(([mkt, s]) => (
-                                <tr key={mkt}>
-                                    <td>{MARKET_LABELS[mkt] ?? mkt}</td>
-                                    <td>{s.h}</td>
-                                    <td>{s.t}</td>
-                                    <td><span className="ml-perf__highlight">{s.t > 0 ? `${Math.round((s.h / s.t) * 100)}%` : '—'}</span></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </Accordion>
-            ))}
-        </div>
-    );
-};
-
-// ── Market Tab ─────────────────────────────────────────────────────────────────
-const MarketTab = ({ roiData }) => {
-    if (!roiData) return <p className="ml-perf__empty">Lance le ROI Calculator pour voir les stats par marché.</p>;
-
-    const markets = Object.entries(MARKET_LABELS).map(([key, label]) => ({
-        key, label,
-        count: roiData.totalBets,
-        hitRate: roiData.hitRate
-    }));
-
-    return (
-        <div className="ml-perf__market-grid">
-            {[
-                { label: '1X2 Full Time', icon: '⚽', key: 'FT_RESULT' },
-                { label: '1X2 Half Time', icon: '⏱️', key: 'HT_RESULT' },
-                { label: 'Corners O/U 9.5', icon: '🚩', key: 'CORNERS_TOTAL' },
-                { label: 'Cards O/U 3.5', icon: '🟨', key: 'CARDS_TOTAL' },
-            ].map(m => (
-                <MetricCard
-                    key={m.key}
-                    label={m.label}
-                    icon={m.icon}
-                    value={`${Math.round(roiData.hitRate * 100)}%`}
-                    subValue={`${roiData.totalBets} paris · Brier —`}
-                />
-            ))}
-        </div>
-    );
-};
-
-// ── Main Page ──────────────────────────────────────────────────────────────────
-const TABS = [
-    { id: 'league', label: 'Par Ligue' },
-    { id: 'club',   label: 'Par Club' },
-    { id: 'market', label: 'Par Marché' },
-];
-
-const MLPerformanceLab = () => {
-    const [roiData, setRoiData] = useState(null);
-    const [activeTab, setActiveTab] = useState('league');
+    const hasSelection = Boolean(selectedLeagueId && selectedSeasonYear);
+    const selectedLeagueName = leagueOptions.find((l) => l.id === selectedLeagueId)?.name || '';
 
     return (
         <div className="ml-perf">
-            <div className="ml-perf__header">
-                <h2 className="ml-perf__title">📊 Performance Lab</h2>
-            </div>
+            <MLHubHero
+                badge={{ label: 'Performance', variant: 'primary' }}
+                title="Gains et historique des runs"
+                subtitle="Sélectionne une ligue et une saison pour voir les statistiques de performance et les runs modèles correspondants."
+            />
 
-            <ROICalculator onResult={setRoiData} />
-            <ROIResults roi={roiData} />
-
-            <div className="ml-perf__tabs-section">
-                <Tabs items={TABS} activeId={activeTab} onChange={setActiveTab} variant="pills" />
-                <div className="ml-perf__tab-content">
-                    {activeTab === 'league' && <LeagueTab />}
-                    {activeTab === 'club'   && <ClubTab />}
-                    {activeTab === 'market' && <MarketTab roiData={roiData} />}
+            <MLHubSection
+                title="Runs disponibles"
+                subtitle="Liste réelle des compétitions et saisons déjà simulées. L’ordre suit l’importance métier de la ligue."
+                badge={{ label: `${leagueSeasonCoverage.length} ligues`, variant: 'neutral' }}
+            >
+                <div className="ml-perf__coverage-list">
+                    {leagueSeasonCoverage.map((league) => (
+                        <button
+                            key={league.id}
+                            type="button"
+                            className={`ml-perf__coverage-item ${selectedLeagueId === league.id ? 'is-active' : ''}`}
+                            onClick={() => {
+                                setSelectedLeagueId(league.id);
+                                setSelectedSeasonYear(league.seasons[0] || '');
+                                setSelectedRunId(null);
+                            }}
+                        >
+                            <strong>{league.name}</strong>
+                            <span>{league.seasons.join(', ')}</span>
+                        </button>
+                    ))}
                 </div>
-            </div>
+            </MLHubSection>
+
+            <MLHubSection
+                title="Paramètres"
+                badge={{ label: hasSelection ? `${selectedLeagueName} · ${selectedSeasonYear}` : 'Sélection requise', variant: hasSelection ? 'primary' : 'neutral' }}
+            >
+                <div className="ml-perf__roi-controls">
+                    <label>
+                        Portefeuille (€)
+                        <Input type="number" min="1" value={portfolioSize} onChange={(e) => setPortfolioSize(e.target.value)} />
+                    </label>
+                    <label>
+                        Mise par pari (€)
+                        <Input type="number" min="1" value={stakePerBet} onChange={(e) => setStakePerBet(e.target.value)} />
+                    </label>
+                    <label>
+                        Ligue
+                        <select className="ml-perf__input" value={selectedLeagueId} onChange={(e) => { setSelectedLeagueId(e.target.value); setSelectedSeasonYear(''); setSelectedRunId(null); }}>
+                            <option value="">Choisir une ligue</option>
+                            {leagueOptions.map((l) => (
+                                <option key={l.id} value={l.id}>{l.name}</option>
+                            ))}
+                        </select>
+                    </label>
+                    <label>
+                        Saison
+                        <select className="ml-perf__input" value={selectedSeasonYear} onChange={(e) => { setSelectedSeasonYear(e.target.value); setSelectedRunId(null); }} disabled={!selectedLeagueId}>
+                            <option value="">Choisir une saison</option>
+                            {seasonOptions.map((year) => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+            </MLHubSection>
+
+            {hasSelection && (
+                <MLHubSection
+                    title="Simulation ROI"
+                    badge={{ label: roiLoading ? 'Calcul…' : roi ? `${roi.totalBets} paris` : 'Aucune donnée', variant: roi ? 'primary' : 'neutral' }}
+                >
+                    {roiLoading ? (
+                        <Skeleton height="96px" />
+                    ) : roi ? (
+                        <>
+                            <div className="ml-perf__roi-scope">
+                                <strong>{roi.scope?.leagueName || selectedLeagueName}</strong>
+                                <span>Saison {roi.scope?.seasonYear || selectedSeasonYear}</span>
+                                <span>Source odds: {roi.scope?.oddsSource || 'indisponible'}</span>
+                            </div>
+                            <div className="ml-perf__roi-grid">
+                            <div className="ml-perf__roi-card">
+                                <span>Paris simulés</span>
+                                <strong>{roi.totalBets}</strong>
+                            </div>
+                            <div className="ml-perf__roi-card">
+                                <span>Montant total</span>
+                                <strong>{fmtDecimal(roi.totalBets * Number(stakePerBet), 0)} €</strong>
+                            </div>
+                            <div className="ml-perf__roi-card">
+                                <span>Hit rate</span>
+                                <strong>{fmtPct(roi.hitRate)}</strong>
+                            </div>
+                            <div className="ml-perf__roi-card">
+                                <span>Bénéfice</span>
+                                <strong className={roi.benefit >= 0 ? 'is-positive' : 'is-negative'}>
+                                    {roi.benefit >= 0 ? '+' : ''}{fmtDecimal(roi.benefit, 0)} €
+                                </strong>
+                            </div>
+                            <div className="ml-perf__roi-card">
+                                <span>ROI</span>
+                                <strong className={roi.roi >= 0 ? 'is-positive' : 'is-negative'}>
+                                    {roi.roi >= 0 ? '+' : ''}{fmtDecimal(roi.roi, 1)} %
+                                </strong>
+                            </div>
+                            <div className="ml-perf__roi-card">
+                                <span>Retrait max</span>
+                                <strong>-{fmtDecimal(roi.maxDrawdown, 1)} %</strong>
+                            </div>
+                            </div>
+                        </>
+                    ) : null}
+                </MLHubSection>
+            )}
+
+            {hasSelection && (
+                <MLHubSection
+                    title="Runs modèles"
+                    subtitle={filteredRuns.length ? `${filteredRuns.length} run${filteredRuns.length > 1 ? 's' : ''} validé${filteredRuns.length > 1 ? 's' : ''} — clique sur un run pour voir le détail` : ''}
+                    badge={{ label: `${filteredRuns.length} runs`, variant: 'neutral' }}
+                >
+                    {filteredRuns.length ? (
+                        <>
+                            <Table
+                                columns={runColumns}
+                                data={filteredRuns}
+                                rowKey="id"
+                                interactive
+                                onRowClick={(row) => setSelectedRunId(row.id === selectedRunId ? null : row.id)}
+                            />
+                            {selectedRun && (
+                                <div className="ml-perf__run-detail">
+                                    <div className="ml-perf__run-detail-head">
+                                        <strong>Run #{selectedRun.id} — {selectedRun.horizon_type?.replaceAll('_', ' ')}</strong>
+                                        <Button variant="ghost" size="sm" onClick={() => setSelectedRunId(null)}>Fermer</Button>
+                                    </div>
+                                    <div className="ml-perf__run-markets">
+                                        {DETAIL_MARKETS.map((m) => {
+                                            const metrics = selectedRun.metrics?.markets?.[m.key];
+                                            if (!metrics) return null;
+                                            return (
+                                                <div key={m.key} className="ml-perf__run-market-card">
+                                                    <strong className="ml-perf__run-market-label">{m.label}</strong>
+                                                    {m.type === '1X2' ? (
+                                                        <>
+                                                            <div className="ml-perf__run-market-row"><span>Hit rate</span><strong>{fmtPct(metrics.accuracy)}</strong></div>
+                                                            <div className="ml-perf__run-market-row"><span>Brier</span><strong>{fmtDecimal(metrics.brier_score)}</strong></div>
+                                                            <div className="ml-perf__run-market-row"><span>Log loss</span><strong>{fmtDecimal(metrics.log_loss)}</strong></div>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div className="ml-perf__run-market-row"><span>Hit rate</span><strong>{fmtPct(metrics.hit_rate)}</strong></div>
+                                                            <div className="ml-perf__run-market-row"><span>MAE</span><strong>{fmtDecimal(metrics.mae_total)}</strong></div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <MLHubEmptyState title="Aucun run" message="Aucun run validé pour cette ligue et cette saison." />
+                    )}
+                </MLHubSection>
+            )}
+
+            {!hasSelection && (
+                <MLHubEmptyState
+                    title="Sélectionne une ligue et une saison"
+                    message="Seules les compétitions et années ayant de vrais runs terminés sont proposées ici."
+                />
+            )}
         </div>
     );
 };
 
-export default MLPerformanceLab;
+export default PerformanceLab;

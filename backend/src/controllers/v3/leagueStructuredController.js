@@ -1,4 +1,5 @@
 import LeagueRepository from '../../repositories/v3/LeagueRepository.js';
+import logger from '../../utils/logger.js';
 
 /**
  * US_070: High-Density League API & Ranking Aggregator
@@ -8,7 +9,7 @@ import LeagueRepository from '../../repositories/v3/LeagueRepository.js';
 const CACHE_KEY = 'v3_structured_leagues';
 let cache = {
     data: null,
-    timestamp: 0 // Resetting cache here 
+    timestamp: 0
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -25,10 +26,10 @@ export const getStructuredLeagues = async (req, res) => {
 
         const structured = {
             international: {
-                world: [],
-                continental: {} // Keyed by continent name
+                club: {},        // Keyed by continent: Champions League, Europa League, Libertadores…
+                national_team: {}// Keyed by continent/World: World Cup, Euro, Copa America…
             },
-            national: [] // List of countries with their leagues
+            national: [] // Domestic leagues grouped by country
         };
 
         const nationalMap = {};
@@ -44,6 +45,7 @@ export const getStructuredLeagues = async (req, res) => {
                 logo: row.logo_url,
                 rank: row.league_rank,
                 is_cup: isCup,
+                competition_type: row.competition_type,
                 seasons_count: row.seasons_count,
                 leader_name: isCup ? null : row.leader_name,
                 leader_logo: isCup ? null : row.leader_logo,
@@ -54,18 +56,15 @@ export const getStructuredLeagues = async (req, res) => {
             const isVirtual = row.country_name === row.continent;
             const isWorld = row.country_name === 'World';
 
-            if (isVirtual) {
-                if (isWorld) {
-                    structured.international.world.push(league);
-                } else {
-                    const continent = row.continent || 'Other';
-                    if (!structured.international.continental[continent]) {
-                        structured.international.continental[continent] = [];
-                    }
-                    structured.international.continental[continent].push(league);
-                }
+            if (isVirtual || isWorld) {
+                const bucket = row.competition_type === 'national_team'
+                    ? structured.international.national_team
+                    : structured.international.club;
+                const key = isWorld ? 'World' : (row.continent || 'Other');
+                if (!bucket[key]) bucket[key] = [];
+                bucket[key].push(league);
             } else {
-                // National
+                // Domestic
                 if (!nationalMap[row.country_name]) {
                     nationalMap[row.country_name] = {
                         name: row.country_name,
@@ -91,7 +90,7 @@ export const getStructuredLeagues = async (req, res) => {
         res.json({ success: true, data: structured });
 
     } catch (error) {
-        console.error("Error in getStructuredLeagues:", error);
+        logger.error({ err: error }, 'Error in getStructuredLeagues');
         res.status(500).json({ success: false, message: "Failed to aggregate structured leagues" });
     }
 };

@@ -9,6 +9,7 @@
     "dev": "node --max-old-space-size=4096 --watch src/server.js",
     "init-db": "node scripts/initDatabase.js",
     "migrate": "node scripts/v3/migrate.js",
+    "smoke:v3-routes": "node scripts/smoke_v3_routes.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

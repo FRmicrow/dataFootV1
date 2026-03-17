@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../../../services/api';
-import { Card, Stack, Badge, Button, Table, Tabs, LeagueHeader, ControlBar, Select, Grid, Skeleton, CardSkeleton, TableSkeleton } from '../../../../design-system';
+import { Card, Button, Tabs, LeagueHeader, ControlBar, Skeleton, TableSkeleton } from '../../../../design-system';
 import { PageLayout, PageContent } from '../../layouts';
+import './SeasonOverviewPage.css';
 
 // Components
 import LeagueOverview from '../../modules/league/LeagueOverview';
@@ -10,7 +11,6 @@ import StandingsTable from '../../modules/league/StandingsTable';
 import FixturesList from '../../modules/league/FixturesList';
 import SquadList from '../../modules/league/SquadList';
 import LeagueXGTable from '../../modules/league/LeagueXGTable';
-import LeagueLeaders from '../../modules/league/LeagueLeaders';
 
 const SeasonOverviewPage = () => {
     const { id, year } = useParams();
@@ -29,12 +29,13 @@ const SeasonOverviewPage = () => {
     const [rangeStart, setRangeStart] = useState(1);
     const [rangeEnd, setRangeEnd] = useState(38);
     const [isDynamicMode, setIsDynamicMode] = useState(false);
+    const [isSplitView, setIsSplitView] = useState(false);
+    const [splitSelectedRound, setSplitSelectedRound] = useState('ALL');
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const [syncing, setSyncing] = useState(false);
-    const [syncLogs, setSyncLogs] = useState([]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -116,10 +117,9 @@ const SeasonOverviewPage = () => {
     const handleSync = async () => {
         if (syncing) return;
         setSyncing(true);
-        setSyncLogs([{ type: 'info', message: `🚀 Starting Sync for ${year}...` }]);
 
         try {
-            const response = await fetch(`/api/league/${id}/season/${year}/sync`, {
+            const response = await fetch(`/api/league/${id}/season/${year}/sync?force=true`, {
                 method: 'POST'
             });
 
@@ -138,11 +138,8 @@ const SeasonOverviewPage = () => {
                         try {
                             const data = JSON.parse(line.slice(6));
                             if (data.type === 'complete') {
-                                setSyncLogs(prev => [...prev.slice(-4), { type: 'success', message: '✅ Sync Completed!' }]);
-                                setTimeout(() => setSyncing(false), 3000);
+                                setTimeout(() => setSyncing(false), 2000);
                                 fetchData();
-                            } else {
-                                setSyncLogs(prev => [...prev.slice(-4), data]); 
                             }
                         } catch (e) {
                             console.error("SSE Parse Error", e);
@@ -152,10 +149,43 @@ const SeasonOverviewPage = () => {
             }
         } catch (err) {
             console.error("Sync failed", err);
-            setSyncLogs(prev => [...prev, { type: 'error', message: `❌ Sync Failed: ${err.message}` }]);
-            setTimeout(() => setSyncing(false), 3000);
+            setTimeout(() => setSyncing(false), 2000);
         }
     };
+
+    // Reset split round when split opens or range changes
+    useEffect(() => {
+        setSplitSelectedRound('ALL');
+    }, [isSplitView, rangeStart, rangeEnd]);
+
+    // Fixtures filtered to the rangeStart–rangeEnd league-stage rounds
+    const splitFixturesData = useMemo(() => {
+        const allRounds = fixturesData.rounds || [];
+        const allFixtures = fixturesData.fixtures || [];
+
+        const parseN = (r) => {
+            let m = r.match(/^League Stage - (\d+)$/i);
+            if (m) return Number(m[1]);
+            m = r.match(/^Regular Season - (\d+)$/i);
+            if (m) return Number(m[1]);
+            return null;
+        };
+
+        const start = Number(rangeStart);
+        const end = Number(rangeEnd);
+
+        const filteredRounds = allRounds
+            .map(r => ({ round: r, n: parseN(r) }))
+            .filter(x => x.n !== null && x.n >= start && x.n <= end)
+            .sort((a, b) => a.n - b.n)
+            .map(x => x.round);
+
+        const roundSet = new Set(filteredRounds);
+        return {
+            rounds: filteredRounds,
+            fixtures: allFixtures.filter(f => roundSet.has(f.round))
+        };
+    }, [fixturesData, rangeStart, rangeEnd]);
 
     const handleSeasonChange = (e) => {
         const newYear = e.target.value;
@@ -259,64 +289,25 @@ const SeasonOverviewPage = () => {
                 }}
                 activeSeason={year}
                 seasonsCount={availableYears?.length}
+                availableYears={availableYears || [year]}
+                onYearChange={handleSeasonChange}
+                onSync={handleSync}
+                syncing={syncing}
             />
 
-            <PageContent>
+            <PageContent style={{ marginTop: 'calc(var(--spacing-sm) * -1)' }}>
 
                 <ControlBar
                     left={
-                        <Stack direction="row" gap="var(--spacing-lg)" align="center">
-                            <Tabs
-                                items={tabItems}
-                                activeId={activeTab}
-                                onChange={setActiveTab}
-                            />
-                            {syncing && (
-                                <div className="sync-status-indicator animate-pulse" style={{ 
-                                    display: 'flex', 
-                                    gap: 'var(--spacing-sm)', 
-                                    fontSize: 'var(--font-xs)',
-                                    color: 'var(--color-primary-light)',
-                                    background: 'rgba(var(--color-primary-rgb), 0.1)',
-                                    padding: '4px 12px',
-                                    borderRadius: '100px',
-                                    border: '1px solid rgba(var(--color-primary-rgb), 0.2)'
-                                }}>
-                                    <span className="spinner-mini"></span>
-                                    {syncLogs[syncLogs.length - 1]?.message || 'Syncing...'}
-                                </div>
-                            )}
-                        </Stack>
-                    }
-                    right={
-                        <Stack direction="row" gap="var(--spacing-md)" align="center">
-                            <Button 
-                                variant="secondary" 
-                                size="sm" 
-                                onClick={handleSync}
-                                loading={syncing}
-                                icon="🔄"
-                            >
-                                Sync {year}
-                            </Button>
-
-                            <div className="ds-filter-box">
-                                <label htmlFor="season-edition-select">Season Edition</label>
-                                <select
-                                    id="season-edition-select"
-                                    value={year}
-                                    onChange={handleSeasonChange}
-                                >
-                                    {(availableYears || [year]).map(y => (
-                                        <option key={y} value={y}>{y}/{Number.parseInt(y) + 1}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </Stack>
+                        <Tabs
+                            items={tabItems}
+                            activeId={activeTab}
+                            onChange={setActiveTab}
+                        />
                     }
                 />
 
-                <main className="season-tab-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                <main className={`season-tab-content${activeTab === 'fixtures' ? ' season-tab-content--fixtures' : ''}`}>
                     {activeTab === 'overview' && (
                         <LeagueOverview
                             leagueId={id}
@@ -328,23 +319,32 @@ const SeasonOverviewPage = () => {
                         />
                     )}
                     {activeTab === 'standings' && (
-                        <Stack gap="var(--spacing-xl)">
-                            <StandingsTable
-                                standings={standings}
-                                rangeStart={rangeStart}
-                                setRangeStart={setRangeStart}
-                                rangeEnd={rangeEnd}
-                                setRangeEnd={setRangeEnd}
-                                handleRangeUpdate={handleRangeUpdate}
-                                isDynamicMode={isDynamicMode}
-                                loading={loading}
-                            />
-                            <LeagueLeaders 
-                                topScorers={topScorers}
-                                topAssists={topAssists}
-                                topRated={topRated}
-                            />
-                        </Stack>
+                        <div className={`standings-split-container${isSplitView ? ' standings-split-container--active' : ''}`}>
+                            <div className="standings-split-left">
+                                <StandingsTable
+                                    standings={standings}
+                                    rangeStart={rangeStart}
+                                    setRangeStart={setRangeStart}
+                                    rangeEnd={rangeEnd}
+                                    setRangeEnd={setRangeEnd}
+                                    handleRangeUpdate={handleRangeUpdate}
+                                    isDynamicMode={isDynamicMode}
+                                    loading={loading}
+                                    isSplitView={isSplitView}
+                                    onToggleSplit={() => setIsSplitView(v => !v)}
+                                />
+                            </div>
+                            {isSplitView && (
+                                <div className="standings-split-right animate-fade-in">
+                                    <FixturesList
+                                        fixturesData={splitFixturesData}
+                                        selectedRound={splitSelectedRound}
+                                        setSelectedRound={setSplitSelectedRound}
+                                        compact
+                                    />
+                                </div>
+                            )}
+                        </div>
                     )}
                     {activeTab === 'fixtures' && (
                         <FixturesList

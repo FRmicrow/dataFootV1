@@ -2,7 +2,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import SquadExplorer from './SquadExplorer';
 import LeagueLeaders from './LeagueLeaders';
-import { Grid, Stack } from '../../../../design-system';
+import { Stack, Accordion } from '../../../../design-system';
+
+const LeaderTitle = () => (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+        <span>🏅</span>
+        <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-main)' }}>
+            Joueurs en vue
+        </span>
+        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>
+            Buteurs · Passeurs · MVP
+        </span>
+    </span>
+);
 
 const LeagueOverview = ({
     leagueId,
@@ -14,14 +26,14 @@ const LeagueOverview = ({
 }) => {
     return (
         <Stack gap="var(--spacing-lg)" className="animate-fade-in scrollbar-custom" style={{ overflowY: 'auto', flex: 1, height: '100%', minHeight: 0 }}>
-            {/* Top Leaders Grid */}
-            <LeagueLeaders
-                topScorers={topScorers}
-                topAssists={topAssists}
-                topRated={topRated}
-            />
+            <Accordion title={<LeaderTitle />} defaultExpanded maxHeight="none">
+                <LeagueLeaders
+                    topScorers={topScorers}
+                    topAssists={topAssists}
+                    topRated={topRated}
+                />
+            </Accordion>
 
-            {/* Full Width Squad Explorer */}
             <SquadExplorer
                 leagueId={leagueId}
                 season={season}

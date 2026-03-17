@@ -55,6 +55,16 @@
     min-height: 0;
 }
 
+.ds-squad-title-link {
+    text-decoration: none;
+    color: inherit;
+    transition: color var(--transition-fast);
+}
+
+.ds-squad-title-link:hover .ds-squad-title {
+    color: var(--color-primary-400);
+}
+
 .ds-squad-search-wrap {
     width: 240px;
 }
@@ -76,35 +86,61 @@
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
-.ds-category-title {
-    font-size: var(--font-size-xs);
-    text-transform: uppercase;
-    color: var(--color-text-dim);
-    margin-top: var(--spacing-lg);
+.ds-squad-position-filters {
+    display: flex;
+    gap: var(--spacing-xs);
     margin-bottom: var(--spacing-md);
-    letter-spacing: 0.2em;
-    border-left: 3px solid var(--color-primary-500);
-    padding-left: var(--spacing-sm);
+    flex-wrap: wrap;
 }
 
-.ds-category-title:first-of-type {
-    margin-top: 0;
+.ds-pos-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2xs);
+    padding: var(--spacing-2xs) var(--spacing-sm);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-dim);
+    font-size: var(--font-size-xs);
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition-fast);
 }
 
-.ds-category-title[data-category="goalkeepers"] {
-    border-color: var(--color-accent-600);
+.ds-pos-filter span {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-muted);
 }
 
-.ds-category-title[data-category="defenders"] {
-    border-color: var(--color-primary-600);
+.ds-pos-filter:hover {
+    border-color: var(--color-primary-500);
+    color: var(--color-text-main);
+    background: rgba(139, 92, 246, 0.06);
 }
 
-.ds-category-title[data-category="midfielders"] {
-    border-color: var(--color-success-600);
+.ds-pos-filter[data-category="goalkeepers"].active {
+    border-color: var(--color-accent-500);
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-accent-400);
 }
 
-.ds-category-title[data-category="attackers"] {
-    border-color: var(--color-danger-600);
+.ds-pos-filter[data-category="defenders"].active {
+    border-color: var(--color-primary-500);
+    background: rgba(139, 92, 246, 0.12);
+    color: var(--color-primary-300);
+}
+
+.ds-pos-filter[data-category="midfielders"].active {
+    border-color: var(--color-success-500);
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-success-400);
+}
+
+.ds-pos-filter[data-category="attackers"].active {
+    border-color: var(--color-danger-500);
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger-400);
 }
 
 .ds-squad-category {

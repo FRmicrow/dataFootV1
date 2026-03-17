@@ -1,4 +1,35 @@
 :root {
+    /* --- Legacy aliases (ML module compatibility) --- */
+    /* Spacing */
+    --space-3xs: var(--spacing-3xs);
+    --space-2xs: var(--spacing-2xs);
+    --space-xs:  var(--spacing-xs);
+    --space-sm:  var(--spacing-sm);
+    --space-md:  var(--spacing-md);
+    --space-lg:  var(--spacing-lg);
+    --space-xl:  var(--spacing-xl);
+    --space-2xl: var(--spacing-2xl);
+    --space-3xl: var(--spacing-3xl);
+    /* Typography */
+    --text-xs:   var(--font-size-xs);
+    --text-sm:   var(--font-size-sm);
+    --text-base: var(--font-size-base);
+    --text-lg:   var(--font-size-lg);
+    --text-xl:   var(--font-size-xl);
+    --text-2xl:  var(--font-size-2xl);
+    --text-3xl:  var(--font-size-3xl);
+    --text-4xl:  var(--font-size-4xl);
+    /* Semantic colors */
+    --color-text-primary:   var(--color-text-main);
+    --color-text-secondary: var(--color-text-muted);
+    --color-success:        var(--color-success-500);
+    --color-error:          var(--color-danger-500);
+    --color-warning:        var(--color-warning-500);
+    --color-info:           var(--color-blue-500);
+    --color-accent:         var(--color-accent-500);
+    --color-surface:        var(--color-bg-card);
+    --color-surface-alt:    var(--color-bg-card-hover);
+
     /* --- Colors: Core Palette --- */
     --color-primary-50: #f5f3ff;
     --color-primary-100: #ede9fe;
@@ -77,6 +108,7 @@
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-blur: blur(12px);
+    --color-bg-subtle: rgba(255, 255, 255, 0.04);
 
     /* --- Text --- */
     --color-text-main: #f8fafc;
@@ -109,6 +141,7 @@
     /* --- Typography --- */
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 
+    --font-size-2xs: 0.625rem; /* 10px */
     --font-size-xs: 0.75rem;
     /* 12px */
     --font-size-sm: 0.875rem;

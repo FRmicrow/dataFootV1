@@ -7,9 +7,9 @@ This service provides a high-performance Machine Learning infrastructure for foo
 ## 🏗️ Architecture
 
 - **Entry Point**: `main.py` (FastAPI)
-- **Feature Store**: `features.py` (ETL logic from SQLite to Feature Vector)
+- **Feature Store**: `features.py` (ETL logic to populate the pre-match feature vector store)
 - **Model Training**: `train_1x2.py` (Random Forest Classifier for 1X2 outcomes)
-- **Storage**: Models are saved as `.joblib` files; features are stored in a `V3_ML_Feature_Store` table within the main SQLite database.
+- **Storage**: Models are saved as `.joblib` files; features are stored in the PostgreSQL `V3_ML_Feature_Store` table.
 
 ---
 
@@ -118,5 +118,5 @@ python ml-service/train_1x2.py
 ## ⚠️ Troubleshooting
 
 - **Model not found**: Ensure `model_1x2.joblib` exists in the `ml-service` folder. If not, run a training cycle.
-- **DB Connection Error**: Ensure the path to `database.sqlite` is correct in `main.py` (it follows a relative path to the backend folder).
+- **DB Connection Error**: Ensure `DATABASE_URL` points to the active PostgreSQL instance.
 - **Port already in use**: If 8008 is taken, change the port in the launch command: `--port 8009`.

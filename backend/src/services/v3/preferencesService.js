@@ -1,5 +1,14 @@
 import db from '../../config/database.js';
 
+const parseJsonArray = (value) => {
+    if (!value || value === '') return [];
+    try {
+        return JSON.parse(value);
+    } catch {
+        return [];
+    }
+};
+
 export const getPreferencesService = async () => {
     let row = await db.get("SELECT favorite_leagues, favorite_teams, tracked_leagues FROM V3_System_Preferences WHERE id = 1");
     if (!row) {
@@ -7,9 +16,9 @@ export const getPreferencesService = async () => {
         row = { favorite_leagues: '[]', favorite_teams: '[]', tracked_leagues: '[]' };
     }
     return {
-        favorite_leagues: JSON.parse(row.favorite_leagues || '[]'),
-        favorite_teams: JSON.parse(row.favorite_teams || '[]'),
-        tracked_leagues: JSON.parse(row.tracked_leagues || '[]')
+        favorite_leagues: parseJsonArray(row.favorite_leagues),
+        favorite_teams: parseJsonArray(row.favorite_teams),
+        tracked_leagues: parseJsonArray(row.tracked_leagues)
     };
 };
 
@@ -30,4 +39,3 @@ export const updatePreferencesService = async (leagues, teams, trackedLeagues) =
     await db.run(sql, [lStr, tStr, trStr]);
     return getPreferencesService();
 };
-

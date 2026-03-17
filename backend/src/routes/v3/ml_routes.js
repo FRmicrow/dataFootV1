@@ -4,6 +4,9 @@ import {
     mlTrainSchema,
     leagueIdV3ParamSchema,
     simulationStatusSchema,
+    simulationStartSchema,
+    simulationReadinessSchema,
+    simulationIdParamSchema,
     roiRequestSchema,
     edgesTopQuerySchema,
     createSubmodelSchema
@@ -21,6 +24,7 @@ import {
     getLeagueModels,
     getMLOrchestratorStatus,
     getMLRecentAnalyses,
+    getMLSimulationFilters,
     getMLModelEvaluation,
     getMLSimulationOverview,
     getMLRecommendations,
@@ -45,7 +49,8 @@ import {
     checkSimulationReadiness,
     triggerBulkSimulation,
     checkBulkJobStatus,
-    getLeagueSimulations
+    getLeagueSimulations,
+    getAllJobs
 } from '../../controllers/v3/simulationController.js';
 const router = express.Router();
 
@@ -64,6 +69,7 @@ router.get('/forge/league-models/:leagueId', validateRequest(leagueIdV3ParamSche
 // Machine Learning Platform V19
 router.get('/ml-platform/orchestrator/status', getMLOrchestratorStatus);
 router.get('/ml-platform/risk/recent', getMLRecentAnalyses);
+router.get('/ml-platform/simulations/filters', getMLSimulationFilters);
 router.get('/ml-platform/simulations/evaluation', getMLModelEvaluation);
 router.get('/ml-platform/simulations/overview', getMLSimulationOverview);
 router.get('/ml-platform/simulations/club-evaluation', getMLClubEvaluation);
@@ -84,11 +90,12 @@ router.post('/ml-platform/submodels', validateRequest(createSubmodelSchema), cre
 router.delete('/ml-platform/submodels/:id', deleteSubmodel);
 
 // Simulation Engine
-router.post('/simulation/start', triggerSimulation);
+router.post('/simulation/start', validateRequest(simulationStartSchema), triggerSimulation);
 router.get('/simulation/status', validateRequest(simulationStatusSchema), checkJobStatus);
-router.get('/simulation/readiness', checkSimulationReadiness);
-router.get('/simulation/results/:simId', getSimulationResults);
-router.get('/simulation/league/:leagueId', getLeagueSimulations);
+router.get('/simulation/readiness', validateRequest(simulationReadinessSchema), checkSimulationReadiness);
+router.get('/simulation/results/:simId', validateRequest(simulationIdParamSchema), getSimulationResults);
+router.get('/simulation/league/:leagueId', validateRequest(leagueIdV3ParamSchema), getLeagueSimulations);
+router.get('/simulation/all', getAllJobs);
 router.post('/simulation/bulk', triggerBulkSimulation);
 router.get('/simulation/bulk/status', checkBulkJobStatus);
 

@@ -1,0 +1,48 @@
+{
+  "updated_at": "2026-03-14T22:05:54.416902+00:00",
+  "applied": [
+    {
+      "name": "league_1x2_ft_2",
+      "recommended_horizon": "FULL_HISTORICAL",
+      "source_version": "league_catboost_v2_20260314_053201_recommended_active",
+      "activated_version": "league_catboost_v2_20260314_053201_recommended_active_recommended_active"
+    },
+    {
+      "name": "league_1x2_ft_30",
+      "recommended_horizon": "FULL_HISTORICAL",
+      "source_version": "league_catboost_v30_20260314_053536_recommended_active",
+      "activated_version": "league_catboost_v30_20260314_053536_recommended_active_recommended_active"
+    },
+    {
+      "name": "league_1x2_ft_34",
+      "recommended_horizon": "FULL_HISTORICAL",
+      "source_version": "league_catboost_v34_20260314_053628_recommended_active",
+      "activated_version": "league_catboost_v34_20260314_053628_recommended_active_recommended_active"
+    },
+    {
+      "name": "league_goals_ou_30",
+      "recommended_horizon": "FULL_HISTORICAL",
+      "source_version": "league_goals_v30_20260314_222204_recommended_active",
+      "activated_version": "league_goals_v30_20260314_222204_recommended_active_recommended_active"
+    },
+    {
+      "name": "league_goals_ou_32",
+      "recommended_horizon": "3Y_ROLLING",
+      "source_version": "league_goals_v32_3y_rolling_20260314_225423_recommended_active",
+      "activated_version": "league_goals_v32_3y_rolling_20260314_225423_recommended_active_recommended_active"
+    },
+    {
+      "name": "league_cards_ou_11",
+      "recommended_horizon": "5Y_ROLLING",
+      "source_version": "league_cards_v11_5y_rolling_20260314_225426_recommended_active",
+      "activated_version": "league_cards_v11_5y_rolling_20260314_225426_recommended_active_recommended_active"
+    },
+    {
+      "name": "league_cards_ou_1",
+      "recommended_horizon": "FULL_HISTORICAL",
+      "source_version": "league_cards_v1_20260314_222223_recommended_active",
+      "activated_version": "league_cards_v1_20260314_222223_recommended_active_recommended_active"
+    }
+  ],
+  "policy_path": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/reports/league_model_policy.json"
+}

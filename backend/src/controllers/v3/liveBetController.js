@@ -18,12 +18,14 @@ export const toggleLeagueMonitoring = async (req, res) => {
 
         res.json({
             success: true,
-            league_id: id,
-            is_live_enabled: enabled
+            data: {
+                league_id: id,
+                is_live_enabled: enabled
+            }
         });
     } catch (error) {
         logger.error({ err: error }, "Error toggling monitoring");
-        res.status(500).json({ error: "Failed to toggle monitoring" });
+        res.status(500).json({ success: false, error: "Failed to toggle monitoring" });
     }
 };
 
@@ -41,14 +43,14 @@ export const getMonitoringLeagues = async (req, res) => {
             JOIN V3_Countries c ON l.country_id = c.country_id
             LEFT JOIN V3_Fixtures f ON l.league_id = f.league_id 
                 AND f.status_short IN ('1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE')
-            GROUP BY l.league_id
+            GROUP BY l.league_id, l.api_id, l.name, l.logo_url, c.name, l.is_live_enabled
             ORDER BY c.name ASC, l.name ASC
         `;
-        const leagues = db.all(sql);
-        res.json(leagues);
+        const leagues = await db.all(sql);
+        res.json({ success: true, data: leagues });
     } catch (error) {
         logger.error({ err: error }, "Error fetching monitoring leagues");
-        res.status(500).json({ error: "Failed to fetch monitoring leagues" });
+        res.status(500).json({ success: false, error: "Failed to fetch monitoring leagues" });
     }
 };
 
@@ -65,17 +67,27 @@ export const getMonitoringLeagues = async (req, res) => {
  */
 export const saveMatchOdds = async (req, res) => {
     const { id } = req.params;
-    if (!id) return res.status(400).json({ error: "Fixture ID is required" });
+    if (!id) return res.status(400).json({ success: false, error: "Fixture ID is required" });
 
     try {
         const numericId = Number.parseInt(id, 10);
-        if (Number.isNaN(numericId)) return res.status(400).json({ error: "Invalid Fixture ID" });
+        if (Number.isNaN(numericId)) return res.status(400).json({ success: false, error: "Invalid Fixture ID" });
 
         const result = await saveMatchOddsService(numericId);
-        res.json(result);
+        res.json({ success: true, data: result });
     } catch (error) {
+        if (error.message === 'No odds available') {
+            return res.json({
+                success: true,
+                data: {
+                    success: false,
+                    reason: 'no_odds_available'
+                }
+            });
+        }
+
         logger.error({ err: error }, `Error saving odds for ${id}`);
-        res.status(500).json({ error: "Failed to save odds", details: error.message });
+        res.status(500).json({ success: false, error: "Failed to save odds", details: error.message });
     }
 };
 
@@ -87,10 +99,10 @@ export const getDailyFixtures = async (req, res) => {
     try {
         const { date } = req.query;
         const fixtures = await getDailyFixturesService(date);
-        res.json(fixtures);
+        res.json({ success: true, data: fixtures });
     } catch (error) {
         logger.error({ err: error }, "Critical Error in getDailyFixtures");
-        res.status(500).json({ error: "Failed to fetch daily fixtures", details: error.message });
+        res.status(500).json({ success: false, error: "Failed to fetch daily fixtures", details: error.message });
     }
 };
 
@@ -105,10 +117,10 @@ export const getUpcomingFixtures = async (req, res) => {
             ? req.query.leagues.split(',').map(Number).filter(Boolean)
             : [];
         const result = await getUpcomingByLeaguesService(leagueIds);
-        res.json(result);
+        res.json({ success: true, data: result });
     } catch (error) {
         logger.error({ err: error }, "Error in getUpcomingFixtures");
-        res.status(500).json({ error: "Failed to fetch upcoming fixtures", details: error.message });
+        res.status(500).json({ success: false, error: "Failed to fetch upcoming fixtures", details: error.message });
     }
 };
 
@@ -118,19 +130,19 @@ export const getUpcomingFixtures = async (req, res) => {
  */
 export const getMatchDetails = async (req, res) => {
     const { id } = req.params;
-    if (!id) return res.status(400).json({ error: "Fixture ID is required" });
+    if (!id) return res.status(400).json({ success: false, error: "Fixture ID is required" });
 
     try {
         const numericId = Number.parseInt(id, 10);
-        if (Number.isNaN(numericId)) return res.status(400).json({ error: "Invalid Fixture ID" });
+        if (Number.isNaN(numericId)) return res.status(400).json({ success: false, error: "Invalid Fixture ID" });
 
         const matchDetails = await getMatchDetailsService(numericId);
-        res.json(matchDetails);
+        res.json({ success: true, data: matchDetails });
     } catch (error) {
         logger.error({ err: error }, `Error fetching match details for ${id}`);
         if (error.message === "Fixture not found") {
-            return res.status(404).json({ error: "Fixture not found" });
+            return res.status(404).json({ success: false, error: "Fixture not found" });
         }
-        res.status(500).json({ error: "Failed to fetch match details", details: error.message });
+        res.status(500).json({ success: false, error: "Failed to fetch match details", details: error.message });
     }
 };

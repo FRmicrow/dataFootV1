@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './ImportEventsPage.css'; // Reusing styles as requested "exactly the same way"
+import { useNavigate } from 'react-router-dom';
+import { Button, Stack } from '../../../../design-system';
+import { PageLayout, PageHeader, PageContent } from '../../layouts';
+import './ImportEventsPage.css';
 
 const ImportLineupsPage = () => {
+    const navigate = useNavigate();
     const [candidates, setCandidates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState({}); // Map of leagueId -> boolean
@@ -100,16 +104,19 @@ const ImportLineupsPage = () => {
     });
 
     return (
-        <div className="import-events-page">
-            <header className="page-header">
-                <h1>Fixture Lineups Import Manager</h1>
-                <p>Select leagues below to sync team compositions (Lineups, Formations, Coaches, Subs).</p>
-                <div className="sub-nav-links" style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-                    <a href="/import" className="btn-v3-secondary btn-sm">League Import</a>
-                    <a href="/events" className="btn-v3-secondary btn-sm">Events Import</a>
-                </div>
-            </header>
-
+        <PageLayout>
+            <PageHeader
+                title="Lineups Import"
+                subtitle="Sync team compositions — Lineups, Formations, Coaches, Subs"
+                badge={{ label: 'IMPORT', variant: 'warning' }}
+                extra={
+                    <Stack direction="row" gap="var(--spacing-sm)">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/import')}>League Import</Button>
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/events')}>Events Import</Button>
+                    </Stack>
+                }
+            />
+            <PageContent>
             {loading ? (
                 <div className="loading-spinner">Loading candidates...</div>
             ) : (
@@ -175,7 +182,8 @@ const ImportLineupsPage = () => {
                     )}
                 </div>
             )}
-        </div>
+            </PageContent>
+        </PageLayout>
     );
 };
 

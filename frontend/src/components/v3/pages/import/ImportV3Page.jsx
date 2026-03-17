@@ -1,37 +1,58 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../../../services/api';
+import { Button, Stack, Card } from '../../../../design-system';
+import { PageLayout, PageHeader, PageContent } from '../../layouts';
 import LeagueSelector from '../../modules/import/LeagueSelector';
 import SeasonSelector from '../../modules/import/SeasonSelector';
+import './ImportV3Page.css';
+
+const getSeasonPillClass = (s) => {
+    if (s.isFull) return 'import-v3__season-pill import-v3__season-pill--full';
+    if (s.isPartial) return 'import-v3__season-pill import-v3__season-pill--partial';
+    return 'import-v3__season-pill import-v3__season-pill--new';
+};
+
+const getLogColor = (type) => {
+    switch (type) {
+        case 'error': return 'var(--color-danger-400)';
+        case 'success': return 'var(--color-success-400)';
+        case 'warning': return 'var(--color-warning-400)';
+        case 'complete': return 'var(--color-success-300)';
+        default: return 'var(--color-text-muted)';
+    }
+};
+
+const getLogIcon = (type) => {
+    switch (type) {
+        case 'error': return '✗';
+        case 'success': return '✓';
+        case 'warning': return '⚠';
+        case 'info': return 'ℹ';
+        default: return '·';
+    }
+};
 
 const ImportV3Page = () => {
-    // --- State ---
+    const navigate = useNavigate();
+
     const [countries, setCountries] = useState([]);
     const [selectedCountry, setSelectedCountry] = useState('');
-
     const [leagues, setLeagues] = useState([]);
     const [selectedLeague, setSelectedLeague] = useState('');
     const [availableSeasons, setAvailableSeasons] = useState([]);
-
-    // Season Range State
     const [fromYear, setFromYear] = useState('');
     const [toYear, setToYear] = useState('');
     const [skipExisting, setSkipExisting] = useState(true);
-    const [leagueSyncStatus, setLeagueSyncStatus] = useState([]); // Array of {year, players, fixtures, standings}
-
-    // Queue State
+    const [leagueSyncStatus, setLeagueSyncStatus] = useState([]);
     const [importQueue, setImportQueue] = useState([]);
-
     const [isImporting, setIsImporting] = useState(false);
     const [logs, setLogs] = useState([]);
     const [autoScroll, setAutoScroll] = useState(true);
 
     const logsEndRef = useRef(null);
 
-    // --- Effects ---
-
-    useEffect(() => {
-        fetchCountries();
-    }, []);
+    useEffect(() => { fetchCountries(); }, []);
 
     useEffect(() => {
         if (selectedCountry) {
@@ -43,15 +64,11 @@ const ImportV3Page = () => {
     }, [selectedCountry]);
 
     useEffect(() => {
-        if (autoScroll) {
-            logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }
+        if (autoScroll) logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [logs, autoScroll]);
 
-    // Update available seasons when league changes
     useEffect(() => {
         if (selectedLeague && leagues.length > 0) {
-            // Fetch comprehensive availability status
             fetchSyncStatus(selectedLeague);
         } else {
             setAvailableSeasons([]);
@@ -60,8 +77,6 @@ const ImportV3Page = () => {
             setLeagueSyncStatus([]);
         }
     }, [selectedLeague]);
-
-    // --- API Calls ---
 
     const fetchCountries = async () => {
         try {
@@ -84,15 +99,10 @@ const ImportV3Page = () => {
     const fetchSyncStatus = async (leagueId) => {
         try {
             const data = await api.getAvailableSeasons(leagueId);
-            // The endpoint returns { league: {}, seasons: [{ year, status, ... }] }
             const seasons = data.seasons || [];
             setLeagueSyncStatus(seasons);
-
-            // Also update availableSeasons (years list) from this source of truth
             const years = seasons.map(s => s.year).sort((a, b) => b - a);
             setAvailableSeasons(years);
-
-            // Smart Defaulting
             if (years.length > 0) {
                 setFromYear(years[years.length - 1]);
                 setToYear(years[0]);
@@ -102,16 +112,12 @@ const ImportV3Page = () => {
         }
     };
 
-    // --- Handlers ---
-
-    const filterSeasonsRange = (start, end, skipExisting, syncStatus) => {
+    const filterSeasonsRange = (start, end, skipEx, syncStatus) => {
         const selected = [];
         for (let y = start; y <= end; y++) {
-            if (skipExisting) {
+            if (skipEx) {
                 const statusObj = syncStatus.find(s => s.year === y);
-                if (statusObj?.status !== 'FULL') {
-                    selected.push(y);
-                }
+                if (statusObj?.status !== 'FULL') selected.push(y);
             } else {
                 selected.push(y);
             }
@@ -124,7 +130,6 @@ const ImportV3Page = () => {
             alert("Please select a country and a league.");
             return;
         }
-
         const leagueObj = leagues.find(l => l.league.id === Number.parseInt(selectedLeague));
         if (!leagueObj) return;
 
@@ -145,20 +150,19 @@ const ImportV3Page = () => {
             const status = statusObj ? statusObj.status : 'NOT_IMPORTED';
             return {
                 year: y,
+                isCurrent: statusObj?.is_current || false,
                 isFull: status === 'FULL',
                 isPartial: status === 'PARTIAL' || status === 'PARTIAL_DISCOVERY'
             };
         });
 
-        const queueItem = {
+        setImportQueue(prev => [...prev, {
             id: Date.now(),
             country: selectedCountry,
             leagueId: Number.parseInt(selectedLeague),
             leagueName: leagueObj.league.name || 'Unknown League',
             seasons: queueSeasons
-        };
-
-        setImportQueue(prev => [...prev, queueItem]);
+        }]);
     };
 
     const handleRemoveFromQueue = (id) => {
@@ -169,24 +173,18 @@ const ImportV3Page = () => {
         while (true) {
             const { value, done } = await reader.read();
             if (done) break;
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-
-            lines.forEach(line => {
+            decoder.decode(value).split('\n').forEach(line => {
                 if (line.startsWith('data: ')) {
                     try {
                         const data = JSON.parse(line.slice(6));
                         setLogs(prev => [...prev, { ...data, id: `log-${Date.now()}-${prev.length}` }]);
-
                         if (data.type === 'complete') {
                             setLogs(prev => [...prev, {
                                 id: `success-${data.leagueId}-${data.season}`,
                                 type: 'success',
-                                message: `✅ Import Finished. View Dashboard: /league/${data.leagueId}/season/${data.season}`,
+                                message: `Import Finished — /league/${data.leagueId}/season/${data.season}`,
                                 link: `/league/${data.leagueId}/season/${data.season}`
                             }]);
-                            // Refresh status
                             if (selectedLeague) fetchSyncStatus(selectedLeague);
                         }
                     } catch (e) {
@@ -199,14 +197,15 @@ const ImportV3Page = () => {
 
     const handleBatchImport = async () => {
         if (importQueue.length === 0) return;
-
-
         setIsImporting(true);
-        setLogs([{ id: 'start-batch', type: 'info', message: `🚀 Starting Batch V3 Import with ${importQueue.length} items...` }]);
+        setLogs([{ id: 'start-batch', type: 'info', message: `Starting Batch Import with ${importQueue.length} item(s)...` }]);
 
         const selection = importQueue.map(item => ({
             leagueId: item.leagueId,
-            seasons: item.seasons.map(s => s.year),
+            seasons: item.seasons.map(s => ({
+                year: s.year,
+                forceRefresh: s.isCurrent || false
+            })),
             forceApiId: true
         }));
 
@@ -216,15 +215,9 @@ const ImportV3Page = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ selection })
             });
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            await processImportStream(reader, decoder);
-
+            await processImportStream(response.body.getReader(), new TextDecoder());
             setIsImporting(false);
-            setIsImporting(false);
-            setImportQueue([]); // Clear queue on success
-
+            setImportQueue([]);
         } catch (error) {
             console.error("Import failed", error);
             setLogs(prev => [...prev, { id: `error-${Date.now()}`, type: 'error', message: `Fatal Error: ${error.message}` }]);
@@ -232,198 +225,158 @@ const ImportV3Page = () => {
         }
     };
 
-    const getSeasonStatusStyles = (s) => {
-        if (s.isFull) return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
-        if (s.isPartial) return 'bg-amber-500/10 border-amber-500/20 text-amber-400';
-        return 'bg-slate-800 border-slate-700 text-slate-500';
-    };
-
-    const getBatchButtonStyle = () => {
-        if (isImporting) return 'bg-slate-700 text-slate-400 cursor-wait';
-        if (importQueue.length === 0) return 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700';
-        return 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transform hover:-translate-y-1 shadow-blue-900/20';
-    };
-
-    const getLogTypeStyles = (type) => {
-        switch (type) {
-            case 'error': return 'text-red-400';
-            case 'success': return 'text-emerald-400 font-bold';
-            case 'warning': return 'text-amber-400';
-            case 'complete': return 'text-emerald-300 border-t border-emerald-900/30 pt-2 mt-2 block w-full';
-            default: return 'text-slate-300';
-        }
-    };
-
     return (
-        <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
-            {/* Header */}
-            <header className="bg-slate-800 border-b border-slate-700 px-8 py-6 shadow-sm">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
-                            🧪 V3 Schema POC Import
-                        </h1>
-                        <p className="text-slate-400 text-sm mt-1">Multi-Criteria Mass Import System</p>
-                    </div>
-                    <div className="flex gap-3">
-                        <a href="/events" className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors border border-slate-600">Events Sync</a>
-                        <a href="/lineups-import" className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors border border-slate-600">Lineups Sync</a>
-                        <a href="/trophies" className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors border border-slate-600">Trophies</a>
-                    </div>
-                </div>
-            </header>
+        <PageLayout>
+            <PageHeader
+                title="Data Acquisition"
+                subtitle="Multi-criteria batch import system"
+                badge={{ label: 'IMPORT', variant: 'warning' }}
+                extra={
+                    <Stack direction="row" gap="var(--spacing-sm)">
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/events')}>Events Sync</Button>
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/lineups-import')}>Lineups Sync</Button>
+                    </Stack>
+                }
+            />
+            <PageContent>
+                <div className="import-v3__grid">
 
-            <div className="flex-1 flex overflow-hidden p-6 gap-6">
+                    {/* Left: Configuration Panel */}
+                    <div className="import-v3__config">
+                        <Card title="Configuration">
+                            <Stack gap="var(--spacing-md)">
+                                <LeagueSelector
+                                    countries={countries}
+                                    selectedCountry={selectedCountry}
+                                    setSelectedCountry={setSelectedCountry}
+                                    leagues={leagues}
+                                    selectedLeague={selectedLeague}
+                                    setSelectedLeague={setSelectedLeague}
+                                    disabled={isImporting}
+                                />
+                                {selectedLeague && (
+                                    <SeasonSelector
+                                        availableSeasons={availableSeasons}
+                                        fromYear={fromYear}
+                                        setFromYear={setFromYear}
+                                        toYear={toYear}
+                                        setToYear={setToYear}
+                                        skipExisting={skipExisting}
+                                        setSkipExisting={setSkipExisting}
+                                        leagueSyncStatus={leagueSyncStatus}
+                                        disabled={isImporting}
+                                    />
+                                )}
+                                <Button
+                                    variant="secondary"
+                                    onClick={handleAddToQueue}
+                                    disabled={isImporting || !selectedLeague}
+                                    style={{ width: '100%' }}
+                                >
+                                    + Add to Batch Queue
+                                </Button>
+                            </Stack>
+                        </Card>
 
-                {/* Left Panel: Configuration */}
-                <div className="w-1/3 min-w-[400px] flex flex-col gap-6 bg-slate-800/50 rounded-xl border border-slate-700 p-6 shadow-lg overflow-y-auto">
-
-                    <h2 className="text-lg font-bold text-white border-b border-slate-700 pb-3">Configuration</h2>
-
-                    <LeagueSelector
-                        countries={countries}
-                        selectedCountry={selectedCountry}
-                        setSelectedCountry={setSelectedCountry}
-                        leagues={leagues}
-                        selectedLeague={selectedLeague}
-                        setSelectedLeague={setSelectedLeague}
-                        disabled={isImporting}
-                    />
-
-                    {selectedLeague && (
-                        <SeasonSelector
-                            availableSeasons={availableSeasons}
-                            fromYear={fromYear}
-                            setFromYear={setFromYear}
-                            toYear={toYear}
-                            setToYear={setToYear}
-                            skipExisting={skipExisting}
-                            setSkipExisting={setSkipExisting}
-                            leagueSyncStatus={leagueSyncStatus}
-                            disabled={isImporting}
-                        />
-                    )}
-
-                    <button
-                        onClick={handleAddToQueue}
-                        disabled={isImporting || !selectedLeague}
-                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-lg shadow-emerald-900/20 transition-all transform active:scale-95"
-                    >
-                        + Add to Batch Queue
-                    </button>
-
-                    <div className="mt-4 bg-slate-900 rounded-lg border border-slate-700 p-4 flex-1">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">
-                            Staging Queue ({importQueue.length})
-                        </h3>
-
-                        {importQueue.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-32 text-slate-600 italic text-sm">
-                                <span>Queue is empty</span>
-                            </div>
-                        ) : (
-                            <ul className="space-y-3">
-                                {importQueue.map(item => (
-                                    <li key={item.id} className="bg-slate-800 rounded-lg p-3 flex items-start justify-between group border border-slate-700 hover:border-blue-500/50 transition-colors">
-                                        <div>
-                                            <div className="font-bold text-white text-sm">{item.leagueName}</div>
-                                            <div className="text-xs text-slate-500 mb-2">{item.country}</div>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {item.seasons.map(s => (
-                                                    <span
-                                                        key={s.year}
-                                                        className={`text-[10px] px-1.5 py-0.5 rounded border ${getSeasonStatusStyles(s)}`}
-                                                    >
-                                                        {s.year} {s.isFull ? '✓' : s.isPartial ? '!' : ''}
-                                                    </span>
-                                                ))}
+                        <div className="import-v3__queue">
+                            <h3 className="import-v3__queue-title">Staging Queue ({importQueue.length})</h3>
+                            {importQueue.length === 0 ? (
+                                <div className="import-v3__queue-empty">Queue is empty</div>
+                            ) : (
+                                <ul className="import-v3__queue-list">
+                                    {importQueue.map(item => (
+                                        <li key={item.id} className="import-v3__queue-item">
+                                            <div>
+                                                <div className="import-v3__queue-league">{item.leagueName}</div>
+                                                <div className="import-v3__queue-country">{item.country}</div>
+                                                <div className="import-v3__queue-seasons">
+                                                    {item.seasons.map(s => (
+                                                        <span key={s.year} className={getSeasonPillClass(s)}>
+                                                            {s.year} {s.isFull ? '✓' : s.isPartial ? '!' : ''}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <button
-                                            onClick={() => handleRemoveFromQueue(item.id)}
-                                            disabled={isImporting}
-                                            className="text-slate-500 hover:text-rose-500 transition-colors p-1"
-                                            aria-label={`Remove ${item.leagueName} from queue`}
-                                        >
-                                            ✕
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={handleBatchImport}
-                        disabled={isImporting || importQueue.length === 0}
-                        className={`
-                            w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all
-                            ${getBatchButtonStyle()}
-                        `}
-                    >
-                        {isImporting ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Processing Batch...
-                            </span>
-                        ) : 'Start Batch Import'}
-                    </button>
-                </div>
-
-                {/* Right Panel: Logs */}
-                <div className="flex-1 bg-black rounded-xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden font-mono text-sm relative">
-                    <div className="bg-slate-900 px-4 py-2 border-b border-slate-800 flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            <div className="flex gap-1.5">
-                                <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-                                <div className="w-3 h-3 rounded-full bg-amber-500/50"></div>
-                                <div className="w-3 h-3 rounded-full bg-emerald-500/50"></div>
-                            </div>
-                            <span className="ml-3 text-slate-400 text-xs">import-cli — v3.0.1</span>
+                                            <button
+                                                className="import-v3__remove-btn"
+                                                onClick={() => handleRemoveFromQueue(item.id)}
+                                                disabled={isImporting}
+                                                aria-label={`Remove ${item.leagueName}`}
+                                            >
+                                                ✕
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
-                        <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer hover:text-slate-300">
-                            <input
-                                type="checkbox"
-                                checked={autoScroll}
-                                onChange={(e) => setAutoScroll(e.target.checked)}
-                                className="rounded border-slate-700 bg-slate-800 text-blue-500 focus:ring-0 focus:ring-offset-0"
-                            />
-                            Auto-scroll
-                        </label>
+
+                        <Button
+                            variant="primary"
+                            onClick={handleBatchImport}
+                            disabled={isImporting || importQueue.length === 0}
+                            style={{ width: '100%' }}
+                        >
+                            {isImporting ? 'Processing Batch...' : 'Start Batch Import'}
+                        </Button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-                        {logs.length === 0 && (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-700">
-                                <div className="text-4xl mb-4">⌨️</div>
-                                <p>Ready for input...</p>
+                    {/* Right: Terminal Log */}
+                    <div className="import-v3__terminal">
+                        <div className="import-v3__terminal-bar">
+                            <div className="import-v3__terminal-dots">
+                                <span className="import-v3__terminal-dot" style={{ background: 'rgba(239,68,68,0.5)' }} />
+                                <span className="import-v3__terminal-dot" style={{ background: 'rgba(234,179,8,0.5)' }} />
+                                <span className="import-v3__terminal-dot" style={{ background: 'rgba(16,185,129,0.5)' }} />
+                                <span className="import-v3__terminal-label">import-cli — v3.0.1</span>
                             </div>
-                        )}
-                        {logs.map((log) => (
-                            <div key={log.id} className="flex gap-3 font-mono text-xs md:text-sm">
-                                <span className="text-slate-600 shrink-0">[{new Date().toLocaleTimeString()}]</span>
-                                <span className={`break-words ${getLogTypeStyles(log.type)}`}>
-                                    {log.type === 'info' && <span className="text-blue-500 mr-2">ℹ</span>}
-                                    {log.type === 'success' && <span className="text-emerald-500 mr-2">✓</span>}
-                                    {log.type === 'error' && <span className="text-red-500 mr-2">✗</span>}
-                                    {log.message}
-                                    {log.link && (
-                                        <a href={log.link} target="_blank" rel="noreferrer" className="ml-2 text-blue-400 hover:text-blue-300 underline underline-offset-2">
-                                            Open Dashboard ↗
-                                        </a>
-                                    )}
-                                </span>
-                            </div>
-                        ))}
-                        <div ref={logsEndRef} />
+                            <label className="import-v3__terminal-autoscroll">
+                                <input
+                                    type="checkbox"
+                                    checked={autoScroll}
+                                    onChange={(e) => setAutoScroll(e.target.checked)}
+                                />
+                                Auto-scroll
+                            </label>
+                        </div>
+                        <div className="import-v3__terminal-body">
+                            {logs.length === 0 ? (
+                                <div className="import-v3__terminal-empty">
+                                    <span className="import-v3__terminal-empty-icon">⌨️</span>
+                                    <span>Ready for input...</span>
+                                </div>
+                            ) : (
+                                logs.map((log) => (
+                                    <div key={log.id} className="import-v3__log-line">
+                                        <span className="import-v3__log-time">
+                                            [{new Date().toLocaleTimeString()}]
+                                        </span>
+                                        <span className="import-v3__log-icon" style={{ color: getLogColor(log.type) }}>
+                                            {getLogIcon(log.type)}
+                                        </span>
+                                        <span style={{ color: getLogColor(log.type), wordBreak: 'break-all' }}>
+                                            {log.message}
+                                            {log.link && (
+                                                <a
+                                                    href={log.link}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    style={{ marginLeft: '8px', color: 'var(--color-primary-400)', textDecoration: 'underline' }}
+                                                >
+                                                    Open ↗
+                                                </a>
+                                            )}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                            <div ref={logsEndRef} />
+                        </div>
                     </div>
+
                 </div>
-
-            </div>
-        </div>
+            </PageContent>
+        </PageLayout>
     );
 };
 

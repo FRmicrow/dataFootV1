@@ -64,17 +64,15 @@ class FixtureRepository extends BaseRepository {
                 f.league_id,
                 f.season_year,
                 COUNT(f.fixture_id) as total_fixtures,
-                (SELECT COUNT(*) FROM V3_Fixtures f2 
-                 LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Events) fe ON f2.fixture_id = fe.fixture_id
-                 WHERE f2.league_id = f.league_id AND f2.season_year = f.season_year 
-                 AND f2.status_short IN ('FT', 'AET', 'PEN') AND fe.fixture_id IS NULL) as missing_events
+                COUNT(*) FILTER (WHERE fe.fixture_id IS NULL) as missing_events
             FROM V3_Fixtures f
             JOIN V3_Leagues l ON f.league_id = l.league_id
             LEFT JOIN V3_Countries c ON l.country_id = c.country_id
+            LEFT JOIN (SELECT DISTINCT fixture_id FROM V3_Fixture_Events) fe ON f.fixture_id = fe.fixture_id
             WHERE f.status_short IN ('FT', 'AET', 'PEN')
-            GROUP BY f.league_id, f.season_year
-            HAVING missing_events > 0
-            ORDER BY c.importance_rank ASC, l.name ASC
+            GROUP BY f.league_id, f.season_year, l.name, l.logo_url, c.name, c.importance_rank
+            HAVING COUNT(*) FILTER (WHERE fe.fixture_id IS NULL) > 0
+            ORDER BY c.importance_rank ASC, l.name ASC, f.season_year DESC
         `);
     }
     async getFixturePlayerTacticalStats(fixtureId) {
@@ -96,4 +94,3 @@ class FixtureRepository extends BaseRepository {
 }
 
 export default new FixtureRepository();
-
