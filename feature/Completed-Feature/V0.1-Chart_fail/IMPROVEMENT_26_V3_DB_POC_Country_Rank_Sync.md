@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # IMPROVEMENT_26_V3_DB_POC_Country_Rank_Sync
 
 ## Develop this feature as Database Agent - Following the US related:

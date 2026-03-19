@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../../../../../services/api';
+import { fmtDecimal, fmtPct, normalizeMetrics } from './mlUtils';
+
+const MARKET_LABELS = {
+    FT_1X2: '1X2 FT',
+    HT_1X2: '1X2 HT',
+    GOALS_OU: 'Goals O/U',
+    CORNERS_OU: 'Corners O/U',
+    CARDS_OU: 'Cards O/U',
+};
 
 /**
  * Custom hook to manage ML simulation lifecycle, status, and results.
@@ -114,6 +123,37 @@ export const useMLSimulation = (initialParams = {}) => {
         // But we could implement internal polling here if we had all params.
     }, [status]);
 
+    const marketSummaries = useMemo(() => {
+        const markets = status?.metrics?.markets || {};
+
+        return Object.entries(markets).map(([marketKey, metrics]) => {
+            const primaryMetric = marketKey === 'FT_1X2' || marketKey === 'HT_1X2'
+                ? { label: 'Accuracy', value: fmtPct(metrics?.accuracy) }
+                : { label: 'Hit rate', value: fmtPct(metrics?.hit_rate) };
+
+            const secondaryMetrics = marketKey === 'FT_1X2' || marketKey === 'HT_1X2'
+                ? [
+                    { label: 'Brier', value: fmtDecimal(metrics?.brier_score) },
+                    { label: 'Log loss', value: fmtDecimal(metrics?.log_loss) },
+                ]
+                : [
+                    { label: 'MAE', value: fmtDecimal(metrics?.mae_total) },
+                    { label: 'Samples', value: Number.isFinite(Number(metrics?.samples)) ? String(metrics.samples) : '—' },
+                ];
+
+            return {
+                value: marketKey,
+                label: MARKET_LABELS[marketKey] || marketKey,
+                metrics: [primaryMetric, ...secondaryMetrics],
+            };
+        });
+    }, [status]);
+
+    const summaryMetrics = useMemo(() => {
+        const rawSummary = status?.metrics || status?.summary_metrics || null;
+        return normalizeMetrics(rawSummary);
+    }, [status]);
+
     return {
         status,
         results,
@@ -128,6 +168,8 @@ export const useMLSimulation = (initialParams = {}) => {
         startSimulation,
         setStatus,
         setResults,
-        setActiveSimulationId
+        setActiveSimulationId,
+        marketSummaries,
+        summaryMetrics,
     };
 };

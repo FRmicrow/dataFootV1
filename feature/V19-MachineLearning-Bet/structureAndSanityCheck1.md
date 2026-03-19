@@ -4,7 +4,7 @@ Parfait — je te donne :
 2. des **SQL sanity checks** (couverture + cohérence + anti-leakage),
 3. une **spec CLV/ROI backtest** (avec tables V3_Forge_* + odds history).
 
-Je reste compatible SQLite + ton MDD. 
+Je reste compatible PostgreSQL + ton MDD. 
 
 ---
 

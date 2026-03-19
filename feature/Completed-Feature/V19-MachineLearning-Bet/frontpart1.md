@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 Parfait. Je te propose une spec “double” : **Produit (UI + endpoints)** et **ML/Ops (gates, champion/challenger, drift, reproductibilité)**. L’objectif est que **chaque run** soit clean, traçable, et qu’aucun modèle douteux n’alimente la page “bets”.
 
 ---

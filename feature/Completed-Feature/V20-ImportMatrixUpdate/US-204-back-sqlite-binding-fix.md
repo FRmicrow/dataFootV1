@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # US-204: [Backend] Fix SQLite3 Binding Errors in Stats Imports
 
 **En tant que** Développeur Backend

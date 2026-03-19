@@ -24,6 +24,23 @@ const getRunLeagueLabel = (run) => {
     return 'Nom indisponible';
 };
 
+const formatMatchDate = (value) => {
+    if (!value) return 'Date indisponible';
+
+    return new Date(value).toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+};
+
+const formatProfit = (value) => {
+    const numericValue = Number(value || 0);
+    return `${numericValue >= 0 ? '+' : ''}${fmtDecimal(numericValue, 2)} €`;
+};
+
 const PerformanceLab = () => {
     const [runs, setRuns] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -32,8 +49,13 @@ const PerformanceLab = () => {
     const [stakePerBet, setStakePerBet] = useState(10);
     const [selectedLeagueId, setSelectedLeagueId] = useState('');
     const [selectedSeasonYear, setSelectedSeasonYear] = useState('');
+    const [selectedAnnualSeasonYear, setSelectedAnnualSeasonYear] = useState('');
     const [roi, setRoi] = useState(null);
+    const [annualRoi, setAnnualRoi] = useState(null);
     const [roiLoading, setRoiLoading] = useState(false);
+    const [annualLoading, setAnnualLoading] = useState(false);
+    const [historicalBetRows, setHistoricalBetRows] = useState([]);
+    const [historicalLoading, setHistoricalLoading] = useState(false);
     const [selectedRunId, setSelectedRunId] = useState(null);
 
     useEffect(() => {
@@ -103,6 +125,15 @@ const PerformanceLab = () => {
         return [...years].sort((a, b) => Number(b) - Number(a));
     }, [completedRuns, selectedLeagueId]);
 
+    const annualSeasonOptions = useMemo(() => {
+        const years = new Set(
+            completedRuns
+                .map((run) => String(run.season_year))
+                .filter(Boolean)
+        );
+        return [...years].sort((a, b) => Number(b) - Number(a));
+    }, [completedRuns]);
+
     useEffect(() => {
         if (!selectedLeagueId && leagueOptions.length) {
             setSelectedLeagueId(leagueOptions[0].id);
@@ -120,6 +151,18 @@ const PerformanceLab = () => {
             setSelectedSeasonYear(seasonOptions[0] || '');
         }
     }, [seasonOptions, selectedSeasonYear]);
+
+    useEffect(() => {
+        if (!selectedAnnualSeasonYear && annualSeasonOptions.length) {
+            setSelectedAnnualSeasonYear(annualSeasonOptions[0]);
+        }
+    }, [annualSeasonOptions, selectedAnnualSeasonYear]);
+
+    useEffect(() => {
+        if (selectedAnnualSeasonYear && !annualSeasonOptions.includes(selectedAnnualSeasonYear)) {
+            setSelectedAnnualSeasonYear(annualSeasonOptions[0] || '');
+        }
+    }, [annualSeasonOptions, selectedAnnualSeasonYear]);
 
     const filteredRuns = useMemo(() => completedRuns.filter((run) => {
         if (selectedLeagueId && String(run.league_id) !== selectedLeagueId) return false;
@@ -153,10 +196,259 @@ const PerformanceLab = () => {
         return () => { cancelled = true; };
     }, [portfolioSize, stakePerBet, selectedLeagueId, selectedSeasonYear]);
 
+    useEffect(() => {
+        if (!selectedAnnualSeasonYear) {
+            setAnnualRoi(null);
+            return;
+        }
+        let cancelled = false;
+        setAnnualLoading(true);
+        api.calculateROI({
+            portfolioSize: Number(portfolioSize),
+            stakePerBet: Number(stakePerBet),
+            seasonYear: Number(selectedAnnualSeasonYear),
+            markets: 'all',
+        })
+            .then((payload) => { if (!cancelled) setAnnualRoi(payload); })
+            .catch(() => { if (!cancelled) setAnnualRoi(null); })
+            .finally(() => { if (!cancelled) setAnnualLoading(false); });
+        return () => { cancelled = true; };
+    }, [portfolioSize, stakePerBet, selectedAnnualSeasonYear]);
+
     const selectedRun = useMemo(
         () => filteredRuns.find((r) => r.id === selectedRunId) || null,
         [filteredRuns, selectedRunId]
     );
+    const isHistoricalSeasonSelected = useMemo(() => {
+        if (!selectedSeasonYear || !seasonOptions.length) return false;
+        return String(selectedSeasonYear) !== String(seasonOptions[0]);
+    }, [seasonOptions, selectedSeasonYear]);
+    const activeHistoricalRun = useMemo(
+        () => (isHistoricalSeasonSelected ? (selectedRun || filteredRuns[0] || null) : null),
+        [filteredRuns, isHistoricalSeasonSelected, selectedRun]
+    );
+
+    const annualRows = useMemo(() => {
+        if (!annualRoi?.leagueBreakdown?.length) return [];
+
+        const totalMarketMap = Object.fromEntries(
+            DETAIL_MARKETS.map((market) => [
+                market.key,
+                annualRoi.marketBreakdown?.find((entry) => entry.marketType === market.key) || null,
+            ]),
+        );
+
+        return [
+            ...annualRoi.leagueBreakdown.map((row) => ({
+                ...row,
+                isTotal: false,
+            })),
+            {
+                leagueId: 'TOTAL',
+                leagueName: 'TOTAL ANNEE',
+                seasonYear: Number(selectedAnnualSeasonYear),
+                totalBets: annualRoi.totalBets,
+                totalMatches: annualRoi.totalMatches,
+                benefit: annualRoi.benefit,
+                roi: annualRoi.roi,
+                markets: totalMarketMap,
+                isTotal: true,
+            },
+        ];
+    }, [annualRoi, selectedAnnualSeasonYear]);
+
+    useEffect(() => {
+        if (!activeHistoricalRun?.id) {
+            setHistoricalBetRows([]);
+            return;
+        }
+
+        let cancelled = false;
+        setHistoricalLoading(true);
+        api.getSimulationResults(activeHistoricalRun.id)
+            .then((rows) => {
+                if (!cancelled) {
+                    setHistoricalBetRows(Array.isArray(rows) ? rows : []);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setHistoricalBetRows([]);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setHistoricalLoading(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeHistoricalRun]);
+
+    const matchColumns = useMemo(() => ([
+        {
+            key: 'match',
+            title: 'Match',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong>{row.homeTeam} vs {row.awayTeam}</strong>
+                    <span>{formatMatchDate(row.date)}</span>
+                    <span>{row.matchScore ? `Score final ${row.matchScore}` : 'Score indisponible'}</span>
+                </div>
+            ),
+        },
+        {
+            key: 'bets',
+            title: 'Paris simulés',
+            render: (_, row) => (
+                <div className="ml-perf__bet-list">
+                    {row.picks.map((pick, index) => (
+                        <div key={`${row.fixtureId}-${pick.marketType}-${index}`} className="ml-perf__bet-item">
+                            <strong>{pick.marketLabel}</strong>
+                            <span>{pick.selection} @ {fmtDecimal(pick.bookmakerOdd, 2)}</span>
+                            <span>ML {fmtPct(pick.mlProbability)}</span>
+                        </div>
+                    ))}
+                </div>
+            ),
+        },
+        {
+            key: 'outcomes',
+            title: 'Issue réelle',
+            render: (_, row) => (
+                <div className="ml-perf__bet-list">
+                    {row.picks.map((pick, index) => (
+                        <div key={`${row.fixtureId}-actual-${pick.marketType}-${index}`} className="ml-perf__bet-item">
+                            <strong>{pick.marketLabel}</strong>
+                            <span>{pick.actualOutcome || 'Push / indisponible'}</span>
+                            <span className={pick.isHit ? 'is-positive' : 'is-negative'}>
+                                {pick.isHit ? 'Gagné' : 'Perdu'}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            ),
+        },
+        {
+            key: 'stake',
+            title: 'Engagement',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong>{fmtDecimal(row.totalStake, 0)} €</strong>
+                    <span>{row.betCount} pari{row.betCount > 1 ? 's' : ''}</span>
+                    <span>{row.hits}/{row.betCount} gagné{row.hits > 1 ? 's' : ''}</span>
+                </div>
+            ),
+        },
+        {
+            key: 'profit',
+            title: 'Gain / Perte',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong className={row.totalNetProfit >= 0 ? 'is-positive' : 'is-negative'}>
+                        {row.totalNetProfit >= 0 ? '+' : ''}{fmtDecimal(row.totalNetProfit, 2)} €
+                    </strong>
+                    <span>Retour {fmtDecimal(row.totalGrossReturn, 2)} €</span>
+                    <span>Portefeuille {fmtDecimal(row.portfolioAfterMatch, 2)} €</span>
+                </div>
+            ),
+        },
+    ]), []);
+
+    const historicalBetColumns = useMemo(() => ([
+        {
+            key: 'match',
+            title: 'Match',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong>{row.home_team_name} vs {row.away_team_name}</strong>
+                    <span>{formatMatchDate(row.fixture_date)}</span>
+                    <span>{row.score && row.score !== '-' ? `Score ${row.score}` : 'Score indisponible'}</span>
+                </div>
+            ),
+        },
+        {
+            key: 'market',
+            title: 'Marché',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong>{row.market_label || row.market_type}</strong>
+                    <span>{row.model_version || 'runtime'}</span>
+                    <span>{row.round_name || '—'}</span>
+                </div>
+            ),
+        },
+        {
+            key: 'prediction',
+            title: 'Pari possible',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong>{row.predicted_outcome || '—'}</strong>
+                    <span>Confiance {row.primary_probability || '—'}</span>
+                    <span>{row.expected_total_label ? `Total attendu ${row.expected_total_label}` : 'Sans total attendu'}</span>
+                </div>
+            ),
+        },
+        {
+            key: 'actual',
+            title: 'Issue réelle',
+            render: (_, row) => (
+                <div className="ml-perf__league-cell">
+                    <strong>{row.actual_result || '—'}</strong>
+                    <span>{row.actual_numeric_label ? `Valeur réelle ${row.actual_numeric_label}` : '—'}</span>
+                    <span className={row.is_correct ? 'is-positive' : 'is-negative'}>
+                        {row.is_correct == null ? 'Inconnu' : row.is_correct ? 'Hit' : 'Miss'}
+                    </span>
+                </div>
+            ),
+        },
+    ]), []);
+
+    const annualColumns = useMemo(() => ([
+        {
+            key: 'league',
+            title: 'Ligue',
+            render: (_, row) => (
+                <div className={`ml-perf__league-cell ${row.isTotal ? 'is-total' : ''}`}>
+                    <strong>{row.leagueName}</strong>
+                    <span>{row.isTotal ? `Saison ${selectedAnnualSeasonYear}` : `${row.totalMatches} matchs · ${row.totalBets} paris`}</span>
+                </div>
+            ),
+        },
+        ...DETAIL_MARKETS.map((market) => ({
+            key: market.key,
+            title: market.label,
+            render: (_, row) => {
+                const metrics = row.markets?.[market.key];
+                if (!metrics) return '—';
+
+                return (
+                    <div className="ml-perf__league-cell">
+                        <strong className={metrics.benefit >= 0 ? 'is-positive' : 'is-negative'}>
+                            {formatProfit(metrics.benefit)}
+                        </strong>
+                        <span>{metrics.totalBets} paris</span>
+                        <span>ROI {fmtDecimal(metrics.roi, 1)} %</span>
+                    </div>
+                );
+            },
+        })),
+        {
+            key: 'total',
+            title: 'Total année',
+            render: (_, row) => (
+                <div className={`ml-perf__league-cell ${row.isTotal ? 'is-total' : ''}`}>
+                    <strong className={row.benefit >= 0 ? 'is-positive' : 'is-negative'}>
+                        {formatProfit(row.benefit)}
+                    </strong>
+                    <span>{row.totalBets} paris</span>
+                    <span>ROI {fmtDecimal(row.roi, 1)} %</span>
+                </div>
+            ),
+        },
+    ]), [selectedAnnualSeasonYear]);
 
     const runColumns = [
         {
@@ -333,6 +625,76 @@ const PerformanceLab = () => {
                 </div>
             </MLHubSection>
 
+            {selectedAnnualSeasonYear && (
+                <MLHubSection
+                    title="Tableau annuel par ligue et modèle"
+                    subtitle="Chaque ligne représente une ligue sur la saison choisie. Les colonnes affichent le gain simulé par modèle, puis le total de l’année."
+                    badge={{ label: annualLoading ? 'Calcul…' : `${selectedAnnualSeasonYear}`, variant: 'primary' }}
+                    actions={(
+                        <select
+                            className="ml-perf__input ml-perf__section-select"
+                            value={selectedAnnualSeasonYear}
+                            onChange={(e) => setSelectedAnnualSeasonYear(e.target.value)}
+                        >
+                            {annualSeasonOptions.map((year) => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
+                        </select>
+                    )}
+                >
+                    {annualLoading ? (
+                        <Skeleton height="220px" />
+                    ) : annualRoi ? (
+                        <>
+                            <div className="ml-perf__roi-grid">
+                                <div className="ml-perf__roi-card">
+                                    <span>Ligues couvertes</span>
+                                    <strong>{annualRoi.leagueBreakdown?.length || 0}</strong>
+                                </div>
+                                <div className="ml-perf__roi-card">
+                                    <span>Paris simulés</span>
+                                    <strong>{annualRoi.totalBets}</strong>
+                                </div>
+                                <div className="ml-perf__roi-card">
+                                    <span>Benefice annuel</span>
+                                    <strong className={annualRoi.benefit >= 0 ? 'is-positive' : 'is-negative'}>
+                                        {formatProfit(annualRoi.benefit)}
+                                    </strong>
+                                </div>
+                                <div className="ml-perf__roi-card">
+                                    <span>ROI annuel</span>
+                                    <strong className={annualRoi.roi >= 0 ? 'is-positive' : 'is-negative'}>
+                                        {annualRoi.roi >= 0 ? '+' : ''}{fmtDecimal(annualRoi.roi, 1)} %
+                                    </strong>
+                                </div>
+                            </div>
+                            <div className="ml-perf__roi-detail">
+                                <div className="ml-perf__roi-detail-head">
+                                    <strong>Gains par ligue et par modele</strong>
+                                    <span>Le total annuel additionne tous les paris de la saison avec la meme mise fixe sur chaque selection.</span>
+                                </div>
+                                {annualRows.length ? (
+                                    <Table
+                                        columns={annualColumns}
+                                        data={annualRows}
+                                        rowKey={(row) => String(row.leagueId)}
+                                    />
+                                ) : (
+                                    <p className="ml-perf__empty-note">
+                                        Aucun run exploitable n&apos;a ete trouve pour cette saison.
+                                    </p>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <MLHubEmptyState
+                            title="Aucune donnee annuelle"
+                            message="La saison selectionnee n’a pas encore de runs termines avec odds exploitables pour construire le tableau annuel."
+                        />
+                    )}
+                </MLHubSection>
+            )}
+
             {hasSelection && (
                 <MLHubSection
                     title="Simulation ROI"
@@ -351,6 +713,10 @@ const PerformanceLab = () => {
                             <div className="ml-perf__roi-card">
                                 <span>Paris simulés</span>
                                 <strong>{roi.totalBets}</strong>
+                            </div>
+                            <div className="ml-perf__roi-card">
+                                <span>Matchs couverts</span>
+                                <strong>{roi.totalMatches}</strong>
                             </div>
                             <div className="ml-perf__roi-card">
                                 <span>Montant total</span>
@@ -377,8 +743,48 @@ const PerformanceLab = () => {
                                 <strong>-{fmtDecimal(roi.maxDrawdown, 1)} %</strong>
                             </div>
                             </div>
+                            <div className="ml-perf__roi-detail">
+                                <div className="ml-perf__roi-detail-head">
+                                    <strong>Détail match par match</strong>
+                                    <span>Une ligne regroupe tous les paris simulés sur un match pour la ligue et la saison sélectionnées.</span>
+                                </div>
+                                {roi.matchResults?.length ? (
+                                    <Table
+                                        columns={matchColumns}
+                                        data={roi.matchResults}
+                                        rowKey="fixtureId"
+                                    />
+                                ) : (
+                                    <p className="ml-perf__empty-note">
+                                        Aucune cote historique exploitable n&apos;a ete trouvee pour cette ligue et cette saison. Le detail match par match s&apos;affichera des que des odds finalisees seront disponibles.
+                                    </p>
+                                )}
+                            </div>
                         </>
                     ) : null}
+                </MLHubSection>
+            )}
+
+            {hasSelection && isHistoricalSeasonSelected && (
+                <MLHubSection
+                    title="Tous les paris possibles"
+                    subtitle="Vue brute du dernier run complété pour cette ligue et cette saison. Elle remonte tous les paris modélisés, même quand les cotes historiques sont absentes."
+                    badge={{ label: activeHistoricalRun ? `Run #${activeHistoricalRun.id}` : 'Aucun run', variant: activeHistoricalRun ? 'primary' : 'neutral' }}
+                >
+                    {historicalLoading ? (
+                        <Skeleton height="220px" />
+                    ) : historicalBetRows.length ? (
+                        <Table
+                            columns={historicalBetColumns}
+                            data={historicalBetRows}
+                            rowKey={(row) => `${row.fixture_id}-${row.market_type}`}
+                        />
+                    ) : (
+                        <MLHubEmptyState
+                            title="Aucun pari disponible"
+                            message="Aucun résultat de simulation n’a été retrouvé pour cette ligue et cette saison."
+                        />
+                    )}
                 </MLHubSection>
             )}
 

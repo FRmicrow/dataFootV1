@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 Voici le **pack complet** :
 
 1. feature schemas exacts pour **HT_RESULT / HT_GOAL_O0_5 / CORNERS_TOTAL / CARDS_TOTAL**,

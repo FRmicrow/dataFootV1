@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 📂 Created User Stories (/UserStories/V11-Advanced-Data-Acquisition/)
 
 Feature Name: Advanced Data Acquisition & Tactical Intelligence

@@ -9,7 +9,8 @@ import {
     simulationIdParamSchema,
     roiRequestSchema,
     edgesTopQuerySchema,
-    createSubmodelSchema
+    createSubmodelSchema,
+    foresightLeagueDetailSchema
 } from '../../schemas/v3Schemas.js';
 import {
     triggerModelRetrain,
@@ -42,6 +43,10 @@ import {
     deleteSubmodel,
     getLeaguesWithOdds
 } from '../../controllers/v3/mlController.js';
+import {
+    getMLForesightLeagues,
+    getMLForesightLeague
+} from '../../controllers/v3/mlForesightController.js';
 import {
     triggerSimulation,
     checkJobStatus,
@@ -82,6 +87,8 @@ router.get('/predict/fixture/:id', predictFixtureAll);
 
 // V37 ML Hub — New Endpoints
 router.get('/ml-platform/models/catalog', getModelsCatalog);
+router.get('/ml-platform/foresight/leagues', getMLForesightLeagues);
+router.get('/ml-platform/foresight/league/:leagueId', validateRequest(foresightLeagueDetailSchema), getMLForesightLeague);
 router.post('/ml-platform/performance/roi', validateRequest(roiRequestSchema), calculatePerformanceROI);
 router.get('/ml-platform/edges/top', validateRequest(edgesTopQuerySchema), getTopEdges);
 router.get('/ml-platform/submodels', getSubmodels);

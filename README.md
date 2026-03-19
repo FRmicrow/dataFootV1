@@ -5,7 +5,7 @@ StatFoot V3 is a comprehensive football analysis platform designed for scouting,
 ## 🌟 Ecosystem Overview
 
 -   **Frontend**: Modern dashboard for visual analysis and scouting.
--   **Backend**: Core API managing data flows and local SQLite storage.
+-   **Backend**: Core API managing data flows and PostgreSQL persistence.
 -   **ML-Service**: Python service using CatBoost models for match predictions.
 -   **Forge**: Integrated ML pipeline for model training and evaluation.
 

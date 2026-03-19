@@ -64,6 +64,10 @@
     color: var(--color-text-primary);
 }
 
+.ml-perf__section-select {
+    min-width: 148px;
+}
+
 .ml-perf__market-picker {
     display: flex;
     flex-wrap: wrap;
@@ -134,6 +138,76 @@
 .ml-perf__roi-card strong.is-positive { color: var(--color-success-400, #4ade80); }
 .ml-perf__roi-card strong.is-negative { color: var(--color-danger-400, #f87171); }
 
+.ml-perf__roi-detail {
+    margin-top: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.ml-perf__roi-detail-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.ml-perf__roi-detail-head strong {
+    color: var(--color-text-primary);
+}
+
+.ml-perf__roi-detail-head span {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.ml-perf__empty-note {
+    margin: 0;
+    padding: var(--space-md);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-subtle);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.ml-perf__bet-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.ml-perf__bet-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-xs) 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+.ml-perf__bet-item:last-child {
+    border-bottom: 0;
+}
+
+.ml-perf__bet-item strong {
+    color: var(--color-text-primary);
+    font-size: var(--text-sm);
+}
+
+.ml-perf__bet-item span {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
+
+.ml-perf__bet-item span.is-positive,
+.ml-perf__league-cell .is-positive {
+    color: var(--color-success-400, #4ade80);
+}
+
+.ml-perf__bet-item span.is-negative,
+.ml-perf__league-cell .is-negative {
+    color: var(--color-danger-400, #f87171);
+}
+
 .ml-perf__run-detail {
     margin-top: var(--space-lg);
     padding: var(--space-lg);
@@ -202,6 +276,10 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+}
+
+.ml-perf__league-cell.is-total strong {
+    color: var(--color-text-primary);
 }
 
 .ml-perf__league-cell span {

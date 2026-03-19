@@ -26,6 +26,6 @@ Une fois les cotes insérées en DB (US-281), le Frontend qui gérera le "ML Hub
 
 ## 6. Critères d'acceptation (Definition of Done)
 - [ ] Le Swagger est mis à jour avec les endpoints des cotes.
-- [ ] Les routes backend rattachées renvoient correctement un code `200` avec la donnée mockée puis réelle depuis SQLite.
+- [ ] Les routes backend rattachées renvoient correctement un code `200` avec la donnée mockée puis réelle depuis PostgreSQL.
 - [ ] La validation en entrée est effectuée via Zod.
 - [ ] Tests fonctionnels validés via un client HTTP ou Mocha.

@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # 👤 US_179: The Great Reset (Data Hygiene)
 **Accountable Agent**: SQL Agent / Data Engineer
 **Feature Type**: Maintenance / Data Governance

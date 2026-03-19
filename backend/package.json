@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node --max-old-space-size=4096 src/server.js",
     "dev": "node --max-old-space-size=4096 --watch src/server.js",
-    "init-db": "node scripts/initDatabase.js",
+    "init-db": "node scripts/v3/migrate.js",
     "migrate": "node scripts/v3/migrate.js",
     "smoke:v3-routes": "node scripts/smoke_v3_routes.mjs",
     "test": "vitest run",

@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # US-2101: Backend - S3 Strategy & Base Infrastructure (PRIORITY)
 
 **Role**: Backend Engineer / DevOps

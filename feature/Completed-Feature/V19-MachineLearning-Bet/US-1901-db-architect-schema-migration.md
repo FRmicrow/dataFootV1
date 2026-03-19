@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # US-1901 - Schéma de Base de Données pour le ML
 
 **Rôle :** Database Architect

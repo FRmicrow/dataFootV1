@@ -371,7 +371,7 @@ WHERE s.ft_rows <> 2 OR s.ft_corners <> 2 OR s.ft_yellows <> 2;
 ## 5.2 Probabilités HT_RESULT qui ne somment pas à 1 (après génération)
 
 ```sql
--- Si tu stockes outputs_json, vérifie côté script, sinon extraction JSON dans SQLite est possible si JSON1 activé.
+-- Si tu stockes outputs_json, vérifie côté script, sinon extraction JSON peut être faite directement via PostgreSQL JSONB.
 ```
 
 ---

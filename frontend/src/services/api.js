@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // Create axios instance
 const api = axios.create({
-    baseURL: '/api', // Vite proxy handles redirection
+    baseURL: import.meta.env.VITE_API_URL || '/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -210,6 +210,13 @@ export default {
 
     // --- ML Hub V37 ---
     getModelsCatalog: (params) => api.get('/ml-platform/models/catalog', { params }),
+    getMLForesightLeagues: () => api.get('/ml-platform/foresight/leagues'),
+    getMLForesightLeague: (leagueId, seasonYear) => {
+        const params = new URLSearchParams();
+        if (seasonYear) params.append('seasonYear', seasonYear);
+        const query = params.toString();
+        return api.get(`/ml-platform/foresight/league/${leagueId}${query ? `?${query}` : ''}`);
+    },
     calculateROI: (data) => api.post('/ml-platform/performance/roi', data),
     getLeaguesWithOdds: () => api.get('/ml-platform/performance/leagues-with-odds'),
     getTopEdges: (params) => api.get('/ml-platform/edges/top', { params }),

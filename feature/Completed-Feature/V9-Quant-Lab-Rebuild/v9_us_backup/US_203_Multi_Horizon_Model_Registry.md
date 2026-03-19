@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 📂 Created User Stories (/UserStories/V9-Quant-Lab-Rebuild/)
 
 # US_203: Multi-Horizon Model Registry Schema

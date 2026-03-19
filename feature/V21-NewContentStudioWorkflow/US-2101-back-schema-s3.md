@@ -16,6 +16,6 @@
 
 ## Acceptance Criteria
 - [ ] Migration applied successfully.
-- [ ] Table `GeneratedContent` exists in SQLite.
+- [ ] Table `GeneratedContent` exists in PostgreSQL.
 - [ ] S3 upload utility can successfully upload a test file.
 - [ ] Pre-signed URLs are correctly generated for private asset access.

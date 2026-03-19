@@ -223,7 +223,7 @@ const MLMatchPremiumPage = () => {
         api.getFixturePrediction(selectedFixtureId)
             .then((payload) => {
                 if (!cancelled) {
-                    setFixturePrediction(payload?.success ? payload : null);
+                    setFixturePrediction(payload || null);
                 }
             })
             .catch(() => {

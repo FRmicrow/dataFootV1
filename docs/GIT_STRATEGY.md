@@ -3,7 +3,7 @@
 > **Version:** 1.0  
 > **Date:** 2026-02-18  
 > **Scope:** Branching, Commits, PRs, Merges, Releases, Conflict Prevention  
-> **Stack:** React (Frontend) · Node.js (Backend) · SQLite/SQL (Database)
+> **Stack:** React (Frontend) · Node.js (Backend) · PostgreSQL (Database)
 
 ---
 
@@ -652,7 +652,7 @@ git tag -a v3.0.0 -m "Release v3.0.0 — V3 Architecture Foundation
 Initial stable release of V3 architecture including:
 - React frontend with component-based UI
 - Node.js backend with REST API
-- SQLite database with V3 schema
+- PostgreSQL database with V3 schema
 - Data import pipeline (leagues, fixtures, lineups, trophies)
 - Data Studio visualization engine
 - Dynamic standings with date filtering"

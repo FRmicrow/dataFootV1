@@ -6,7 +6,7 @@ La fonctionnalité d'importation et d'affichage des cotes pré-match (Odds) est 
 
 ### 🗄️ Base de Données
 - Création de la table `V3_Odds` avec contraintes d'intégrité et index pour des performances optimales.
-- Synchronisation du schéma avec la base de données de développement locale (`backend/data/database.sqlite`).
+- Synchronisation du schéma avec la base de données PostgreSQL de développement.
 
 ### ⚙️ Backend
 - **Service d'import** : Création de `OddsService.js` permettant de récupérer les cotes par ligue et saison. L'import est optimisé pour minimiser les appels API.
@@ -30,7 +30,7 @@ La fonctionnalité d'importation et d'affichage des cotes pré-match (Odds) est 
 
 ## Résolution des Erreurs Critiques (Stabilisation Docker)
 
-- **Fix "Invalid ELF Header"** : Correction de l'incompatibilité d'architecture pour `better-sqlite3` en isolant les `node_modules` de l'hôte du conteneur via `.dockerignore`.
+- **Fix compatibilité conteneur** : Isolation des `node_modules` de l'hôte via `.dockerignore` pour éviter les conflits d'architecture.
 - **Inter-service Communication** : Mise à jour du Backend pour utiliser le nom d'hôte Docker `ml-service:8008` au lieu de `localhost`.
 - **Base de Données** : Création de la table `V3_Risk_Analysis` manquante via la migration `20260305_00_CreateRiskAnalysis.js`.
 

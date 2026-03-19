@@ -4,7 +4,7 @@
 **Objectif :** Mettre en œuvre le nouveau schéma de base de données nécessaire au pipeline ML V3.
 
 ## Contexte
-Le pipeline ML nécessite de stocker des features calculées, des outputs de sous-modèles, des métriques de runs et des fichiers de modèles binaires. Le schéma doit être idempotent et compatible avec SQLite.
+Le pipeline ML nécessite de stocker des features calculées, des outputs de sous-modèles, des métriques de runs et des fichiers de modèles binaires. Le schéma doit être idempotent et compatible avec PostgreSQL.
 
 ## Tâches
 - [ ] Créer la table `V3_Fixture_Lineup_Players` (fixture_id, team_id, player_id, is_starting, shirt_number, player_name, position, grid, sub_in_minute, sub_out_minute).

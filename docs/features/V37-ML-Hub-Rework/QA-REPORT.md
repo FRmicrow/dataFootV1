@@ -17,7 +17,7 @@
 | Page 5 — Glossaire | 30 termes en 5 sections avec formules | ✅ Implémenté |
 | Page 6 — Système | Mission Control redesign + actions rapides | ✅ Implémenté |
 | Migration | 7 onglets → 6 pages + redirects legacy | ✅ Implémenté |
-| SQLite fix | `datetime('now')` → `NOW()` dans getMLRecommendations | ✅ Corrigé |
+| SQL dialect fix | `datetime('now')` → `NOW()` dans getMLRecommendations | ✅ Corrigé |
 
 ---
 
@@ -123,7 +123,7 @@
 - `frontend/src/design-system/components/EquityCurve.jsx`
 
 **Modifiés:**
-- `backend/src/controllers/v3/mlController.js` (+6 fonctions, fix SQLite)
+- `backend/src/controllers/v3/mlController.js` (+6 fonctions, fix SQL dialect)
 - `backend/src/routes/v3/ml_routes.js` (+6 routes)
 - `backend/src/schemas/v3Schemas.js` (+3 schemas Zod)
 - `frontend/src/services/api.js` (+7 méthodes)

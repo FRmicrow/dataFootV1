@@ -39,11 +39,6 @@ async function main() {
         }
     }
 
-    // SQLite save
-    if (typeof db.save === 'function') {
-        db.save(true);
-    }
-
     console.log(`\n✅ Done! Updated ${updated} leagues.`);
 }
 
