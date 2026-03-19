@@ -11,7 +11,7 @@ This report documents the final quality assurance phase for the ImportOdds featu
 
 ### 1. Backend Verification (Odds Service)
 - **Logic**: Verified fetching by league/season via API-Football.
-- **Data Integrity**: Checked SQLite `V3_Odds` table for proper upsert logic (handling duplicate snapshots).
+- **Data Integrity**: Checked PostgreSQL `V3_Odds` table for proper upsert logic (handling duplicate snapshots).
 - **Bulk Processing**: Validated the `oddsCatchupBulk.js` script for large-scale data ingestion.
 - **Results**: Real API calls returned valid JSON objects which were successfully persisted in the database.
 
@@ -28,7 +28,7 @@ This report documents the final quality assurance phase for the ImportOdds featu
 - **Empty States**: Confirmed that the UI handles missing data or service failures gracefully with appropriate placeholders.
 
 ### 4. Stability & Bug Fixes (US-28x Refinement)
-- **Error 500 Resolved**: Fixed a critical bug in `OddsRefineryService` (incorrect DB access via `better-sqlite3` instance) and corrected the API parameter mapping in `bulkOddsService` (now using `api_id` instead of local `fixture_id`).
+- **Error 500 Resolved**: Fixed a critical bug in `OddsRefineryService` (incorrect DB access layer) and corrected the API parameter mapping in `bulkOddsService` (now using `api_id` instead of local `fixture_id`).
 - **Dual Sync Buttons**: Split the manual synchronization into two distinct actions: **Sync Past Odds** (Historical) and **Sync Future Odds** (Upcoming).
 - **Stability**: Backend routes categorized under `/ml-platform/odds/` are now resilient and production-ready.
 

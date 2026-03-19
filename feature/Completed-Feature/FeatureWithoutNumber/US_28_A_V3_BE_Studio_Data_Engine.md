@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # US_28_A_V3_BE_Studio_Data_Engine
 
 ## Develop this feature as Backend Agent - Following the US related:

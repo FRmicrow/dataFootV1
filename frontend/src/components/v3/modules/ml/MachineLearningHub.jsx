@@ -107,6 +107,12 @@ const MachineLearningHub = () => {
                         <Route path="betting"      element={<Navigate to="/machine-learning/foresight" replace />} />
                         <Route path="knowledge"    element={<Navigate to="/machine-learning/glossary"  replace />} />
                         <Route path="odds"         element={<Navigate to="/machine-learning/foresight" replace />} />
+                        <Route path="system"       element={<Navigate to="/machine-learning/orchestrator" replace />} />
+                        <Route path="analyse"      element={<Navigate to="/machine-learning/analytics" replace />} />
+                        <Route path="match"        element={<Navigate to="/machine-learning/match-premium" replace />} />
+                        <Route path="erreurs"      element={<Navigate to="/machine-learning/error-lab" replace />} />
+                        <Route path="ligues"       element={<Navigate to="/machine-learning/league-premium" replace />} />
+                        <Route path="*"            element={<Navigate to="/machine-learning/models" replace />} />
                     </Routes>
                 </Suspense>
             </div>

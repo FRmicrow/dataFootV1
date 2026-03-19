@@ -1,4 +1,4 @@
-Voici du **pseudo-code “agent-ready”** (SQLite) pour :
+Voici du **pseudo-code “agent-ready”** (PostgreSQL) pour :
 
 1. appliquer les migrations,
 2. backfill lineups normalisés + substitutions,
@@ -49,7 +49,7 @@ function apply_migrations(db):
   db.exec(SQL_CREATE_V3_SUBMODEL_OUTPUTS)
   db.exec(SQL_CREATE_V3_ML_FEATURE_STORE_V2)
 
-  # ALTER TABLE: ignore errors if column exists (SQLite workaround)
+  # ALTER TABLE: use idempotent migration guards
   try db.exec("ALTER TABLE V3_Fixture_Stats ADD COLUMN ball_possession_pct INTEGER")
   catch: pass
 
@@ -115,7 +115,7 @@ function upsert_lineup_player(db, fixture_id, team_id, player_id, is_starting, m
   ])
 ```
 
-> SQLite supporte `ON CONFLICT DO UPDATE` si version récente (>= 3.24).
+> PostgreSQL supporte nativement `ON CONFLICT DO UPDATE`.
 > Sinon fallback: try/except insert then update.
 
 ### Pipeline lineup

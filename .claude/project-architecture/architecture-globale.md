@@ -4,26 +4,32 @@ Ce document décrit l'architecture de haut niveau du projet StatFootV3. Il est d
 
 ## Services (Définis via Docker Compose)
 
-Le projet est divisé en trois services principaux conteneurisés :
+Le projet est divisé en quatre services principaux conteneurisés :
 
-### 1. Frontend (`/frontend`)
+### 1. Base de données (`statfoot-db`)
+- **Technologie** : PostgreSQL 15
+- **Port** : 5432
+- **Rôle** : Base de données unique de la stack locale. Le `backend` et le `ml-service` s'y connectent via `DATABASE_URL`.
+
+### 2. Frontend (`/frontend`)
 - **Technologie** : React (Vite)
 - **Port** : 5173
 - **Rôle** : Interface utilisateur principale. Il interagit avec le Backend via des appels API REST (exposé sur `http://localhost:3001/api`).
 
-### 2. Backend (`/backend`)
+### 3. Backend (`/backend`)
 - **Technologie** : Node.js (probablement Express, vu la structure `routes`/`controllers`)
 - **Port** : 3001
-- **Rôle** : Cœur logique de l'application. Fournit les données au frontend, gère l'authentification, la logique métier, et lit/écrit dans la base de données.
+- **Rôle** : Cœur logique de l'application. Fournit les données au frontend, gère l'authentification, la logique métier, et lit/écrit dans PostgreSQL.
 
-### 3. ML-Service (`/ml-service`)
+### 4. ML-Service (`/ml-service`)
 - **Technologie** : Python (modèles CatBoost/Scikit-learn)
 - **Port** : 8008
 - **Rôle** : Service dédié à l'entraînement de modèles (Forge), à l'orchestration des données ML, l'évaluation des risques et la génération de prédictions.
 
 ## Base de Données
-- Le projet utilise une base de données **SQLite** localisée dans `/backend/data/database.sqlite`.
-- Ce fichier de base de données est partagé par volume entre le `backend` et le `ml-service` (ce qui signifie que les deux services peuvent y lire et écrire directement).
+- Le projet utilise une base de données **PostgreSQL** servie par le conteneur `statfoot-db`.
+- Le `backend` et le `ml-service` n'embarquent pas de base locale. Ils se connectent tous les deux à PostgreSQL via `DATABASE_URL`.
+- Le conteneur `statfoot-backend` sert l'API et la logique métier. Le conteneur `statfoot-db` contient les données.
 
 ## Flux de données standard pour une Feature Complexe (ex: Nouveau modèle de prédiction)
 1. **Frontend** : L'utilisateur demande une prédiction via l'UI. L'UI appelle l'API Backend.

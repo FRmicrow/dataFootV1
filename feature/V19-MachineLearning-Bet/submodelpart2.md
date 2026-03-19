@@ -3,7 +3,7 @@ Voici une version **copier-coller “agent-ready”** (pseudo-code très proche 
 * `04_train_submodels.py` (entraîner + enregistrer dans `V3_Model_Registry` + générer `V3_Submodel_Outputs`)
 * `06_backtest.py` (CLV/ROI) en s’appuyant sur `V3_Odds_History` + `V3_Forge_*`
 
-Je reste compatible **SQLite** et ton schéma V3 (avec les tables ajoutées). 
+Je reste compatible **PostgreSQL** et ton schéma V3 (avec les tables ajoutées). 
 ⚠️ Les noms exacts de colonnes d’odds/events peuvent varier : j’ajoute une section “Mapping” que ton agent doit adapter une fois en lisant le MDD.
 
 ---
@@ -251,7 +251,7 @@ function build_poisson_over_probs(name, lambda_, lines):
 
 ```pseudo
 function main():
-  db = connect_sqlite("db.sqlite")
+  db = connect_postgres(DATABASE_URL)
 
   league_id = argv.league_id
   horizons = ["FULL_HISTORICAL","5Y_ROLLING","3Y_ROLLING"]

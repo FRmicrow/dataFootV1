@@ -398,7 +398,7 @@ Les deux règles qui empêchent de tout casser :
 Je peux te livrer :
 
 * des **wireframes détaillés** (composant par composant, champs exacts, états UI)
-* une **spec de “Run tables”** (DDL SQLite) pour tracer tout ça proprement
+* une **spec de “Run tables”** (DDL PostgreSQL) pour tracer tout ça proprement
 * un “contract” JSON exact pour `RunConfig`, `StepResult`, `ModelScorecard`, `RecommendationItem`
 
 Tu préfères qu’on commence par :

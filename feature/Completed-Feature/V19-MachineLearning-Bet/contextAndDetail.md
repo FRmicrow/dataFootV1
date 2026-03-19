@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 OK — je te donne une **spec exacte** (submodels + entraînement + scripts/pipelines) adaptée à **SQLite + ton schéma V3** et à l’approche “par étapes”.
 Je reste **concret** : tables touchées, targets, datasets, features, algos, validation walk-forward, artefacts à enregistrer.
 

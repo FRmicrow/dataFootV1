@@ -295,3 +295,12 @@ export const createSubmodelSchema = z.object({
         trainNow: z.boolean().default(false)
     })
 });
+
+export const foresightLeagueDetailSchema = z.object({
+    params: z.object({
+        leagueId: z.coerce.number().positive()
+    }),
+    query: z.object({
+        seasonYear: z.coerce.number().min(2000).max(2030).optional()
+    })
+});

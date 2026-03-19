@@ -4,9 +4,21 @@
     gap: var(--space-lg);
 }
 
+.ml-foresight__hero-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
 .ml-foresight__league-picker {
     display: flex;
     flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.ml-foresight__season-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--space-sm);
 }
 
@@ -23,16 +35,47 @@
     transition: var(--transition-base);
 }
 
+.ml-foresight__season-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: var(--space-md);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-card);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
 .ml-foresight__league-chip img {
     width: 18px;
     height: 18px;
     object-fit: contain;
 }
 
-.ml-foresight__league-chip.is-active {
+.ml-foresight__league-chip.is-active,
+.ml-foresight__season-chip.is-active {
     border-color: var(--color-primary-500);
     color: var(--color-primary-500);
     background: color-mix(in srgb, var(--color-primary-500) 8%, transparent);
+}
+
+.ml-foresight__season-chip strong {
+    color: var(--color-text-primary);
+    font-size: var(--text-lg);
+}
+
+.ml-foresight__season-chip span {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.ml-foresight__season-badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
 }
 
 .ml-foresight__fixture-list {
@@ -41,11 +84,33 @@
     gap: var(--space-md);
 }
 
+.ml-foresight__history-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.ml-foresight__result-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-sm);
+}
+
 .ml-foresight__fixture-card {
     padding: var(--space-md);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border);
     background: var(--color-bg-subtle);
+}
+
+.ml-foresight__fixture-card.is-compact {
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--color-primary-500) 10%, transparent), transparent 55%),
+        var(--color-bg-subtle);
+}
+
+.ml-foresight__fixture-card.is-pending {
+    border-style: dashed;
 }
 
 .ml-foresight__fixture-top {
@@ -64,6 +129,63 @@
 
 .ml-foresight__fixture-top span {
     color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.ml-foresight__fixture-badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-xs);
+}
+
+.ml-foresight__projected-result {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    border: 1px solid color-mix(in srgb, var(--color-primary-500) 18%, var(--color-border));
+}
+
+.ml-foresight__projected-result span {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ml-foresight__projected-result strong {
+    color: var(--color-text-primary);
+    flex: 1;
+}
+
+.ml-foresight__pending-state {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-bg-card) 80%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--color-border) 80%, transparent);
+}
+
+.ml-foresight__pending-state.is-subtle {
+    margin-bottom: 0;
+}
+
+.ml-foresight__pending-state span {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ml-foresight__pending-state strong {
+    color: var(--color-text-primary);
     font-size: var(--text-sm);
 }
 
@@ -105,8 +227,86 @@
     color: var(--color-text-primary);
 }
 
+.ml-foresight__history-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--color-primary-500) 7%, transparent), transparent 58%),
+        var(--color-bg-subtle);
+}
+
+.ml-foresight__history-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md);
+}
+
+.ml-foresight__history-main strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--color-text-primary);
+}
+
+.ml-foresight__history-main span {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.ml-foresight__history-badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-xs);
+}
+
+.ml-foresight__history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-sm);
+}
+
+.ml-foresight__history-grid div {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-card);
+}
+
+.ml-foresight__history-grid span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ml-foresight__history-grid strong {
+    color: var(--color-text-primary);
+}
+
+.ml-foresight__history-market-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
 @media (max-width: 720px) {
     .ml-foresight__fixture-top {
+        flex-direction: column;
+    }
+
+    .ml-foresight__history-head {
+        flex-direction: column;
+    }
+
+    .ml-foresight__projected-result {
+        align-items: flex-start;
         flex-direction: column;
     }
 }

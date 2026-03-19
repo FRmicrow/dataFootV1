@@ -1,4 +1,5 @@
 import mlService from '../../services/v3/mlService.js';
+import mlForesightService from '../../services/v3/mlForesightService.js';
 import dbModule from '../../config/database.js';
 import axios from 'axios';
 import OddsSyncService from '../../services/v3/OddsSyncService.js';
@@ -29,35 +30,34 @@ const determineActualOutcome = (group) => {
         const match = selection.match(/^(Over|Under)\s+(\d+(?:\.\d+)?)$/i);
         if (!match) return null;
 
-        const side = match[1].toLowerCase();
         const line = parseFloat(match[2]);
         if (Number.isNaN(line)) return null;
 
-        return side === 'over'
-            ? (total > line ? selection : null)
-            : (total < line ? selection : null);
+        if (total > line) return `Over ${match[2]}`;
+        if (total < line) return `Under ${match[2]}`;
+        return null;
     }
     return null;
 };
 
-const ROI_MARKET_SQL = `
-    CASE
-        WHEN ra.market_type IN ('1N2_FT', '1X2') AND ra.selection = '1' THEN mm.odds_h
-        WHEN ra.market_type IN ('1N2_FT', '1X2') AND ra.selection = 'N' THEN mm.odds_d
-        WHEN ra.market_type IN ('1N2_FT', '1X2') AND ra.selection = '2' THEN mm.odds_a
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 0.5' THEN mm.odds_o05
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 0.5' THEN mm.odds_u05
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 1.5' THEN mm.odds_o15
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 1.5' THEN mm.odds_u15
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 2.5' THEN mm.odds_o25
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 2.5' THEN mm.odds_u25
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 3.5' THEN mm.odds_o35
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 3.5' THEN mm.odds_u35
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'over 4.5' THEN mm.odds_o45
-        WHEN ra.market_type = 'GOALS_OU' AND LOWER(ra.selection) = 'under 4.5' THEN mm.odds_u45
-        ELSE NULL
-    END
-`;
+const ROI_MARKET_LABELS = {
+    '1N2_FT': '1X2 FT',
+    '1X2': '1X2 FT',
+    '1N2_HT': '1X2 HT',
+    'FT_1X2': '1X2 FT',
+    'HT_1X2': '1X2 HT',
+    'GOALS_OU': 'Goals O/U',
+    'CORNERS_OU': 'Corners O/U',
+    'CARDS_OU': 'Cards O/U',
+};
+
+const roundCurrency = (value) => Math.round(Number(value || 0) * 100) / 100;
+const roundMetric = (value, digits = 3) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return null;
+    const factor = 10 ** digits;
+    return Math.round(numeric * factor) / factor;
+};
 
 const calculateGroupStats = (matchGroups) => {
     const stats = { overall_hit_rate: 0, by_market: {}, totalMatches: 0, totalHits: 0, brierSum: 0 };
@@ -199,24 +199,31 @@ export const getMLRecentAnalyses = async (req, res) => {
 export const getMLSimulationFilters = async (req, res) => {
     try {
         const rows = await dbModule.all(`
-            WITH enriched_countries AS (
-                SELECT DISTINCT source_country
-                FROM ml_matches
-                WHERE source_country IS NOT NULL
-            )
-            SELECT DISTINCT
-                l.league_id,
-                l.name as league_name,
-                f.season_year,
-                c.name as country_name,
-                c.flag_url
-            FROM V3_Risk_Analysis r
-            JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id
-            JOIN V3_Leagues l ON f.league_id = l.league_id
-            JOIN V3_Countries c ON l.country_id = c.country_id
-            JOIN enriched_countries ec ON ec.source_country = c.name
-            WHERE f.status_short IN ('FT', 'AET', 'PEN')
-            ORDER BY c.name, l.name, f.season_year DESC
+            SELECT
+                league_id,
+                league_name,
+                season_year,
+                country_name,
+                flag_url
+            FROM (
+                SELECT DISTINCT
+                    l.league_id,
+                    l.name as league_name,
+                    f.season_year,
+                    c.name as country_name,
+                    c.flag_url,
+                    COALESCE(c.importance_rank, 999) AS country_importance_rank,
+                    COALESCE(l.importance_rank, 999) AS league_importance_rank
+                FROM V3_Fixtures f
+                JOIN V3_Leagues l ON f.league_id = l.league_id
+                LEFT JOIN V3_Countries c ON l.country_id = c.country_id
+                WHERE f.season_year IS NOT NULL
+            ) filters
+            ORDER BY
+                country_importance_rank,
+                league_importance_rank,
+                league_name,
+                season_year DESC
         `);
         res.json({ success: true, data: rows });
     } catch (err) {
@@ -682,55 +689,21 @@ const MODEL_CATALOG_STATIC = {
     }
 };
 
-// Importance rank map for leagues (used to sort catalog output)
-const LEAGUE_IMPORTANCE_MAP = {
-    39: 1,   // Premier League
-    140: 2,  // La Liga
-    135: 3,  // Serie A
-    78:  4,  // Bundesliga
-    61:  5,  // Ligue 1
-    94:  6,  // Primeira Liga
-    88:  7,  // Eredivisie
-    203: 8,  // Süper Lig
-};
-
 // --- New V37 Controllers ---
 
 export const getModelsCatalog = async (req, res) => {
     try {
         const { leagueId } = req.query;
-        const leagueFilter = leagueId ? 'AND f.league_id = $1' : '';
-        const leagueParams = leagueId ? [leagueId] : [];
+        const [coveredLeagues, registryVersions] = await Promise.all([
+            mlForesightService.getCoveredLeaguesSummary(),
+            mlForesightService.getModelCatalogVersions(),
+        ]);
+        const catalogLeagues = (leagueId
+            ? coveredLeagues.filter((league) => Number(league.leagueId) === Number(leagueId))
+            : coveredLeagues
+        );
 
-        // Leagues with completed simulations
-        const simLeagues = await dbModule.all(`
-            SELECT
-                   f.league_id,
-                   l.name as league_name,
-                   l.logo_url,
-                   COALESCE(l.importance_rank, 99) as league_importance,
-                   COALESCE(c.importance_rank, 99) as country_importance,
-                   co.name as country_name
-            FROM V3_Forge_Simulations fs
-            JOIN V3_Fixtures f ON fs.league_id = f.league_id
-            JOIN V3_Leagues l ON f.league_id = l.league_id
-            LEFT JOIN V3_Countries c ON l.country_id = c.country_id
-            LEFT JOIN V3_Countries co ON l.country_id = co.country_id
-            WHERE fs.status = 'COMPLETED' ${leagueFilter}
-            GROUP BY
-                f.league_id,
-                l.name,
-                l.logo_url,
-                COALESCE(l.importance_rank, 99),
-                COALESCE(c.importance_rank, 99),
-                co.name
-            ORDER BY
-                COALESCE(c.importance_rank, 99) ASC,
-                COALESCE(l.importance_rank, 99) ASC,
-                l.name ASC
-        `, leagueParams);
-
-        if (!simLeagues.length) {
+        if (!catalogLeagues.length) {
             return res.json({ success: true, data: [] });
         }
 
@@ -796,8 +769,16 @@ export const getModelsCatalog = async (req, res) => {
             if (!teamMap[t.league_id]) teamMap[t.league_id] = { homeTeam: t.home_team, awayTeam: t.away_team };
         }
 
-        const catalog = simLeagues.map(league => {
-            const lid = league.league_id;
+        const typeToCoverageKey = {
+            FT_RESULT: 'ftResult',
+            HT_RESULT: 'htResult',
+            GOALS_TOTAL: 'goalsTotal',
+            CORNERS_TOTAL: 'cornersTotal',
+            CARDS_TOTAL: 'cardsTotal',
+        };
+
+        const catalog = catalogLeagues.map(league => {
+            const lid = Number(league.leagueId);
             const teams = teamMap[lid] ?? { homeTeam: 'Domicile', awayTeam: 'Extérieur' };
             const metFT = metricsMap[`${lid}_1N2_FT`];
             const seasonRange = metFT ? `${metFT.season_min}–${metFT.season_max}` : '—';
@@ -805,40 +786,42 @@ export const getModelsCatalog = async (req, res) => {
 
             return {
                 leagueId: lid,
-                leagueName: league.league_name,
-                leagueLogo: league.logo_url,
-                country: league.country_name,
-                importanceRank: LEAGUE_IMPORTANCE_MAP[lid] || league.league_importance,
-                models: Object.entries(MODEL_CATALOG_STATIC).map(([type, info]) => {
-                    const mKey = type === 'FT_RESULT' ? `${lid}_1N2_FT`
-                               : type === 'HT_RESULT' ? `${lid}_1N2_HT` : null;
-                    const m = mKey ? metricsMap[mKey] : null;
-                    const hitRate = m && m.total > 0 ? m.hits / m.total : null;
-                    const brier = m && m.total > 0 ? m.brier_score : null;
-                    return {
-                        type,
-                        label: info.label,
-                        version: 'v1.0',
-                        isActive: true,
-                        description: info.description,
-                        trainingFeatures: info.features,
-                        trainingDataSummary: {
-                            samplesCount: m ? parseInt(m.total) : null,
-                            seasonsRange: seasonRange,
-                            lastTrainedAt: lastTrained
-                        },
-                        metrics: {
-                            accuracy: hitRate != null ? Math.round(hitRate * 1000) / 1000 : null,
-                            brierScore: brier != null ? Math.round(brier * 10000) / 10000 : null
-                        },
-                        examplePrediction: {
-                            ...info.example,
-                            fixtureLabel: `${teams.homeTeam} vs ${teams.awayTeam} (scénario type)`,
-                            homeTeam: teams.homeTeam,
-                            awayTeam: teams.awayTeam
-                        }
-                    };
-                })
+                leagueName: league.leagueName,
+                leagueLogo: league.logo,
+                country: league.country,
+                importanceRank: league.importanceRank ?? 99,
+                models: Object.entries(MODEL_CATALOG_STATIC)
+                    .filter(([type]) => league.markets?.[typeToCoverageKey[type]])
+                    .map(([type, info]) => {
+                        const mKey = type === 'FT_RESULT' ? `${lid}_1N2_FT`
+                            : type === 'HT_RESULT' ? `${lid}_1N2_HT` : null;
+                        const m = mKey ? metricsMap[mKey] : null;
+                        const hitRate = m && m.total > 0 ? m.hits / m.total : null;
+                        const brier = m && m.total > 0 ? m.brier_score : null;
+                        return {
+                            type,
+                            label: info.label,
+                            version: registryVersions[typeToCoverageKey[type]] || 'runtime',
+                            isActive: true,
+                            description: info.description,
+                            trainingFeatures: info.features,
+                            trainingDataSummary: {
+                                samplesCount: m ? parseInt(m.total, 10) : null,
+                                seasonsRange: seasonRange,
+                                lastTrainedAt: lastTrained
+                            },
+                            metrics: {
+                                accuracy: hitRate != null ? Math.round(hitRate * 1000) / 1000 : null,
+                                brierScore: brier != null ? Math.round(brier * 10000) / 10000 : null
+                            },
+                            examplePrediction: {
+                                ...info.example,
+                                fixtureLabel: `${teams.homeTeam} vs ${teams.awayTeam} (scénario type)`,
+                                homeTeam: teams.homeTeam,
+                                awayTeam: teams.awayTeam
+                            }
+                        };
+                    })
             };
         }).sort((a, b) => a.importanceRank - b.importanceRank);
 
@@ -851,54 +834,148 @@ export const getModelsCatalog = async (req, res) => {
 export const calculatePerformanceROI = async (req, res) => {
     try {
         const { portfolioSize, stakePerBet, leagueId, seasonYear, markets } = req.body;
+        const numericPortfolioSize = Number(portfolioSize);
+        const numericStakePerBet = Number(stakePerBet);
+        const marketFilter = markets && markets !== 'all'
+            ? new Set((Array.isArray(markets) ? markets : markets.split(',').map((m) => m.trim())).filter(Boolean))
+            : null;
 
-        let whereClause = `f.status_short IN ('FT', 'AET', 'PEN') AND mm.v3_fixture_id IS NOT NULL`;
+        const simulationFilters = [`fs.status = 'COMPLETED'`];
+        const resultFilters = [`f.status_short IN ('FT', 'AET', 'PEN')`, `fr.market_type IS NOT NULL`];
         const params = [];
-        if (leagueId) { whereClause += ` AND f.league_id = $${params.length + 1}`; params.push(leagueId); }
-        if (seasonYear) { whereClause += ` AND f.season_year = $${params.length + 1}`; params.push(seasonYear); }
-        if (markets && markets !== 'all') {
-            const marketList = Array.isArray(markets) ? markets : markets.split(',').map(m => m.trim());
-            if (marketList.length === 1) {
-                whereClause += ` AND ra.market_type = $${params.length + 1}`; params.push(marketList[0]);
-            } else if (marketList.length > 1) {
-                const placeholders = marketList.map((_, i) => `$${params.length + i + 1}`).join(', ');
-                whereClause += ` AND ra.market_type IN (${placeholders})`; params.push(...marketList);
-            }
+
+        if (leagueId) {
+            simulationFilters.push(`fs.league_id = ?`);
+            params.push(leagueId);
+        }
+        if (seasonYear) {
+            simulationFilters.push(`fs.season_year = ?`);
+            params.push(seasonYear);
+        }
+        if (leagueId) {
+            resultFilters.push(`f.league_id = ?`);
+            params.push(leagueId);
+        }
+        if (seasonYear) {
+            resultFilters.push(`f.season_year = ?`);
+            params.push(seasonYear);
         }
 
         const rows = await dbModule.all(`
-            WITH roi_candidates AS (
+            WITH ranked_simulations AS (
                 SELECT
-                    ra.fixture_id,
-                    ra.market_type,
-                    ra.selection,
-                    ra.ml_probability,
-                    ${ROI_MARKET_SQL} AS bookmaker_odd,
+                    fs.id AS simulation_id,
+                    fs.league_id,
+                    fs.season_year,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY fs.league_id, fs.season_year
+                        ORDER BY fs.id DESC
+                    ) AS rn
+                FROM v3_forge_simulations fs
+                WHERE ${simulationFilters.join(' AND ')}
+                  AND EXISTS (
+                      SELECT 1
+                      FROM v3_forge_results fr
+                      WHERE fr.simulation_id = fs.id
+                        AND fr.market_type IS NOT NULL
+                  )
+            ),
+            latest_simulations AS (
+                SELECT simulation_id, league_id, season_year
+                FROM ranked_simulations
+                WHERE rn = 1
+            ),
+            latest_selection_odds AS (
+                SELECT DISTINCT ON (fixture_id, market_name, label, COALESCE(handicap, -1))
+                    fixture_id,
+                    market_name,
+                    label,
+                    handicap,
+                    odd_value,
+                    captured_at
+                FROM v3_odds_selections
+                ORDER BY fixture_id, market_name, label, COALESCE(handicap, -1), captured_at DESC
+            ),
+            roi_candidates AS (
+                SELECT
+                    fr.fixture_id,
+                    fr.market_type,
+                    fr.predicted_outcome AS selection,
+                    fr.actual_result,
+                    fr.primary_probability AS ml_probability,
                     f.league_id,
                     l.name AS league_name,
+                    COALESCE(l.importance_rank, 9999) AS league_importance,
                     f.season_year,
                     f.goals_home,
                     f.goals_away,
                     f.score_halftime_home,
                     f.score_halftime_away,
                     f.date,
-                    COALESCE(mm.h_corners_ft, 0) + COALESCE(mm.a_corners_ft, 0) AS total_corners,
-                    COALESCE(mm.h_yc_ft, 0) + COALESCE(mm.a_yc_ft, 0) AS total_cards
-                FROM v3_risk_analysis ra
-                JOIN v3_fixtures f ON ra.fixture_id = f.fixture_id
+                    ht.name AS home_team,
+                    at.name AS away_team,
+                    CASE
+                        WHEN fr.market_type = 'FT_1X2' THEN 'Match Winner'
+                        WHEN fr.market_type = 'HT_1X2' THEN 'First Half Winner'
+                        WHEN fr.market_type = 'GOALS_OU' THEN 'Goals Over/Under'
+                        WHEN fr.market_type = 'CORNERS_OU' THEN 'Corners Over Under'
+                        WHEN fr.market_type = 'CARDS_OU' THEN 'Cards Over/Under'
+                        ELSE NULL
+                    END AS odds_market_name,
+                    CASE
+                        WHEN fr.market_type IN ('FT_1X2', 'HT_1X2') AND fr.predicted_outcome = '1' THEN 'Home'
+                        WHEN fr.market_type IN ('FT_1X2', 'HT_1X2') AND fr.predicted_outcome IN ('X', 'N') THEN 'Draw'
+                        WHEN fr.market_type IN ('FT_1X2', 'HT_1X2') AND fr.predicted_outcome = '2' THEN 'Away'
+                        ELSE fr.predicted_outcome
+                    END AS odds_label,
+                    CASE
+                        WHEN fr.market_type IN ('GOALS_OU', 'CORNERS_OU', 'CARDS_OU')
+                        THEN CAST(NULLIF(SPLIT_PART(fr.predicted_outcome, ' ', 2), '') AS DOUBLE PRECISION)
+                        ELSE NULL
+                    END AS selection_line,
+                    COALESCE(selection_odds.odd_value, NULL) AS bookmaker_odd
+                FROM latest_simulations ls
+                JOIN v3_forge_results fr ON fr.simulation_id = ls.simulation_id
+                JOIN v3_fixtures f ON fr.fixture_id = f.fixture_id
                 JOIN v3_leagues l ON f.league_id = l.league_id
-                JOIN ml_matches mm ON mm.v3_fixture_id = f.fixture_id
-                WHERE ${whereClause}
+                JOIN v3_teams ht ON f.home_team_id = ht.team_id
+                JOIN v3_teams at ON f.away_team_id = at.team_id
+                LEFT JOIN latest_selection_odds selection_odds
+                    ON selection_odds.fixture_id = fr.fixture_id
+                   AND selection_odds.market_name = CASE
+                        WHEN fr.market_type = 'FT_1X2' THEN 'Match Winner'
+                        WHEN fr.market_type = 'HT_1X2' THEN 'First Half Winner'
+                        WHEN fr.market_type = 'GOALS_OU' THEN 'Goals Over/Under'
+                        WHEN fr.market_type = 'CORNERS_OU' THEN 'Corners Over Under'
+                        WHEN fr.market_type = 'CARDS_OU' THEN 'Cards Over/Under'
+                        ELSE NULL
+                   END
+                   AND selection_odds.label = CASE
+                        WHEN fr.market_type IN ('FT_1X2', 'HT_1X2') AND fr.predicted_outcome = '1' THEN 'Home'
+                        WHEN fr.market_type IN ('FT_1X2', 'HT_1X2') AND fr.predicted_outcome IN ('X', 'N') THEN 'Draw'
+                        WHEN fr.market_type IN ('FT_1X2', 'HT_1X2') AND fr.predicted_outcome = '2' THEN 'Away'
+                        ELSE fr.predicted_outcome
+                   END
+                   AND (
+                        fr.market_type NOT IN ('GOALS_OU', 'CORNERS_OU', 'CARDS_OU')
+                        OR selection_odds.handicap IS NULL
+                        OR selection_odds.handicap = CAST(NULLIF(SPLIT_PART(fr.predicted_outcome, ' ', 2), '') AS DOUBLE PRECISION)
+                   )
+                WHERE ${resultFilters.join(' AND ')}
             )
             SELECT *
             FROM roi_candidates
             WHERE bookmaker_odd IS NOT NULL
-            ORDER BY date ASC
+            ORDER BY date ASC, fixture_id ASC, market_type ASC
         `, params);
+
+        const filteredRows = marketFilter
+            ? rows.filter((row) => marketFilter.has(row.market_type))
+            : rows;
 
         // Group by fixture+market (take highest probability prediction per group)
         const groups = {};
-        for (const r of rows) {
+        for (const r of filteredRows) {
             const k = `${r.fixture_id}_${r.market_type}`;
             if (!groups[k] || r.ml_probability > groups[k].ml_probability) groups[k] = r;
         }
@@ -911,26 +988,35 @@ export const calculatePerformanceROI = async (req, res) => {
         `, [leagueId]) : null;
 
         // Simulate bets
-        let portfolio = portfolioSize;
+        let portfolio = numericPortfolioSize;
         let wins = 0, losses = 0, bestStreak = 0, worstStreak = 0;
         let currentStreak = 0;
         const equityCurve = [{ betIndex: 0, portfolio }];
-        let maxPortfolio = portfolioSize;
+        let maxPortfolio = numericPortfolioSize;
         let maxDrawdown = 0;
+        const betResults = [];
 
-        for (const row of Object.values(groups)) {
-            const actual = determineActualOutcome(row);
+        const orderedGroups = Object.values(groups).sort((a, b) => {
+            const dateDelta = new Date(a.date) - new Date(b.date);
+            if (dateDelta !== 0) return dateDelta;
+            return Number(a.fixture_id) - Number(b.fixture_id) || String(a.market_type).localeCompare(String(b.market_type));
+        });
+
+        for (const row of orderedGroups) {
+            const actual = row.actual_result || determineActualOutcome(row);
             if (actual === null) continue;
             const isHit = row.selection === actual;
+            const odd = Number(row.bookmaker_odd);
+            const grossReturn = isHit ? numericStakePerBet * odd : 0;
+            const netProfit = isHit ? grossReturn - numericStakePerBet : -numericStakePerBet;
 
             if (isHit) {
-                const profit = stakePerBet * (row.bookmaker_odd - 1);
-                portfolio += profit;
+                portfolio += netProfit;
                 wins++;
                 currentStreak = currentStreak >= 0 ? currentStreak + 1 : 1;
                 if (currentStreak > bestStreak) bestStreak = currentStreak;
             } else {
-                portfolio -= stakePerBet;
+                portfolio += netProfit;
                 losses++;
                 currentStreak = currentStreak <= 0 ? currentStreak - 1 : -1;
                 if (Math.abs(currentStreak) > worstStreak) worstStreak = Math.abs(currentStreak);
@@ -941,15 +1027,206 @@ export const calculatePerformanceROI = async (req, res) => {
             if (drawdown > maxDrawdown) maxDrawdown = drawdown;
 
             equityCurve.push({ betIndex: wins + losses, portfolio: Math.round(portfolio * 100) / 100 });
+
+            betResults.push({
+                betIndex: wins + losses,
+                fixtureId: row.fixture_id,
+                date: row.date,
+                leagueId: row.league_id,
+                leagueName: row.league_name,
+                leagueImportance: Number(row.league_importance || 9999),
+                seasonYear: row.season_year,
+                homeTeam: row.home_team,
+                awayTeam: row.away_team,
+                marketType: row.market_type,
+                marketLabel: ROI_MARKET_LABELS[row.market_type] || row.market_type,
+                selection: row.selection,
+                actualOutcome: actual,
+                mlProbability: roundMetric(row.ml_probability),
+                bookmakerOdd: roundMetric(odd, 2),
+                stake: roundCurrency(numericStakePerBet),
+                grossReturn: roundCurrency(grossReturn),
+                netProfit: roundCurrency(netProfit),
+                isHit,
+                portfolioAfterBet: roundCurrency(portfolio),
+                matchScore: `${row.goals_home}-${row.goals_away}`,
+                halftimeScore: row.score_halftime_home != null && row.score_halftime_away != null
+                    ? `${row.score_halftime_home}-${row.score_halftime_away}`
+                    : null,
+                totalGoals: Number(row.goals_home || 0) + Number(row.goals_away || 0),
+                totalCorners: Number(row.total_corners || 0),
+                totalCards: Number(row.total_cards || 0),
+            });
         }
 
+        const matchResultsMap = new Map();
+        for (const bet of betResults) {
+            const fixtureKey = Number(bet.fixtureId);
+            if (!matchResultsMap.has(fixtureKey)) {
+                matchResultsMap.set(fixtureKey, {
+                    fixtureId: bet.fixtureId,
+                    date: bet.date,
+                    leagueId: bet.leagueId,
+                    leagueName: bet.leagueName,
+                    seasonYear: bet.seasonYear,
+                    homeTeam: bet.homeTeam,
+                    awayTeam: bet.awayTeam,
+                    matchScore: bet.matchScore,
+                    halftimeScore: bet.halftimeScore,
+                    betCount: 0,
+                    totalStake: 0,
+                    totalGrossReturn: 0,
+                    totalNetProfit: 0,
+                    hits: 0,
+                    picks: [],
+                    portfolioAfterMatch: bet.portfolioAfterBet,
+                });
+            }
+
+            const fixtureEntry = matchResultsMap.get(fixtureKey);
+            fixtureEntry.betCount += 1;
+            fixtureEntry.totalStake += bet.stake;
+            fixtureEntry.totalGrossReturn += bet.grossReturn;
+            fixtureEntry.totalNetProfit += bet.netProfit;
+            fixtureEntry.hits += bet.isHit ? 1 : 0;
+            fixtureEntry.portfolioAfterMatch = bet.portfolioAfterBet;
+            fixtureEntry.picks.push({
+                marketType: bet.marketType,
+                marketLabel: bet.marketLabel,
+                selection: bet.selection,
+                actualOutcome: bet.actualOutcome,
+                bookmakerOdd: bet.bookmakerOdd,
+                mlProbability: bet.mlProbability,
+                netProfit: bet.netProfit,
+                isHit: bet.isHit,
+            });
+        }
+
+        const matchResults = [...matchResultsMap.values()].map((match) => ({
+            ...match,
+            totalStake: roundCurrency(match.totalStake),
+            totalGrossReturn: roundCurrency(match.totalGrossReturn),
+            totalNetProfit: roundCurrency(match.totalNetProfit),
+            portfolioAfterMatch: roundCurrency(match.portfolioAfterMatch),
+        }));
+
         const totalBets = wins + losses;
-        const totalStaked = totalBets * stakePerBet;
-        const profit = portfolio - portfolioSize;
-        const marketCoverage = Object.values(groups).reduce((acc, row) => {
-            acc[row.market_type] = (acc[row.market_type] || 0) + 1;
+        const totalStaked = totalBets * numericStakePerBet;
+        const profit = portfolio - numericPortfolioSize;
+        const marketCoverage = betResults.reduce((acc, row) => {
+            acc[row.marketType] = (acc[row.marketType] || 0) + 1;
             return acc;
         }, {});
+        const leagueBreakdownMap = new Map();
+        const marketBreakdownMap = new Map();
+
+        for (const bet of betResults) {
+            if (!leagueBreakdownMap.has(bet.leagueId)) {
+                leagueBreakdownMap.set(bet.leagueId, {
+                    leagueId: bet.leagueId,
+                    leagueName: bet.leagueName,
+                    leagueImportance: bet.leagueImportance,
+                    seasonYear: bet.seasonYear,
+                    fixtureIds: new Set(),
+                    totalBets: 0,
+                    totalStake: 0,
+                    totalGrossReturn: 0,
+                    totalNetProfit: 0,
+                    wins: 0,
+                    markets: {},
+                });
+            }
+
+            const leagueEntry = leagueBreakdownMap.get(bet.leagueId);
+            leagueEntry.fixtureIds.add(bet.fixtureId);
+            leagueEntry.totalBets += 1;
+            leagueEntry.totalStake += bet.stake;
+            leagueEntry.totalGrossReturn += bet.grossReturn;
+            leagueEntry.totalNetProfit += bet.netProfit;
+            leagueEntry.wins += bet.isHit ? 1 : 0;
+
+            if (!leagueEntry.markets[bet.marketType]) {
+                leagueEntry.markets[bet.marketType] = {
+                    marketType: bet.marketType,
+                    marketLabel: bet.marketLabel,
+                    totalBets: 0,
+                    totalStake: 0,
+                    totalGrossReturn: 0,
+                    totalNetProfit: 0,
+                    wins: 0,
+                };
+            }
+
+            const leagueMarketEntry = leagueEntry.markets[bet.marketType];
+            leagueMarketEntry.totalBets += 1;
+            leagueMarketEntry.totalStake += bet.stake;
+            leagueMarketEntry.totalGrossReturn += bet.grossReturn;
+            leagueMarketEntry.totalNetProfit += bet.netProfit;
+            leagueMarketEntry.wins += bet.isHit ? 1 : 0;
+
+            if (!marketBreakdownMap.has(bet.marketType)) {
+                marketBreakdownMap.set(bet.marketType, {
+                    marketType: bet.marketType,
+                    marketLabel: bet.marketLabel,
+                    totalBets: 0,
+                    totalStake: 0,
+                    totalGrossReturn: 0,
+                    totalNetProfit: 0,
+                    wins: 0,
+                });
+            }
+
+            const marketEntry = marketBreakdownMap.get(bet.marketType);
+            marketEntry.totalBets += 1;
+            marketEntry.totalStake += bet.stake;
+            marketEntry.totalGrossReturn += bet.grossReturn;
+            marketEntry.totalNetProfit += bet.netProfit;
+            marketEntry.wins += bet.isHit ? 1 : 0;
+        }
+
+        const serializeBreakdown = (entry) => ({
+            totalBets: entry.totalBets,
+            totalMatches: entry.fixtureIds ? entry.fixtureIds.size : undefined,
+            wins: entry.wins,
+            losses: entry.totalBets - entry.wins,
+            hitRate: entry.totalBets > 0 ? roundMetric(entry.wins / entry.totalBets) : 0,
+            totalStaked: roundCurrency(entry.totalStake),
+            totalReturned: roundCurrency(entry.totalGrossReturn),
+            benefit: roundCurrency(entry.totalNetProfit),
+            roi: entry.totalStake > 0 ? roundMetric((entry.totalNetProfit / entry.totalStake) * 100, 2) : 0,
+        });
+        const marketOrder = Object.keys(ROI_MARKET_LABELS);
+        const leagueBreakdown = [...leagueBreakdownMap.values()]
+            .map((entry) => ({
+                leagueId: entry.leagueId,
+                leagueName: entry.leagueName,
+                leagueImportance: entry.leagueImportance,
+                seasonYear: entry.seasonYear,
+                ...serializeBreakdown(entry),
+                markets: Object.fromEntries(
+                    marketOrder
+                        .filter((marketType) => entry.markets[marketType])
+                        .map((marketType) => [
+                            marketType,
+                            {
+                                marketType,
+                                marketLabel: entry.markets[marketType].marketLabel,
+                                ...serializeBreakdown(entry.markets[marketType]),
+                            },
+                        ]),
+                ),
+            }))
+            .sort((a, b) => a.leagueImportance - b.leagueImportance || a.leagueName.localeCompare(b.leagueName));
+        const marketBreakdown = marketOrder
+            .filter((marketType) => marketBreakdownMap.has(marketType))
+            .map((marketType) => {
+                const entry = marketBreakdownMap.get(marketType);
+                return {
+                    marketType,
+                    marketLabel: entry.marketLabel,
+                    ...serializeBreakdown(entry),
+                };
+            });
 
         res.json({
             success: true,
@@ -959,7 +1236,7 @@ export const calculatePerformanceROI = async (req, res) => {
                     leagueName: leagueMeta?.league_name || null,
                     countryName: leagueMeta?.country_name || null,
                     seasonYear: seasonYear || null,
-                    oddsSource: 'ml_matches',
+                    oddsSource: 'V3_Forge_Results + V3_Odds_Selections',
                     availableMarkets: Object.keys(marketCoverage),
                     marketCoverage,
                 },
@@ -975,8 +1252,13 @@ export const calculatePerformanceROI = async (req, res) => {
                 maxDrawdown: Math.round(maxDrawdown * 100) / 100,
                 bestStreak,
                 worstStreak,
-                stakeTooHigh: stakePerBet > portfolioSize * 0.5,
-                equityCurve
+                stakeTooHigh: numericStakePerBet > numericPortfolioSize * 0.5,
+                equityCurve,
+                leagueBreakdown,
+                marketBreakdown,
+                totalMatches: matchResults.length,
+                matchResults,
+                betResults,
             }
         });
     } catch (err) {
@@ -1116,22 +1398,37 @@ export const createSubmodel = async (req, res) => {
 export const getLeaguesWithOdds = async (_req, res) => {
     try {
         const rows = await dbModule.all(`
+            WITH odds_by_fixture AS (
+                SELECT DISTINCT
+                    fixture_id,
+                    market_name,
+                    label,
+                    handicap
+                FROM V3_Odds_Selections
+            )
             SELECT
                 f.league_id,
                 l.name AS league_name,
                 l.logo_url,
                 c.name AS country_name,
                 f.season_year,
-                COUNT(DISTINCT mm.v3_fixture_id)::int AS odds_count,
-                COUNT(DISTINCT CASE WHEN mm.odds_h IS NOT NULL AND mm.odds_d IS NOT NULL AND mm.odds_a IS NOT NULL THEN mm.v3_fixture_id END)::int AS ft_1x2_count,
-                COUNT(DISTINCT CASE WHEN mm.odds_o25 IS NOT NULL AND mm.odds_u25 IS NOT NULL THEN mm.v3_fixture_id END)::int AS goals_ou_count
-            FROM ml_matches mm
-            JOIN v3_fixtures f ON mm.v3_fixture_id = f.fixture_id
+                COUNT(DISTINCT obf.fixture_id)::int AS odds_count,
+                COUNT(DISTINCT CASE
+                    WHEN obf.market_name = 'Match Winner'
+                    THEN obf.fixture_id
+                END)::int AS ft_1x2_count,
+                COUNT(DISTINCT CASE
+                    WHEN obf.market_name = 'Goals Over/Under'
+                     AND obf.handicap = 2.5
+                    THEN obf.fixture_id
+                END)::int AS goals_ou_count
+            FROM odds_by_fixture obf
+            JOIN v3_fixtures f ON obf.fixture_id = f.fixture_id
             JOIN v3_leagues l ON f.league_id = l.league_id
             LEFT JOIN v3_countries c ON l.country_id = c.country_id
             WHERE f.status_short IN ('FT', 'AET', 'PEN')
             GROUP BY f.league_id, l.name, l.logo_url, c.name, f.season_year
-            HAVING COUNT(DISTINCT mm.v3_fixture_id) > 0
+            HAVING COUNT(DISTINCT obf.fixture_id) > 0
             ORDER BY l.name ASC, f.season_year DESC
         `);
 

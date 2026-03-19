@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # US_35_V3_DB_Cleanup_Schema_Optimization
 
 ## 1. User Story

@@ -44,6 +44,22 @@ export const up = async (db) => {
         error_log TEXT
     )`);
 
+    // Forge Results Table (legacy single-market base, upgraded later to multi-market)
+    await db.run(`CREATE TABLE IF NOT EXISTS V3_Forge_Results (
+        id SERIAL PRIMARY KEY,
+        simulation_id INTEGER NOT NULL REFERENCES V3_Forge_Simulations(id) ON DELETE CASCADE,
+        fixture_id INTEGER NOT NULL REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE,
+        prob_home DOUBLE PRECISION,
+        prob_draw DOUBLE PRECISION,
+        prob_away DOUBLE PRECISION,
+        predicted_score TEXT,
+        actual_winner INTEGER,
+        is_correct INTEGER,
+        edge_value DOUBLE PRECISION,
+        retrieved_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(simulation_id, fixture_id)
+    )`);
+
 
     // Import Status Registry
     await db.run(`CREATE TABLE IF NOT EXISTS V3_Import_Status (

@@ -27,7 +27,7 @@ Pour pouvoir alimenter notre ML Hub avec l'historique des cotes et les prédicti
 - Attention à gérer les conflits (ex: mise à jour des cotes d'un match si elles changent avant le coup d'envoi).
 
 ## 6. Critères d'acceptation (Definition of Done)
-- [ ] Le script SQL de création de la table est fourni et s'exécute sans erreur sur SQLite.
+- [ ] Le script SQL de création de la table est fourni et s'exécute sans erreur sur PostgreSQL.
 - [ ] La table est correctement liée via clé étrangère à `V3_Fixtures`.
 - [ ] Les index sont mis en place pour accélérer les requêtes par `fixture_id`.
 - [ ] `V3_Baseline.sql` est mis à jour pour refléter l'ajout de la table.

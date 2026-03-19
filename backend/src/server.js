@@ -49,6 +49,7 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // 4. CORS Configuration - Allow localhost even in "production" (Docker) if FRONTEND_URL is not set
+const localhostOriginPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
 if (process.env.FRONTEND_URL) {
     allowedOrigins.push(process.env.FRONTEND_URL);
@@ -58,7 +59,7 @@ const corsOptions = {
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
+        if (allowedOrigins.includes(origin) || localhostOriginPattern.test(origin)) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));

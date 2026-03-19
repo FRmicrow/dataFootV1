@@ -1,4 +1,4 @@
-OK — je te donne une **spec exacte** (submodels + entraînement + scripts/pipelines) adaptée à **SQLite + ton schéma V3** et à l’approche “par étapes”.
+OK — je te donne une **spec exacte** (submodels + entraînement + scripts/pipelines) adaptée à **PostgreSQL + ton schéma V3** et à l’approche “par étapes”.
 Je reste **concret** : tables touchées, targets, datasets, features, algos, validation walk-forward, artefacts à enregistrer.
 
 > Hypothèse : tu veux une base solide et extensible (pas encore “edge trading”), avec versions/horizons.

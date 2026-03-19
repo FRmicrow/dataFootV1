@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 Voici une version **copier-coller “agent-ready”** (pseudo-code très proche d’un script Python) pour :
 
 * `04_train_submodels.py` (entraîner + enregistrer dans `V3_Model_Registry` + générer `V3_Submodel_Outputs`)

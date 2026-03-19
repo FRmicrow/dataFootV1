@@ -51,6 +51,6 @@ Docker Development Workflow
 
 **Smart Rebuilds**: Use the `--build` flag (`docker compose up -d --build`) ONLY when adding new library dependencies (`package.json`, `requirements.txt`), modifying a `Dockerfile`, or updating `docker-compose.yml`.
 
-**Data Persistence**: Recognize that the database is managed in a Docker Volume. Do not attempt to sync or commit the 2GB `database.sqlite` file from the local filesystem.
+**Data Persistence**: Recognize that the database is managed in PostgreSQL via Docker volumes. Do not attempt to sync or commit local database artifacts from the filesystem.
 
 **Log Inspection**: Use `docker compose logs -f` or `docker logs <container_name> -f` to monitor application behavior and debug errors instead of relying on local terminal output.

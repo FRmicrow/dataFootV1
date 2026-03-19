@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # US-V3-POC-019: Deep Sync v3 - Discovery Archive & Auto-Creation
 
 **Role**: Full Stack (DB + Backend + Frontend)  

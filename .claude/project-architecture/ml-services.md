@@ -7,7 +7,7 @@ Le `ml-service` est un micro-service Python responsable de toute l'intelligence 
 L'architecture est découpée intelligemment pour faciliter le cycle de vie des modèles :
 
 - `models/` : Contient les définitions des algorithmes prédictifs (CatBoost, régressions) pour divers marchés de paris (1N2, Over/Under, Buteurs...).
-- `orchestrator/` : Gère le pipeline de données. Il orchestre l'extraction (de la DB partagée SQLite), la préparation des *features*, l'entraînement des modèles et leur sauvegarde.
+- `orchestrator/` : Gère le pipeline de données. Il orchestre l'extraction depuis PostgreSQL, la préparation des *features*, l'entraînement des modèles et leur sauvegarde.
 - `risk/` : Engin de gestion des risques. Il évalue la confiance d'une prédiction en fonction de la volatilité, des blessures, ou des anomalies statistiques.
 
 ## Scripts Utilitaires (`ml-service/scripts/`)
@@ -20,4 +20,4 @@ Exemples notables :
 ## Comment solliciter le ML-Service pour une nouvelle Feature ?
 1. **Création du Modèle/Feature** : Ajouter la logique Python dans `models/` ou `features.py`.
 2. **Exposition** : Si le Backend a besoin des résultats "à la demande", le ml-service doit exposer une route via son serveur (probablement FastAPI/Flask qui écoute sur le port 8008, via `main.py`).
-3. **Persistance partagée** : Le plus souvent, le `ml-service` exécute des scripts asynchrones et écrit directement les probabilités dans la base de données SQLite partagée. Le Backend Node.js de son côté lit simplement cette table SQL (`ml_predictions` par hasard) pour les envoyer au Frontend.
+3. **Persistance partagée** : Le plus souvent, le `ml-service` exécute des scripts asynchrones et écrit directement les sorties ML dans PostgreSQL. Le Backend Node.js lit ensuite ces tables normalisées pour les exposer au Frontend.

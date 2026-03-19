@@ -2073,6 +2073,217 @@ paths:
       responses:
         200:
           description: Succès
+  /ml-platform/foresight/leagues:
+    get:
+      operationId: getMlForesightLeagues
+      tags:
+        - Betting & ML
+      summary: Ligues couvertes par ML Hub Prévisions
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        leagueId:
+                          type: integer
+                        leagueName:
+                          type: string
+                        country:
+                          type: string
+                        logo:
+                          type: string
+                          nullable: true
+                        seasonYear:
+                          type: integer
+                          nullable: true
+                        upcomingFixtureCount:
+                          type: integer
+                        predictionReadyCount:
+                          type: integer
+                        historicalFixtureCount:
+                          type: integer
+                        modeledSeasonYears:
+                          type: array
+                          items:
+                            type: integer
+                        markets:
+                          type: object
+                          properties:
+                            ftResult:
+                              type: boolean
+                            htResult:
+                              type: boolean
+                            goalsTotal:
+                              type: boolean
+                            cornersTotal:
+                              type: boolean
+                            cardsTotal:
+                              type: boolean
+                        isFeatured:
+                          type: boolean
+  /ml-platform/foresight/league/{leagueId}:
+    get:
+      operationId: getMlForesightLeague
+      tags:
+        - Betting & ML
+      summary: Saison ML Hub d'une ligue avec matchs a venir et historique modele
+      parameters:
+        - name: leagueId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: seasonYear
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      league:
+                        type: object
+                        properties:
+                          leagueId:
+                            type: integer
+                          leagueName:
+                            type: string
+                          country:
+                            type: string
+                          logo:
+                            type: string
+                            nullable: true
+                          seasonYear:
+                            type: integer
+                            nullable: true
+                      coverage:
+                        type: object
+                        properties:
+                          ftResult:
+                            type: boolean
+                          htResult:
+                            type: boolean
+                          goalsTotal:
+                            type: boolean
+                          cornersTotal:
+                            type: boolean
+                          cardsTotal:
+                            type: boolean
+                      seasonOptions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            seasonYear:
+                              type: integer
+                            isCurrent:
+                              type: boolean
+                            hasHistoricalRun:
+                              type: boolean
+                            latestSimulationId:
+                              type: integer
+                              nullable: true
+                            horizonType:
+                              type: string
+                              nullable: true
+                            completedFixtureCount:
+                              type: integer
+                            upcomingFixtureCount:
+                              type: integer
+                            modeledFixtureCount:
+                              type: integer
+                            marketTypes:
+                              type: array
+                              items:
+                                type: string
+                      summary:
+                        type: object
+                        properties:
+                          selectedSeasonYear:
+                            type: integer
+                            nullable: true
+                          historicalFixtureCount:
+                            type: integer
+                          upcomingFixtureCount:
+                            type: integer
+                          predictionReadyCount:
+                            type: integer
+                          projectedResultCount:
+                            type: integer
+                      fixtures:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            fixtureId:
+                              type: integer
+                            leagueId:
+                              type: integer
+                            seasonYear:
+                              type: integer
+                            date:
+                              type: string
+                              format: date-time
+                            round:
+                              type: string
+                            status:
+                              type: string
+                            matchState:
+                              type: string
+                              enum: [upcoming, completed]
+                            actualScore:
+                              type: string
+                              nullable: true
+                            actualHalfTimeScore:
+                              type: string
+                              nullable: true
+                            actualResult:
+                              type: object
+                              nullable: true
+                            verdict:
+                              type: string
+                              nullable: true
+                              enum: [hit, miss]
+                            predictionStatus:
+                              type: string
+                              enum: [ready, partial, missing]
+                            projectedResult:
+                              type: object
+                              nullable: true
+                            markets:
+                              type: object
+                      upcomingFixtures:
+                        type: array
+                        items:
+                          type: object
+                      historicalFixtures:
+                        type: array
+                        items:
+                          type: object
+        400:
+          description: Erreur de validation
+        404:
+          description: Ligue non couverte ou introuvable
   /ml-platform/performance/roi:
     post:
       operationId: calculatePerformanceROI

@@ -1,3 +1,5 @@
+> Obsolete Note (2026-03-18): Historical SQLite-era document kept for archive only. The active stack now uses PostgreSQL via `statfoot-db`.
+
 # 👤 US_181: Time-Travel Feature Factory
 **Accountable Agent**: ML Agent / Data Engineer
 **Feature Type**: Core Intelligence / Data Pipeline
