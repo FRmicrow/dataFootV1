@@ -5,28 +5,23 @@ import { PageLayout, PageHeader } from '../../layouts';
 import './MachineLearningHub.css';
 
 const MLModelCatalog = lazy(() => import('./MLModelCatalog'));
-const MLPerformanceLab = lazy(() => import('./MLPerformanceLab'));
+const MLPerformanceAnalyticsPage = lazy(() => import('./MLPerformanceAnalyticsPage'));
 const MLForesightHub = lazy(() => import('./MLForesightHub'));
 const MLSubModelBuilder = lazy(() => import('./MLSubModelBuilder'));
 const MLGlossary = lazy(() => import('./MLGlossary'));
 const MLOrchestratorPage = lazy(() => import('./MLOrchestratorPage'));
-const MLSimulationAnalyticsPage = lazy(() => import('./MLSimulationAnalyticsPage'));
-const MLMatchPremiumPage = lazy(() => import('./MLMatchPremiumPage'));
-const MLErrorLabPage = lazy(() => import('./MLErrorLabPage'));
-const MLLeaguePremiumPage = lazy(() => import('./MLLeaguePremiumPage'));
+const MLPremiumIntelPage = lazy(() => import('./MLPremiumIntelPage'));
 
 const navItems = [
     { id: 'models', label: 'Modèles' },
-    { id: 'performance', label: 'Performance' },
     { id: 'foresight', label: 'Prévisions' },
+    { id: 'performance', label: 'Performance' },
+    { id: 'premium', label: 'Premium Intel' },
     { id: 'orchestrator', label: 'Système' },
-    { id: 'analytics', label: 'Analyse' },
-    { id: 'match-premium', label: 'Match' },
-    { id: 'error-lab', label: 'Erreurs' },
-    { id: 'league-premium', label: 'Ligues' },
 ];
 
 const secondaryItems = [
+    { id: 'submodels', label: 'Sub-modèles' },
     { id: 'glossary', label: 'Glossaire' },
 ];
 
@@ -57,6 +52,8 @@ const MachineLearningHub = () => {
         return navItems.some(item => item.id === last) ? last : 'models';
     }, [location]);
 
+    const handleSecondaryNav = (id) => navigate(`/machine-learning/${id}`);
+
     const handleTabChange = (id) => navigate(`/machine-learning/${id}`);
 
     return (
@@ -80,7 +77,7 @@ const MachineLearningHub = () => {
 
             <div className="ml-hub__secondary">
                 {secondaryItems.map((item) => (
-                    <Button key={item.id} variant="ghost" size="sm" onClick={() => navigate(`/machine-learning/${item.id}`)}>
+                    <Button key={item.id} variant="ghost" size="sm" onClick={() => handleSecondaryNav(item.id)}>
                         {item.label}
                     </Button>
                 ))}
@@ -91,28 +88,30 @@ const MachineLearningHub = () => {
                     <Routes>
                         <Route path="/"            element={<Navigate to="models" replace />} />
                         <Route path="models"       element={<MLModelCatalog />} />
-                        <Route path="performance"  element={<MLPerformanceLab />} />
                         <Route path="foresight"    element={<MLForesightHub />} />
+                        <Route path="performance"  element={<MLPerformanceAnalyticsPage />} />
+                        <Route path="premium"      element={<MLPremiumIntelPage />} />
+                        <Route path="orchestrator" element={<MLOrchestratorPage />} />
                         <Route path="submodels"    element={<MLSubModelBuilder />} />
                         <Route path="glossary"     element={<MLGlossary />} />
-                        <Route path="orchestrator" element={<MLOrchestratorPage />} />
-                        <Route path="analytics"    element={<MLSimulationAnalyticsPage />} />
-                        <Route path="match-premium" element={<MLMatchPremiumPage />} />
-                        <Route path="error-lab"    element={<MLErrorLabPage />} />
-                        <Route path="league-premium" element={<MLLeaguePremiumPage />} />
-                        {/* Legacy redirects */}
-                        <Route path="intelligence" element={<Navigate to="/machine-learning/models"    replace />} />
-                        <Route path="factory"      element={<Navigate to="/machine-learning/models"    replace />} />
-                        <Route path="test-lab"     element={<Navigate to="/machine-learning/foresight" replace />} />
-                        <Route path="betting"      element={<Navigate to="/machine-learning/foresight" replace />} />
-                        <Route path="knowledge"    element={<Navigate to="/machine-learning/glossary"  replace />} />
-                        <Route path="odds"         element={<Navigate to="/machine-learning/foresight" replace />} />
+                        {/* Legacy redirects — V36bis consolidation */}
+                        <Route path="analytics"      element={<Navigate to="/machine-learning/performance" replace />} />
+                        <Route path="error-lab"      element={<Navigate to="/machine-learning/performance" replace />} />
+                        <Route path="match-premium"  element={<Navigate to="/machine-learning/premium" replace />} />
+                        <Route path="league-premium" element={<Navigate to="/machine-learning/premium" replace />} />
+                        {/* Legacy redirects — pre-V36 */}
+                        <Route path="intelligence" element={<Navigate to="/machine-learning/models"       replace />} />
+                        <Route path="factory"      element={<Navigate to="/machine-learning/models"       replace />} />
+                        <Route path="test-lab"     element={<Navigate to="/machine-learning/foresight"    replace />} />
+                        <Route path="betting"      element={<Navigate to="/machine-learning/foresight"    replace />} />
+                        <Route path="knowledge"    element={<Navigate to="/machine-learning/glossary"     replace />} />
+                        <Route path="odds"         element={<Navigate to="/machine-learning/foresight"    replace />} />
                         <Route path="system"       element={<Navigate to="/machine-learning/orchestrator" replace />} />
-                        <Route path="analyse"      element={<Navigate to="/machine-learning/analytics" replace />} />
-                        <Route path="match"        element={<Navigate to="/machine-learning/match-premium" replace />} />
-                        <Route path="erreurs"      element={<Navigate to="/machine-learning/error-lab" replace />} />
-                        <Route path="ligues"       element={<Navigate to="/machine-learning/league-premium" replace />} />
-                        <Route path="*"            element={<Navigate to="/machine-learning/models" replace />} />
+                        <Route path="analyse"      element={<Navigate to="/machine-learning/performance"  replace />} />
+                        <Route path="match"        element={<Navigate to="/machine-learning/premium"      replace />} />
+                        <Route path="erreurs"      element={<Navigate to="/machine-learning/performance"  replace />} />
+                        <Route path="ligues"       element={<Navigate to="/machine-learning/premium"      replace />} />
+                        <Route path="*"            element={<Navigate to="/machine-learning/models"       replace />} />
                     </Routes>
                 </Suspense>
             </div>

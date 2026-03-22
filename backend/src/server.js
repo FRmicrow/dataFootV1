@@ -38,13 +38,13 @@ app.use(helmet({
 // 2. Compression
 app.use(compression());
 
-// 3. Rate Limiter (Data Import Friendly: 450 req/min)
+// 3. Rate Limiter (2000 req/min — sufficient for internal scripts + UI usage)
 const globalLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 450,
+    max: 2000,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: 'Rate limit exceeded (450 req/min). Please slow down.' }
+    message: { error: 'Rate limit exceeded (2000 req/min). Please slow down.' }
 });
 app.use(globalLimiter);
 

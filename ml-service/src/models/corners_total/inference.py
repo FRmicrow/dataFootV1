@@ -211,6 +211,95 @@ def _build_corners_result(fixture_id, h_mu, a_mu, model_version, prediction_stat
         "over_under_probabilities": over_under,
     }
 
+def _build_corners_prediction(fixture_id, h_mu, a_mu, model_version, model_scope, is_shadow=False):
+    total_mu = h_mu + a_mu
+    probabilities = {k: poisson_prob(total_mu, k) for k in range(31)}
+    total_prob = sum(probabilities.values()) or 1.0
+    probabilities = {k: p / total_prob for k, p in probabilities.items()}
+    lines = [7.5, 8.5, 9.5, 10.5, 11.5]
+    over_under = {}
+    for line in lines:
+        prob_under = sum(p for k, p in probabilities.items() if k < line)
+        over_under[f"Over {line}"] = float(1.0 - prob_under)
+        over_under[f"Under {line}"] = float(prob_under)
+    return {
+        "fixture_id": fixture_id,
+        "model_version": model_version,
+        "model_scope": model_scope,
+        "prediction_status": "success_model",
+        "is_fallback": False,
+        "is_shadow": is_shadow,
+        "expected_corners": {"home": float(h_mu), "away": float(a_mu), "total": float(total_mu)},
+        "over_under_probabilities": over_under,
+    }
+
+
+def apply_corners_adjustment(prediction, factor):
+    if not factor:
+        return None
+
+    base_total = float(prediction["expected_corners"]["total"])
+    base_home = float(prediction["expected_corners"]["home"])
+    base_away = float(prediction["expected_corners"]["away"])
+    total_delta = float(factor.get("recommended_total_corners_delta", 0.0))
+    cap = float(factor.get("recommended_adjustment_cap", 0.04))
+
+    if base_total <= 0:
+        return None
+
+    base_over_9_5 = float(prediction["over_under_probabilities"].get("Over 9.5", 0.0))
+    home_share = base_home / base_total if base_total > 0 else 0.5
+    away_share = base_away / base_total if base_total > 0 else 0.5
+
+    adjusted = None
+    applied_total_delta = 0.0
+    adjusted_over_9_5 = base_over_9_5
+    for scale in (1.0, 0.85, 0.7, 0.55, 0.4, 0.25, 0.1):
+        candidate_total = max(0.5, base_total + total_delta * scale)
+        candidate_home = max(0.1, candidate_total * home_share)
+        candidate_away = max(0.1, candidate_total * away_share)
+        candidate = _build_corners_prediction(
+            prediction["fixture_id"],
+            candidate_home,
+            candidate_away,
+            prediction["model_version"],
+            "league_adjusted_shadow",
+            is_shadow=True,
+        )
+        candidate_over_9_5 = float(candidate["over_under_probabilities"].get("Over 9.5", 0.0))
+        if abs(candidate_over_9_5 - base_over_9_5) <= cap + 1e-9:
+            adjusted = candidate
+            applied_total_delta = candidate_total - base_total
+            adjusted_over_9_5 = candidate_over_9_5
+            break
+
+    if adjusted is None:
+        adjusted = _build_corners_prediction(
+            prediction["fixture_id"],
+            base_home,
+            base_away,
+            prediction["model_version"],
+            "league_adjusted_shadow",
+            is_shadow=True,
+        )
+        assert adjusted is not None
+
+    adjusted["adjustment_context"] = {
+        "market": "corners_ou",
+        "league_id": factor["league_id"],
+        "league_name": factor["league_name"],
+        "window": factor.get("window"),
+        "style_metrics": factor.get("style_metrics", {}),
+        "indices": factor.get("indices", {}),
+        "recommended_total_corners_delta": total_delta,
+        "recommended_over_9_5_delta": float(factor.get("recommended_over_9_5_delta", 0.0)),
+        "recommended_adjustment_cap": cap,
+        "applied_total_corners_delta": applied_total_delta,
+        "applied_over_9_5_delta": adjusted_over_9_5 - base_over_9_5,
+    }
+    return adjusted
+
+
 def predict_total_corners(fixture_id, version="v2"):
     context = get_fixture_context(fixture_id)
     model_data = load_models(version)
