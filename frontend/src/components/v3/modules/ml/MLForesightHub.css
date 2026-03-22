@@ -113,6 +113,13 @@
     border-style: dashed;
 }
 
+.ml-foresight__fixture-card.is-live {
+    border-color: var(--color-danger, #e53e3e);
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--color-danger, #e53e3e) 6%, transparent), transparent 55%),
+        var(--color-bg-subtle);
+}
+
 .ml-foresight__fixture-top {
     display: flex;
     align-items: flex-start;
@@ -309,4 +316,269 @@
         align-items: flex-start;
         flex-direction: column;
     }
+}
+
+/* ─── V36bis: Edges & Recommendations ─────────────────────────────────────── */
+
+.ml-foresight__edges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-md);
+}
+
+.ml-foresight__edge-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+    animation: fadeSlideUp 0.3s ease both;
+}
+
+.ml-foresight__edge-card:hover {
+    border-color: var(--color-primary-500);
+    box-shadow: var(--shadow-premium, 0 4px 16px rgba(0,0,0,0.15));
+}
+
+.ml-foresight__edge-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-sm);
+}
+
+.ml-foresight__edge-teams {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ml-foresight__edge-teams strong { font-size: var(--text-sm); color: var(--color-text-primary); }
+.ml-foresight__edge-meta { font-size: var(--text-xs); color: var(--color-text-muted); }
+.ml-foresight__edge-vs { color: var(--color-text-muted); font-weight: 400; }
+
+.ml-foresight__edge-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xs);
+}
+
+.ml-foresight__edge-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.ml-foresight__edge-stat span   { font-size: var(--text-xs); color: var(--color-text-muted); }
+.ml-foresight__edge-stat strong { font-size: var(--text-sm); color: var(--color-text-primary); }
+.ml-foresight__edge-value { color: var(--color-primary-500); font-weight: 700; }
+
+/* Recommendations list */
+.ml-foresight__recos-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.ml-foresight__reco-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    animation: fadeSlideUp 0.25s ease both;
+    transition: var(--transition-base);
+}
+
+.ml-foresight__reco-row:hover { border-color: var(--color-primary-500); }
+
+.ml-foresight__reco-match {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.ml-foresight__reco-match strong { font-size: var(--text-sm); color: var(--color-text-primary); }
+.ml-foresight__reco-match span   { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+.ml-foresight__reco-market {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+}
+
+.ml-foresight__reco-prob {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+.ml-foresight__reco-prob strong { font-size: var(--text-base); color: var(--color-primary-500); font-weight: 700; }
+.ml-foresight__reco-prob span   { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Market body ─────────────────────────────────────────────────────────── */
+
+.ml-foresight__market-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+/* Footer meta (model version / expected total) */
+.ml-foresight__market-footer {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.ml-foresight__market-footer strong {
+    color: var(--color-text-secondary);
+    font-weight: 600;
+}
+
+.ml-foresight__market-sub {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
+
+/* ─── 1X2 probability rows ───────────────────────────────────────────────── */
+
+.ml-foresight__prob-table {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ml-foresight__prob-row {
+    display: grid;
+    grid-template-columns: 20px 1fr 44px;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 5px var(--space-sm);
+    border-radius: var(--radius-sm);
+    transition: var(--transition-base);
+}
+
+.ml-foresight__prob-row.is-best {
+    background: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+}
+
+.ml-foresight__prob-outcome {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.ml-foresight__prob-row.is-best .ml-foresight__prob-outcome {
+    color: var(--color-primary-500);
+}
+
+.ml-foresight__prob-bar-wrap {
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--color-border) 60%, transparent);
+    overflow: hidden;
+}
+
+.ml-foresight__prob-bar {
+    height: 100%;
+    border-radius: var(--radius-full);
+    background: var(--color-text-muted);
+    transition: width 0.4s ease;
+}
+
+.ml-foresight__prob-row.is-best .ml-foresight__prob-bar {
+    background: var(--color-primary-500);
+}
+
+.ml-foresight__prob-value {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-align: right;
+    color: var(--color-text-secondary);
+}
+
+.ml-foresight__prob-row.is-best .ml-foresight__prob-value {
+    color: var(--color-primary-500);
+}
+
+/* ─── Over / Under probability table ─────────────────────────────────────── */
+
+.ml-foresight__ou-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.ml-foresight__ou-header {
+    display: grid;
+    grid-template-columns: 44px 1fr 1fr;
+    gap: var(--space-xs);
+    padding: 4px var(--space-sm);
+    background: color-mix(in srgb, var(--color-border) 30%, transparent);
+}
+
+.ml-foresight__ou-header span {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.ml-foresight__ou-header span:first-child {
+    text-align: left;
+}
+
+.ml-foresight__ou-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 1fr;
+    gap: var(--space-xs);
+    align-items: center;
+    padding: 5px var(--space-sm);
+    border-radius: var(--radius-xs, 4px);
+    transition: var(--transition-base);
+}
+
+.ml-foresight__ou-row.is-best {
+    background: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+}
+
+.ml-foresight__ou-row span {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-text-muted);
+}
+
+.ml-foresight__ou-row.is-best span {
+    color: var(--color-primary-500);
+}
+
+.ml-foresight__ou-row strong {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.ml-foresight__ou-row.is-best strong {
+    color: var(--color-text-primary);
 }

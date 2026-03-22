@@ -7,6 +7,46 @@ import MLGlossaryTooltip from './shared/MLGlossaryTooltip';
 import { ForesightFixtureCard, HistoricalFixtureRow } from './submodules/MLForesightComponents';
 import './MLForesightHub.css';
 
+// ─── Power level badge variant ────────────────────────────────────────────────
+const powerVariant = (level) => ({ elite: 'success', strong: 'primary', moderate: 'warning', weak: 'neutral' }[level] || 'neutral');
+
+// ─── Edge card ────────────────────────────────────────────────────────────────
+const EdgeCard = ({ edge }) => (
+    <div className="ml-foresight__edge-card" style={{ animationDelay: `${edge._idx * 50}ms` }}>
+        <div className="ml-foresight__edge-head">
+            <div className="ml-foresight__edge-teams">
+                <strong>{edge.homeTeam} <span className="ml-foresight__edge-vs">vs</span> {edge.awayTeam}</strong>
+                <span className="ml-foresight__edge-meta">{edge.leagueName} · {edge.market}</span>
+            </div>
+            <Badge variant={powerVariant(edge.powerLevel)} size="sm">{edge.powerLevel?.toUpperCase() || 'N/A'}</Badge>
+        </div>
+        <div className="ml-foresight__edge-body">
+            <div className="ml-foresight__edge-stat"><span>Sélection</span><strong>{edge.selection}</strong></div>
+            <div className="ml-foresight__edge-stat"><span>Edge</span><strong className="ml-foresight__edge-value">{Number(edge.edge).toFixed(1)}%</strong></div>
+            <div className="ml-foresight__edge-stat"><span>ML Prob.</span><strong>{(Number(edge.mlProbability) * 100).toFixed(0)}%</strong></div>
+            <div className="ml-foresight__edge-stat"><span>Power Score</span><strong>{Number(edge.powerScore).toFixed(0)}</strong></div>
+        </div>
+    </div>
+);
+
+// ─── Recommendation row ───────────────────────────────────────────────────────
+const RecoRow = ({ reco, idx }) => (
+    <div className="ml-foresight__reco-row" style={{ animationDelay: `${idx * 40}ms` }}>
+        <div className="ml-foresight__reco-match">
+            <strong>{reco.home_team} <span className="ml-foresight__edge-vs">vs</span> {reco.away_team}</strong>
+            <span>{reco.league_name}</span>
+        </div>
+        <div className="ml-foresight__reco-market">
+            <Badge variant="neutral" size="sm">{reco.market_type}</Badge>
+            <span>{reco.selection}</span>
+        </div>
+        <div className="ml-foresight__reco-prob">
+            <strong>{(Number(reco.ml_probability) * 100).toFixed(0)}%</strong>
+            <span>ML</span>
+        </div>
+    </div>
+);
+
 const pickDefaultLeagueId = (leagues) => {
     if (!leagues.length) return '';
 
@@ -27,6 +67,29 @@ const MLForesightHub = () => {
     const [detailLoading, setDetailLoading] = useState(false);
     const [error, setError] = useState(null);
     const [detailError, setDetailError] = useState(null);
+
+    // Edges & Recommendations
+    const [edges, setEdges] = useState([]);
+    const [edgesLoading, setEdgesLoading] = useState(true);
+    const [recos, setRecos] = useState([]);
+    const [recosLoading, setRecosLoading] = useState(true);
+    const [edgesOpen, setEdgesOpen] = useState(true);
+    const [recosOpen, setRecosOpen] = useState(false);
+
+    useEffect(() => {
+        api.getTopEdges({ limit: 8 })
+            .then((rows) => setEdges(Array.isArray(rows) ? rows.map((e, i) => ({ ...e, _idx: i })) : []))
+            .catch(() => setEdges([]))
+            .finally(() => setEdgesLoading(false));
+
+        api.getMLRecommendations()
+            .then((payload) => {
+                const all = payload?.top_confidence || payload?.all || [];
+                setRecos(Array.isArray(all) ? all.slice(0, 8) : []);
+            })
+            .catch(() => setRecos([]))
+            .finally(() => setRecosLoading(false));
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
@@ -121,10 +184,6 @@ const MLForesightHub = () => {
     );
     const upcomingFixtures = activeLeagueData?.upcomingFixtures || activeLeagueData?.fixtures || [];
     const historicalFixtures = activeLeagueData?.historicalFixtures || [];
-    const projectedResults = useMemo(
-        () => upcomingFixtures.filter((fixture) => fixture.projectedResult).slice(0, 12),
-        [upcomingFixtures]
-    );
 
     const totalUpcomingFixtures = useMemo(
         () => leagues.reduce((sum, league) => sum + Number(league.upcomingFixtureCount || 0), 0),
@@ -217,6 +276,48 @@ const MLForesightHub = () => {
 
             <MLHubMetricStrip metrics={metrics} />
 
+            {/* ── Top Edges ── */}
+            <MLHubSection
+                title="Top Edges"
+                subtitle="Value bets détectés par le moteur ML sur les prochains matchs."
+                badge={{ label: edgesLoading ? '…' : `${edges.length} edges`, variant: edges.length ? 'primary' : 'neutral' }}
+                actions={
+                    <Button variant="ghost" size="sm" onClick={() => setEdgesOpen((o) => !o)}>
+                        {edgesOpen ? 'Réduire' : 'Afficher'}
+                    </Button>
+                }
+            >
+                {edgesOpen && (
+                    edgesLoading ? <div className="ml-foresight__edges-grid"><Skeleton height="100px" /><Skeleton height="100px" /><Skeleton height="100px" /></div>
+                    : edges.length ? (
+                        <div className="ml-foresight__edges-grid">
+                            {edges.map((edge) => <EdgeCard key={`${edge.fixtureId}-${edge.market}`} edge={edge} />)}
+                        </div>
+                    ) : <MLHubEmptyState title="Aucun edge disponible" message="Les edges s'affichent quand le moteur ML détecte des cotes sous-évaluées sur des matchs à venir." />
+                )}
+            </MLHubSection>
+
+            {/* ── Recommandations ML ── */}
+            <MLHubSection
+                title="Recommandations ML"
+                subtitle="Top confidence — picks les plus solides du modèle sur les prochains matchs."
+                badge={{ label: recosLoading ? '…' : `${recos.length} picks`, variant: recos.length ? 'neutral' : 'neutral' }}
+                actions={
+                    <Button variant="ghost" size="sm" onClick={() => setRecosOpen((o) => !o)}>
+                        {recosOpen ? 'Réduire' : 'Afficher'}
+                    </Button>
+                }
+            >
+                {recosOpen && (
+                    recosLoading ? <Skeleton height="200px" />
+                    : recos.length ? (
+                        <div className="ml-foresight__recos-list">
+                            {recos.map((reco, idx) => <RecoRow key={`${reco.fixture_id}-${reco.market_type}-${idx}`} reco={reco} idx={idx} />)}
+                        </div>
+                    ) : <MLHubEmptyState title="Aucune recommandation" message="Les recommandations s'affichent dès que le moteur ML retourne des picks haute confiance." />
+                )}
+            </MLHubSection>
+
             <MLHubSection
                 title="Ligues couvertes"
                 subtitle="Sélectionne une ligue V36. La liste des prochains matchs vient du même socle que la page ligue classique."
@@ -279,38 +380,9 @@ const MLForesightHub = () => {
             </MLHubSection>
 
             <MLHubSection
-                title="Résultats à venir"
-                subtitle="Lecture rapide du FT 1X2 projeté sur la ligue sélectionnée."
-                badge={{ label: activeLeague ? `${activeLeague.leagueName} · ${activeSeasonYear || '—'}` : 'Prévisions', variant: 'neutral' }}
-            >
-                {detailLoading ? (
-                    <div className="ml-foresight__result-strip">
-                        <Skeleton height="140px" />
-                        <Skeleton height="140px" />
-                        <Skeleton height="140px" />
-                    </div>
-                ) : detailError ? (
-                    <MLHubEmptyState title="Prévisions indisponibles" message={detailError} />
-                ) : projectedResults.length ? (
-                    <div className="ml-foresight__result-strip">
-                        {projectedResults.map((fixture) => (
-                            <ForesightFixtureCard key={`${fixture.fixtureId}-projected`} fixture={fixture} compact />
-                        ))}
-                    </div>
-                ) : (
-                    <MLHubEmptyState
-                        title="Aucune projection FT"
-                        message={activeSeason?.upcomingFixtureCount
-                            ? 'Les matchs a venir sont bien remontes, mais aucune sortie FT 1X2 n’est encore persistee pour cette ligue.'
-                            : 'La saison selectionnee n’a actuellement plus de match a venir a projeter.'}
-                    />
-                )}
-            </MLHubSection>
-
-            <MLHubSection
-                title="Prochains matchs"
-                subtitle="Chaque match reste visible même si la prédiction est partielle ou encore en attente."
-                badge={{ label: `${upcomingFixtures.length} matchs`, variant: 'neutral' }}
+                title="Matchs à venir & en cours"
+                subtitle="Tous les matchs non terminés pour la ligue et la saison sélectionnées, avec les prédictions ML associées."
+                badge={{ label: `${upcomingFixtures.length} match${upcomingFixtures.length > 1 ? 's' : ''}`, variant: upcomingFixtures.length ? 'primary' : 'neutral' }}
             >
                 {detailLoading ? (
                     <div className="ml-foresight__fixture-list">
@@ -335,8 +407,8 @@ const MLForesightHub = () => {
 
             <MLHubSection
                 title="Historique des matchs"
-                subtitle="Toutes les fixtures terminées de la saison sélectionnée, lues depuis V3_Fixtures puis enrichies avec le dernier run complété de cette année."
-                badge={{ label: `${historicalFixtures.length} matchs`, variant: 'neutral' }}
+                subtitle="Matchs terminés de la saison sélectionnée enrichis avec les résultats du dernier run ML complété."
+                badge={{ label: `${historicalFixtures.length} match${historicalFixtures.length > 1 ? 's' : ''}`, variant: historicalFixtures.length ? 'neutral' : 'neutral' }}
             >
                 {detailLoading ? (
                     <div className="ml-foresight__history-list">

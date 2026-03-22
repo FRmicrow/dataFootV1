@@ -31,6 +31,7 @@ const EXPECTED_TOTAL_KEY_BY_MARKET = {
 };
 
 const FINISHED_STATUSES = ['FT', 'AET', 'PEN', 'AWD', 'WO', 'CANC', 'ABD'];
+const LIVE_STATUSES = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'INT', 'LIVE'];
 const HISTORICAL_VISIBLE_STATUSES = ['FT', 'AET', 'PEN', 'AWD', 'WO'];
 
 const MARKET_TYPE_TO_KEY = {
@@ -325,8 +326,10 @@ const resolveSeasonYear = async (leagueId, explicitSeasonYear) => {
         SELECT
             ls.season_year,
             COALESCE(MAX(CASE
-                WHEN f.date >= NOW() AND COALESCE(f.status_short, 'NS') NOT IN (${makeInClause(FINISHED_STATUSES)})
-                THEN 1 ELSE 0
+                WHEN (
+                    COALESCE(f.status_short, 'NS') IN (${makeInClause(LIVE_STATUSES)})
+                    OR (f.date >= NOW() AND COALESCE(f.status_short, 'NS') NOT IN (${makeInClause(FINISHED_STATUSES)}))
+                ) THEN 1 ELSE 0
             END), 0) AS has_upcoming,
             COUNT(f.fixture_id) AS fixture_count,
             COALESCE(ls.is_current, false) AS is_current
@@ -341,7 +344,7 @@ const resolveSeasonYear = async (leagueId, explicitSeasonYear) => {
             is_current DESC,
             ls.season_year DESC
         LIMIT 1
-    `, [...FINISHED_STATUSES, leagueId]);
+    `, [...LIVE_STATUSES, ...FINISHED_STATUSES, leagueId]);
 
     if (seasonRow?.season_year) {
         return Number(seasonRow.season_year);
@@ -351,15 +354,17 @@ const resolveSeasonYear = async (leagueId, explicitSeasonYear) => {
         SELECT
             f.season_year,
             COALESCE(MAX(CASE
-                WHEN f.date >= NOW() AND COALESCE(f.status_short, 'NS') NOT IN (${makeInClause(FINISHED_STATUSES)})
-                THEN 1 ELSE 0
+                WHEN (
+                    COALESCE(f.status_short, 'NS') IN (${makeInClause(LIVE_STATUSES)})
+                    OR (f.date >= NOW() AND COALESCE(f.status_short, 'NS') NOT IN (${makeInClause(FINISHED_STATUSES)}))
+                ) THEN 1 ELSE 0
             END), 0) AS has_upcoming
         FROM V3_Fixtures f
         WHERE f.league_id = ?
         GROUP BY f.season_year
         ORDER BY has_upcoming DESC, f.season_year DESC
         LIMIT 1
-    `, [...FINISHED_STATUSES, leagueId]);
+    `, [...LIVE_STATUSES, ...FINISHED_STATUSES, leagueId]);
 
     return fallbackRow?.season_year ? Number(fallbackRow.season_year) : null;
 };
@@ -386,10 +391,12 @@ const getUpcomingFixtures = async (leagueId, seasonYear) => {
         JOIN V3_Teams at ON f.away_team_id = at.team_id
         WHERE f.league_id = ?
           AND f.season_year = ?
-          AND f.date >= NOW()
-          AND COALESCE(f.status_short, 'NS') NOT IN (${makeInClause(FINISHED_STATUSES)})
+          AND (
+              COALESCE(f.status_short, 'NS') IN (${makeInClause(LIVE_STATUSES)})
+              OR (f.date >= NOW() AND COALESCE(f.status_short, 'NS') NOT IN (${makeInClause(FINISHED_STATUSES)}))
+          )
         ORDER BY f.date ASC, f.fixture_id ASC
-    `, [leagueId, seasonYear, ...FINISHED_STATUSES]);
+    `, [leagueId, seasonYear, ...LIVE_STATUSES, ...FINISHED_STATUSES]);
 };
 
 const getCompletedFixtures = async (leagueId, seasonYear) => {
@@ -433,14 +440,16 @@ const getSeasonFixtureCounts = async (leagueId) => {
                 WHERE COALESCE(f.status_short, 'NS') IN (${makeInClause(HISTORICAL_VISIBLE_STATUSES)})
             ) AS completed_fixture_count,
             COUNT(*) FILTER (
-                WHERE f.date >= NOW()
-                  AND COALESCE(f.status_short, 'NS') NOT IN (${makeInClause(FINISHED_STATUSES)})
+                WHERE (
+                    COALESCE(f.status_short, 'NS') IN (${makeInClause(LIVE_STATUSES)})
+                    OR (f.date >= NOW() AND COALESCE(f.status_short, 'NS') NOT IN (${makeInClause(FINISHED_STATUSES)}))
+                )
             ) AS upcoming_fixture_count
         FROM V3_Fixtures f
         WHERE f.league_id = ?
         GROUP BY f.season_year
         ORDER BY f.season_year DESC
-    `, [...HISTORICAL_VISIBLE_STATUSES, ...FINISHED_STATUSES, leagueId]);
+    `, [...HISTORICAL_VISIBLE_STATUSES, ...LIVE_STATUSES, ...FINISHED_STATUSES, leagueId]);
 };
 
 const getHistoricalSeasonRuns = async (leagueId) => {
