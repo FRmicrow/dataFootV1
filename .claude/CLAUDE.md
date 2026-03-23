@@ -63,18 +63,21 @@ Read these before implementing any feature:
 - `.claude/rules/ai-cognition.md` — how to reason and search the codebase
 - `.claude/rules/development-best-practices.md` — code and testing standards
 - `.claude/rules/visual-manifesto.md` — UI design standards (UI features)
-- `.claude/workflows/implement-feature.md` — end-to-end feature workflow
 
-Skills are located in `.agents/skills/` and follow the [Agent Skills specification](https://agentskills.io/specification). Both Antigravity and Claude should use these:
-- `project-context` — master project reference (Read this first)
-- `web-dev` — React, Next.js, TS, CSS
-- `testing` — Vitest, Playwright, QA battery
-- `devops` — Docker, CI/CD
-- `docs` — Documentation standards
-- `code-quality` — Refactoring and Best Practices
-- `design` — UI/UX and Visual Manifesto
-- `productivity` — Workflows and Multi-agent coordination
-- `data-analyzer` — Match data and xG specialization
+## Slash Commands
+- `/project:create-new-feature` — feature de A à Z (TSD → US → impl → tests → doc → merge)
+- `/project:implement-feature [US]` — implémenter une US de bout en bout
+- `/project:run-tests` — batterie complète (Docker + backend + frontend)
+- `/project:gitflow` — commit + push + merge vers main
+- `/project:deploy` — déploiement Docker Compose
+
+## Agents spécialisés (déclenchement auto)
+- `code-reviewer` — revue de code avant merge
+- `security-auditor` — audit sécurité (SQL injection, XSS, secrets)
+- `qa-runner` — exécution tests + QA Reports
+- `doc-writer` — génération QA-REPORT, Swagger, technical-spec
+
+Skills are located in `.claude/skills/` and follow the [Agent Skills specification](https://agentskills.io/specification).
 
 ## Project Structure
 - `backend/src/config/database.js` — PostgreSQL pool with `db.all()`, `db.get()`, `db.run()` (parameterized, `?` → `$N` auto-conversion)

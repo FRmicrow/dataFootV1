@@ -164,6 +164,7 @@ const SeasonOverviewPage = () => {
         const allFixtures = fixturesData.fixtures || [];
 
         const parseN = (r) => {
+            if (!r) return null;
             let m = r.match(/^League Stage - (\d+)$/i);
             if (m) return Number(m[1]);
             m = r.match(/^Regular Season - (\d+)$/i);
