@@ -114,5 +114,5 @@ Présente le bilan complet à l'utilisateur :
 Veux-tu merger cette feature vers main ?
 ```
 
-- **Si oui** → lance `/project:gitflow`
+- **Si oui** → lance `/project:gitflow` (merge vers `dev`)
 - **Si non** → note les points à retravailler et attends les instructions
