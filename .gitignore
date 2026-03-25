@@ -81,3 +81,12 @@ Database - Odds - Europe Conference League - LS.zip
 Database - Odds - Europe Conference League - LS/
 Database-Odds/
 *.csv
+
+# Données externes & temporaires
+externalData/
+.tmp_extracted/
+.tmp_oddsportal_extracted/
+
+# Rapports Sonar (générés localement — sonar-project.properties et scripts conservés)
+sonar/*.csv
+sonar/*.xlsx
