@@ -252,9 +252,10 @@ const V3LeaguesList = () => {
                                         key={country.name}
                                         title={
                                             <Stack direction="row" align="center" gap="var(--spacing-md)">
-                                                <div className="v3-flag-circle">
-                                                    {country.flag ? <img src={country.flag} alt="" /> : '🏳️'}
-                                                </div>
+                                                {country.flag
+                                                    ? <div className="v3-flag-circle"><img src={country.flag} alt="" /></div>
+                                                    : <div className="v3-zone-badge">{country.name}</div>
+                                                }
                                                 <div>
                                                     <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>{country.name}</h3>
                                                     <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>

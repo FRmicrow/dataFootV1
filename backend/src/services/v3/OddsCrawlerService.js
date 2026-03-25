@@ -90,6 +90,10 @@ class OddsCrawlerService {
      * @private
      */
     async _syncFixtureOdds(fixtureId, apiId) {
+        if (!apiId) {
+            logger.info({ fixture_id: fixtureId }, 'Skipping odds sync: fixture has no api_id (non-API source)');
+            return false;
+        }
         try {
             // US-1917: We call the specific fixture odds endpoint
             const response = await footballApi.getOdds({ fixture: apiId });

@@ -5,10 +5,12 @@
 
 .ds-fixture-row {
     flex: 1;
-    min-height: 34px;
-    padding: 0 var(--spacing-md);
+    min-height: 56px;
+    padding: var(--spacing-sm) var(--spacing-md);
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -57,6 +59,11 @@
     object-fit: contain;
     flex-shrink: 0;
     display: block;
+}
+
+.ds-fr-logo--placeholder {
+    background: var(--color-bg-hover);
+    border-radius: var(--radius-xs);
 }
 
 /* ── xG values ── */
@@ -122,20 +129,6 @@
     0%, 100% { opacity: 1; }
     50%       { opacity: 0.4; }
 }
-
-/* ── Aggregate/winner line (2-leg ties) ── */
-.ds-fixture-extra {
-    margin-top: 3px;
-    display: flex;
-    justify-content: center;
-    gap: var(--spacing-md);
-    font-size: 9px;
-    text-transform: uppercase;
-    font-weight: 800;
-}
-
-.ds-fixture-extra .agg    { color: var(--color-primary-400); }
-.ds-fixture-extra .winner { color: var(--color-text-main); }
 
 /* ── Compact mode: no xG, 5-column grid, wrappable names ─────────────────── */
 .ds-fixture-row--compact .ds-fr-grid {

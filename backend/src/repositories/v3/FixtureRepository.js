@@ -26,10 +26,11 @@ class FixtureRepository extends BaseRepository {
         return await this.db.all(`
             SELECT 
                 fe.*,
-                (CASE 
-                    WHEN fe.team_id = f.home_team_id THEN 1 
+                (CASE
+                    WHEN fe.team_id = f.home_team_id THEN 1
                     WHEN t_home.api_id = fe.team_id THEN 1
-                    ELSE 0 
+                    WHEN fe.team_id IS NULL AND fe.side = 'home' THEN 1
+                    ELSE 0
                  END) as is_home_team
             FROM V3_Fixture_Events fe
             JOIN V3_Fixtures f ON fe.fixture_id = f.fixture_id

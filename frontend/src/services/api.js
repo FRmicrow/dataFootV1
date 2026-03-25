@@ -48,6 +48,7 @@ export default {
     getStructuredLeagues: () => api.get('/leagues/structured'),
     getSeasonOverview: (id, year) => api.get(`/league/${id}/season/${year}`),
     getSeasonPlayers: (id, year, params) => api.get(`/league/${id}/season/${year}/players`, { params }),
+    getGroupStandings: (id, year) => api.get(`/league/${id}/season/${year}/group-standings`),
     getStandings: (id, year) => api.get(`/league/${id}/standings?year=${year}`), // Note: Verify if query param or path param
     getDynamicStandings: (params) => api.get(`/standings/dynamic?${new URLSearchParams(params)}`),
 

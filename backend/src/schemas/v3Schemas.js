@@ -215,6 +215,13 @@ export const leagueIdParamSchema = z.object({
     })
 });
 
+export const leagueSeasonParamSchema = z.object({
+    params: z.object({
+        id: z.coerce.number().positive(),
+        year: z.coerce.number().min(1900).max(2100)
+    })
+});
+
 export const simulationStatusSchema = z.object({
     query: z.object({
         leagueId: z.coerce.number().positive(),

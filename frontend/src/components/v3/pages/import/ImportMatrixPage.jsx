@@ -96,7 +96,7 @@ const MatrixRow = React.memo(({ league, years, isSelected, onSelect, batchQueueK
                 <img src={league.logo} alt="" className="comp-logo" />
                 <div className="comp-info">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <img src={league.flag} alt="" className="comp-flag" />
+                        {league.flag && <img src={league.flag} alt="" className="comp-flag" />}
                         <span className="comp-name">{league.name}</span>
                     </div>
                     <span className="comp-country">{league.country}</span>
@@ -471,7 +471,7 @@ const ImportMatrixPage = () => {
                                         <div className="discovery-batch-items">
                                             {discoveryBatch.map(item => (
                                                 <div key={item.leagueId} className="discovery-batch-tag">
-                                                    <img src={item.flag} alt="" className="mini-flag" />
+                                                    {item.flag && <img src={item.flag} alt="" className="mini-flag" />}
                                                     <span>{item.name} ({item.seasonYear})</span>
                                                     <button className="btn-remove-tag" onClick={() => removeFromDiscoveryBatch(item.leagueId)}>×</button>
                                                 </div>

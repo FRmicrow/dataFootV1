@@ -11,6 +11,7 @@ import StandingsTable from '../../modules/league/StandingsTable';
 import FixturesList from '../../modules/league/FixturesList';
 import SquadList from '../../modules/league/SquadList';
 import LeagueXGTable from '../../modules/league/LeagueXGTable';
+import GroupStandings from '../../modules/league/GroupStandings';
 
 const SeasonOverviewPage = () => {
     const { id, year } = useParams();
@@ -25,6 +26,8 @@ const SeasonOverviewPage = () => {
     const [standings, setStandings] = useState([]);
     const [fixturesData, setFixturesData] = useState({ fixtures: [], rounds: [] });
     const [selectedRound, setSelectedRound] = useState('');
+    const [groupStandings, setGroupStandings] = useState([]);
+    const [groupStandingsLoading, setGroupStandingsLoading] = useState(false);
 
     const [rangeStart, setRangeStart] = useState(1);
     const [rangeEnd, setRangeEnd] = useState(38);
@@ -44,7 +47,7 @@ const SeasonOverviewPage = () => {
             if (!year) {
                 const res = await api.getLeagueSeasons(id);
                 const seasonsList = res.seasons || [];
-                const imported = seasonsList.filter(s => s.imported_players === 1);
+                const imported = seasonsList.filter(s => s.imported_players === 1 || s.imported_fixtures === true || s.imported_fixtures === 1);
                 if (imported.length > 0) {
                     // Prioritize the season marked as current
                     const currentSeason = imported.find(s => s.is_current === 1 || s.is_current === true);
@@ -62,12 +65,25 @@ const SeasonOverviewPage = () => {
                 api.getLeagueFixtures(id, targetYear)
             ]);
 
-            setData(overviewRes);
-            setStandings(overviewRes.standings || []);
+            // Fetch group standings in background (non-blocking)
+            setGroupStandingsLoading(true);
+            api.getGroupStandings(id, targetYear)
+                .then(data => setGroupStandings(data || []))
+                .catch(() => setGroupStandings([]))
+                .finally(() => setGroupStandingsLoading(false));
 
-            if (overviewRes.standings && overviewRes.standings.length > 0 && !isDynamicMode) {
-                const maxPlayed = Math.max(...overviewRes.standings.map(t => t.played || 0));
+            setData(overviewRes);
+            const fetchedStandings = overviewRes.standings || [];
+            setStandings(fetchedStandings);
+
+            if (fetchedStandings.length > 0 && !isDynamicMode) {
+                const maxPlayed = Math.max(...fetchedStandings.map(t => t.played || 0));
                 setRangeEnd(maxPlayed || 38);
+            }
+
+            // Fall back to groups/fixtures tab when no standings available
+            if (fetchedStandings.length === 0) {
+                setActiveTab('fixtures'); // will switch to 'groups' once groupStandings loads
             }
 
             setFixturesData(fixturesRes || { fixtures: [], rounds: [] });
@@ -256,6 +272,8 @@ const SeasonOverviewPage = () => {
     const isUEFACup = [1475, 1476, 1516].includes(Number.parseInt(id));
     const isModernUEFA = isUEFACup && Number.parseInt(year) >= 2024;
 
+    const hasGroups = groupStandings.length > 0;
+
     const tabItems = [
         { id: 'overview', label: 'Player Insights', icon: '🔭' },
         {
@@ -267,6 +285,12 @@ const SeasonOverviewPage = () => {
             })(),
             icon: '📊',
             hidden: league.type === 'Cup' && !isUEFACup
+        },
+        {
+            id: 'groups',
+            label: 'Groupes',
+            icon: '⬡',
+            hidden: !hasGroups && !groupStandingsLoading,
         },
         {
             id: 'fixtures',
@@ -346,6 +370,12 @@ const SeasonOverviewPage = () => {
                                 </div>
                             )}
                         </div>
+                    )}
+                    {activeTab === 'groups' && (
+                        <GroupStandings
+                            groups={groupStandings}
+                            loading={groupStandingsLoading}
+                        />
                     )}
                     {activeTab === 'fixtures' && (
                         <FixturesList

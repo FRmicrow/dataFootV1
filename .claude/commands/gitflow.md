@@ -1,5 +1,5 @@
 ---
-description: Commit, push et merge vers main — workflow Git complet avec gates de validation
+description: Commit, push et merge vers dev — workflow Git complet avec gates de validation
 ---
 
 ## État du dépôt
@@ -37,13 +37,16 @@ Endosse le rôle **Git Engineer** et exécute le gitflow :
 
 5. **Archive** : Déplace `docs/features/Vxx-[Nom]/` → `docs/features/Completed-Feature/`
 
-6. **Demande de merge (BLOQUANT)** : "Prêt à merger [branche] vers main ?" — attend la confirmation
+6. **Demande de merge (BLOQUANT)** : "Prêt à merger [branche] vers dev ?" — attend la confirmation
 
-7. **Merge** :
+7. **Merge vers dev uniquement** :
    ```bash
-   git checkout main && git pull && git merge [branche]
+   git checkout dev && git pull && git merge [branche] && git push origin dev
    ```
 
 8. **Nettoyage** : Supprime la branche locale et distante
 
-**RÈGLE ABSOLUE** : Ne jamais forcer sur main, ne jamais skipper les tests, ne jamais committer `.env`
+**RÈGLES ABSOLUES** :
+- Les features mergent **uniquement vers `dev`** — jamais directement vers `preprod` ou `main`
+- `preprod` et `main` sont gérés manuellement par l'utilisateur
+- Ne jamais forcer sur une branche protégée, ne jamais skipper les tests, ne jamais committer `.env`

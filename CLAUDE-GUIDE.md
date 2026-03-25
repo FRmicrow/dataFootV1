@@ -4,6 +4,20 @@ Comment utiliser Claude à son plein potentiel sur ce projet.
 
 ---
 
+## Stratégie de branches
+
+```
+main      ← production stable        (manuel uniquement)
+preprod   ← validation pré-prod      (manuel uniquement)
+dev       ← intégration features     ← Claude merge ici
+  └── feature/Vxx-[Nom]              ← Claude travaille ici
+```
+
+**Claude gère uniquement** : `feature/*` → `dev`
+**Manuel uniquement** : `dev` → `preprod` → `main`
+
+---
+
 ## Architecture de la config
 
 ```
@@ -115,7 +129,7 @@ Tape `/project:` dans Claude Code pour voir la liste complète. Chaque commande 
 
 ### `/project:gitflow`
 
-**Quand** : Tu veux commiter, pusher et merger une feature terminée.
+**Quand** : Tu veux commiter, pusher et merger une feature terminée vers `dev`.
 
 **Ce que ça fait (avec 2 gates de validation obligatoires) :**
 1. `git status` + `git diff --stat` pour vérifier l'état
@@ -123,8 +137,8 @@ Tape `/project:` dans Claude Code pour voir la liste complète. Chaque commande 
 3. `npm test` des deux côtés avant tout commit
 4. `git add` + `git commit` + `git push`
 5. Archive `docs/features/Vxx-[Nom]/` → `docs/features/Completed-Feature/`
-6. **Gate 2** : "Prêt à merger vers main ?" → **attends ta validation**
-7. Merge + nettoyage de branche
+6. **Gate 2** : "Prêt à merger vers dev ?" → **attends ta validation**
+7. Merge vers `dev` + nettoyage de branche
 
 **Important** : Claude ne mergera jamais sans ta confirmation explicite.
 

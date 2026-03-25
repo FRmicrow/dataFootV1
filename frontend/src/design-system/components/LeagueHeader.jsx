@@ -99,9 +99,14 @@ const LeagueHeader = ({
         extractImageColors(league.logo, setColors);
     }, [league.logo, league.id, key]);
 
+    const isSingleYear = [44, 42].includes(Number(league.id));
+    // TM stores season_year = tournament_year - 1 for historical editions (odd years)
+    // API-Football uses the actual tournament year (even). Normalize to display year.
+    const displayYear = (y) => isSingleYear && Number(y) % 2 !== 0 ? Number(y) + 1 : Number(y);
+
     const subtitles = [
         league.country?.name ?? 'International',
-        activeSeason ? `${activeSeason} / ${Number(activeSeason) + 1}` : null,
+        activeSeason ? (isSingleYear ? String(displayYear(activeSeason)) : `${activeSeason} / ${Number(activeSeason) + 1}`) : null,
     ].filter(Boolean);
 
     const rightSlot = (
@@ -115,7 +120,7 @@ const LeagueHeader = ({
                     aria-label="Season"
                 >
                     {availableYears.map(y => (
-                        <option key={y} value={y}>{y} / {Number(y) + 1}</option>
+                        <option key={y} value={y}>{isSingleYear ? displayYear(y) : `${y} / ${Number(y) + 1}`}</option>
                     ))}
                 </select>
             )}

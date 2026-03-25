@@ -11,6 +11,7 @@
     align-items: center;
     gap: 0;
     min-width: 0;
+    flex: 1;
 }
 
 /* Left anchor: label + badge grouped together */
@@ -40,10 +41,16 @@
     display: flex;
     gap: 6px;
     overflow-x: auto;
-    padding: var(--spacing-2xs) var(--spacing-sm) var(--spacing-2xs) 2px;
+    padding: var(--spacing-2xs) 0 var(--spacing-2xs) 2px;
     scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to left, transparent 0, black 32px);
+    mask-image: linear-gradient(to left, transparent 0, black 32px);
+}
+
+/* Extra scroll space to push the last element out of the fade zone */
+.ds-md-selector-scroll::after {
+    content: '';
+    flex: 0 0 24px;
 }
 
 .ds-md-selector-scroll::-webkit-scrollbar {
@@ -53,7 +60,7 @@
 /* Round pill button */
 .ds-md-round-pill {
     flex-shrink: 0;
-    padding: 6px 16px;
+    padding: 4px 14px;
     border-radius: var(--radius-full);
     font-size: 11px;
     font-weight: 800;
@@ -79,47 +86,63 @@
     border-color: var(--color-primary-400);
 }
 
-/* Phase separator label */
-.ds-md-phase-sep {
+/* ── Phase Wrappers (Groups of pills) ── */
+.ds-md-phase-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-full);
+    padding: 3px 4px 3px 12px;
     flex-shrink: 0;
-    align-self: center;
-    padding: 0 6px;
+}
+
+.ds-md-phase-label {
     font-size: 9px;
-    font-weight: var(--font-weight-black);
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--color-text-dim);
-    opacity: 0.5;
+    letter-spacing: 0.08em;
+    color: var(--color-primary-400);
     white-space: nowrap;
-    pointer-events: none;
+    opacity: 0.8;
 }
 
-/* ── Fixture list body — flex column so rows fill all available height ───── */
+.ds-md-phase-pills {
+    display: flex;
+    gap: 4px;
+}
+
+/* ── Fixture list body — explicit height so rows fill it via flex-grow ──────
+   Height = viewport - page chrome (nav + tabs) - card header.
+   Must be explicit (not flex:1) so it stays stable when the expansion panel
+   is appended below it in the Card. */
 .ds-fixtures-body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    height: calc(100vh - 260px);
+    min-height: 200px;
+    overflow-y: scroll;
     display: flex;
     flex-direction: column;
 }
 
-/* Match group wrappers (single or tie) fill space proportionally */
-.ds-fixtures-body > div:not(.ds-fixture-day-sep) {
-    flex: 1;
-    min-height: 34px;
+/* Group wrappers — should not grow, they have intrinsic height. */
+.ds-fixtures-body > div:not(.ds-fixture-day-sep):not(.ds-fixture-expansion-panel):not(.ds-fixture-section-header) {
+    flex: 0 0 auto;
+    min-height: 56px;
     display: flex;
     flex-direction: column;
 }
 
-/* Expansion panels stay at natural height — don't steal from rows */
+/* Expansion panel — inline below the clicked group */
 .ds-fixture-expansion-panel {
     flex: 0 0 auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* ── Inline date row: date col + fixture row on same line ─────────────────── */
 .ds-fixture-date-row {
-    flex: 1;
-    min-height: 34px;
+    flex: 0 0 auto;
+    min-height: 56px;
     display: flex;
     align-items: stretch;
 }
@@ -140,6 +163,22 @@
     text-align: right;
 }
 
+.ds-tie-date {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+}
+
+.ds-tie-leg-name {
+    color: var(--color-primary-400);
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.8;
+}
+
 /* ── Day separator — thin line after last match of each day ──────────────── */
 .ds-fixture-day-sep {
     flex: 0 0 auto;
@@ -154,4 +193,62 @@
     font-weight: 900;
     color: var(--color-text-dim);
     letter-spacing: 0.2em;
+}
+
+/* ── Petite Finale / Finale section header ────────────────────────────── */
+.ds-fixture-section-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ds-fixture-section-header span {
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-primary-400);
+}
+
+/* ── Two-leg Tie Groups ──────────────────────────────────────────────────── */
+.ds-fixture-tie-group {
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.025));
+    border-left: 2px solid var(--color-primary-600);
+    margin-bottom: var(--spacing-sm);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    overflow: hidden;
+}
+
+.ds-fixture-tie-group .ds-fixture-row {
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.04);
+}
+
+.ds-fixture-tie-group .ds-fixture-date-row:last-of-type .ds-fixture-row {
+    border-bottom: none;
+}
+
+.ds-fixture-tie-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: rgba(0, 0, 0, 0.25);
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.ds-tie-agg {
+    color: var(--color-primary-400);
+}
+
+.ds-tie-winner {
+    color: var(--color-text-main);
 }
