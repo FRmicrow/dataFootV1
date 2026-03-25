@@ -18,6 +18,7 @@ export { default as LeagueHeader } from './components/LeagueHeader';
 export { default as Select } from './components/Select';
 export { default as Input } from './components/Input';
 export { default as Tooltip } from './components/Tooltip';
+export { default as Switch } from './components/Switch';
 export { default as Skeleton, CardSkeleton, MetricCardSkeleton, TableSkeleton } from './components/Skeleton';
 
 import './tokens.css';
@@ -32,5 +33,6 @@ import './components/FixtureRow.css';
 import './components/TeamSelector.css';
 import './components/LeagueHeader.css';
 import './components/Tooltip.css';
+import './components/Switch.css';
 
 export { default as Accordion } from './components/Accordion';

@@ -192,6 +192,10 @@ export const syncLeaguePlayerStatsService = async (leagueId, seasonYear, limit =
  * @returns {Promise<boolean>} true if data was found and stored
  */
 export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
+    if (!apiFixtureId) {
+        logger.info({ fixture_id: localFixtureId }, 'Skipping FS sync: fixture has no api_id (non-API source)');
+        return false;
+    }
     const res = await footballApi.getFixtureStatistics(apiFixtureId, { half: true });
 
     if (!res.response || res.response.length === 0) {
@@ -240,6 +244,10 @@ export async function fetchAndStoreFixtureStats(localFixtureId, apiFixtureId) {
  * @returns {Promise<boolean>} true if data was found and stored
  */
 export async function fetchAndStorePlayerStats(localFixtureId, apiFixtureId) {
+    if (!apiFixtureId) {
+        logger.info({ fixture_id: localFixtureId }, 'Skipping PS sync: fixture has no api_id (non-API source)');
+        return false;
+    }
     const res = await footballApi.getFixturePlayerStatistics(apiFixtureId);
 
     if (!res.response || res.response.length === 0) {

@@ -23,19 +23,22 @@ describe('Content Studio API Integration (Baseline)', () => {
     it('GET /api/v3/studio/meta/stats - should return stats list', async () => {
         const response = await request(app).get('/api/v3/studio/meta/stats');
         expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body.success).toBe(true);
+        expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     it('GET /api/v3/studio/meta/leagues - should return leagues list', async () => {
         const response = await request(app).get('/api/v3/studio/meta/leagues');
         expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body.success).toBe(true);
+        expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     it('GET /api/v3/studio/meta/nationalities - should return nationalities list', async () => {
         const response = await request(app).get('/api/v3/studio/meta/nationalities');
         expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body.success).toBe(true);
+        expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     it('POST /api/v3/studio/query - should return timeline data', async () => {
@@ -48,6 +51,7 @@ describe('Content Studio API Integration (Baseline)', () => {
                 options: { cumulative: true }
             });
         expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('timeline');
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toHaveProperty('timeline');
     });
 });

@@ -18,8 +18,6 @@ const FixtureRow = ({
     date,
     active = false,
     onClick,
-    aggregate,
-    winner,
     compact = false,
 }) => {
     const isFinished = status === 'FT';
@@ -51,7 +49,10 @@ const FixtureRow = ({
                 <span className="ds-fr-name ds-fr-name--home">{homeTeam.name}</span>
 
                 {/* Home logo */}
-                <img src={homeTeam.logo} alt="" className="ds-fr-logo" />
+                {homeTeam.logo
+                    ? <img src={homeTeam.logo} alt="" className="ds-fr-logo" />
+                    : <span className="ds-fr-logo ds-fr-logo--placeholder" />
+                }
 
                 {/* Home xG */}
                 <span className="ds-fr-xg ds-fr-xg--home">
@@ -84,18 +85,14 @@ const FixtureRow = ({
                 </span>
 
                 {/* Away logo */}
-                <img src={awayTeam.logo} alt="" className="ds-fr-logo" />
+                {awayTeam.logo
+                    ? <img src={awayTeam.logo} alt="" className="ds-fr-logo" />
+                    : <span className="ds-fr-logo ds-fr-logo--placeholder" />
+                }
 
                 {/* Away name */}
                 <span className="ds-fr-name ds-fr-name--away">{awayTeam.name}</span>
             </div>
-
-            {aggregate && (
-                <div className="ds-fixture-extra">
-                    <span className="agg">AGG: {aggregate}</span>
-                    {winner && <span className="winner">🏆 {winner}</span>}
-                </div>
-            )}
         </div>
     );
 };
@@ -117,8 +114,6 @@ FixtureRow.propTypes = {
     date:      PropTypes.string,
     active:    PropTypes.bool,
     onClick:   PropTypes.func,
-    aggregate: PropTypes.string,
-    winner:    PropTypes.string,
     compact:   PropTypes.bool,
 };
 

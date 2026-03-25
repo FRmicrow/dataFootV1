@@ -136,11 +136,17 @@ export const syncLeagueEventsService = async (leagueId, seasonYear, limit = 50, 
  * Internal helper to fetch from API and store to DB
  */
 export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
-    // If we only have local ID, we need to look up API ID. 
+    // If we only have local ID, we need to look up API ID.
     if (!apiFixtureId) {
         const row = await db.get('SELECT api_id FROM V3_Fixtures WHERE fixture_id = ?', cleanParams([localFixtureId]));
         if (!row) throw new Error(`Fixture ${localFixtureId} not found locally`);
         apiFixtureId = row.api_id;
+    }
+
+    // TM-only fixtures have no api_id — skip API sync
+    if (!apiFixtureId) {
+        logger.info({ fixture_id: localFixtureId }, 'Skipping event sync: fixture has no api_id (non-API source)');
+        return false;
     }
 
     // Call API: fixtures?id={id} with retry logic

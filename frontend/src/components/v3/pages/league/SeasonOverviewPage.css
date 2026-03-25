@@ -5,10 +5,10 @@
     flex-direction: column;
 }
 
-/* Fixtures tab: lock to viewport so FixturesList rows fill available height */
+/* Fixtures tab: the FixturesList body has its own fixed height.
+   This container scrolls the page when the expansion panel extends below. */
 .season-tab-content--fixtures {
-    height: calc(100vh - 210px);
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .season-tab-content > div {
@@ -24,6 +24,13 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Groups tab view switcher */
+.groups-view-switcher {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--spacing-sm) var(--spacing-lg);
 }
 
 /* Split view layout for standings + fixtures */
