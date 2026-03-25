@@ -1,79 +1,58 @@
 import React from 'react';
 import { useStudio } from './StudioContext';
+import { Button } from '../../../../design-system';
 import './StudioWizard.css';
 
-// Step components (will create these next)
 import Step1_Data from './Step1_Data';
-import Step2_Config from './Step2_Config';
-import Step3_Preview from './Step3_Preview';
-import Step4_Export from './Step4_Export';
+import Step3_PreviewExport from './Step3_PreviewExport';
 
 const StudioWizard = () => {
-    const { step, goToStep, error } = useStudio();
+    const { step, goToStep, resetWizard, error } = useStudio();
 
-    // Render active step content
     const renderStep = () => {
         switch (step) {
             case 1: return <Step1_Data />;
-            case 2: return <Step2_Config />;
-            case 3: return <Step3_Preview />;
-            case 4: return <Step4_Export />;
+            case 2: return <Step3_PreviewExport />;
             default: return <Step1_Data />;
         }
     };
 
     return (
         <div className="studio-container">
-            {/* Wizard Header / Stepper */}
-            <div className="studio-stepper">
-                <button
-                    className={`step-item ${step === 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}
-                    onClick={() => step > 1 && goToStep(1)}
-                    disabled={step <= 1}
-                    type="button"
-                >
-                    <span className="step-num">1</span>
-                    <span className="step-label">Data Source</span>
-                </button>
-                <div className="step-line"></div>
-                <button
-                    className={`step-item ${step === 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}
-                    onClick={() => step > 2 && goToStep(2)}
-                    disabled={step <= 2}
-                    type="button"
-                >
-                    <span className="step-num">2</span>
-                    <span className="step-label">Configuration</span>
-                </button>
-                <div className="step-line"></div>
-                <button
-                    className={`step-item ${step === 3 ? 'active' : ''} ${step > 3 ? 'completed' : ''}`}
-                    onClick={() => step > 3 && goToStep(3)}
-                    disabled={step <= 3}
-                    type="button"
-                >
-                    <span className="step-num">3</span>
-                    <span className="step-label">Animation</span>
-                </button>
-                <div className="step-line"></div>
-                <button
-                    className={`step-item ${step === 4 ? 'active' : ''}`}
-                    disabled={step <= 4}
-                    type="button"
-                >
-                    <span className="step-num">4</span>
-                    <span className="step-label">Export</span>
-                </button>
+            <div className="studio-wizard-top">
+                <div className="studio-stepper">
+                    <button
+                        className={`step-item ${step === 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}
+                        onClick={() => step > 1 && goToStep(1)}
+                        disabled={step <= 1}
+                        type="button"
+                    >
+                        <span className="step-num">1</span>
+                        <span className="step-label">Data & Config</span>
+                    </button>
+                    <div className="step-line"></div>
+                    <button
+                        className={`step-item ${step === 2 ? 'active' : ''}`}
+                        disabled={step <= 2}
+                        type="button"
+                    >
+                        <span className="step-num">2</span>
+                        <span className="step-label">Preview & Export</span>
+                    </button>
+                </div>
+                {step >= 2 && (
+                    <Button variant="ghost" size="sm" onClick={resetWizard}>
+                        + New
+                    </Button>
+                )}
             </div>
 
-            {/* Error Banner */}
             {error && (
                 <div className="studio-error-banner">
-                    ⚠️ {error}
+                    {error}
                 </div>
             )}
 
-            {/* Step Content */}
             <div className="studio-content">
                 {renderStep()}
             </div>

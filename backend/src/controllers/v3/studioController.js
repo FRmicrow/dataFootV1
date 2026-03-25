@@ -118,25 +118,46 @@ export const searchStudioPlayers = async (req, res) => {
     }
 
     try {
-        // Query to get distinct players, prioritizing most recent team info
-        // We use GROUP BY player_id to ensure single entry per player
+        const searchTerm = `%${search}%`;
+
+        // Mirrors SearchRepository.globalSearch — same ILIKE + word-boundary + scout_rank pattern
         let sql = `
-            SELECT 
-                p.player_id, 
-                p.name, 
-                p.firstname, 
-                p.lastname, 
+            SELECT
+                p.player_id,
+                p.name,
+                p.firstname,
+                p.lastname,
                 p.photo_url,
+                p.scout_rank,
                 MAX(s.season_year) as last_season,
-                (SELECT t.name FROM V3_Teams t 
-                 JOIN V3_Player_Stats s2 ON t.team_id = s2.team_id 
-                 WHERE s2.player_id = p.player_id 
-                 ORDER BY s2.season_year DESC LIMIT 1) as team_name
+                (SELECT t.name FROM V3_Teams t
+                 JOIN V3_Player_Stats s2 ON t.team_id = s2.team_id
+                 WHERE s2.player_id = p.player_id
+                 ORDER BY s2.season_year DESC LIMIT 1) as team_name,
+                CASE
+                    WHEN p.name ILIKE ?
+                      OR p.name ILIKE ? || ' %'
+                      OR p.name ILIKE '% ' || ?
+                      OR p.name ILIKE '% ' || ? || ' %' THEN 0
+                    WHEN p.lastname ILIKE ?
+                      OR p.lastname ILIKE ? || ' %'
+                      OR p.lastname ILIKE '% ' || ?
+                      OR p.lastname ILIKE '% ' || ? || ' %' THEN 1
+                    WHEN p.name ILIKE ? OR p.lastname ILIKE ? THEN 2
+                    ELSE 3
+                END as relevance_priority,
+                COALESCE(c.importance_rank, 999) as country_importance
             FROM V3_Players p
             JOIN V3_Player_Stats s ON p.player_id = s.player_id
-            WHERE (p.name LIKE ? OR p.lastname LIKE ?)
+            LEFT JOIN V3_Countries c ON p.nationality = c.name
+            WHERE (p.name ILIKE ? OR p.firstname ILIKE ? OR p.lastname ILIKE ?)
         `;
-        const params = [`%${search}%`, `%${search}%`];
+        const params = [
+            search, search, search, search,
+            search, search, search, search,
+            searchTerm, searchTerm,
+            searchTerm, searchTerm, searchTerm
+        ];
 
         if (league_id) {
             sql += ` AND s.league_id = ?`;
@@ -147,9 +168,15 @@ export const searchStudioPlayers = async (req, res) => {
             params.push(season);
         }
 
-        sql += ` GROUP BY p.player_id ORDER BY COALESCE(p.scout_rank, 0) DESC, last_season DESC, p.name ASC LIMIT 20`;
+        sql += ` GROUP BY p.player_id, p.name, p.firstname, p.lastname, p.photo_url, p.scout_rank, relevance_priority, country_importance
+            ORDER BY relevance_priority ASC, p.scout_rank DESC, country_importance ASC, p.name ASC
+            LIMIT 20`;
+
         const rows = await db.all(sql, params);
-        res.json({ success: true, data: rows });
+
+        // Strip internal ranking columns before sending to frontend
+        const data = rows.map(({ relevance_priority, country_importance, scout_rank, ...rest }) => rest);
+        res.json({ success: true, data });
     } catch (error) {
         logger.error({ err: error }, 'Error searching studio players');
         res.status(500).json({ success: false, error: error.message });
@@ -216,7 +243,7 @@ const buildStudioWhereClause = (filters, selection, stat) => {
 
     return {
         sql: `
-            SELECT s.season_year, s.player_id, p.name as player_name, p.photo_url, t.name as team_name, t.logo_url as team_logo, SUM(s.${stat}) as value
+            SELECT s.season_year, s.player_id, p.name as player_name, p.photo_url, t.name as team_name, t.logo_url as team_logo, COALESCE(SUM(s.${stat}), 0) as value
             FROM V3_Player_Stats s
             JOIN V3_Players p ON s.player_id = p.player_id
             JOIN V3_Teams t ON s.team_id = t.team_id
@@ -255,17 +282,17 @@ export const queryStudioData = async (req, res) => {
         const sortedYears = Array.from(yearsSet).sort((a, b) => a - b);
 
         if (sortedYears.length > 0) {
-            timeline.push({ year: sortedYears[0] - 1, records: Object.values(playerMeta).map(m => ({ ...m, value: 0 })) });
+            timeline.push({ year: sortedYears[0] - 1, records: Object.values(playerMeta).map((m, idx) => ({ ...m, value: 0, rank: idx + 1 })) });
         }
 
         sortedYears.forEach(year => {
             const yearRows = rows.filter(r => r.season_year === year);
             yearRows.forEach(row => {
-                runningTotals[row.player_id] = (cumulative ? (runningTotals[row.player_id] || 0) : 0) + row.value;
+                runningTotals[row.player_id] = (cumulative ? (runningTotals[row.player_id] || 0) : 0) + (row.value || 0);
             });
-            const frameRecords = Object.entries(runningTotals).map(([pid, val]) => ({ ...playerMeta[pid], value: Number.parseFloat(val.toFixed(2)) }));
+            const frameRecords = Object.entries(runningTotals).map(([pid, val]) => ({ ...playerMeta[pid], value: Number.parseFloat((val || 0).toFixed(2)) }));
             frameRecords.sort((a, b) => b.value - a.value);
-            timeline.push({ year, records: frameRecords.slice(0, topN) });
+            timeline.push({ year, records: frameRecords.slice(0, topN).map((r, idx) => ({ ...r, rank: idx + 1 })) });
         });
 
         res.json({ success: true, data: { meta: { stat, cumulative, count: rows.length }, timeline } });

@@ -11,7 +11,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
 
 
     // Helper to get time key (season or round)
-    const getTime = (frame) => frame.season ?? frame.round;
+    const getTime = (frame) => frame.year ?? frame.season ?? frame.round;
 
     const timeRef = useRef(getTime(data[0]));
     const yDomainRef = useRef([0, 10]); // Initial domain for smoothing
@@ -195,7 +195,7 @@ const LineChartRace = forwardRef(({ data, width, height, isPlaying, onFrame, onC
             lImg.src = leagueLogo;
         }
 
-    }, [data, barCount, leagueLogo]);
+    }, [data, barCount, leagueLogo, isBump]);
 
     // --- Drawing Helpers ---
 

@@ -7,7 +7,7 @@ const BarChartRace = React.forwardRef(({ data, width, height, isPlaying, onFrame
     const canvasRef = ref || internalCanvasRef;
     const animationRef = useRef(null);
     // Helper to get time key (season or round)
-    const getTime = (frame) => frame.season !== undefined ? frame.season : frame.round;
+    const getTime = (frame) => frame.year ?? frame.season ?? frame.round;
 
     const timeRef = useRef(getTime(data[0]));
 

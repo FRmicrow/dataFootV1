@@ -1,10 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 
-import { Button, Input, Tabs } from '../../../../design-system';
+import { Button, Input, Grid, Stack } from '../../../../design-system';
 import api from '../../../../services/api';
 import { useStudio } from './StudioContext';
 import './Step1_Data.css';
+
+const CHART_TYPES = [
+    { value: 'bar_race', icon: '\u{1F4CA}', title: 'Bar race', desc: 'Ranked bars evolving over time.' },
+    { value: 'line', icon: '\u{1F4C8}', title: 'Trend line', desc: 'Progress across periods.' },
+    { value: 'league_race', icon: '\u{1F3C1}', title: 'Standing race', desc: 'Club rankings over matchdays.' },
+    { value: 'bump', icon: '\u{1F3A2}', title: 'Bump chart', desc: 'Position fluctuations.' }
+];
 
 const EMPTY_SELECTION = { players: [], leagues: [], countries: [], teams: [] };
 const EMPTY_QUERIES = { player: '', team: '', league: '', country: '' };
@@ -147,6 +154,7 @@ const Step1_Data = () => {
     const {
         filters,
         setFilters,
+        visual,
         setVisual,
         setError,
         isLoading,
@@ -324,12 +332,11 @@ const Step1_Data = () => {
                 value: mode === 'specific' ? selected.players.length : 20,
                 players: selected.players.map((player) => player.player_id)
             },
-            options: { cumulative: filters.cumulative }
+            options: { cumulative: true }
         });
     };
 
     const handleLeagueRankings = async () => {
-        setVisual((prev) => ({ ...prev, type: 'league_race' }));
         return api.queryStudioLeagueRankings({
             league_id: selected.leagues[0].id,
             season: filters.years[1]
@@ -444,19 +451,24 @@ const Step1_Data = () => {
         <div className="step-container animate-fade-in">
             <h2 className="step-title-v2">Selection & Scope</h2>
 
-            <Tabs
-                items={[
-                    { id: 'specific', label: 'Player Performance', icon: '👤' },
-                    { id: 'league', label: 'League Insights', icon: '🏆' },
-                    { id: 'country', label: 'Nationality Comparisons', icon: '🌍' },
-                    { id: 'club', label: 'Club Metrics', icon: '🛡️' },
-                    { id: 'standings', label: 'League Standings', icon: '📈' }
-                ]}
-                activeId={mode}
-                onChange={setMode}
-                variant="pills"
-                className="mb-lg"
-            />
+            <div className="data-type-selector">
+                {[
+                    { id: 'specific', label: 'Players' },
+                    { id: 'league', label: 'League' },
+                    { id: 'country', label: 'Country' },
+                    { id: 'club', label: 'Club' },
+                    { id: 'standings', label: 'Standings' }
+                ].map((item) => (
+                    <button
+                        key={item.id}
+                        type="button"
+                        className={`data-type-btn ${mode === item.id ? 'active' : ''}`}
+                        onClick={() => setMode(item.id)}
+                    >
+                        {item.label}
+                    </button>
+                ))}
+            </div>
 
             <div className="form-group-v2">
                 <label htmlFor="studio-scope-search" className="form-label-v2">Selected Scope</label>
@@ -509,14 +521,14 @@ const Step1_Data = () => {
 
             {mode !== 'standings' ? (
                 <div className="form-group-v2">
-                    <label htmlFor="studio-stat-select" className="form-label-v2">Performance Metric</label>
+                    <label htmlFor="studio-stat-select" className="form-label-v2">Metric</label>
                     <select
                         id="studio-stat-select"
                         value={filters.stat}
                         onChange={(event) => setFilters((prev) => ({ ...prev, stat: event.target.value }))}
                         className="input-v2"
                     >
-                        <option value="">Select surveillance metric...</option>
+                        <option value="">Select a metric...</option>
                         {statsMeta.map((stat) => (
                             <option key={stat.key} value={stat.key}>
                                 {stat.label}
@@ -571,19 +583,43 @@ const Step1_Data = () => {
                 </div>
             </div>
 
-            {mode !== 'standings' ? (
-                <div className="form-group-v2">
-                    <label className="option-card-v2" htmlFor="studio-cumulative">
-                        <input
-                            id="studio-cumulative"
-                            type="checkbox"
-                            checked={filters.cumulative}
-                            onChange={(event) => setFilters((prev) => ({ ...prev, cumulative: event.target.checked }))}
-                        />
-                        <span className="option-label-v2">Cumulative progression over time</span>
-                    </label>
+            <Stack gap="md" className="form-group-v2">
+                <span className="form-label-v2">Chart Type</span>
+                <Grid columns="repeat(auto-fit, minmax(180px, 1fr))" gap="md" className="config-grid-v2">
+                    {CHART_TYPES.map(ct => (
+                        <button
+                            key={ct.value}
+                            className={`config-card-v2 ${visual.type === ct.value ? 'active' : ''}`}
+                            onClick={() => setVisual(prev => ({ ...prev, type: ct.value }))}
+                            type="button"
+                        >
+                            <div className="card-icon-v2">{ct.icon}</div>
+                            <h4 className="card-title-v2">{ct.title}</h4>
+                            <p className="card-desc-v2">{ct.desc}</p>
+                        </button>
+                    ))}
+                </Grid>
+            </Stack>
+
+            <div className="form-group-v2">
+                <label htmlFor="animation-speed-slider" className="form-label-v2">Speed</label>
+                <div className="slider-container-v2">
+                    <div className="slider-header-v2">
+                        <span className="slider-label-v2">Transition Pace</span>
+                        <span className="slider-value-v2">{visual.speed}x</span>
+                    </div>
+                    <input
+                        id="animation-speed-slider"
+                        type="range"
+                        min="0.5"
+                        max="3.0"
+                        step="0.5"
+                        value={visual.speed}
+                        onChange={(e) => setVisual(prev => ({ ...prev, speed: Number.parseFloat(e.target.value) }))}
+                        className="slider-v2"
+                    />
                 </div>
-            ) : null}
+            </div>
 
             <div className="step-actions">
                 <Button
@@ -594,7 +630,7 @@ const Step1_Data = () => {
                     disabled={!canSubmit}
                     className="studio-next-button"
                 >
-                    Initialize visualization sequence
+                    Preview Animation &rarr;
                 </Button>
             </div>
         </div>
