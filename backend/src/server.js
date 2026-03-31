@@ -10,6 +10,7 @@ import cron from 'node-cron';
 import MarketVolatilityService from './services/v3/MarketVolatilityService.js';
 import db from './config/database.js';
 import v3Routes from './routes/v3_routes.js';
+import v4Routes from './routes/v4/v4_routes.js';
 import MigrationService from './services/v3/MigrationService.js';
 import SimulationQueueService from './services/v3/SimulationQueueService.js';
 import logger from './utils/logger.js';
@@ -79,8 +80,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// API routes (V3)
+// API routes (V3 & V4)
 app.use('/api', v3Routes);
+app.use('/api', v4Routes);
 
 // Health check
 app.get('/health', (req, res) => {

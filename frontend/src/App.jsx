@@ -15,6 +15,7 @@ import ImportLineupsPage from './components/v3/pages/import/ImportLineupsPage';
 import MatchDetailPage from './components/v3/pages/match/MatchDetailPage';
 import MachineLearningHub from './components/v3/modules/ml/MachineLearningHub';
 import DesignSystemPage from './components/v3/pages/system/DesignSystemPage';
+import SeasonOverviewPageV4 from './components/v4/pages/league/SeasonOverviewPageV4';
 
 import { ImportProvider } from './context/ImportContext.jsx';
 import ErrorBoundary from './design-system/components/ErrorBoundary';
@@ -40,6 +41,7 @@ function App() {
                             <Route path="/leagues" element={<V3LeaguesList />} />
                             <Route path="/league/:id" element={<SeasonOverviewPage />} />
                             <Route path="/league/:id/season/:year" element={<SeasonOverviewPage />} />
+                            <Route path="/leagueV4/:name/season/:year" element={<SeasonOverviewPageV4 />} />
                             <Route path="/player/:id" element={<PlayerProfilePageV3 />} />
                             <Route path="/search" element={<SearchPageV3 />} />
                             <Route path="/club/:id" element={<ClubProfilePageV3 />} />

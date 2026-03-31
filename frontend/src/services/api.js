@@ -51,6 +51,17 @@ export default {
     getGroupStandings: (id, year) => api.get(`/league/${id}/season/${year}/group-standings`),
     getStandings: (id, year) => api.get(`/league/${id}/standings?year=${year}`), // Note: Verify if query param or path param
     getDynamicStandings: (params) => api.get(`/standings/dynamic?${new URLSearchParams(params)}`),
+    
+    // --- V4 (Historical TM Data) ---
+    getLeaguesV4: () => api.get('/v4/leagues'),
+    getSeasonOverviewV4: (league, season) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}`),
+    getFixturesV4: (league, season) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/fixtures`),
+    getSeasonPlayersV4: (league, season, params) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/players`, { params }),
+    getFixtureDetailsV4: (fixtureId) => api.get(`/v4/match/${fixtureId}`),
+    getFixtureEventsV4: (id) => api.get(`/v4/fixtures/${id}/events`),
+    getFixtureLineupsV4: (id) => api.get(`/v4/fixtures/${id}/lineups`),
+    getFixtureTacticalStatsV4: (id) => api.get(`/v4/fixtures/${id}/tactical-stats`),
+    getFixturePlayerTacticalStatsV4: (id) => api.get(`/v4/fixtures/${id}/player-tactical-stats`),
 
     // --- Clubs ---
     getClub: (id, year, competition) => {

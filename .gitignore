@@ -90,3 +90,5 @@ externalData/
 # Rapports Sonar (générés localement — sonar-project.properties et scripts conservés)
 sonar/*.csv
 sonar/*.xlsx
+transfermarkt_dump.zip
+backups/
