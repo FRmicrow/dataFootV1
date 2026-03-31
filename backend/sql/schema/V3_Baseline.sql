@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS V3_Standings (
 
 CREATE TABLE IF NOT EXISTS V3_Fixtures (
     fixture_id SERIAL PRIMARY KEY,
-    api_id INTEGER UNIQUE NOT NULL,
+    api_id INTEGER UNIQUE, -- Note: can be NULL for manually created shells
     league_id INTEGER NOT NULL,
     season_year INTEGER NOT NULL,
     round TEXT,
@@ -181,6 +181,13 @@ CREATE TABLE IF NOT EXISTS V3_Fixtures (
     score_penalty_home INTEGER,
     score_penalty_away INTEGER,
     referee TEXT,
+    xg_home REAL,
+    xg_away REAL,
+    data_source TEXT DEFAULT 'api_football',
+    external_id TEXT,
+    tm_match_id TEXT,
+    home_logo_url TEXT,
+    away_logo_url TEXT,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (league_id) REFERENCES V3_Leagues(league_id),
@@ -203,8 +210,25 @@ CREATE TABLE IF NOT EXISTS V3_Fixture_Events (
     type TEXT NOT NULL, -- 'Goal', 'Card', 'subst', 'Var'
     detail TEXT,        -- 'Normal Goal', 'Yellow Card'
     comments TEXT,
+    data_source TEXT DEFAULT 'api_football',
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS V3_Fixture_Lineups (
+    lineup_id SERIAL PRIMARY KEY,
+    fixture_id INTEGER NOT NULL,
+    team_id INTEGER NOT NULL,
+    formation TEXT,
+    coach_id INTEGER,
+    coach_name TEXT,
+    coach_photo TEXT,
+    starting_xi TEXT, -- JSON Array of {player: {name, number, pos, grid}}
+    substitutes TEXT, -- JSON Array of {player: {name, number, pos, grid}}
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (fixture_id) REFERENCES V3_Fixtures(fixture_id) ON DELETE CASCADE,
+    FOREIGN KEY (team_id) REFERENCES V3_Teams(team_id),
+    UNIQUE(fixture_id, team_id)
 );
 
 CREATE TABLE IF NOT EXISTS V3_Fixture_Stats (
@@ -460,6 +484,7 @@ CREATE INDEX IF NOT EXISTS idx_v3_fixture_events_fixture ON V3_Fixture_Events(fi
 CREATE INDEX IF NOT EXISTS idx_v3_fixture_stats_fixture ON V3_Fixture_Stats(fixture_id);
 CREATE INDEX IF NOT EXISTS idx_v3_fixture_player_stats_fixture ON V3_Fixture_Player_Stats(fixture_id);
 CREATE INDEX IF NOT EXISTS idx_v3_fixture_player_stats_player ON V3_Fixture_Player_Stats(player_id);
+CREATE INDEX IF NOT EXISTS idx_v3_fixture_lineups_fixture ON V3_Fixture_Lineups(fixture_id);
 CREATE INDEX IF NOT EXISTS idx_v3_player_season_stats_composite ON V3_Player_Season_Stats(league_id, season_year);
 CREATE INDEX IF NOT EXISTS idx_v3_leagues_name_country ON V3_Leagues(name, country_id);
 CREATE INDEX IF NOT EXISTS idx_v3_trophies_player_id ON V3_Trophies(player_id);

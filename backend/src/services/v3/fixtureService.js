@@ -175,8 +175,19 @@ export async function fetchAndStoreEvents(localFixtureId, apiFixtureId) {
         `;
 
         for (const ev of events) {
-            // Must resolve TEAM ID to local ID, otherwise we store API ID which mismatches V3_Fixtures
-            const localTeamId = (await db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([ev.team.id])))?.team_id || ev.team.id;
+            // Never fall back to raw API team IDs here: that creates fixture/event mismatches in local tables.
+            const localTeamId = (await db.get("SELECT team_id FROM V3_Teams WHERE api_id = ?", cleanParams([ev.team.id])))?.team_id;
+
+            if (!localTeamId) {
+                logger.warn({
+                    fixture_id: localFixtureId,
+                    api_fixture_id: apiFixtureId,
+                    api_team_id: ev.team.id,
+                    event_type: ev.type,
+                    event_detail: ev.detail
+                }, 'Skipping fixture event because API team has no local mapping');
+                continue;
+            }
 
             await db.run(insertSql, cleanParams([
                 localFixtureId,

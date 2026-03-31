@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import StatsEngine from '../../services/v3/StatsEngine.js';
+import { getLineupCorruptionSummary } from '../../services/v3/lineupIntegrityService.js';
 import logger from '../../utils/logger.js';
 
 export const getLineups = async (req, res) => {
@@ -96,6 +97,20 @@ export const getLineupCandidates = async (req, res) => {
         res.json({ success: true, data: candidates });
     } catch (error) {
         logger.error({ err: error }, 'Error finding lineup candidates');
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+/**
+ * GET /api/v3/fixtures/lineups/corruption-summary
+ * Group lineup corruption by league/season to support manual cleanup planning.
+ */
+export const getLineupCorruptionAudit = async (req, res) => {
+    try {
+        const rows = await getLineupCorruptionSummary();
+        res.json({ success: true, data: rows });
+    } catch (error) {
+        logger.error({ err: error }, 'Error building lineup corruption summary');
         res.status(500).json({ success: false, error: error.message });
     }
 };

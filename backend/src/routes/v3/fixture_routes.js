@@ -12,7 +12,8 @@ import {
 import {
     getLineups,
     getLineupCandidates,
-    importLineupsBatch
+    importLineupsBatch,
+    getLineupCorruptionAudit
 } from '../../controllers/v3/lineupController.js';
 
 const router = express.Router();
@@ -25,6 +26,7 @@ router.get('/fixtures/:id/player-stats', getFixturePlayerTacticalStats);
 router.get('/fixtures/:id', getFixtureDetails);
 router.get('/fixtures/:id/lineups', getLineups);
 router.get('/fixtures/lineups/candidates', getLineupCandidates);
+router.get('/fixtures/lineups/corruption-summary', getLineupCorruptionAudit);
 router.post('/fixtures/lineups/import', validateRequest(importLineupsSchema), importLineupsBatch);
 
 export default router;

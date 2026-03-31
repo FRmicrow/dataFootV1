@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../services/api';
 import PropTypes from 'prop-types';
+import TacticalField from './TacticalField';
 import './MatchDetailLineups.css';
 
 const MatchDetailLineups = ({ fixtureId }) => {
@@ -48,8 +49,10 @@ const MatchDetailLineups = ({ fixtureId }) => {
             <div className={`team-lineup-col ${side}`}>
                 <div className="lineup-header">
                     <h3>{team.team_name || (side === 'home' ? 'Home Team' : 'Away Team')}</h3>
-                    <div className="formation-badge">{team.formation}</div>
-                    <div className="coach-name">Coach: {team.coach_name}</div>
+                    <div className="lineup-meta-info">
+                        <div className="formation-badge">{team.formation}</div>
+                        <div className="coach-name">Chef de file: {team.coach_name}</div>
+                    </div>
                 </div>
 
                 <div className="lineup-list starters">
@@ -77,10 +80,13 @@ const MatchDetailLineups = ({ fixtureId }) => {
     };
 
     return (
-        <div className="match-lineups-container">
-            {renderTeamLineup(home, 'home')}
-            <div className="lineup-divider">VS</div>
-            {renderTeamLineup(away, 'away')}
+        <div className="match-lineups-root">
+            <TacticalField lineups={lineups} />
+            <div className="match-lineups-container">
+                {renderTeamLineup(home, 'home')}
+                <div className="lineup-divider">VS</div>
+                {renderTeamLineup(away, 'away')}
+            </div>
         </div>
     );
 };

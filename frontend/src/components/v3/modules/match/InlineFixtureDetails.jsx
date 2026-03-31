@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import api from '../../../../services/api';
 import MatchDetailEvents from './MatchDetailEvents';
 import InlineMatchDetailTactical from './InlineMatchDetailTactical';
+import TacticalField from './TacticalField';
 import InlinePlayerStatCard from '../shared/InlinePlayerStatCard';
 import { Grid, Tabs, Badge } from '../../../../design-system';
 import './InlineFixtureDetails.css';
@@ -101,6 +102,12 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
                     <h4>Starting XI</h4>
                     {lineup.formation && <Badge variant="primary" size="xs">{lineup.formation}</Badge>}
                 </div>
+                
+                <div className="ds-inline-coach">
+                    <span>Technical Director</span>
+                    <strong>{lineup.coach_name}</strong>
+                </div>
+
                 <div className="ds-inline-player-list">
                     {starting.map((entry) => <PlayerRow key={entry.player_id} entry={entry} />)}
                 </div>
@@ -108,11 +115,6 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
                 <h4 className="ds-inline-squad-section-title">Reserves</h4>
                 <div className="ds-inline-player-list">
                     {subs.map((entry) => <PlayerRow key={entry.player_id} entry={entry} />)}
-                </div>
-
-                <div className="ds-inline-coach">
-                    <span>Technical Director</span>
-                    <strong>{lineup.coach_name}</strong>
                 </div>
             </div>
         );
@@ -147,7 +149,10 @@ const InlineFixtureDetails = ({ fixtureId, homeTeamId, awayTeamId }) => {
                             </div>
                         )}
                         {activeTab === 'tactical' && (
-                            <InlineMatchDetailTactical fixtureId={fixtureId} />
+                            <div className="ds-inline-tactical-wrapper">
+                                <TacticalField lineups={lineups} />
+                                <InlineMatchDetailTactical fixtureId={fixtureId} />
+                            </div>
                         )}
                         {activeTab === 'player_intel' && (
                             <InlinePlayerStatCard player={selectedPlayer} />

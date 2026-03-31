@@ -1,4 +1,3 @@
-import { normalizeTeam } from './team_resolver.js';
 
 /**
  * Industrial SAFE Team Resolver.
@@ -42,7 +41,7 @@ export function normalizeTeam(name) {
 // 🛡️ PROTECTED CANONICAL IDs (France)
 const PROTECTED_WHITELIST = {
     'bordeaux': 2, 'girondins': 2,
-    'lyon': 4, 'ol': 4,
+    'lyon': 4, 'ol': 4, 'lyonnais': 4,
     'marseille': 5, 'om': 5,
     'montpellier': 6,
     'nantes': 7,
@@ -58,7 +57,7 @@ const PROTECTED_WHITELIST = {
     'brest': 18,
     'metz': 19,
     'lens': 20,
-    'saint etienne': 21, 'asse': 21,
+    'saint etienne': 21, 'asse': 21, 'saint etienne': 21, 'st etienne': 21,
     'caen': 22,
     'nancy': 23,
     'valenciennes': 24,
@@ -81,51 +80,74 @@ const PROTECTED_WHITELIST = {
     'racing': 18873
 };
 
+// 🛡️ PROTECTED CANONICAL IDs (Italy)
+const PROTECTED_WHITELIST_ITALY = {
+    'milan': 2388,
+    'inter': 2399,
+    'juventus': 2394,
+    'napoli': 2391,
+    'roma': 2395,
+    'lazio': 2387,
+    'fiorentina': 2398,
+    'palermo': 2403,
+    'genoa': 2393,
+    'atalanta': 2407,
+    'udinese': 2392,
+    'sampdoria': 2396,
+    'torino': 2410,
+    'cagliari': 2389,
+    'chievo': 2390,
+    'bologna': 2397,
+    'lecce': 2405,
+    'reggina': 2445,
+    'catania': 2406,
+    'siena': 20855,
+};
+
 const resolutionCache = new Map();
 
-export async function resolveTeamId(teamName, db, teamsCache) {
+export async function resolveTeamId(teamName, db, teamsCache, country = 'France') {
     if (!teamName) return null;
-    if (resolutionCache.has(teamName)) return resolutionCache.get(teamName);
+    const cacheKey = `${country}:${teamName}`;
+    if (resolutionCache.has(cacheKey)) return resolutionCache.get(cacheKey);
 
     const norm = normalizeTeam(teamName);
+    const whitelist = country === 'Italy' ? PROTECTED_WHITELIST_ITALY : PROTECTED_WHITELIST;
 
     // 1. Check Protected Whitelist
-    for (const [key, id] of Object.entries(PROTECTED_WHITELIST)) {
+    for (const [key, id] of Object.entries(whitelist)) {
         if (norm === key || norm.includes(key)) {
-            // Very strict comparison to avoid "Hauts Lyonnais" matching "Lyon"
-            if (norm === key || (norm === 'montpellier' && teamName.includes('Montpellier'))) {
-                resolutionCache.set(teamName, id);
-                return id;
-            }
+            resolutionCache.set(cacheKey, id);
+            return id;
         }
     }
 
     // 2. Exact Normalized Match in Cache
     const match = teamsCache.find(t => normalizeTeam(t.name) === norm);
     if (match) {
-        resolutionCache.set(teamName, match.team_id);
+        resolutionCache.set(cacheKey, match.team_id);
         return match.team_id;
     }
 
-    // 3. Database Exact Search
+    // 3. Database Exact Search (Filtered by League/Season context in future, here we use name)
     const dbMatch = await db.get("SELECT team_id, name FROM v3_teams WHERE lower(name) = lower($1) LIMIT 1", [teamName]);
     if (dbMatch) {
-        resolutionCache.set(teamName, dbMatch.team_id);
+        resolutionCache.set(cacheKey, dbMatch.team_id);
         return dbMatch.team_id;
     }
 
     // 4. AUTO-CREATE (Beautified Name)
     const beautifiedName = teamName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-    console.log(`[TeamResolver] Creating missing team: ${beautifiedName} (norm: ${norm})`);
+    console.log(`[TeamResolver] Creating missing team: ${beautifiedName} (norm: ${norm}, country: ${country})`);
     
     const res = await db.run(`
         INSERT INTO v3_teams (name, country, national, data_source)
         VALUES ($1, $2, $3, $4)
         RETURNING team_id
-    `, [beautifiedName, 'France', 0, 'TM_Historical']);
+    `, [beautifiedName, country, 0, 'TM_Historical']);
     
     const newId = res.lastInsertRowid;
-    resolutionCache.set(teamName, newId);
+    resolutionCache.set(cacheKey, newId);
     teamsCache.push({ team_id: newId, name: beautifiedName });
     return newId;
 }

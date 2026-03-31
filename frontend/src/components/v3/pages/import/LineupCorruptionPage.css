@@ -1,0 +1,265 @@
+.lineup-corruption-page {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+.lineup-corruption-page__summary {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.lineup-corruption-page__metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.lineup-corruption-page__metric {
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    background:
+        linear-gradient(160deg, rgba(17, 24, 39, 0.86), rgba(15, 23, 42, 0.72)),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 45%);
+    border: 1px solid var(--color-border);
+    display: grid;
+    gap: 4px;
+}
+
+.lineup-corruption-page__metric-value {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.lineup-corruption-page__metric-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.lineup-corruption-page__filters {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.lineup-corruption-page__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
+    gap: var(--spacing-md);
+    align-items: start;
+}
+
+.lineup-corruption-page__plan {
+    position: sticky;
+    top: var(--spacing-md);
+}
+
+.lineup-corruption-page__rows {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.lineup-corruption-page__row {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+    background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.58), rgba(15, 23, 42, 0.44)),
+        radial-gradient(circle at top left, rgba(250, 204, 21, 0.12), transparent 38%);
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.lineup-corruption-page__row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+}
+
+.lineup-corruption-page__league {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 0;
+}
+
+.lineup-corruption-page__league-logo {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.lineup-corruption-page__league-name {
+    font-weight: 700;
+    font-size: var(--font-size-lg);
+}
+
+.lineup-corruption-page__league-meta {
+    color: var(--color-text-dim);
+    font-size: var(--font-size-sm);
+}
+
+.lineup-corruption-page__badges {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.lineup-corruption-page__counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    color: var(--color-text-dim);
+    font-size: var(--font-size-sm);
+}
+
+.lineup-corruption-page__samples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.lineup-corruption-page__sample-pill {
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    color: var(--color-text-dim);
+    font-size: var(--font-size-xs);
+}
+
+.lineup-corruption-page__form {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    gap: var(--spacing-sm);
+    align-items: start;
+}
+
+.lineup-corruption-page__field {
+    display: grid;
+    gap: 6px;
+}
+
+.lineup-corruption-page__field-label {
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-dim);
+}
+
+.lineup-corruption-page__note,
+.lineup-corruption-page__preview {
+    width: 100%;
+    min-height: 84px;
+    resize: vertical;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: rgba(15, 23, 42, 0.64);
+    color: var(--color-text-main);
+    padding: 10px 12px;
+    font: inherit;
+    line-height: 1.45;
+}
+
+.lineup-corruption-page__note:focus,
+.lineup-corruption-page__preview:focus {
+    outline: 2px solid rgba(56, 189, 248, 0.2);
+    border-color: rgba(56, 189, 248, 0.42);
+}
+
+.lineup-corruption-page__plan-counts {
+    display: grid;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.lineup-corruption-page__plan-chip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.52);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.lineup-corruption-page__panel-section {
+    display: grid;
+    gap: var(--spacing-xs);
+}
+
+.lineup-corruption-page__panel-section + .lineup-corruption-page__panel-section {
+    margin-top: var(--spacing-sm);
+}
+
+.lineup-corruption-page__panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.lineup-corruption-page__panel-header h3,
+.lineup-corruption-page__panel-section h3 {
+    margin: 0;
+    font-size: var(--font-size-md);
+}
+
+.lineup-corruption-page__manual-list {
+    display: grid;
+    gap: var(--spacing-xs);
+}
+
+.lineup-corruption-page__manual-item {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.52);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    display: grid;
+    gap: 4px;
+}
+
+.lineup-corruption-page__manual-item span,
+.lineup-corruption-page__copy-state,
+.lineup-corruption-page__status,
+.lineup-corruption-page__empty {
+    color: var(--color-text-dim);
+}
+
+.lineup-corruption-page__status--error {
+    color: #fca5a5;
+}
+
+@media (max-width: 1180px) {
+    .lineup-corruption-page__grid,
+    .lineup-corruption-page__summary {
+        grid-template-columns: 1fr;
+    }
+
+    .lineup-corruption-page__plan {
+        position: static;
+    }
+}
+
+@media (max-width: 720px) {
+    .lineup-corruption-page__metrics,
+    .lineup-corruption-page__form {
+        grid-template-columns: 1fr;
+    }
+
+    .lineup-corruption-page__row-header {
+        flex-direction: column;
+    }
+
+    .lineup-corruption-page__badges {
+        justify-content: flex-start;
+    }
+}

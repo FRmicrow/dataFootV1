@@ -88,6 +88,7 @@ export default {
     getEventCandidates: () => api.get('/fixtures/events/candidates'),
     syncEvents: (data) => api.post('/fixtures/events/sync', data),
     getLineupCandidates: () => api.get('/fixtures/lineups/candidates'),
+    getLineupCorruptionSummary: () => api.get('/fixtures/lineups/corruption-summary'),
     importLineups: (data) => api.post('/fixtures/lineups/import', data),
 
     // Trophies Import

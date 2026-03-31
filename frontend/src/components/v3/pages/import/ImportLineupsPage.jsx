@@ -113,6 +113,7 @@ const ImportLineupsPage = () => {
                     <Stack direction="row" gap="var(--spacing-sm)">
                         <Button variant="secondary" size="sm" onClick={() => navigate('/import')}>League Import</Button>
                         <Button variant="secondary" size="sm" onClick={() => navigate('/events')}>Events Import</Button>
+                        <Button variant="secondary" size="sm" onClick={() => navigate('/lineups-corruption')}>Corruption Audit</Button>
                     </Stack>
                 }
             />

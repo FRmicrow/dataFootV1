@@ -45,18 +45,27 @@ Refer to `.agents/rules/` for specialized personas:
 - `engineering-standards.md`: Code and testing standards.
 - `visual-manifesto.md`: UI/UX excellence.
 
-## Unified Skill Set
-This project uses a standardized set of skills located in `.agents/skills/`:
-- `web-dev`: React, Vite, TypeScript, CSS.
-- `backend`: Node.js, Express, Zod, Winston.
-- `database`: PostgreSQL, SQL, Indexing.
-- `testing`: Vitest, Playwright, QA battery.
-- `devops`: Docker, Docker Compose, CI/CD.
-- `machine-learning`: Python, CatBoost, Scikit-learn.
-- `data-analyzer`: Match data and xG specialization.
-- `security`: OWASP, Sanitization, Secrets.
-- `performance`: Profiling, Caching, Bundle optimization.
-- `docs`: Documentation, README, API references.
-- `code-quality`: Linting, Refactoring, Best Practices.
-- `design`: UI/UX, Design System, Visual Manifesto.
-- `productivity`: Workflows, Automation, Git.
+## Available Domain Specialized Skills
+This project uses a standardized set of skills located in `.agents/skills/`. Each skill represents a specialized agent capability:
+
+| Skill | Scope & Utility | Key Technologies |
+| :--- | :--- | :--- |
+| **[web-dev](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/web-dev/SKILL.md)** | Building components, pages, and handling logic integration. | React, Vite, TS, CSS |
+| **[backend](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/backend/SKILL.md)** | Node.js API development, business logic, and services. | Express, Zod, Winston |
+| **[database](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/database/SKILL.md)** | PostgreSQL schema management and optimized queries. | PG, SQL, Indexing |
+| **[testing](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/testing/SKILL.md)** | Writing unit/E2E tests and performing QA validation. | Vitest, Supertest, Playwright |
+| **[devops](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/devops/SKILL.md)** | Managing infrastructure, Docker, and CI/CD pipelines. | Docker, Docker Compose |
+| **[machine-learning](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/machine-learning/SKILL.md)** | Predictive models and data science for football stats. | Python, CatBoost, Scikit-learn |
+| **[data-analyzer](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/data-analyzer/SKILL.md)** | Match data and xG statistics processing. | JSON, CSV, OCR |
+| **[security](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/security/SKILL.md)** | Security audits and vulnerability remediation. | OWASP, Sanitization |
+| **[performance](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/performance/SKILL.md)** | Optimization of queries, bundles, and execution time. | Profiling, Caching |
+| **[design](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/design/SKILL.md)** | UI/UX design, visual manifesto, and design system. | CSS Tokens, Figma |
+| **[docs](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/docs/SKILL.md)** | Documenting features, READMEs, and API references. | Markdown, JSDoc |
+| **[code-quality](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/code-quality/SKILL.md)** | Code review, linting, and architectural best practices. | ESLint, Clean Code |
+| **[productivity](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/.agents/skills/productivity/SKILL.md)** | Workflow automation and multi-agent coordination. | Git, Workflows |
+
+---
+
+## 📚 Historical Data Pipeline (V3)
+For agents working on historical football data (1950–2010), refer to the **[V3 Historical Import SOP](file:///Users/domp6/Projet%20Dev/NinetyXI/dataFootV1/backend/docs/v3_historical_import_sop.md)**.
+This document contains the A-Z process for ingestion, resolution, deduplication, and harmonization across all major leagues.

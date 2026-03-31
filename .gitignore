@@ -35,6 +35,7 @@ __pycache__/
 backend/*.sql
 backend/*.db
 backend/backups/
+backups/
 backend/archive/
 backend/data/*.sqlite
 backend/data/*.db

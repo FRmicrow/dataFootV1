@@ -11,6 +11,7 @@ const navItems = [
     { to: "/machine-learning", label: "ML Hub",          icon: "🤖" },
     { to: "/studio",           label: "Studio",          icon: "✏️" },
     { to: "/import",           label: "Import",          icon: "⬇️" },
+    { to: "/lineups-corruption", label: "Integrity",     icon: "🧹" },
     { to: "/design",           label: "Design System",   icon: "🎨" },
 ];
 

@@ -12,6 +12,7 @@ import ClubProfilePageV3 from './components/v3/pages/profile/ClubProfilePageV3';
 import ContentStudioV3 from './components/v3/pages/studio/ContentStudioV3';
 import ImportEventsPage from './components/v3/pages/import/ImportEventsPage';
 import ImportLineupsPage from './components/v3/pages/import/ImportLineupsPage';
+import LineupCorruptionPage from './components/v3/pages/import/LineupCorruptionPage';
 import MatchDetailPage from './components/v3/pages/match/MatchDetailPage';
 import MachineLearningHub from './components/v3/modules/ml/MachineLearningHub';
 import DesignSystemPage from './components/v3/pages/system/DesignSystemPage';
@@ -46,6 +47,7 @@ function App() {
                             <Route path="/studio" element={<ContentStudioV3 />} />
                             <Route path="/events" element={<ImportEventsPage />} />
                             <Route path="/lineups-import" element={<ImportLineupsPage />} />
+                            <Route path="/lineups-corruption" element={<LineupCorruptionPage />} />
                             <Route path="/match/:id" element={<MatchDetailPage />} />
                             <Route path="/machine-learning/*" element={<MachineLearningHub />} />
                             <Route path="/design" element={<DesignSystemPage />} />
