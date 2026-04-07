@@ -97,4 +97,12 @@ SQL-V4/
 SQL-V4.zip
 *.gz
 upcoming_fixtures.json
+upcoming_all_leagues.json
 test_logos.py
+
+# Temp and data
+tmp/
+backend/data/
+backend/scripts/v4/import-upcoming-from-json.js
+backend/scripts/v4/sync-upcoming-matches.js
+
