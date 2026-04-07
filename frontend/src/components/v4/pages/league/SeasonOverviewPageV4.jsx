@@ -98,7 +98,7 @@ const SeasonOverviewPageV4 = () => {
         { id: 'overview', label: 'Player Insights', icon: '🔭' },
         { id: 'standings', label: 'Standings (V4)', icon: '📊' },
         { id: 'titlerace', label: 'Title Race', icon: '🏁' },
-        { id: 'fixtures', label: 'Results', icon: '📅' },
+        { id: 'fixtures', label: 'Schedule', icon: '📅' },
         { id: 'squads', label: 'Squads', icon: '👥' }
     ];
 

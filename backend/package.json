@@ -12,6 +12,8 @@
     "import:v4-sql": "node scripts/v4/import_sql_v4.js",
     "canonicalize:v4-competitions": "node scripts/v4/canonicalize_competitions.js",
     "rank:v4": "node scripts/v4/apply_importance_rankings.js",
+    "sync:v4-upcoming": "node scripts/v4/sync-upcoming-matches.js",
+    "import:v4-upcoming-json": "node scripts/v4/import-upcoming-from-json.js",
     "smoke:v3-routes": "node scripts/smoke_v3_routes.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"

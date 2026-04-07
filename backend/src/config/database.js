@@ -6,8 +6,8 @@ import logger from '../utils/logger.js';
 // Configure type parsers for PostgreSQL type coercion
 // 16 is the OID for 'bool' in Postgres. Return 1 for true, 0 for false (matches legacy int convention).
 types.setTypeParser(16, val => (val === 't' || val === true) ? 1 : 0);
-// 20 is the OID for 'int8' (BIGINT). Parse as Number to avoid JS string issues with large integers.
-types.setTypeParser(20, val => Number.parseInt(val, 10));
+// 20 is the OID for 'int8' (BIGINT). Return as string to preserve precision of 64-bit Flake IDs.
+types.setTypeParser(20, val => val);
 
 let pool;
 
