@@ -105,4 +105,12 @@ tmp/
 backend/data/
 backend/scripts/v4/import-upcoming-from-json.js
 backend/scripts/v4/sync-upcoming-matches.js
+data-freeze-v4.sql.gz
+import-upcoming.js
+import_v4_upcoming.js
+scripts/v4/import-v4-upcoming.js
+
+# Agent config (ignore if requested, but adding for cleanliness)
+.agents/
+.claude/
 
