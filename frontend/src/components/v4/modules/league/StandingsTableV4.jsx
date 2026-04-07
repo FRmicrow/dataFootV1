@@ -32,16 +32,112 @@ const RankBadge = ({ rank }) => {
 
 const StandingsTableV4 = ({
     standings = [],
-    rangeStart,
-    setRangeStart,
-    rangeEnd,
-    setRangeEnd,
-    handleRangeUpdate,
-    loading,
-    isSplitView,
-    onToggleSplit
+    fixtures = [],
+    loading
 }) => {
-    const groupMap = (standings || []).reduce((acc, curr) => {
+    const [rangeStart, setRangeStart] = React.useState('');
+    const [rangeEnd, setRangeEnd] = React.useState('');
+    const [activeFilterStart, setActiveFilterStart] = React.useState(null);
+    const [activeFilterEnd, setActiveFilterEnd] = React.useState(null);
+
+    // Auto-calculate max round from fixtures
+    const maxRound = React.useMemo(() => {
+        if (!fixtures || fixtures.length === 0) return 0;
+        let max = 0;
+        fixtures.forEach(f => {
+            const match = String(f.round).match(/\d+/);
+            const r = match ? parseInt(match[0], 10) : 0;
+            if (r > max) max = r;
+        });
+        return max;
+    }, [fixtures]);
+
+    // Initial default: 1 to MAX
+    React.useEffect(() => {
+        if (maxRound > 0 && activeFilterStart === null) {
+            setRangeStart('1');
+            setRangeEnd(String(maxRound));
+            setActiveFilterStart(1);
+            setActiveFilterEnd(maxRound);
+        }
+    }, [maxRound, activeFilterStart]);
+
+    const handleRangeUpdate = () => {
+        setActiveFilterStart(rangeStart ? Number(rangeStart) : null);
+        setActiveFilterEnd(rangeEnd ? Number(rangeEnd) : null);
+    };
+
+    const computedStandings = React.useMemo(() => {
+        if (!activeFilterStart || !activeFilterEnd || fixtures.length === 0) {
+            return standings;
+        }
+
+        const teamsMap = {};
+        standings.forEach(t => {
+            teamsMap[t.team_id] = {
+                team_id: t.team_id,
+                team_name: t.team_name,
+                team_logo: t.team_logo,
+                group_name: t.group_name || 'General Standings (V4)',
+                played: 0,
+                win: 0,
+                draw: 0,
+                lose: 0,
+                goals_for: 0,
+                goals_against: 0,
+                points: 0,
+                form: ''
+            };
+        });
+
+        // Parse round number from strings like "1. Journée" or "Regular Season - 1"
+        const getRoundNum = (roundStr) => {
+            if (!roundStr) return -1;
+            const match = String(roundStr).match(/\d+/);
+            return match ? parseInt(match[0], 10) : -1;
+        };
+
+        const validFixtures = fixtures.filter(f => {
+            const rNum = getRoundNum(f.round);
+            return rNum >= activeFilterStart && rNum <= activeFilterEnd && f.goals_home !== null && f.goals_away !== null;
+        });
+
+        validFixtures.forEach(f => {
+            const home = teamsMap[f.home_team_id];
+            const away = teamsMap[f.away_team_id];
+            if (!home || !away) return;
+
+            home.played++;
+            away.played++;
+            home.goals_for += f.goals_home;
+            home.goals_against += f.goals_away;
+            away.goals_for += f.goals_away;
+            away.goals_against += f.goals_home;
+
+            if (f.goals_home > f.goals_away) {
+                home.win++; home.points += 3;
+                away.lose++;
+            } else if (f.goals_home < f.goals_away) {
+                away.win++; away.points += 3;
+                home.lose++;
+            } else {
+                home.draw++; home.points += 1;
+                away.draw++; away.points += 1;
+            }
+        });
+
+        const sortedTeams = Object.values(teamsMap).sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            const diffA = a.goals_for - a.goals_against;
+            const diffB = b.goals_for - b.goals_against;
+            if (diffB !== diffA) return diffB - diffA;
+            return b.goals_for - a.goals_for;
+        });
+
+        return sortedTeams.map((t, idx) => ({ ...t, rank: idx + 1, goals_diff: t.goals_for - t.goals_against }));
+    }, [standings, fixtures, activeFilterStart, activeFilterEnd]);
+
+    const groupMap = (computedStandings || []).reduce((acc, curr) => {
         const group = curr.group_name || 'General Standings (V4)';
         if (!acc[group]) acc[group] = [];
         acc[group].push(curr);
@@ -102,7 +198,7 @@ const StandingsTableV4 = ({
         }
     ];
 
-    const columns = isSplitView ? allColumns : allColumns;
+    const columns = allColumns;
 
     if (standings.length === 0) {
         return (
@@ -120,7 +216,33 @@ const StandingsTableV4 = ({
     return (
         <Stack gap="var(--spacing-lg)" className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {groups.map(([groupName, teams], idx) => (
-                <Card key={groupName} title={groupName} padding="0" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                <Card 
+                    key={groupName} 
+                    title={groupName} 
+                    padding="0" 
+                    style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+                    extra={idx === 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', background: 'rgba(255,255,255,0.03)', padding: '4px 12px', borderRadius: 'var(--radius-full)' }}>
+                            <label htmlFor="range-start" style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--color-text-dim)' }}>FILTER RANKS</label>
+                            <Input
+                                id="range-start"
+                                type="number"
+                                value={rangeStart}
+                                onChange={e => setRangeStart(e.target.value)}
+                                style={{ width: '48px', textAlign: 'center', padding: '4px' }}
+                            />
+                            <label htmlFor="range-end" style={{ opacity: 0.3 }}>-</label>
+                            <Input
+                                id="range-end"
+                                type="number"
+                                value={rangeEnd}
+                                onChange={e => setRangeEnd(e.target.value)}
+                                style={{ width: '48px', textAlign: 'center', padding: '4px' }}
+                            />
+                            <Button size="xs" variant="ghost" onClick={handleRangeUpdate} loading={loading} style={{ padding: '2px 8px' }}>APPLY</Button>
+                        </div>
+                    )}
+                >
                     <Table columns={columns} data={teams} className="plain" interactive style={{ flex: 1, minHeight: 0 }} />
                 </Card>
             ))}
@@ -130,14 +252,8 @@ const StandingsTableV4 = ({
 
 StandingsTableV4.propTypes = {
     standings: PropTypes.array,
-    rangeStart: PropTypes.number,
-    setRangeStart: PropTypes.func,
-    rangeEnd: PropTypes.number,
-    setRangeEnd: PropTypes.func,
-    handleRangeUpdate: PropTypes.func,
-    loading: PropTypes.bool,
-    isSplitView: PropTypes.bool,
-    onToggleSplit: PropTypes.func
+    fixtures: PropTypes.array,
+    loading: PropTypes.bool
 };
 
 export default StandingsTableV4;

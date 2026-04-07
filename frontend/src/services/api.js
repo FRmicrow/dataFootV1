@@ -57,6 +57,7 @@ export default {
     getSeasonOverviewV4: (league, season) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}`),
     getFixturesV4: (league, season) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/fixtures`),
     getSeasonPlayersV4: (league, season, params) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/players`, { params }),
+    getTeamSquadV4: (league, season, teamId) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/team/${teamId}/squad`),
     getFixtureDetailsV4: (fixtureId) => api.get(`/v4/match/${fixtureId}`),
     getFixtureEventsV4: (id) => api.get(`/v4/fixtures/${id}/events`),
     getFixtureLineupsV4: (id) => api.get(`/v4/fixtures/${id}/lineups`),

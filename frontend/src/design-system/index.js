@@ -1,4 +1,5 @@
 export { default as Card } from './components/Card';
+export { default as Breadcrumbs } from './components/Breadcrumbs';
 export { default as Button } from './components/Button';
 export { default as Badge } from './components/Badge';
 export { default as Table } from './components/Table';
@@ -34,5 +35,6 @@ import './components/TeamSelector.css';
 import './components/LeagueHeader.css';
 import './components/Tooltip.css';
 import './components/Switch.css';
+import './components/Breadcrumbs.css';
 
 export { default as Accordion } from './components/Accordion';

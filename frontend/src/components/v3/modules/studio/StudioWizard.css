@@ -80,7 +80,7 @@
     background: var(--color-primary-500);
     border-color: var(--color-primary-400);
     color: white;
-    box-shadow: var(--glow-primary);
+    box-shadow: var(--shadow-premium);
 }
 
 .step-item.active .step-label {

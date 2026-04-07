@@ -1,64 +1,88 @@
 .v3-layout {
-    display: flex;
-    min-height: 100vh;
-    font-family: var(--font-family);
-    color: var(--color-text-main);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "sidebar main";
+    height: 100vh;
+    overflow: hidden;
     background: var(--color-bg-main);
+    color: var(--color-text-main);
 }
 
-/* Main content — takes all remaining space after sidebar */
+/* Sidebar Area */
+.sf-sidebar {
+    grid-area: sidebar;
+}
+
+/* Main Content Area */
 .v3-main-content {
-    flex: 1;
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
     overflow-y: auto;
     background: var(--color-bg-main);
-    min-width: 0; /* prevent flex overflow on narrow content */
-    
-    /* Default layout constraints */
-    --layout-max-width: 1400px;
+    position: relative;
+    scrollbar-gutter: stable;
 }
 
-/* US-330: Expand content when sidebar is collapsed */
-body.sidebar-collapsed .v3-main-content {
-    --layout-max-width: 1700px;
+/* New: Sticky Header with blur */
+.v3-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-index-sticky);
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-lg);
+    background: rgba(9, 9, 11, 0.7);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--color-border);
 }
 
-/* Nav items (shared style referenced by CollapsibleSidebar) */
+
+
+/* Content Container */
+.v3-content-wrapper {
+    flex: 1;
+    padding: var(--spacing-lg);
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Nav items refinement */
 .v3-nav-item {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--radius-sm);
     color: var(--color-text-muted);
     text-decoration: none;
-    font-weight: var(--font-weight-semibold);
-    transition: var(--transition-fast);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-fast);
 }
 
 .v3-nav-item:hover {
-    background: var(--glass-bg);
+    background: var(--color-bg-card-hover);
     color: var(--color-text-main);
 }
 
 .v3-nav-item.active {
     background: var(--color-primary-bg);
-    color: var(--color-text-main);
-    border-left: 3px solid var(--color-primary-500);
+    color: var(--color-primary-400);
 }
 
-/* Import page padding */
-.v3-import-page {
-    padding: var(--spacing-lg);
-}
-
-/* Responsive — stack on mobile (sidebar is fixed off-canvas via CollapsibleSidebar) */
+/* Responsive */
 @media (max-width: 992px) {
     .v3-layout {
-        flex-direction: column;
+        grid-template-columns: 1fr;
+        grid-template-areas: "main";
     }
 
-    /* Reduce padding on mobile */
-    .v3-main-content .sf-page-layout {
-        padding: var(--spacing-sm) !important;
+    .v3-content-wrapper {
+        padding: var(--spacing-md);
     }
 }

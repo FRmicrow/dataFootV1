@@ -68,6 +68,7 @@
 
 /* ── xG values ── */
 .ds-fr-xg {
+    font-family: var(--font-family-mono);
     font-size: 10px;
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-dim);
@@ -90,16 +91,17 @@
     display: flex;
     align-items: center;
     gap: 5px;
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-base);
-    font-weight: 900;
+    font-weight: 800;
     color: var(--color-text-main);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     line-height: 1;
 }
 
 .ds-fr-score__sep {
     color: var(--color-text-dim);
-    opacity: 0.4;
+    opacity: 0.3;
     font-weight: 400;
 }
 
@@ -108,8 +110,9 @@
 }
 
 .ds-fr-time {
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-xs);
-    font-weight: 800;
+    font-weight: 700;
     color: var(--color-text-dim);
     line-height: 1;
 }

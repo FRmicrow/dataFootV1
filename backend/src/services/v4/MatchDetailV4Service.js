@@ -1,139 +1,173 @@
 import db from '../../config/database.js';
-import logger from '../../utils/logger.js';
 
-/**
- * MatchDetailV4Service
- * Aggregates match data (info, lineups, events) from V4 tables.
- * Formatted for V3 UI component compatibility.
- */
+const DEFAULT_LOGO = 'https://tmssl.akamaized.net//images/logo/normal/tm.png';
+
 class MatchDetailV4Service {
-    /**
-     * Get basic match info, teams and historical logos
-     */
     async getFixtureDetails(fixtureId) {
-        const info = await db.get(`
-            SELECT 
-                f.*, 
-                th.name as home_name, 
-                ta.name as away_name,
-                COALESCE(
-                    (SELECT logo_url FROM V4_Club_Logos 
-                     WHERE team_id = th.team_id 
-                     AND CAST(SPLIT_PART(f.season, '-', 1) AS INTEGER) BETWEEN start_year AND COALESCE(end_year, 9999)
-                     ORDER BY start_year DESC LIMIT 1), 
-                    th.logo_url
-                ) as home_logo,
-                COALESCE(
-                    (SELECT logo_url FROM V4_Club_Logos 
-                     WHERE team_id = ta.team_id 
-                     AND CAST(SPLIT_PART(f.season, '-', 1) AS INTEGER) BETWEEN start_year AND COALESCE(end_year, 9999)
-                     ORDER BY start_year DESC LIMIT 1), 
-                    ta.logo_url
-                ) as away_logo
-            FROM V4_Fixtures f
-            JOIN V4_Teams th ON th.team_id = f.home_team_id
-            JOIN V4_Teams ta ON ta.team_id = f.away_team_id
-            WHERE f.fixture_id = $1
-        `, [fixtureId]);
+        const info = await db.get(
+            `
+                SELECT
+                    m.match_id::text AS fixture_id,
+                    m.match_id::text AS match_id,
+                    m.match_date AS date,
+                    m.season_label AS season,
+                    m.round_label AS round,
+                    m.matchday,
+                    m.home_score AS goals_home,
+                    m.away_score AS goals_away,
+                    m.home_formation,
+                    m.away_formation,
+                    c.name AS league,
+                    c.name AS league_name,
+                    home.club_id::text AS home_team_id,
+                    home.name AS home_name,
+                    COALESCE(hl.logo_url, home.current_logo_url, ?) AS home_logo,
+                    away.club_id::text AS away_team_id,
+                    away.name AS away_name,
+                    COALESCE(al.logo_url, away.current_logo_url, ?) AS away_logo,
+                    venue.name AS venue_name,
+                    referee.full_name AS referee_name
+                FROM v4.matches m
+                JOIN v4.competitions c ON c.competition_id = m.competition_id
+                JOIN v4.clubs home ON home.club_id = m.home_club_id
+                JOIN v4.clubs away ON away.club_id = m.away_club_id
+                LEFT JOIN v4.venues venue ON venue.venue_id = m.venue_id
+                LEFT JOIN v4.people referee ON referee.person_id = m.referee_person_id
+                LEFT JOIN LATERAL (
+                    SELECT logo_url
+                    FROM v4.club_logos
+                    WHERE club_id = home.club_id
+                    ORDER BY end_year DESC NULLS LAST, start_year DESC NULLS LAST
+                    LIMIT 1
+                ) hl ON TRUE
+                LEFT JOIN LATERAL (
+                    SELECT logo_url
+                    FROM v4.club_logos
+                    WHERE club_id = away.club_id
+                    ORDER BY end_year DESC NULLS LAST, start_year DESC NULLS LAST
+                    LIMIT 1
+                ) al ON TRUE
+                WHERE m.match_id::text = ?
+            `,
+            [DEFAULT_LOGO, DEFAULT_LOGO, fixtureId]
+        );
 
         if (!info) return null;
 
-        return {
-            ...info,
-            league_name: info.league
-        };
+        return info;
     }
 
-    /**
-     * Get match lineups grouped and formatted for V3 parity
-     */
     async getFixtureLineups(fixtureId) {
-        const rows = await db.all(`
-            SELECT l.*, p.name as player_name
-            FROM V4_Fixture_Lineups l
-            JOIN V4_Players p ON p.player_id = l.player_id
-            WHERE l.fixture_id = $1
-            ORDER BY l.side, l.is_starter DESC, l.numero ASC
-        `, [fixtureId]);
+        const rows = await db.all(
+            `
+                SELECT
+                    l.match_lineup_id::text AS id,
+                    l.club_id::text AS team_id,
+                    l.player_id::text AS player_id,
+                    l.side,
+                    l.is_starter,
+                    l.jersey_number,
+                    l.position_code,
+                    l.role_code,
+                    p.full_name AS player_name,
+                    c.name AS team_name
+                FROM v4.match_lineups l
+                JOIN v4.people p ON p.person_id = l.player_id
+                JOIN v4.clubs c ON c.club_id = l.club_id
+                WHERE l.match_id::text = ?
+                ORDER BY l.side ASC, l.is_starter DESC, NULLIF(l.jersey_number, '') ASC NULLS LAST, p.full_name ASC
+            `,
+            [fixtureId]
+        );
 
-        if (rows.length === 0) return { lineups: [] };
+        if (rows.length === 0) {
+            return { lineups: [] };
+        }
 
-        const transform = (teamRows) => {
-            if (!teamRows.length) return null;
-            
-            const starters = teamRows.filter(r => r.is_starter === 1 || r.is_starter === true).map(r => ({
-                player: { id: r.player_id, name: r.player_name, number: r.numero, pos: r.position_code }
-            }));
-            const subs = teamRows.filter(r => r.is_starter === 0 || r.is_starter === false).map(r => ({
-                player: { id: r.player_id, name: r.player_name, number: r.numero, pos: r.position_code }
-            }));
-            
+        const matchInfo = await db.get(
+            `
+                SELECT
+                    home_club_id::text AS home_team_id,
+                    away_club_id::text AS away_team_id,
+                    home_formation,
+                    away_formation
+                FROM v4.matches
+                WHERE match_id::text = ?
+            `,
+            [fixtureId]
+        );
+
+        const transform = (side) => {
+            const teamRows = rows.filter((row) => row.side === side);
+            if (teamRows.length === 0) return null;
+
             return {
                 team_id: teamRows[0].team_id,
-                team_name: 'N/A', 
-                formation: 'N/A',
+                team_name: teamRows[0].team_name,
+                formation: side === 'home' ? matchInfo?.home_formation || 'N/A' : matchInfo?.away_formation || 'N/A',
                 coach_name: 'N/A',
-                starting_xi: starters,
-                substitutes: subs
+                starting_xi: teamRows
+                    .filter((row) => row.is_starter === true || row.is_starter === 1)
+                    .map((row) => ({
+                        player_id: row.player_id,
+                        player: {
+                            id: row.player_id,
+                            name: row.player_name,
+                            number: row.jersey_number,
+                            pos: row.position_code || row.role_code || '?'
+                        }
+                    })),
+                substitutes: teamRows
+                    .filter((row) => row.is_starter === false || row.is_starter === 0)
+                    .map((row) => ({
+                        player_id: row.player_id,
+                        player: {
+                            id: row.player_id,
+                            name: row.player_name,
+                            number: row.jersey_number,
+                            pos: row.position_code || row.role_code || '?'
+                        }
+                    }))
             };
         };
 
-        const homeRows = rows.filter(r => r.side === 'home');
-        const awayRows = rows.filter(r => r.side === 'away');
-
-        const homeLineup = transform(homeRows);
-        const awayLineup = transform(awayRows);
-
-        const teams = await db.all(`
-            SELECT team_id, name FROM V4_Teams WHERE team_id IN (
-                SELECT home_team_id FROM V4_Fixtures WHERE fixture_id = $1
-                UNION
-                SELECT away_team_id FROM V4_Fixtures WHERE fixture_id = $1
-            )
-        `, [fixtureId]);
-        
-        if (homeLineup) {
-            const team = teams.find(t => t.team_id === homeLineup.team_id);
-            homeLineup.team_name = team?.name || 'Home';
-        }
-        if (awayLineup) {
-            const team = teams.find(t => t.team_id === awayLineup.team_id);
-            awayLineup.team_name = team?.name || 'Away';
-        }
+        const homeLineup = transform('home');
+        const awayLineup = transform('away');
 
         return {
             lineups: [homeLineup, awayLineup].filter(Boolean)
         };
     }
 
-    /**
-     * Get match events formatted for V3 parity
-     */
     async getFixtureEvents(fixtureId) {
-        const events = await db.all(`
-            SELECT e.*, p.name as player_name, a.name as assist_name,
-                (SELECT CASE WHEN side = 'home' THEN 1 ELSE 0 END FROM V4_Fixture_Lineups WHERE fixture_id = $1 AND player_id = e.player_id LIMIT 1) as is_home_team
-            FROM V4_Fixture_Events e
-            LEFT JOIN V4_Players p ON p.player_id = e.player_id
-            LEFT JOIN V4_Players a ON a.player_id = e.assist_id
-            WHERE e.fixture_id = $1
-            ORDER BY e.time_elapsed ASC, e.id ASC
-        `, [fixtureId]);
-
-        return events;
+        return db.all(
+            `
+                SELECT
+                    e.match_event_id::text AS id,
+                    e.event_order,
+                    e.minute_label AS time_elapsed,
+                    NULL::integer AS extra_minute,
+                    e.event_type AS type,
+                    e.detail,
+                    e.score_at_event,
+                    player.full_name AS player_name,
+                    related.full_name AS assist_name,
+                    CASE WHEN e.side = 'home' THEN 1 ELSE 0 END AS is_home_team
+                FROM v4.match_events e
+                LEFT JOIN v4.people player ON player.person_id = e.player_id
+                LEFT JOIN v4.people related ON related.person_id = e.related_player_id
+                WHERE e.match_id::text = ?
+                ORDER BY e.event_order ASC, e.match_event_id ASC
+            `,
+            [fixtureId]
+        );
     }
 
-    /**
-     * Get tactical stats
-     */
-    async getFixtureTacticalStats(fixtureId) {
+    async getFixtureTacticalStats() {
         return [];
     }
 
-    /**
-     * Get player tactical stats
-     */
-    async getFixturePlayerTacticalStats(fixtureId) {
+    async getFixturePlayerTacticalStats() {
         return [];
     }
 }

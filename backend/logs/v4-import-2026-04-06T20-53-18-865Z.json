@@ -1,0 +1,19 @@
+[
+  {
+    "country": "France",
+    "status": "imported",
+    "freeze_status": "frozen",
+    "locked": true,
+    "matches": 47987,
+    "competitions": 5,
+    "clubs": 1505,
+    "people": 34054,
+    "events": 426769,
+    "lineups": 1213620,
+    "started_at": "2026-04-06T20:53:19.093Z",
+    "finished_at": "2026-04-06T20:53:33.312Z",
+    "duration_ms": 14219,
+    "file": "France.sql",
+    "note": ""
+  }
+]

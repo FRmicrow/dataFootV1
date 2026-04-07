@@ -11,7 +11,7 @@
 
 .ds-card:hover {
     border-color: var(--color-border-hover);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-premium);
 }
 
 .ds-card--ghost {
@@ -22,24 +22,7 @@
 .ds-card--interactive:hover {
     background: var(--color-bg-card-hover);
     border-color: var(--color-primary-500);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-xl), 0 0 15px var(--color-primary-glow);
-}
-
-.ds-card--interactive::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05), transparent);
-    transform: skewX(-25deg);
-    transition: 0.75s;
-}
-
-.ds-card--interactive:hover::after {
-    left: 150%;
+    box-shadow: var(--shadow-premium);
 }
 
 

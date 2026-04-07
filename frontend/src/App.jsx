@@ -16,6 +16,7 @@ import MatchDetailPage from './components/v3/pages/match/MatchDetailPage';
 import MachineLearningHub from './components/v3/modules/ml/MachineLearningHub';
 import DesignSystemPage from './components/v3/pages/system/DesignSystemPage';
 import SeasonOverviewPageV4 from './components/v4/pages/league/SeasonOverviewPageV4';
+import V4LeaguesList from './components/v4/pages/league/V4LeaguesList';
 
 import { ImportProvider } from './context/ImportContext.jsx';
 import ErrorBoundary from './design-system/components/ErrorBoundary';
@@ -39,6 +40,7 @@ function App() {
                             <Route path="/import/matrix-status" element={<ImportMatrixPage />} />
                             <Route path="/import/old" element={<ImportV3Page />} />
                             <Route path="/leagues" element={<V3LeaguesList />} />
+                            <Route path="/leagues-v4" element={<V4LeaguesList />} />
                             <Route path="/league/:id" element={<SeasonOverviewPage />} />
                             <Route path="/league/:id/season/:year" element={<SeasonOverviewPage />} />
                             <Route path="/leagueV4/:name/season/:year" element={<SeasonOverviewPageV4 />} />

@@ -28,11 +28,12 @@
 }
 
 .ds-metric-value {
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-3xl);
-    font-weight: var(--font-weight-black);
+    font-weight: 800;
     color: var(--color-text-main);
     margin: 0;
-    text-shadow: 0 0 20px rgba(139, 92, 246, 0.1);
+    letter-spacing: -0.04em;
 }
 
 .ds-metric-trend {
@@ -86,7 +87,7 @@
 .ds-metric-card--featured {
     background: var(--color-primary-bg);
     border-color: var(--color-primary-400);
-    box-shadow: var(--glow-primary-strong);
+    box-shadow: var(--shadow-premium);
 }
 
 .ds-metric-card--featured .ds-metric-value {

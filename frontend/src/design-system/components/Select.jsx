@@ -16,7 +16,7 @@ const customStyles = {
         borderRadius: 'var(--radius-sm)',
         padding: '0 2px',
         boxShadow: state.isFocused
-            ? '0 0 0 2px rgba(139, 92, 246, 0.18), 0 4px 12px rgba(0,0,0,0.3)'
+            ? '0 0 0 2px var(--color-primary-bg), 0 4px 12px rgba(0,0,0,0.3)'
             : '0 1px 3px rgba(0,0,0,0.2)',
         '&:hover': {
             borderColor: state.isFocused
@@ -47,9 +47,9 @@ const customStyles = {
     }),
     menu: (provided) => ({
         ...provided,
-        backgroundColor: 'rgba(10, 15, 30, 0.92)',
+        backgroundColor: 'rgba(9, 9, 11, 0.95)',
         backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(139, 92, 246, 0.2)',
+        border: '1px solid var(--color-border)',
         borderRadius: 'var(--radius-md)',
         overflow: 'hidden',
         boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
@@ -69,12 +69,12 @@ const customStyles = {
     option: (provided, state) => ({
         ...provided,
         backgroundColor: state.isSelected
-            ? 'rgba(139, 92, 246, 0.25)'
+            ? 'var(--color-primary-bg)'
             : state.isFocused
-                ? 'rgba(139, 92, 246, 0.1)'
+                ? 'var(--color-bg-subtle)'
                 : 'transparent',
         color: state.isSelected
-            ? 'var(--color-primary-300)'
+            ? 'var(--color-primary-400)'
             : 'var(--color-text-main)',
         fontSize: 'var(--font-size-sm)',
         padding: '8px 12px',
@@ -86,7 +86,7 @@ const customStyles = {
             : '2px solid transparent',
         transition: 'all 0.1s ease',
         '&:active': {
-            backgroundColor: 'rgba(139, 92, 246, 0.3)',
+            backgroundColor: 'var(--color-primary-bg)',
         },
     }),
     placeholder: (provided) => ({

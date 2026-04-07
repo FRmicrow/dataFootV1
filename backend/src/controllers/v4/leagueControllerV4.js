@@ -1,25 +1,47 @@
+import { z } from 'zod';
+
 import StandingsV4Service from '../../services/v4/StandingsV4Service.js';
 import MatchDetailV4Service from '../../services/v4/MatchDetailV4Service.js';
-import db from '../../config/database.js';
+import LeagueServiceV4 from '../../services/v4/LeagueServiceV4.js';
 import logger from '../../utils/logger.js';
 
-/**
- * LeagueControllerV4
- * Handles V4-specific league and season requests.
- */
+const leagueSeasonParamsSchema = z.object({
+    league: z.string().min(1),
+    season: z.string().min(1)
+});
 
-export const getLeaguesV4 = async (req, res) => {
+const fixtureIdSchema = z.object({
+    fixtureId: z.string().min(1)
+});
+
+const fixtureRouteIdSchema = z.object({
+    id: z.string().min(1)
+});
+
+const teamSquadParamsSchema = z.object({
+    league: z.string().min(1),
+    season: z.string().min(1),
+    teamId: z.string().min(1)
+});
+
+const seasonPlayersQuerySchema = z.object({
+    teamId: z.string().optional(),
+    position: z.enum(['ALL', 'Goalkeeper', 'Defender', 'Midfielder', 'Attacker']).optional().default('ALL'),
+    sortBy: z.enum(['goals', 'appearances', 'assists', 'minutes', 'name']).optional().default('goals'),
+    order: z.enum(['ASC', 'DESC']).optional().default('DESC')
+});
+
+function handleValidationError(res, error) {
+    return res.status(400).json({
+        success: false,
+        error: error?.issues?.[0]?.message || 'Invalid request'
+    });
+}
+
+export const getLeaguesV4 = async (_req, res) => {
     try {
-        const competitions = await StandingsV4Service.listAvailableCompetitions();
-        
-        // Group by league for easier frontend consumption
-        const grouped = {};
-        competitions.forEach(c => {
-            if (!grouped[c.league]) grouped[c.league] = { name: c.league, seasons: [] };
-            grouped[c.league].seasons.push(c.season);
-        });
-
-        res.json({ success: true, data: Object.values(grouped) });
+        const data = await LeagueServiceV4.getLeaguesGroupedByCountry();
+        res.json({ success: true, data });
     } catch (error) {
         logger.error({ err: error }, 'V4 getLeagues error');
         res.status(500).json({ success: false, error: 'Internal Server Error' });
@@ -28,147 +50,87 @@ export const getLeaguesV4 = async (req, res) => {
 
 export const getSeasonOverviewV4 = async (req, res) => {
     try {
-        const { league, season } = req.params;
+        const params = leagueSeasonParamsSchema.parse(req.params);
+        const leagueData = await LeagueServiceV4.getCompetitionByName(params.league);
 
-        if (!league || !season) {
-            return res.status(400).json({ success: false, error: 'Missing league or season' });
+        if (!leagueData) {
+            return res.status(404).json({ success: false, error: 'League not found in V4' });
         }
 
-        // 1. Calculate Standings
-        const standings = await StandingsV4Service.calculateStandings(league, season);
-
-        // 2. Get Top Scorers (V4_Fixture_Events)
-        const topScorers = await db.all(`
-            SELECT 
-                p.player_id, 
-                p.name as player_name, 
-                COUNT(*) as goals_total,
-                MIN(t.name) as team_name,
-                MIN(p.player_id) as id,
-                COALESCE(
-                    (SELECT logo_url FROM V4_Club_Logos 
-                     WHERE team_id = MIN(t.team_id) 
-                     AND CAST(SPLIT_PART($2, '-', 1) AS INTEGER) BETWEEN start_year AND COALESCE(end_year, 9999)
-                     ORDER BY start_year DESC
-                     LIMIT 1), 
-                    MIN(t.logo_url)
-                ) as team_logo
-            FROM V4_Fixture_Events e
-            JOIN V4_Fixtures f ON f.fixture_id = e.fixture_id
-            JOIN V4_Players p ON p.player_id = e.player_id
-            LEFT JOIN V4_Fixture_Lineups l ON l.fixture_id = f.fixture_id AND l.player_id = p.player_id
-            LEFT JOIN V4_Teams t ON t.team_id = l.team_id
-            WHERE f.league = $1 AND f.season = $2 AND e.type = 'goal'
-            GROUP BY p.player_id, p.name
-            ORDER BY goals_total DESC
-            LIMIT 10
-        `, [league, season]);
-
-        // 3. Get Metadata (League type, seasons list)
-        const availableYears = (await db.all(`
-            SELECT DISTINCT season FROM V4_Fixtures WHERE league = $1 ORDER BY season DESC
-        `, [league])).map(r => r.season);
+        const [standings, topScorers, topAssists, availableYears] = await Promise.all([
+            StandingsV4Service.calculateStandings(leagueData.competition_id, params.season),
+            LeagueServiceV4.getTopScorers(leagueData.competition_id, params.season),
+            LeagueServiceV4.getTopAssists(leagueData.competition_id, params.season),
+            LeagueServiceV4.getAvailableSeasonsByCompetitionId(leagueData.competition_id)
+        ]);
 
         res.json({
             success: true,
             data: {
-                league: { league_name: league, type: 'League' },
+                league: {
+                    league_id: leagueData.competition_id,
+                    league_name: leagueData.name,
+                    type: leagueData.competition_type,
+                    logo_url: leagueData.logo_url,
+                    country_name: leagueData.country_name,
+                    country_flag: leagueData.country_flag
+                },
                 standings,
                 topScorers,
-                availableYears,
-                topAssists: [], // To be implemented if assist data is rich enough
-                topRated: []
+                topAssists,
+                topRated: [],
+                availableYears
             }
         });
-
     } catch (error) {
-        logger.error({ err: error, league: req.params.league }, 'V4 season overview error');
-        res.status(500).json({ success: false, error: error.message });
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
+        logger.error({ err: error, league: req.params.league, season: req.params.season }, 'V4 season overview error');
+        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
     }
 };
 
 export const getSeasonPlayersV4 = async (req, res) => {
     try {
-        const { league, season } = req.params;
-        const { teamId, position, sortBy = 'goals', order = 'DESC' } = req.query;
+        const params = leagueSeasonParamsSchema.parse(req.params);
+        const query = seasonPlayersQuerySchema.parse(req.query);
+        const leagueData = await LeagueServiceV4.getCompetitionByName(params.league);
 
-        // Base query: Aggregate from Lineups (appearances) and Events (goals/assists)
-        const players = await db.all(`
-            WITH player_stats AS (
-                SELECT 
-                    p.player_id,
-                    p.name,
-                    MIN(t.name) as team_name,
-                    MIN(t.team_id) as team_id,
-                    MIN(t.logo_url) as team_logo,
-                    MIN(l.position_code) as position,
-                    COUNT(DISTINCT l.fixture_id) as appearances,
-                    COUNT(CASE WHEN e.type = 'goal' THEN 1 END) as goals,
-                    COUNT(CASE WHEN e.type = 'assist' THEN 1 END) as assists
-                FROM V4_Players p
-                JOIN V4_Fixture_Lineups l ON l.player_id = p.player_id
-                JOIN V4_Fixtures f ON f.fixture_id = l.fixture_id
-                JOIN V4_Teams t ON t.team_id = l.team_id
-                LEFT JOIN V4_Fixture_Events e ON e.fixture_id = f.fixture_id AND e.player_id = p.player_id
-                WHERE f.league = $1 AND f.season = $2
-                GROUP BY p.player_id, p.name
-            )
-            SELECT ps.*, 
-                COALESCE(
-                    (SELECT logo_url FROM V4_Club_Logos 
-                     WHERE team_id = ps.team_id 
-                     AND CAST(SPLIT_PART($2, '-', 1) AS INTEGER) BETWEEN start_year AND COALESCE(end_year, 9999)
-                     ORDER BY start_year DESC
-                     LIMIT 1), 
-                    ps.team_logo
-                ) as contextual_logo
-            FROM player_stats ps
-            WHERE ( $3::text IS NULL OR team_id::text = $3::text )
-            ORDER BY ${sortBy === 'goals' ? 'goals' : sortBy === 'appearances' ? 'appearances' : 'goals'} ${order === 'DESC' ? 'DESC' : 'ASC'}
-            LIMIT 100
-        `, [league, season, teamId || null]);
+        if (!leagueData) {
+            return res.status(404).json({ success: false, error: 'League not found in V4' });
+        }
 
+        const players = await LeagueServiceV4.getSeasonPlayers(leagueData.competition_id, params.season, query);
         res.json({ success: true, data: players });
     } catch (error) {
-        logger.error({ err: error, league: req.params.league }, 'V4 getSeasonPlayers error');
-        res.status(500).json({ success: false, error: error.message });
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
+        logger.error({ err: error, league: req.params.league, season: req.params.season }, 'V4 getSeasonPlayers error');
+        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
     }
 };
 
 export const getFixturesV4 = async (req, res) => {
     try {
-        const { league, season } = req.params;
+        const params = leagueSeasonParamsSchema.parse(req.params);
+        const leagueData = await LeagueServiceV4.getCompetitionByName(params.league);
 
-        const fixtures = await db.all(`
-            SELECT 
-                f.*, 
-                th.name as home_team, 
-                ta.name as away_team,
-                COALESCE(
-                    (SELECT logo_url FROM V4_Club_Logos 
-                     WHERE team_id = th.team_id 
-                     AND CAST(SPLIT_PART(f.season, '-', 1) AS INTEGER) BETWEEN start_year AND COALESCE(end_year, 9999)
-                     ORDER BY start_year DESC
-                     LIMIT 1), 
-                    th.logo_url
-                ) as home_team_logo,
-                COALESCE(
-                    (SELECT logo_url FROM V4_Club_Logos 
-                     WHERE team_id = ta.team_id 
-                     AND CAST(SPLIT_PART(f.season, '-', 1) AS INTEGER) BETWEEN start_year AND COALESCE(end_year, 9999)
-                     ORDER BY start_year DESC
-                     LIMIT 1), 
-                    ta.logo_url
-                ) as away_team_logo
-            FROM V4_Fixtures f
-            JOIN V4_Teams th ON th.team_id = f.home_team_id
-            JOIN V4_Teams ta ON ta.team_id = f.away_team_id
-            WHERE f.league = $1 AND f.season = $2
-            ORDER BY f.date ASC, f.fixture_id ASC
-        `, [league, season]);
+        if (!leagueData) {
+            return res.status(404).json({ success: false, error: 'League not found in V4' });
+        }
 
-        // Group by rounds if available
-        const rounds = [...new Set(fixtures.map(f => f.round))].filter(Boolean);
+        const fixtures = await LeagueServiceV4.getFixtures(leagueData.competition_id, params.season);
+        const rounds = [...new Set(fixtures.map((fixture) => fixture.round))]
+            .filter(Boolean)
+            .sort((a, b) => {
+                const numA = Number.parseInt(String(a).match(/\d+/)?.[0] || '0', 10);
+                const numB = Number.parseInt(String(b).match(/\d+/)?.[0] || '0', 10);
+                return numA - numB;
+            });
 
         res.json({
             success: true,
@@ -178,59 +140,109 @@ export const getFixturesV4 = async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error({ err: error, league: req.params.league }, 'V4 getFixtures error');
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
+        logger.error({ err: error, league: req.params.league, season: req.params.season }, 'V4 getFixtures error');
         res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 };
 
 export const getFixtureDetailsV4 = async (req, res) => {
     try {
-        const { fixtureId } = req.params;
+        const { fixtureId } = fixtureIdSchema.parse(req.params);
         const match = await MatchDetailV4Service.getFixtureDetails(fixtureId);
-        if (!match) return res.status(404).json({ success: false, error: 'Match not found in V4' });
+        if (!match) {
+            return res.status(404).json({ success: false, error: 'Match not found in V4' });
+        }
+
         res.json({ success: true, data: match });
     } catch (error) {
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
         logger.error({ err: error, fixtureId: req.params.fixtureId }, 'V4 getFixtureDetails error');
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
     }
 };
 
 export const getFixtureEventsV4 = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = fixtureRouteIdSchema.parse(req.params);
         const events = await MatchDetailV4Service.getFixtureEvents(id);
         res.json({ success: true, data: events });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
+        logger.error({ err: error, fixtureId: req.params.id }, 'V4 getFixtureEvents error');
+        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
     }
 };
 
 export const getFixtureLineupsV4 = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = fixtureRouteIdSchema.parse(req.params);
         const lineups = await MatchDetailV4Service.getFixtureLineups(id);
         res.json({ success: true, data: lineups });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
+        logger.error({ err: error, fixtureId: req.params.id }, 'V4 getFixtureLineups error');
+        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
     }
 };
 
 export const getFixtureTacticalStatsV4 = async (req, res) => {
     try {
-        const { id } = req.params;
-        const stats = await MatchDetailV4Service.getFixtureTacticalStats(id);
+        fixtureRouteIdSchema.parse(req.params);
+        const stats = await MatchDetailV4Service.getFixtureTacticalStats();
         res.json({ success: true, data: stats });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
+        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
     }
 };
 
 export const getFixturePlayerTacticalStatsV4 = async (req, res) => {
     try {
-        const { id } = req.params;
-        const stats = await MatchDetailV4Service.getFixturePlayerTacticalStats(id);
+        fixtureRouteIdSchema.parse(req.params);
+        const stats = await MatchDetailV4Service.getFixturePlayerTacticalStats();
         res.json({ success: true, data: stats });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
+        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
+    }
+};
+
+export const getTeamSquadV4 = async (req, res) => {
+    try {
+        const params = teamSquadParamsSchema.parse(req.params);
+        const leagueData = await LeagueServiceV4.getCompetitionByName(params.league);
+
+        if (!leagueData) {
+            return res.status(404).json({ success: false, error: 'League not found in V4' });
+        }
+
+        const squad = await LeagueServiceV4.getTeamSquad(leagueData.competition_id, params.season, params.teamId);
+        res.json({ success: true, data: squad });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error);
+        }
+
+        logger.error({ err: error, teamId: req.params.teamId, league: req.params.league, season: req.params.season }, 'V4 getTeamSquad error');
+        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
     }
 };

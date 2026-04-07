@@ -1,0 +1,1087 @@
+[
+  {
+    "league_name": "Kategoria Superiore",
+    "country": "Albanie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/alb1_1645711083.png?lm=1645711083"
+  },
+  {
+    "league_name": "Kupa e Shqipërisë",
+    "country": "Albanie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/albp.png?lm=1443938546"
+  },
+  {
+    "league_name": "Coupe d'Algérie",
+    "country": "Algerie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/algp.png?lm=1745433661"
+  },
+  {
+    "league_name": "Division 1",
+    "country": "Algerie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/alg1.png?lm=1719326582"
+  },
+  {
+    "league_name": "Supercoupe d'Algérie",
+    "country": "Algerie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/agsc.png?lm=1736963912"
+  },
+  {
+    "league_name": "2. Bundesliga",
+    "country": "Allemagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/l2.png?lm=1525905553"
+  },
+  {
+    "league_name": "Bundesliga",
+    "country": "Allemagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/l1_1447076810.png?lm=1447076810"
+  },
+  {
+    "league_name": "Franz-Beckenbauer-Supercup",
+    "country": "Allemagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/dfl.png?lm=1749719877"
+  },
+  {
+    "league_name": "Tschammerpokal",
+    "country": "Allemagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/dfb_1652339968.png?lm=1652339968"
+  },
+  {
+    "league_name": "Championship",
+    "country": "Angleterre",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/gb2.png?lm=1692214857"
+  },
+  {
+    "league_name": "EFL Cup",
+    "country": "Angleterre",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/cgb_1546360420.png?lm=1546360420"
+  },
+  {
+    "league_name": "FA Charity Shield",
+    "country": "Angleterre",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/gbcs.png?lm=1659265562"
+  },
+  {
+    "league_name": "FA Cup",
+    "country": "Angleterre",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/fac.png?lm=1666031556"
+  },
+  {
+    "league_name": "Premier League",
+    "country": "Angleterre",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/gb1_1464786056.png?lm=1464786056"
+  },
+  {
+    "league_name": "Saudi Pro League",
+    "country": "Arabie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sa1.png?lm=1692612717"
+  },
+  {
+    "league_name": "King's Cup",
+    "country": "ArabieSaoudite",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sakc.png?lm=1719262754"
+  },
+  {
+    "league_name": "Saudi First Division League",
+    "country": "ArabieSaoudite",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sa2l.png?lm=1693314633"
+  },
+  {
+    "league_name": "Saudi Pro League",
+    "country": "ArabieSaoudite",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sa1.png?lm=1692612717"
+  },
+  {
+    "league_name": "Saudi Super Cup",
+    "country": "ArabieSaoudite",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sass.png?lm=1669488902"
+  },
+  {
+    "league_name": "Copa Argentina",
+    "country": "Argentine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/arca_1681944621.png?lm=1681944621"
+  },
+  {
+    "league_name": "LigaProfesionalFixtureDetail",
+    "country": "Argentine",
+    "logo_url": null
+  },
+  {
+    "league_name": "Primera Nacional",
+    "country": "Argentine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/arg2.png?lm=1606232114"
+  },
+  {
+    "league_name": "Torneo Apertura",
+    "country": "Argentine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/arg1.png?lm=1768234319"
+  },
+  {
+    "league_name": "A-League Men",
+    "country": "Australie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/aus1.png?lm=1644660263"
+  },
+  {
+    "league_name": "Australia Cup",
+    "country": "Australie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ffac.png?lm=1663585104"
+  },
+  {
+    "league_name": "National Premier League - Victoria",
+    "country": "Australie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/a2vi.png?lm=1676575805"
+  },
+  {
+    "league_name": "Bundesliga",
+    "country": "Autriche",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/a1_1447248543.png?lm=1447248543"
+  },
+  {
+    "league_name": "Erste Liga",
+    "country": "Autriche",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/a2_1448548121.png?lm=1448548123"
+  },
+  {
+    "league_name": "ÖFB-Cup",
+    "country": "Autriche",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ofb.png?lm=1498505424"
+  },
+  {
+    "league_name": "ÖFB-Supercup",
+    "country": "Autriche",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ofbs.png?lm=1430401933"
+  },
+  {
+    "league_name": "Azerbaycan Kuboku",
+    "country": "Azerbaidjan",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/aspk.png?lm=1543338457"
+  },
+  {
+    "league_name": "Premyer Liqa",
+    "country": "Azerbaidjan",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/az1.png?lm=1608210628"
+  },
+  {
+    "league_name": "Croky Cup",
+    "country": "Belgique",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ccb.png?lm=1489925878"
+  },
+  {
+    "league_name": "Division 1",
+    "country": "Belgique",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/be1_1703696049.png?lm=1703696049"
+  },
+  {
+    "league_name": "EXQI League",
+    "country": "Belgique",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/be2_1711034182.png?lm=1711034182"
+  },
+  {
+    "league_name": "JupilerProLeagueFixtureDetail",
+    "country": "Belgique",
+    "logo_url": null
+  },
+  {
+    "league_name": "Copa Bolivia",
+    "country": "Bolivie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/bo12_1749741282.png?lm=1749741282"
+  },
+  {
+    "league_name": "División Profesional",
+    "country": "Bolivie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/bo1a.png?lm=1602510560"
+  },
+  {
+    "league_name": "Kup BiH",
+    "country": "BosnIeHerzegovine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/bihp.png?lm=1431970034"
+  },
+  {
+    "league_name": "Premijer Liga Bosne i Hercegovine",
+    "country": "BosnIeHerzegovine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/bos1.png?lm=1708359973"
+  },
+  {
+    "league_name": "Bob Radcliffe Cup",
+    "country": "Bresil",
+    "logo_url": null
+  },
+  {
+    "league_name": "BrasileiraoSerieAFixtureDetail",
+    "country": "Bresil",
+    "logo_url": null
+  },
+  {
+    "league_name": "Campeonato Brasileiro Série A",
+    "country": "Bresil",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/bra1.png?lm=1713364599"
+  },
+  {
+    "league_name": "Campeonato Brasileiro Série B",
+    "country": "Bresil",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/bra2.png?lm=1731436730"
+  },
+  {
+    "league_name": "Coupe des clubs champions européens",
+    "country": "C1",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/epl.png?lm=1413986138"
+  },
+  {
+    "league_name": "UEFA Champions League",
+    "country": "C1",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/cl.png?lm=1626810555"
+  },
+  {
+    "league_name": "Coupe de l'UEFA (- 2009)",
+    "country": "C3",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/uefa.png?lm=1401990307"
+  },
+  {
+    "league_name": "UEFA Europa League",
+    "country": "C3",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/el.png?lm=1721915137"
+  },
+  {
+    "league_name": "Canadian Championship",
+    "country": "Canada",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/can_1627064491.png?lm=1627064491"
+  },
+  {
+    "league_name": "Canadian Premier League",
+    "country": "Canada",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/cdn1_1769610692.png?lm=1769610693"
+  },
+  {
+    "league_name": "Liga DIMAYOR Apertura",
+    "country": "Colombie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/colp.png?lm=1580674248"
+  },
+  {
+    "league_name": "K League 1",
+    "country": "CoreeDuSud",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/rsk1_1605026829.png?lm=1605026829"
+  },
+  {
+    "league_name": "K League 2",
+    "country": "CoreeDuSud",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/rsk2_1609881698.png?lm=1609881698"
+  },
+  {
+    "league_name": "Korea Cup",
+    "country": "CoreeDuSud",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/rkpo_1680106314.png?lm=1680106314"
+  },
+  {
+    "league_name": "Korean Super Cup",
+    "country": "CoreeDuSud",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ksc1_1769635514.png?lm=1769635514"
+  },
+  {
+    "league_name": "Hrvatski nogometni kup",
+    "country": "Croatie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/krc.png?lm=1662675206"
+  },
+  {
+    "league_name": "SuperSport HNL",
+    "country": "Croatie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/kr1.png?lm=1667669232"
+  },
+  {
+    "league_name": "1.Division",
+    "country": "Danemark",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/dk2.png?lm=1751368386"
+  },
+  {
+    "league_name": "Coca Cola-Ligaen",
+    "country": "Danemark",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/dk1_1578775004.png?lm=1578775004"
+  },
+  {
+    "league_name": "DBU Pokalen",
+    "country": "Danemark",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/dkp_1715369748.png?lm=1715369748"
+  },
+  {
+    "league_name": "Scottish League Cup",
+    "country": "Ecosse",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/scp.png?lm=1625225729"
+  },
+  {
+    "league_name": "Scottish Premiership",
+    "country": "Ecosse",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sc1.png?lm=1750156806"
+  },
+  {
+    "league_name": "SFA Cup",
+    "country": "Ecosse",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sfa_1711910414.png?lm=1711910414"
+  },
+  {
+    "league_name": "Egypt Cup",
+    "country": "Egypte",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/egyp.png?lm=1764422713"
+  },
+  {
+    "league_name": "Egyptian Premier League",
+    "country": "Egypte",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/egy1_1677156865.png?lm=1677156865"
+  },
+  {
+    "league_name": "Egyptian Super Cup",
+    "country": "Egypte",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/escu.png?lm=1683275354"
+  },
+  {
+    "league_name": "UAE President's Cup",
+    "country": "EmiratsArabesUnis",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/uaep.png?lm=1672241511"
+  },
+  {
+    "league_name": "UAE Pro League",
+    "country": "EmiratsArabesUnis",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/uae1.png?lm=1670616425"
+  },
+  {
+    "league_name": "UAE Super Cup",
+    "country": "EmiratsArabesUnis",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/uasc.png?lm=1620468058"
+  },
+  {
+    "league_name": "Copa Ecuador",
+    "country": "Equateur",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ecup_1650757870.png?lm=1650757870"
+  },
+  {
+    "league_name": "Liga Pro Serie B",
+    "country": "Equateur",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ec2l.png?lm=1754883326"
+  },
+  {
+    "league_name": "LigaPro Serie A",
+    "country": "Equateur",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ec1n.png?lm=1581946833"
+  },
+  {
+    "league_name": "Copa de la Coronación",
+    "country": "Espagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/cdr.png?lm=1644835742"
+  },
+  {
+    "league_name": "LaLiga",
+    "country": "Espagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/es1.png?lm=1725974302"
+  },
+  {
+    "league_name": "LaLiga2",
+    "country": "Espagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/es2.png?lm=1725974946"
+  },
+  {
+    "league_name": "Segunda División",
+    "country": "Espagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/es2_1725975410.png?lm=1725975410"
+  },
+  {
+    "league_name": "Supercopa",
+    "country": "Espagne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/suc.png?lm=1641310343"
+  },
+  {
+    "league_name": "Suomen Cup",
+    "country": "Finlande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/fis.png?lm=1768067131"
+  },
+  {
+    "league_name": "Veikkausliiga",
+    "country": "Finlande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/fi1_1743024325.png?lm=1743024326"
+  },
+  {
+    "league_name": "Ykkönen",
+    "country": "Finlande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/fi2_1648805460.png?lm=1648805461"
+  },
+  {
+    "league_name": "Coupe de France",
+    "country": "France",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/frc.png?lm=1762358120"
+  },
+  {
+    "league_name": "Ligue 1",
+    "country": "France",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/fr1.png?lm=1732280518"
+  },
+  {
+    "league_name": "Ligue 2",
+    "country": "France",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/fr2.png?lm=1732281128"
+  },
+  {
+    "league_name": "Ligue1FixtureDetail",
+    "country": "France",
+    "logo_url": null
+  },
+  {
+    "league_name": "Ligue2FixtureDetail",
+    "country": "France",
+    "logo_url": null
+  },
+  {
+    "league_name": "Trophée des Champions",
+    "country": "France",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/frch.png?lm=1758903821"
+  },
+  {
+    "league_name": "David Kipiani Cup",
+    "country": "Georgie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/gep1.png?lm=1706783820"
+  },
+  {
+    "league_name": "Erovnuli Liga",
+    "country": "Georgie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ge1n.png?lm=1648352894"
+  },
+  {
+    "league_name": "Erovnuli Liga 2",
+    "country": "Georgie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/geo2.png?lm=1650631536"
+  },
+  {
+    "league_name": "Ghana Premier League",
+    "country": "Ghana",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ghpl.png?lm=1754394962"
+  },
+  {
+    "league_name": "Alpha Ethniki",
+    "country": "Grece",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/gr1_1717687099.png?lm=1717687100"
+  },
+  {
+    "league_name": "Greek Super Cup",
+    "country": "Grece",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/grsc_1766440410.png?lm=1766440411"
+  },
+  {
+    "league_name": "Kypello Elladas",
+    "country": "Grece",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/grp.png?lm=1717682298"
+  },
+  {
+    "league_name": "Super League 2",
+    "country": "Grece",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/grs2_1717681311.png?lm=1717681311"
+  },
+  {
+    "league_name": "Magyar Kupa",
+    "country": "Hongrie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ungp.png?lm=1599888104"
+  },
+  {
+    "league_name": "Nemzeti Bajnokság",
+    "country": "Hongrie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ung1.png?lm=1765624664"
+  },
+  {
+    "league_name": "Nemzeti Bajnokság II.",
+    "country": "Hongrie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/un2.png?lm=1619448884"
+  },
+  {
+    "league_name": "Durand Cup",
+    "country": "Inde",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/indc.png?lm=1670959820"
+  },
+  {
+    "league_name": "Indian Super League",
+    "country": "Inde",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ind1.png?lm=1770292477"
+  },
+  {
+    "league_name": "Championnat d'Europe 1960",
+    "country": "International-Nation",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/em60.png?lm=1401980383"
+  },
+  {
+    "league_name": "Coupe du monde 1930",
+    "country": "International-Nation",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/wm30.png?lm=1669497576"
+  },
+  {
+    "league_name": "Iraq FA Cup",
+    "country": "Irak",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/irqc.png?lm=1748211925"
+  },
+  {
+    "league_name": "Iraq Stars League",
+    "country": "Irak",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/irq1.png?lm=1728638644"
+  },
+  {
+    "league_name": "Hazfi Cup",
+    "country": "Iran",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/irnp.png?lm=1655899542"
+  },
+  {
+    "league_name": "Pro League",
+    "country": "Iran",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/irn1_1705575463.png?lm=1705575463"
+  },
+  {
+    "league_name": "Eircom League Premier Division",
+    "country": "Irlande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ir1_1635647412.png?lm=1635647413"
+  },
+  {
+    "league_name": "FAICupFixtureDetail",
+    "country": "Irlande",
+    "logo_url": null
+  },
+  {
+    "league_name": "League of Ireland Cup",
+    "country": "Irlande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ilip.png?lm=1635651114"
+  },
+  {
+    "league_name": "League of Ireland First Division",
+    "country": "Irlande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ir2_1635648302.png?lm=1635648302"
+  },
+  {
+    "league_name": "Irish League Cup",
+    "country": "IrlandeDuNord",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/nilc.png?lm=1541110862"
+  },
+  {
+    "league_name": "Premiership",
+    "country": "IrlandeDuNord",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/nir1.png?lm=1698034818"
+  },
+  {
+    "league_name": "Mjólkurbikarinn",
+    "country": "Islande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/isp.png?lm=1525362955"
+  },
+  {
+    "league_name": "Símadeild",
+    "country": "Islande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/is1_1447261612.png?lm=1447261612"
+  },
+  {
+    "league_name": "Gvia haMedina",
+    "country": "Israel",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ispo.png?lm=1479242955"
+  },
+  {
+    "league_name": "Liga Leumit",
+    "country": "Israel",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/isr2.png?lm=1476188771"
+  },
+  {
+    "league_name": "Ligat ha'Al",
+    "country": "Israel",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/isr1_1607275873.png?lm=1607275874"
+  },
+  {
+    "league_name": "Coupe d'Italie",
+    "country": "Italie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/cit.png?lm=1726237063"
+  },
+  {
+    "league_name": "Serie A",
+    "country": "Italie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/it1_1447255463.png?lm=1447255463"
+  },
+  {
+    "league_name": "Serie B",
+    "country": "Italie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/it2_1479384018.png?lm=1479384018"
+  },
+  {
+    "league_name": "SerieBFixtureDetail",
+    "country": "Italie",
+    "logo_url": null
+  },
+  {
+    "league_name": "Supercoppa Italiana",
+    "country": "Italie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sci_1478692575.png?lm=1478692575"
+  },
+  {
+    "league_name": "Jamaica Premier League",
+    "country": "Jamaique",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/jpl1_1626609957.png?lm=1626609957"
+  },
+  {
+    "league_name": "Coupe de l'Empereur",
+    "country": "Japon",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/jemp_1603635431.png?lm=1603635431"
+  },
+  {
+    "league_name": "J.League Division 1",
+    "country": "Japon",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/jap1_1480243952.png?lm=1480243952"
+  },
+  {
+    "league_name": "J.League Division 2",
+    "country": "Japon",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/jap2_1480243971.png?lm=1480243971"
+  },
+  {
+    "league_name": "Super Cup Japonais",
+    "country": "Japon",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/jasp.png?lm=1644673145"
+  },
+  {
+    "league_name": "Jordanian Pro League",
+    "country": "Jordanie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/jo1l.png?lm=1740753026"
+  },
+  {
+    "league_name": "Kupa e Kosovës",
+    "country": "Kosovo",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/kop1.png?lm=1618612342"
+  },
+  {
+    "league_name": "Superliga e Kosovës",
+    "country": "Kosovo",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ko1.png?lm=1763591266"
+  },
+  {
+    "league_name": "Libyan Premier League",
+    "country": "Libye",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/lpl.png?lm=1735383720"
+  },
+  {
+    "league_name": "Kup na Makedonija",
+    "country": "MacedoineduNord",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/nmap.png?lm=1737545234"
+  },
+  {
+    "league_name": "Prva Makedonska Fudbalska Liga",
+    "country": "MacedoineduNord",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/maz1.png?lm=1404085586"
+  },
+  {
+    "league_name": "Botola Pro",
+    "country": "Maroc",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/mar1_1768225626.png?lm=1768225626"
+  },
+  {
+    "league_name": "CoupeDuTroneFixtureDetail",
+    "country": "Maroc",
+    "logo_url": null
+  },
+  {
+    "league_name": "Supercoupe de l'UEFA",
+    "country": "Maroc",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/usc.png?lm=1520607013"
+  },
+  {
+    "league_name": "LigaMXClausuraFixtureDetail",
+    "country": "Mexique",
+    "logo_url": null
+  },
+  {
+    "league_name": "Primera División Invierno",
+    "country": "Mexique",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/mexa_1731946744.png?lm=1731946744"
+  },
+  {
+    "league_name": "Primera División Verano",
+    "country": "Mexique",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/mex1_1731947087.png?lm=1731947087"
+  },
+  {
+    "league_name": "Meridianbet 1. CFL",
+    "country": "Montenegro",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/mne1.png?lm=1658245756"
+  },
+  {
+    "league_name": "Montenegro Cup",
+    "country": "Montenegro",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/mnec.png?lm=1686133478"
+  },
+  {
+    "league_name": "Nigeria Professional Football League",
+    "country": "Nigeria",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/npfl.png?lm=1764764383"
+  },
+  {
+    "league_name": "1. divisjon",
+    "country": "Norvege",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/no2_1447263716.png?lm=1447263716"
+  },
+  {
+    "league_name": "NM-Cup",
+    "country": "Norvege",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/nopo.png?lm=1446217530"
+  },
+  {
+    "league_name": "Tippeligaen",
+    "country": "Norvege",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/no1_1481571267.png?lm=1481571267"
+  },
+  {
+    "league_name": "Oman Jindal League",
+    "country": "Oman",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/om1l.png?lm=1760659155"
+  },
+  {
+    "league_name": "Uganda Premier League",
+    "country": "Ouganda",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ugl1.png?lm=1721651729"
+  },
+  {
+    "league_name": "Coupe d'Ouzbékistan",
+    "country": "Ouzbekistan",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/kobu_1678165331.png?lm=1678165331"
+  },
+  {
+    "league_name": "O'zbekiston Superligasi",
+    "country": "Ouzbekistan",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/uz1.png?lm=1707031580"
+  },
+  {
+    "league_name": "Liga Panameña de Fútbol Clausura",
+    "country": "Panama",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/pn1c_1723704762.png?lm=1723704768"
+  },
+  {
+    "league_name": "División Intermedia",
+    "country": "Paraguay",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/par2.png?lm=1755784944"
+  },
+  {
+    "league_name": "Primera División Apertura",
+    "country": "Paraguay",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/pr1a.png?lm=1586638106"
+  },
+  {
+    "league_name": "Eerste Divisie",
+    "country": "PaysBas",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/nl2_1660411745.png?lm=1660411745"
+  },
+  {
+    "league_name": "Eredivisie",
+    "country": "PaysBas",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/nl1_1659706812.png?lm=1659706812"
+  },
+  {
+    "league_name": "EredivisieFixtureDetail",
+    "country": "PaysBas",
+    "logo_url": null
+  },
+  {
+    "league_name": "KNVB Beker",
+    "country": "PaysBas",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/nlp_1660559286.png?lm=1660559286"
+  },
+  {
+    "league_name": "Cymru Premier",
+    "country": "PaysDeGalles",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/wal1_1564139795.png?lm=1564139795"
+  },
+  {
+    "league_name": "Welsh Cup",
+    "country": "PaysDeGalles",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/wale.png?lm=1619955792"
+  },
+  {
+    "league_name": "2 Liga",
+    "country": "Pologne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/pl2_1492424769.png?lm=1492424769"
+  },
+  {
+    "league_name": "I Liga",
+    "country": "Pologne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/pl1_1459337496.png?lm=1459337496"
+  },
+  {
+    "league_name": "STS Coupe de Pologne",
+    "country": "Pologne",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/popu_1766571935.png?lm=1766571937"
+  },
+  {
+    "league_name": "Allianz Cup",
+    "country": "Portugal",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/pocp.png?lm=1648294009"
+  },
+  {
+    "league_name": "Liga Portugal 2",
+    "country": "Portugal",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/po2.png?lm=1721404373"
+  },
+  {
+    "league_name": "Primeira Divisão",
+    "country": "Portugal",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/po1_1714459113.png?lm=1714459114"
+  },
+  {
+    "league_name": "Taça de Portugal",
+    "country": "Portugal",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/popo.png?lm=1747907485"
+  },
+  {
+    "league_name": "AmirCupFixtureDetail",
+    "country": "Qatar",
+    "logo_url": null
+  },
+  {
+    "league_name": "Qatar Stars League",
+    "country": "Qatar",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/qsl.png?lm=1753787876"
+  },
+  {
+    "league_name": "Qatari Sheikh Jassim Cup",
+    "country": "Qatar",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/qsj1.png?lm=1634202006"
+  },
+  {
+    "league_name": "1. ceska fotbalova liga",
+    "country": "RepubliqueTcheque",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ts1_1644398578.png?lm=1644398578"
+  },
+  {
+    "league_name": "2. ceska fotbalova liga",
+    "country": "RepubliqueTcheque",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ts2_1720021909.png?lm=1720021910"
+  },
+  {
+    "league_name": "MOL Cup",
+    "country": "RepubliqueTcheque",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/tsp.png?lm=1500716948"
+  },
+  {
+    "league_name": "Superpohar",
+    "country": "RepubliqueTcheque",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/czsc.png?lm=1538517400"
+  },
+  {
+    "league_name": "Cupa Ligii",
+    "country": "Roumanie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/rocl.png?lm=1653377727"
+  },
+  {
+    "league_name": "Cupa Romaniei",
+    "country": "Roumanie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/romp.png?lm=1607009132"
+  },
+  {
+    "league_name": "Divizia A",
+    "country": "Roumanie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ro1_1459893578.png?lm=1459893578"
+  },
+  {
+    "league_name": "Liga 2",
+    "country": "Roumanie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ro2.png?lm=1618761930"
+  },
+  {
+    "league_name": "Supercupa Romaniei",
+    "country": "Roumanie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/roms.png?lm=1468671141"
+  },
+  {
+    "league_name": "Coupe de Russie",
+    "country": "Russie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/rup_1722663490.png?lm=1722663490"
+  },
+  {
+    "league_name": "Premier Liga",
+    "country": "Russie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ru1_1586328070.png?lm=1586328070"
+  },
+  {
+    "league_name": "Ligue 1",
+    "country": "Senegal",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sen1.png?lm=1761736142"
+  },
+  {
+    "league_name": "Kup Srbije",
+    "country": "Serbie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/serp.png?lm=1540043525"
+  },
+  {
+    "league_name": "Meridian Super liga",
+    "country": "Serbie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ser1_1563901258.png?lm=1563901258"
+  },
+  {
+    "league_name": "Prva liga Srbije",
+    "country": "Serbie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ser2.png?lm=1688375013"
+  },
+  {
+    "league_name": "Corgon Liga",
+    "country": "Slovaquie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/slo1_1688501186.png?lm=1688501187"
+  },
+  {
+    "league_name": "II. Liga",
+    "country": "Slovaquie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sk2_1709490370.png?lm=1709490370"
+  },
+  {
+    "league_name": "Slovnaft Cup",
+    "country": "Slovaquie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/skc.png?lm=1640113180"
+  },
+  {
+    "league_name": "Supercoupe de Slovaquie de football",
+    "country": "Slovaquie",
+    "logo_url": null
+  },
+  {
+    "league_name": "Pokal Slovenije",
+    "country": "Slovenie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/slp.png?lm=1620844103"
+  },
+  {
+    "league_name": "Prva Liga",
+    "country": "Slovenie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sl1.png?lm=1685026467"
+  },
+  {
+    "league_name": "Allsvenskan",
+    "country": "Suede",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/se1.png?lm=1750622121"
+  },
+  {
+    "league_name": "Supercupen",
+    "country": "Suede",
+    "logo_url": null
+  },
+  {
+    "league_name": "Superettan",
+    "country": "Suede",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/se2.png?lm=1750622575"
+  },
+  {
+    "league_name": "Svenska Cupen",
+    "country": "Suede",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/sec.png?lm=1612394198"
+  },
+  {
+    "league_name": "Coupe Suisse",
+    "country": "Suisse",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/scc.png?lm=1719831432"
+  },
+  {
+    "league_name": "Nationalliga B",
+    "country": "Suisse",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/c2_1515283191.png?lm=1515283191"
+  },
+  {
+    "league_name": "Super League",
+    "country": "Suisse",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/c1_1750419015.png?lm=1750419015"
+  },
+  {
+    "league_name": "Thai FA Cup",
+    "country": "Thailande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/thfa.png?lm=1759172745"
+  },
+  {
+    "league_name": "Thai Premier League",
+    "country": "Thailande",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/tha1_1481731424.png?lm=1481731424"
+  },
+  {
+    "league_name": "Coupe de Tunisie",
+    "country": "Tunisie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/tunp.png?lm=1488902235"
+  },
+  {
+    "league_name": "Ligue 1",
+    "country": "Tunisie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/tun1.png?lm=1534152824"
+  },
+  {
+    "league_name": "Supercoupe Tunisienne",
+    "country": "Tunisie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/tusc.png?lm=1644688376"
+  },
+  {
+    "league_name": "1.Lig",
+    "country": "Turquie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/tr2.png?lm=1691091073"
+  },
+  {
+    "league_name": "SuperLigFixtureDetail",
+    "country": "Turquie",
+    "logo_url": null
+  },
+  {
+    "league_name": "Süper Lig",
+    "country": "Turquie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/tr1.png?lm=1723019495"
+  },
+  {
+    "league_name": "TFF Süper Kupa",
+    "country": "Turquie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/trs.png?lm=1763051112"
+  },
+  {
+    "league_name": "Türkiye Kupasi",
+    "country": "Turquie",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/trp.png?lm=1646477111"
+  },
+  {
+    "league_name": "Coupe d'Ukraine",
+    "country": "Ukraine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ukrp.png?lm=1754655822"
+  },
+  {
+    "league_name": "Persha Liga",
+    "country": "Ukraine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ukr2.png?lm=1665239718"
+  },
+  {
+    "league_name": "Supercoupe d'Ukraine",
+    "country": "Ukraine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ukrs.png?lm=1627823641"
+  },
+  {
+    "league_name": "Vyshcha Liga",
+    "country": "Ukraine",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ukr1_1637135627.png?lm=1637135627"
+  },
+  {
+    "league_name": "Copa AUF Uruguay",
+    "country": "Uruguay",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/urp1.png?lm=1659012144"
+  },
+  {
+    "league_name": "Liga AUF Apertura",
+    "country": "Uruguay",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/uru1.png?lm=1737663848"
+  },
+  {
+    "league_name": "Supercopa Uruguaya",
+    "country": "Uruguay",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/ursc.png?lm=1516905176"
+  },
+  {
+    "league_name": "Major League Soccer",
+    "country": "USA",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/mls1_1448139805.png?lm=1448139805"
+  },
+  {
+    "league_name": "US Open Cup",
+    "country": "USA",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/mlsp.png?lm=1463649901"
+  },
+  {
+    "league_name": "Copa Venezuela",
+    "country": "Venezuela",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/vec1.png?lm=1715450443"
+  },
+  {
+    "league_name": "Liga FUTVE 2",
+    "country": "Venezuela",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/vn2a.png?lm=1679095131"
+  },
+  {
+    "league_name": "Liga FUTVE Apertura",
+    "country": "Venezuela",
+    "logo_url": "https://tmssl.akamaized.net//images/logo/mediumsmall/vz1a.png?lm=1679095469"
+  }
+]

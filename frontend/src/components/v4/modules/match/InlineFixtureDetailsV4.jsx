@@ -58,8 +58,8 @@ const InlineFixtureDetailsV4 = ({ fixtureId, homeTeamId, awayTeamId }) => {
         </div>
     );
 
-    let homeLineup = lineups.find(l => Number(l.team_id) === Number(homeTeamId)) || lineups[0];
-    let awayLineup = lineups.find(l => Number(l.team_id) === Number(awayTeamId)) || lineups[1];
+    let homeLineup = lineups.find(l => String(l.team_id) === String(homeTeamId)) || lineups[0];
+    let awayLineup = lineups.find(l => String(l.team_id) === String(awayTeamId)) || lineups[1];
 
     const renderSquad = (lineup, title) => {
         if (!lineup || !lineup.starting_xi || lineup.starting_xi.length === 0) return (

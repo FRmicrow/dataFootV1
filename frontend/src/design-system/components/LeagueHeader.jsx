@@ -20,6 +20,30 @@ const KNOWN_COLORS = {
     '203': { accent: '#e30022', secondary: '#ffd700' }, // Super Lig
 };
 
+function formatSeasonLabel(value, isSingleYear) {
+    if (value === null || value === undefined || value === '') return '';
+
+    const raw = String(value);
+    if (raw.includes('-')) {
+        const [start, end] = raw.split('-');
+        if (start && end) {
+            return `${start}-${end}`;
+        }
+        return raw;
+    }
+
+    const numeric = Number(raw);
+    if (Number.isNaN(numeric)) {
+        return raw;
+    }
+
+    if (isSingleYear) {
+        return String(numeric % 2 !== 0 ? numeric + 1 : numeric);
+    }
+
+    return `${numeric}-${numeric + 1}`;
+}
+
 /* Stable distinct color from league id when logo extraction fails */
 function hashColors(id) {
     const hue = (Number(id) * 137) % 360;
@@ -100,13 +124,10 @@ const LeagueHeader = ({
     }, [league.logo, league.id, key]);
 
     const isSingleYear = [44, 42].includes(Number(league.id));
-    // TM stores season_year = tournament_year - 1 for historical editions (odd years)
-    // API-Football uses the actual tournament year (even). Normalize to display year.
-    const displayYear = (y) => isSingleYear && Number(y) % 2 !== 0 ? Number(y) + 1 : Number(y);
 
     const subtitles = [
         league.country?.name ?? 'International',
-        activeSeason ? (isSingleYear ? String(displayYear(activeSeason)) : `${activeSeason} / ${Number(activeSeason) + 1}`) : null,
+        activeSeason ? formatSeasonLabel(activeSeason, isSingleYear) : null,
     ].filter(Boolean);
 
     const rightSlot = (
@@ -120,7 +141,7 @@ const LeagueHeader = ({
                     aria-label="Season"
                 >
                     {availableYears.map(y => (
-                        <option key={y} value={y}>{isSingleYear ? displayYear(y) : `${y} / ${Number(y) + 1}`}</option>
+                        <option key={y} value={y}>{formatSeasonLabel(y, isSingleYear)}</option>
                     ))}
                 </select>
             )}

@@ -1,0 +1,114 @@
+.v4-leagues-content {
+    min-height: 100vh;
+}
+
+.v4-leagues-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xl);
+    padding-bottom: 0;
+}
+
+.v4-leagues-title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-main);
+    margin: 0;
+}
+
+.v4-leagues-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-dim);
+    margin: var(--spacing-xs) 0 0;
+    letter-spacing: 0.02em;
+}
+
+/* Country flag badge in accordion header */
+.v4-flag-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--glass-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.v4-flag-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Fallback badge when no flag available */
+.v4-zone-badge {
+    height: 32px;
+    padding: 0 var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    background: var(--glass-bg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+/* Accordion body content */
+.v4-country-body {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-slate-900);
+}
+
+/* Empty / error state */
+.v4-leagues-empty {
+    padding: var(--spacing-3xl);
+    text-align: center;
+    background: var(--color-bg-card);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.v4-leagues-empty h3 {
+    margin: 0;
+    color: var(--color-text-main);
+}
+
+/* Stats banner */
+.v4-leagues-stats {
+    display: flex;
+    gap: var(--spacing-lg);
+    padding: 0 var(--spacing-xl);
+}
+
+.v4-leagues-stat {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+}
+
+.v4-leagues-stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary-400);
+    font-family: var(--font-family-mono, monospace);
+}
+
+.v4-leagues-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

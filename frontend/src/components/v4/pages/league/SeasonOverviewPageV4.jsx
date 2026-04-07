@@ -11,6 +11,8 @@ import PageContentV4 from '../../layouts/PageContentV4';
 import LeagueOverviewV4 from '../../modules/league/LeagueOverviewV4';
 import StandingsTableV4 from '../../modules/league/StandingsTableV4';
 import FixturesListV4 from '../../modules/league/FixturesListV4';
+import SquadListV4 from '../../modules/league/SquadListV4';
+import TitleRaceV4 from '../../modules/league/TitleRaceV4';
 
 // Design
 import '../../../v3/pages/league/SeasonOverviewPage.css';
@@ -58,8 +60,9 @@ const SeasonOverviewPageV4 = () => {
     };
 
     useEffect(() => {
-        if (name && year) fetchData();
+        fetchData();
     }, [name, year]);
+
 
     const handleSeasonChange = (e) => {
         const newYear = e.target.value;
@@ -94,7 +97,9 @@ const SeasonOverviewPageV4 = () => {
     const tabItems = [
         { id: 'overview', label: 'Player Insights', icon: '🔭' },
         { id: 'standings', label: 'Standings (V4)', icon: '📊' },
-        { id: 'fixtures', label: 'Results', icon: '📅' }
+        { id: 'titlerace', label: 'Title Race', icon: '🏁' },
+        { id: 'fixtures', label: 'Results', icon: '📅' },
+        { id: 'squads', label: 'Squads', icon: '👥' }
     ];
 
     return (
@@ -103,9 +108,9 @@ const SeasonOverviewPageV4 = () => {
                 league={{
                     id: name,
                     name: league.league_name,
-                    logo: 'https://tmssl.akamaized.net//images/logo/normal/tm.png',
-                    country: { name: 'Historical Data (V4)' },
-                    type: 'League'
+                    logo: league.logo_url || 'https://tmssl.akamaized.net//images/logo/normal/tm.png',
+                    country: { name: league.country_name || 'Historical Data (V4)' },
+                    type: league.type || 'League'
                 }}
                 activeSeason={year}
                 availableYears={availableYears || [year]}
@@ -139,9 +144,14 @@ const SeasonOverviewPageV4 = () => {
                     {activeTab === 'standings' && (
                         <StandingsTableV4
                             standings={standings}
+                            fixtures={fixturesData?.fixtures || []}
                             loading={loading}
-                            isSplitView={false}
-                            onToggleSplit={() => {}}
+                        />
+                    )}
+                    {activeTab === 'titlerace' && (
+                        <TitleRaceV4 
+                            standings={standings}
+                            fixtures={fixturesData.fixtures}
                         />
                     )}
                     {activeTab === 'fixtures' && (
@@ -149,6 +159,13 @@ const SeasonOverviewPageV4 = () => {
                             fixturesData={fixturesData}
                             selectedRound={selectedRound}
                             setSelectedRound={setSelectedRound}
+                        />
+                    )}
+                    {activeTab === 'squads' && (
+                        <SquadListV4
+                            league={name}
+                            season={year}
+                            teams={standings}
                         />
                     )}
                 </main>

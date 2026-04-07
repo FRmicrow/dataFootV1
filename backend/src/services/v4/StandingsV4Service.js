@@ -1,43 +1,51 @@
 import db from '../../config/database.js';
 import logger from '../../utils/logger.js';
 
-/**
- * StandingsV4Service
- * Calculates league tables on-the-fly from V4_Fixtures.
- */
+const DEFAULT_LOGO = 'https://tmssl.akamaized.net//images/logo/normal/tm.png';
+
 class StandingsV4Service {
-    /**
-     * Calculate standings for a specific league and season
-     */
-    async calculateStandings(leagueName, season) {
+    async calculateStandings(competitionId, season) {
         try {
-            // Fetch all COMPLETED fixtures for this league and season
-            const fixtures = await db.all(`
-                SELECT f.*, th.name as home_name, ta.name as away_name,
-                    COALESCE(
-                        (SELECT logo_url FROM V4_Club_Logos 
-                         WHERE team_id = th.team_id 
-                         AND CAST(SPLIT_PART(f.season, '-', 1) AS INTEGER) BETWEEN start_year AND COALESCE(end_year, 9999)
-                         ORDER BY start_year DESC
-                         LIMIT 1), 
-                        th.logo_url
-                    ) as home_logo_url,
-                    COALESCE(
-                        (SELECT logo_url FROM V4_Club_Logos 
-                         WHERE team_id = ta.team_id 
-                         AND CAST(SPLIT_PART(f.season, '-', 1) AS INTEGER) BETWEEN start_year AND COALESCE(end_year, 9999)
-                         ORDER BY start_year DESC
-                         LIMIT 1), 
-                        ta.logo_url
-                    ) as away_logo_url
-                FROM V4_Fixtures f
-                JOIN V4_Teams th ON th.team_id = f.home_team_id
-                JOIN V4_Teams ta ON ta.team_id = f.away_team_id
-                WHERE f.league = $1 AND f.season = $2
-                  AND f.goals_home IS NOT NULL 
-                  AND f.goals_away IS NOT NULL
-                ORDER BY f.date ASC
-            `, [leagueName, season]);
+            const fixtures = await db.all(
+                `
+                    SELECT
+                        m.match_id::text AS fixture_id,
+                        m.match_date AS date,
+                        m.round_label AS round,
+                        m.home_score AS goals_home,
+                        m.away_score AS goals_away,
+                        m.home_club_id::text AS home_team_id,
+                        m.away_club_id::text AS away_team_id,
+                        home.name AS home_name,
+                        away.name AS away_name,
+                        COALESCE(hl.logo_url, home.current_logo_url, ?) AS home_logo_url,
+                        COALESCE(al.logo_url, away.current_logo_url, ?) AS away_logo_url
+                    FROM v4.matches m
+                    JOIN v4.competitions c ON c.competition_id = m.competition_id
+                    JOIN v4.clubs home ON home.club_id = m.home_club_id
+                    JOIN v4.clubs away ON away.club_id = m.away_club_id
+                    LEFT JOIN LATERAL (
+                        SELECT logo_url
+                        FROM v4.club_logos
+                        WHERE club_id = home.club_id
+                        ORDER BY end_year DESC NULLS LAST, start_year DESC NULLS LAST
+                        LIMIT 1
+                    ) hl ON TRUE
+                    LEFT JOIN LATERAL (
+                        SELECT logo_url
+                        FROM v4.club_logos
+                        WHERE club_id = away.club_id
+                        ORDER BY end_year DESC NULLS LAST, start_year DESC NULLS LAST
+                        LIMIT 1
+                    ) al ON TRUE
+                    WHERE m.competition_id::text = ?
+                      AND m.season_label = ?
+                      AND m.home_score IS NOT NULL
+                      AND m.away_score IS NOT NULL
+                    ORDER BY m.match_date ASC NULLS LAST, m.match_id ASC
+                `,
+                [DEFAULT_LOGO, DEFAULT_LOGO, competitionId, season]
+            );
 
             const teams = {};
 
@@ -46,7 +54,7 @@ class StandingsV4Service {
                     teams[id] = {
                         team_id: id,
                         team_name: name,
-                        team_logo: logo || 'https://tmssl.akamaized.net//images/logo/normal/tm.png',
+                        team_logo: logo || DEFAULT_LOGO,
                         played: 0,
                         win: 0,
                         draw: 0,
@@ -61,66 +69,65 @@ class StandingsV4Service {
                 return teams[id];
             };
 
-            for (const f of fixtures) {
-                const home = getTeam(f.home_team_id, f.home_name, f.home_logo_url);
-                const away = getTeam(f.away_team_id, f.away_name, f.away_logo_url);
+            for (const fixture of fixtures) {
+                const home = getTeam(fixture.home_team_id, fixture.home_name, fixture.home_logo_url);
+                const away = getTeam(fixture.away_team_id, fixture.away_name, fixture.away_logo_url);
 
-                home.played++;
-                away.played++;
-                home.goals_for += f.goals_home;
-                home.goals_against += f.goals_away;
-                away.goals_for += f.goals_away;
-                away.goals_against += f.goals_home;
+                home.played += 1;
+                away.played += 1;
+                home.goals_for += Number(fixture.goals_home || 0);
+                home.goals_against += Number(fixture.goals_away || 0);
+                away.goals_for += Number(fixture.goals_away || 0);
+                away.goals_against += Number(fixture.goals_home || 0);
 
-                if (f.goals_home > f.goals_away) {
-                    home.win++;
+                if (Number(fixture.goals_home) > Number(fixture.goals_away)) {
+                    home.win += 1;
                     home.points += 3;
-                    away.lose++;
-                } else if (f.goals_home < f.goals_away) {
-                    away.win++;
+                    away.lose += 1;
+                } else if (Number(fixture.goals_home) < Number(fixture.goals_away)) {
+                    away.win += 1;
                     away.points += 3;
-                    home.lose++;
+                    home.lose += 1;
                 } else {
-                    home.draw++;
+                    home.draw += 1;
+                    away.draw += 1;
                     home.points += 1;
-                    away.draw++;
                     away.points += 1;
                 }
             }
 
-            // Convert to array and calculate diff, then sort
-            const standings = Object.values(teams).map(t => {
-                t.goals_diff = t.goals_for - t.goals_against;
-                return t;
-            });
+            const standings = Object.values(teams)
+                .map((team) => ({
+                    ...team,
+                    goals_diff: team.goals_for - team.goals_against
+                }))
+                .sort((a, b) => {
+                    if (b.points !== a.points) return b.points - a.points;
+                    if (b.goals_diff !== a.goals_diff) return b.goals_diff - a.goals_diff;
+                    if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
+                    return a.team_name.localeCompare(b.team_name);
+                });
 
-            // Sort by points, then gd, then gf
-            standings.sort((a, b) => {
-                if (b.points !== a.points) return b.points - a.points;
-                if (b.goals_diff !== a.goals_diff) return b.goals_diff - a.goals_diff;
-                return b.goals_for - a.goals_for;
+            standings.forEach((team, index) => {
+                team.rank = index + 1;
             });
-
-            // Assign ranks
-            standings.forEach((t, i) => t.rank = i + 1);
 
             return standings;
-
         } catch (error) {
-            logger.error({ err: error, leagueName, season }, 'V4 standings calculation error');
+            logger.error({ err: error, competitionId, season }, 'V4 standings calculation error');
             throw error;
         }
     }
 
-    /**
-     * Get unique leagues and seasons available in V4
-     */
     async listAvailableCompetitions() {
-        return db.all(`
-            SELECT DISTINCT league, season 
-            FROM V4_Fixtures 
-            ORDER BY league, season DESC
-        `);
+        return db.all(
+            `
+                SELECT DISTINCT c.name AS league, m.season_label AS season
+                FROM v4.matches m
+                JOIN v4.competitions c ON c.competition_id = m.competition_id
+                ORDER BY c.name ASC, m.season_label DESC
+            `
+        );
     }
 }
 

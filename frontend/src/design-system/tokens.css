@@ -31,16 +31,16 @@
     --color-surface-alt:    var(--color-bg-card-hover);
 
     /* --- Colors: Core Palette --- */
-    --color-primary-50: #f5f3ff;
-    --color-primary-100: #ede9fe;
-    --color-primary-200: #ddd6fe;
-    --color-primary-300: #c4b5fd;
-    --color-primary-400: #a78bfa;
-    --color-primary-500: #8b5cf6;
-    --color-primary-600: #7c3aed;
-    --color-primary-700: #6d28d9;
-    --color-primary-800: #5b21b6;
-    --color-primary-900: #4c1d95;
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #2563eb;
+    --color-primary-700: #1d4ed8;
+    --color-primary-800: #1e40af;
+    --color-primary-900: #1e3a8a;
 
     --color-blue-50: #eff6ff;
     --color-blue-100: #dbeafe;
@@ -86,17 +86,17 @@
     --color-slate-950: #020617;
 
     /* --- Gradients --- */
-    --gradient-primary: linear-gradient(135deg, var(--color-primary-500) 0%, #a855f7 100%);
-    --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-    --gradient-dark: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --gradient-primary: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-700) 100%);
+    --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+    --gradient-dark: linear-gradient(180deg, #09090b 0%, #020617 100%);
 
     /* --- Surfaces & Glassmorphism --- */
-    --color-bg-main: #0f172a;
-    --color-bg-sidebar: #0f172a;
-    --color-bg-card: rgba(30, 41, 59, 0.7);
-    --color-bg-card-hover: rgba(51, 65, 85, 0.8);
-    --color-border: rgba(255, 255, 255, 0.1);
-    --color-border-hover: rgba(255, 255, 255, 0.2);
+    --color-bg-main: #09090b;
+    --color-bg-sidebar: #09090b;
+    --color-bg-card: #18181b;
+    --color-bg-card-hover: #27272a;
+    --color-border: rgba(255, 255, 255, 0.06);
+    --color-border-hover: rgba(255, 255, 255, 0.1);
 
     /* --- Feedback Backgrounds (Translucent) --- */
     --color-success-bg: rgba(16, 185, 129, 0.1);
@@ -140,6 +140,7 @@
 
     /* --- Typography --- */
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-family-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, monospace;
 
     --font-size-2xs: 0.625rem; /* 10px */
     --font-size-xs: 0.75rem;
@@ -173,12 +174,12 @@
     --line-height-relaxed: 1.75;
 
     /* --- Layout & Shapes --- */
-    --radius-xs: 4px;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
-    --radius-2xl: 32px;
+    --radius-xs: 2px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
     --radius-full: 9999px;
 
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -200,12 +201,8 @@
     --focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.5);
     --focus-offset: 2px;
 
-    /* --- Premium Effects & Glows --- */
-    --color-primary-glow: rgba(139, 92, 246, 0.3);
-    --glow-primary: 0 0 15px var(--color-primary-glow);
-    --glow-primary-strong: 0 0 25px rgba(139, 92, 246, 0.5);
-
-    --shadow-premium: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    /* --- Clean Shadow (Quiet Luxury) --- */
+    --shadow-premium: 0 8px 30px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.02);
 
 
     /* --- Animation --- */

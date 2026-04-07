@@ -29,7 +29,7 @@
 .ds-button--primary:hover:not(:disabled) {
     background: var(--color-primary-500);
     transform: translateY(-1px);
-    box-shadow: var(--glow-primary);
+    box-shadow: var(--shadow-premium);
 }
 
 .ds-button--secondary {

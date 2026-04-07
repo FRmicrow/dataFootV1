@@ -1,6 +1,6 @@
 import express from 'express';
 import { 
-    getLeaguesV4, getSeasonOverviewV4, getFixturesV4, getSeasonPlayersV4, 
+    getLeaguesV4, getSeasonOverviewV4, getFixturesV4, getSeasonPlayersV4, getTeamSquadV4,
     getFixtureDetailsV4, getFixtureEventsV4, getFixtureLineupsV4, getFixtureTacticalStatsV4,
     getFixturePlayerTacticalStatsV4 
 } from '../../controllers/v4/leagueControllerV4.js';
@@ -15,6 +15,7 @@ router.get('/league/:league/season/:season', getSeasonOverviewV4);
 
 // Player stats (Squad Explorer)
 router.get('/league/:league/season/:season/players', getSeasonPlayersV4);
+router.get('/league/:league/season/:season/team/:teamId/squad', getTeamSquadV4);
 
 // Fixtures
 router.get('/league/:league/season/:season/fixtures', getFixturesV4);
