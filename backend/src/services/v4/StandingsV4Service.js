@@ -3,47 +3,40 @@ import logger from '../../utils/logger.js';
 
 const DEFAULT_LOGO = 'https://tmssl.akamaized.net//images/logo/normal/tm.png';
 
+const LATEST_CLUB_LOGOS_CTE = `
+    latest_club_logos AS (
+        SELECT DISTINCT ON (club_id) club_id, logo_url
+        FROM v4.club_logos
+        ORDER BY club_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
+    )`;
+
 class StandingsV4Service {
     async calculateStandings(competitionId, season) {
         try {
             const fixtures = await db.all(
-                `
-                    SELECT
-                        m.match_id::text AS fixture_id,
-                        m.match_date AS date,
-                        m.round_label AS round,
-                        m.home_score AS goals_home,
-                        m.away_score AS goals_away,
-                        m.home_club_id::text AS home_team_id,
-                        m.away_club_id::text AS away_team_id,
-                        home.name AS home_name,
-                        away.name AS away_name,
-                        COALESCE(hl.logo_url, home.current_logo_url, ?) AS home_logo_url,
-                        COALESCE(al.logo_url, away.current_logo_url, ?) AS away_logo_url
-                    FROM v4.matches m
-                    JOIN v4.competitions c ON c.competition_id = m.competition_id
-                    JOIN v4.clubs home ON home.club_id = m.home_club_id
-                    JOIN v4.clubs away ON away.club_id = m.away_club_id
-                    LEFT JOIN LATERAL (
-                        SELECT logo_url
-                        FROM v4.club_logos
-                        WHERE club_id = home.club_id
-                        ORDER BY end_year DESC NULLS LAST, start_year DESC NULLS LAST
-                        LIMIT 1
-                    ) hl ON TRUE
-                    LEFT JOIN LATERAL (
-                        SELECT logo_url
-                        FROM v4.club_logos
-                        WHERE club_id = away.club_id
-                        ORDER BY end_year DESC NULLS LAST, start_year DESC NULLS LAST
-                        LIMIT 1
-                    ) al ON TRUE
-                    WHERE m.competition_id::text = ?
-                      AND m.season_label = ?
-                      AND m.home_score IS NOT NULL
-                      AND m.away_score IS NOT NULL
-                    ORDER BY m.match_date ASC NULLS LAST, m.match_id ASC
-                `,
+                `WITH ${LATEST_CLUB_LOGOS_CTE}
+                 SELECT
+                     m.match_id::text        AS fixture_id,
+                     m.match_date            AS date,
+                     m.round_label           AS round,
+                     m.home_score            AS goals_home,
+                     m.away_score            AS goals_away,
+                     m.home_club_id::text    AS home_team_id,
+                     m.away_club_id::text    AS away_team_id,
+                     home.name               AS home_name,
+                     away.name               AS away_name,
+                     COALESCE(hl.logo_url, home.current_logo_url, ?) AS home_logo_url,
+                     COALESCE(al.logo_url, away.current_logo_url, ?) AS away_logo_url
+                 FROM v4.matches m
+                 JOIN v4.clubs home              ON home.club_id = m.home_club_id
+                 JOIN v4.clubs away              ON away.club_id = m.away_club_id
+                 LEFT JOIN latest_club_logos hl  ON hl.club_id = m.home_club_id
+                 LEFT JOIN latest_club_logos al  ON al.club_id = m.away_club_id
+                 WHERE m.competition_id = ?::BIGINT
+                   AND m.season_label   = ?
+                   AND m.home_score IS NOT NULL
+                   AND m.away_score IS NOT NULL
+                 ORDER BY m.match_date ASC NULLS LAST, m.match_id ASC`,
                 [DEFAULT_LOGO, DEFAULT_LOGO, competitionId, season]
             );
 

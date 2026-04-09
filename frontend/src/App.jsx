@@ -39,11 +39,11 @@ function App() {
                             <Route path="/import" element={<ImportMatrixPage />} />
                             <Route path="/import/matrix-status" element={<ImportMatrixPage />} />
                             <Route path="/import/old" element={<ImportV3Page />} />
-                            <Route path="/leagues" element={<V3LeaguesList />} />
-                            <Route path="/leagues-v4" element={<V4LeaguesList />} />
+                            <Route path="/leagues" element={<V4LeaguesList />} />
+                            <Route path="/leagues/:name/season/:year" element={<SeasonOverviewPageV4 />} />
+                            {/* V3 league detail — kept for backwards compat (player/club links) */}
                             <Route path="/league/:id" element={<SeasonOverviewPage />} />
                             <Route path="/league/:id/season/:year" element={<SeasonOverviewPage />} />
-                            <Route path="/leagueV4/:name/season/:year" element={<SeasonOverviewPageV4 />} />
                             <Route path="/player/:id" element={<PlayerProfilePageV3 />} />
                             <Route path="/search" element={<SearchPageV3 />} />
                             <Route path="/club/:id" element={<ClubProfilePageV3 />} />

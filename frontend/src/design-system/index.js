@@ -38,3 +38,4 @@ import './components/Switch.css';
 import './components/Breadcrumbs.css';
 
 export { default as Accordion } from './components/Accordion';
+export { default as MatchStatBar } from './components/MatchStatBar';

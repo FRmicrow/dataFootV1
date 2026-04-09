@@ -7,7 +7,6 @@ import './V4Layout.css';
 const navItems = [
     { to: "/dashboard",        label: "Dashboard",       icon: "📊" },
     { to: "/leagues",          label: "Leagues",         icon: "🏆" },
-    { to: "/leagues-v4",       label: "Leagues V4",      icon: "📜" },
     { to: "/search",           label: "Search",          icon: "🔍" },
     { to: "/machine-learning", label: "ML Hub",          icon: "🤖" },
     { to: "/studio",           label: "Studio",          icon: "✏️" },

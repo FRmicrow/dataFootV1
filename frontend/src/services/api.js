@@ -63,6 +63,8 @@ export default {
     getFixtureLineupsV4: (id) => api.get(`/v4/fixtures/${id}/lineups`),
     getFixtureTacticalStatsV4: (id) => api.get(`/v4/fixtures/${id}/tactical-stats`),
     getFixturePlayerTacticalStatsV4: (id) => api.get(`/v4/fixtures/${id}/player-tactical-stats`),
+    getTeamSeasonXgV4: (league, season) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/team-xg`),
+    getPlayerSeasonStatsV4: (league, season, playerId) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/player/${playerId}`),
 
     // --- Clubs ---
     getClub: (id, year, competition) => {

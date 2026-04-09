@@ -6,12 +6,18 @@ import api from '../../../../services/api';
 import { Card, Table, Badge, Stack, Grid, Select } from '../../../../design-system';
 import { getShortPosition } from '../../../../utils/positionUtils';
 
+const VIEW_MODES = [
+    { id: 'standard', label: 'Standard' },
+    { id: 'xg',       label: 'xG Deep' },
+];
+
 const SquadExplorerV4 = ({ leagueId, season, teams }) => {
     const [teamId, setTeamId] = useState('');
     const [position, setPosition] = useState('ALL');
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: 'goals', direction: 'DESC' });
+    const [viewMode, setViewMode] = useState('standard');
 
     useEffect(() => {
         const fetchExplorerData = async () => {
@@ -43,7 +49,9 @@ const SquadExplorerV4 = ({ leagueId, season, teams }) => {
         }));
     };
 
-    const columns = [
+    const fmtXg = (v) => (v !== null && v !== undefined) ? Number(v).toFixed(2) : '-';
+
+    const baseColumns = [
         {
             title: 'Player',
             key: 'name',
@@ -71,17 +79,21 @@ const SquadExplorerV4 = ({ leagueId, season, teams }) => {
         { title: 'Pos', key: 'pos', dataIndex: 'position', align: 'center', width: '60px', render: (v) => <span style={{ opacity: 0.6 }}>{getShortPosition(v)}</span> },
         { title: 'App', key: 'apps', dataIndex: 'appearances', align: 'center', width: '50px' },
         { title: '90s', key: 'mins', dataIndex: 'minutes', align: 'center', width: '50px', render: (m) => Math.round(m / 90) },
-        { 
-            title: 'G', 
-            key: 'goals', 
-            dataIndex: 'goals', 
-            align: 'center', 
-            width: '40px', 
+    ];
+
+    const standardColumns = [
+        ...baseColumns,
+        {
+            title: 'G',
+            key: 'goals',
+            dataIndex: 'goals',
+            align: 'center',
+            width: '40px',
             render: (v, player, index) => {
                 const isTopScorer = sortConfig.key === 'goals' && index === 0 && v > 0;
                 return (
-                    <span style={{ 
-                        color: v > 0 ? 'var(--color-success-500)' : 'inherit', 
+                    <span style={{
+                        color: v > 0 ? 'var(--color-success-500)' : 'inherit',
                         fontWeight: v > 0 ? 'bold' : 'normal',
                         display: 'flex',
                         alignItems: 'center',
@@ -95,10 +107,10 @@ const SquadExplorerV4 = ({ leagueId, season, teams }) => {
             }
         },
         { title: 'A', key: 'assists', dataIndex: 'assists', align: 'center', width: '40px', render: (v) => <span style={{ color: v > 0 ? 'var(--color-primary-400)' : 'inherit', fontWeight: v > 0 ? 'bold' : 'normal' }}>{v}</span> },
-        { title: 'xG', key: 'xg', dataIndex: 'xg', align: 'center', width: '60px', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
-        { title: 'xA', key: 'xa', dataIndex: 'xa', align: 'center', width: '60px', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
-        { title: 'npxG', key: 'npxg', dataIndex: 'npxg', align: 'center', width: '60px', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
-        { title: 'xG90', key: 'xg_90', dataIndex: 'xg_90', align: 'center', width: '60px', render: (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '-' },
+        { title: 'xG', key: 'xg', dataIndex: 'xg', align: 'center', width: '60px', render: fmtXg },
+        { title: 'xA', key: 'xa', dataIndex: 'xa', align: 'center', width: '60px', render: fmtXg },
+        { title: 'npxG', key: 'npxg', dataIndex: 'npxg', align: 'center', width: '60px', render: fmtXg },
+        { title: 'xG/90', key: 'xg_90', dataIndex: 'xg_90', align: 'center', width: '60px', render: fmtXg },
         {
             title: 'Rat',
             key: 'rating',
@@ -109,12 +121,51 @@ const SquadExplorerV4 = ({ leagueId, season, teams }) => {
         }
     ];
 
+    const xgColumns = [
+        ...baseColumns,
+        { title: 'xG', key: 'xg', dataIndex: 'xg', align: 'center', width: '56px', render: fmtXg },
+        { title: 'NPxG', key: 'npxg', dataIndex: 'npxg', align: 'center', width: '56px', render: fmtXg },
+        { title: 'xA', key: 'xa', dataIndex: 'xa', align: 'center', width: '56px', render: fmtXg },
+        { title: 'xG/90', key: 'xg_90', dataIndex: 'xg_90', align: 'center', width: '60px', render: fmtXg },
+        { title: 'NPxG/90', key: 'npxg_90', dataIndex: 'npxg_90', align: 'center', width: '72px', render: fmtXg },
+        { title: 'xA/90', key: 'xa_90', dataIndex: 'xa_90', align: 'center', width: '60px', render: fmtXg },
+        { title: 'xGChain', key: 'xg_chain', dataIndex: 'xg_chain', align: 'center', width: '72px', render: fmtXg },
+        { title: 'Chain/90', key: 'xg_chain_90', dataIndex: 'xg_chain_90', align: 'center', width: '74px', render: fmtXg },
+        { title: 'xGBuild', key: 'xg_buildup', dataIndex: 'xg_buildup', align: 'center', width: '72px', render: fmtXg },
+        { title: 'Build/90', key: 'xg_buildup_90', dataIndex: 'xg_buildup_90', align: 'center', width: '74px', render: fmtXg },
+    ];
+
+    const columns = viewMode === 'xg' ? xgColumns : standardColumns;
+
     return (
         <Card
             title="Squad Explorer"
             subtitle="Deep statistical drill-down"
             extra={
                 <Stack direction="row" gap="var(--spacing-xs)">
+                    {/* View mode toggle */}
+                    <div style={{ display: 'flex', gap: '4px', marginRight: 'var(--spacing-xs)' }}>
+                        {VIEW_MODES.map(m => (
+                            <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => { setViewMode(m.id); setSortConfig({ key: m.id === 'xg' ? 'xg' : 'goals', direction: 'DESC' }); }}
+                                style={{
+                                    padding: '4px 10px',
+                                    borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid var(--color-border-subtle)',
+                                    background: viewMode === m.id ? 'var(--color-primary-600)' : 'transparent',
+                                    color: viewMode === m.id ? '#fff' : 'var(--color-text-dim)',
+                                    fontSize: 'var(--font-size-xs)',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'var(--transition-fast)',
+                                }}
+                            >
+                                {m.label}
+                            </button>
+                        ))}
+                    </div>
                     <Select
                         options={[{ value: '', label: 'All Teams' }, ...teams.map(t => ({ value: t.team_id, label: t.team_name }))]}
                         value={(() => {

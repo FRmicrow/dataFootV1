@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import api from '../../../../services/api';
-import { Badge } from '../../../../design-system';
 import './MatchDetailEventsV4.css';
 
 const MatchDetailEventsV4 = ({ fixtureId }) => {
@@ -28,15 +27,18 @@ const MatchDetailEventsV4 = ({ fixtureId }) => {
     const renderEventIcon = (type, detail) => {
         const t = (type || '').toLowerCase();
         const d = (detail || '').toLowerCase();
-        if (t === 'goal') return '⚽';
-        if (t === 'card') {
-            if (d?.includes('yellow')) return '🟨';
-            if (d?.includes('red')) return '🟥';
-            return '🎴';
+        if (t === 'goal' || t === 'normalgoal' || t === 'owngoal') {
+            const isOwn = t === 'owngoal' || d.includes('own');
+            return <span className={`ev-icon ev-icon--goal ${isOwn ? 'ev-icon--own' : ''}`} title={isOwn ? 'Own goal' : 'Goal'} />;
         }
-        if (t === 'subst' || t === 'substitution') return '⇄';
-        if (t === 'var') return '📺';
-        return '•';
+        if (t === 'card' || t === 'yellowcard' || t === 'redcard' || t === 'yellowredcard') {
+            if (d.includes('red') || t === 'redcard') return <span className="ev-icon ev-icon--red-card" title="Red card" />;
+            if (d.includes('yellow red') || t === 'yellowredcard') return <span className="ev-icon ev-icon--yellow-red-card" title="Second yellow" />;
+            return <span className="ev-icon ev-icon--yellow-card" title="Yellow card" />;
+        }
+        if (t === 'subst' || t === 'substitution') return <span className="ev-icon ev-icon--subst" title="Substitution" />;
+        if (t === 'var') return <span className="ev-icon ev-icon--var" title="VAR" />;
+        return <span className="ev-icon ev-icon--dot" />;
     };
 
     if (loading) return <div className="ds-events-loading">Synchronizing historical events...</div>;
@@ -59,7 +61,7 @@ const MatchDetailEventsV4 = ({ fixtureId }) => {
                                     <div className="ds-ev-meta">
                                         <span className="ds-ev-detail">{ev.detail}</span>
                                         {ev.assist_name && (
-                                            <Badge variant="neutral" size="xs">Ass: {ev.assist_name}</Badge>
+                                            <span className="ds-ev-assist">{ev.assist_name}</span>
                                         )}
                                     </div>
                                 </div>
@@ -80,7 +82,7 @@ const MatchDetailEventsV4 = ({ fixtureId }) => {
                                     <div className="ds-ev-meta">
                                         <span className="ds-ev-detail">{ev.detail}</span>
                                         {ev.assist_name && (
-                                            <Badge variant="neutral" size="xs">Ass: {ev.assist_name}</Badge>
+                                            <span className="ds-ev-assist">{ev.assist_name}</span>
                                         )}
                                     </div>
                                 </div>

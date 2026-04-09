@@ -77,13 +77,7 @@ export const saveMatchOdds = async (req, res) => {
         res.json({ success: true, data: result });
     } catch (error) {
         if (error.message === 'No odds available') {
-            return res.json({
-                success: true,
-                data: {
-                    success: false,
-                    reason: 'no_odds_available'
-                }
-            });
+            return res.status(404).json({ success: false, error: 'No odds available' });
         }
 
         logger.error({ err: error }, `Error saving odds for ${id}`);
