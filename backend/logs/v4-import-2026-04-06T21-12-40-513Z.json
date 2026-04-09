@@ -1,0 +1,19 @@
+[
+  {
+    "country": "AfriqueDuSud",
+    "status": "failed",
+    "freeze_status": "error",
+    "locked": false,
+    "matches": 0,
+    "competitions": 0,
+    "clubs": 0,
+    "people": 0,
+    "events": 0,
+    "lineups": 0,
+    "started_at": "2026-04-06T21:12:40.775Z",
+    "finished_at": "2026-04-06T21:12:40.775Z",
+    "duration_ms": 0,
+    "file": "AfriqueDuSud.sql",
+    "note": "Neither local psql nor docker-based psql is available."
+  }
+]

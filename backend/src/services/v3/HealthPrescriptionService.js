@@ -1,5 +1,6 @@
 
 import db from '../../config/database.js';
+import { cleanParams } from '../../utils/sqlHelpers.js';
 import { ResolutionService } from './ResolutionService.js';
 import { runImportJob } from './leagueImportService.js';
 import { syncLeagueEventsService } from './fixtureService.js';
@@ -27,15 +28,15 @@ export class HealthPrescriptionService {
         let count = 0;
         for (const p of prescriptions) {
             const metaStr = JSON.stringify(p.metadata);
-            const exists = db.get(
+            const exists = await db.get(
                 "SELECT id FROM V3_Health_Prescriptions WHERE type = ? AND target_entity_type = ? AND target_entity_id = ? AND status = 'PENDING' AND metadata = ?",
-                [p.type, p.target_entity_type, p.target_entity_id, metaStr]
+                cleanParams([p.type, p.target_entity_type, p.target_entity_id, metaStr])
             );
 
             if (!exists) {
-                db.run(
+                await db.run(
                     "INSERT INTO V3_Health_Prescriptions (type, priority, target_entity_type, target_entity_id, description, metadata) VALUES (?, ?, ?, ?, ?, ?)",
-                    [p.type, p.priority || 'MEDIUM', p.target_entity_type, p.target_entity_id, p.description, metaStr]
+                    cleanParams([p.type, p.priority || 'MEDIUM', p.target_entity_type, p.target_entity_id, p.description, metaStr])
                 );
                 count++;
             }
@@ -48,21 +49,32 @@ export class HealthPrescriptionService {
      * Detects missing seasons (data gaps)
      */
     static async detectMissingPlayerSeasons() {
+        const minSeasonYear = new Date().getFullYear() - 6;
+
         // Find players who have a gap in their season history for the same league
         const sql = `
-            SELECT s1.player_id, p.name, s1.league_id, l.name as league_name, MAX(s1.season_year) as year_max, MIN(s1.season_year) as year_min
+            SELECT
+                s1.player_id,
+                p.name,
+                s1.league_id,
+                l.name as league_name,
+                MAX(s1.season_year) as year_max,
+                MIN(s1.season_year) as year_min
             FROM V3_Player_Stats s1
             JOIN V3_Players p ON s1.player_id = p.player_id
             JOIN V3_Leagues l ON s1.league_id = l.league_id
-            GROUP BY s1.player_id, s1.league_id
-            HAVING year_max > year_min + (COUNT(DISTINCT s1.season_year) - 1)
+            WHERE s1.season_year >= ?
+            GROUP BY s1.player_id, p.name, s1.league_id, l.name
+            HAVING MAX(s1.season_year) > MIN(s1.season_year) + (COUNT(DISTINCT s1.season_year) - 1)
+            ORDER BY MAX(s1.season_year) DESC
+            LIMIT 150
         `;
-        const gaps = db.all(sql);
+        const gaps = await db.all(sql, cleanParams([minSeasonYear]));
         const results = [];
 
         for (const gap of gaps) {
             for (let year = gap.year_min + 1; year < gap.year_max; year++) {
-                const hasStat = db.get("SELECT 1 FROM V3_Player_Stats WHERE player_id = ? AND league_id = ? AND season_year = ?", [gap.player_id, gap.league_id, year]);
+                const hasStat = await db.get("SELECT 1 FROM V3_Player_Stats WHERE player_id = ? AND league_id = ? AND season_year = ?", cleanParams([gap.player_id, gap.league_id, year]));
                 if (!hasStat) {
                     results.push({
                         type: 'MISSING_DATA',
@@ -80,7 +92,7 @@ export class HealthPrescriptionService {
 
     static async detectDuplicateCandidates() {
         const threshold = 85;
-        const candidates = ResolutionService.findGlobalDuplicates(threshold);
+        const candidates = await ResolutionService.findGlobalDuplicates(threshold, { pairLimit: 250 });
         return candidates.map(c => ({
             type: 'DUPLICATE_CANDIDATE',
             priority: 'HIGH',
@@ -100,9 +112,9 @@ export class HealthPrescriptionService {
             LEFT JOIN V3_Fixture_Events e ON f.fixture_id = e.fixture_id
             WHERE f.status_short IN ('FT', 'AET', 'PEN')
             AND e.id IS NULL
-            GROUP BY f.league_id, f.season_year
+            GROUP BY f.league_id, f.season_year, l.name
         `;
-        const fixtures = db.all(sql);
+        const fixtures = await db.all(sql);
 
         return fixtures.map(g => ({
             type: 'DATA_INCONSISTENCY',
@@ -118,7 +130,7 @@ export class HealthPrescriptionService {
      * Executes the recovery action for a prescription.
      */
     static async execute(prescriptionId, sendLog) {
-        const prescription = db.get("SELECT * FROM V3_Health_Prescriptions WHERE id = ?", [prescriptionId]);
+        const prescription = await db.get("SELECT * FROM V3_Health_Prescriptions WHERE id = ?", cleanParams([prescriptionId]));
         if (!prescription) throw new Error("Prescription not found");
         if (prescription.status === 'RESOLVED') throw new Error("Prescription already resolved");
 
@@ -150,7 +162,7 @@ export class HealthPrescriptionService {
             }
 
             // Mark as RESOLVED
-            db.run("UPDATE V3_Health_Prescriptions SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP WHERE id = ?", [prescriptionId]);
+            await db.run("UPDATE V3_Health_Prescriptions SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP WHERE id = ?", cleanParams([prescriptionId]));
 
             sendLog(`✅ Prescription #${prescriptionId} marked as RESOLVED.`, 'success');
             return result;

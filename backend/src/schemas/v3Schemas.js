@@ -208,3 +208,106 @@ export const tacticalStatsSchema = z.object({
         limit: z.coerce.number().optional()
     })
 });
+
+export const leagueIdParamSchema = z.object({
+    params: z.object({
+        id: z.coerce.number().positive()
+    })
+});
+
+export const leagueSeasonParamSchema = z.object({
+    params: z.object({
+        id: z.coerce.number().positive(),
+        year: z.coerce.number().min(1900).max(2100)
+    })
+});
+
+export const simulationStatusSchema = z.object({
+    query: z.object({
+        leagueId: z.coerce.number().positive(),
+        seasonYear: z.coerce.number().min(2000).max(2030),
+        horizon: z.enum(['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING']).optional(),
+        simId: z.coerce.number().positive().optional(),
+    })
+});
+
+export const simulationStartSchema = z.object({
+    body: z.object({
+        leagueId: z.coerce.number().positive(),
+        seasonYear: z.coerce.number().min(2000).max(2030),
+        mode: z.enum(['STATIC', 'WALK_FORWARD']).optional(),
+        horizon: z.enum(['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING']).optional(),
+    })
+});
+
+export const simulationReadinessSchema = z.object({
+    query: z.object({
+        leagueId: z.coerce.number().positive(),
+        seasonYear: z.coerce.number().min(2000).max(2030),
+    })
+});
+
+export const simulationIdParamSchema = z.object({
+    params: z.object({
+        simId: z.coerce.number().positive(),
+    })
+});
+
+export const breedingSchema = z.object({
+    body: z.object({
+        leagueId: z.coerce.number().positive()
+    })
+});
+
+export const breedingStatusSchema = z.object({
+    query: z.object({
+        leagueId: z.coerce.number().positive()
+    })
+});
+
+export const leagueIdV3ParamSchema = z.object({
+    params: z.object({
+        leagueId: z.coerce.number().positive()
+    })
+});
+
+export const roiRequestSchema = z.object({
+    body: z.object({
+        portfolioSize: z.number().positive(),
+        stakePerBet: z.number().positive(),
+        leagueId: z.number().optional(),
+        seasonYear: z.number().optional(),
+        markets: z.union([z.string(), z.array(z.string())]).optional()
+    })
+});
+
+export const edgesTopQuerySchema = z.object({
+    query: z.object({
+        minEdge: z.coerce.number().min(0).max(100).optional(),
+        minConfidence: z.coerce.number().min(0).max(100).optional(),
+        limit: z.coerce.number().min(1).max(100).optional(),
+        leagueId: z.coerce.number().optional(),
+        markets: z.string().optional()
+    })
+});
+
+export const createSubmodelSchema = z.object({
+    body: z.object({
+        displayName: z.string().min(1).max(100),
+        description: z.string().max(500).optional(),
+        baseModelType: z.enum(['FT_RESULT', 'HT_RESULT', 'CORNERS_TOTAL', 'CARDS_TOTAL']),
+        leagueId: z.number().optional(),
+        seasonYear: z.number().min(2015).max(2030).optional(),
+        horizonType: z.enum(['FULL_HISTORICAL', '5Y_ROLLING', '3Y_ROLLING']).default('FULL_HISTORICAL'),
+        trainNow: z.boolean().default(false)
+    })
+});
+
+export const foresightLeagueDetailSchema = z.object({
+    params: z.object({
+        leagueId: z.coerce.number().positive()
+    }),
+    query: z.object({
+        seasonYear: z.coerce.number().min(2000).max(2030).optional()
+    })
+});

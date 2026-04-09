@@ -1,0 +1,241 @@
+.ml-orch {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+.ml-orch .ml-surface__section,
+.ml-orch__alert {
+    border: 1px solid var(--glass-border);
+    background: var(--gradient-surface), color-mix(in srgb, var(--color-bg-main) 72%, transparent);
+    backdrop-filter: var(--glass-blur);
+}
+
+.ml-orch__alert--error {
+    border-color: color-mix(in srgb, var(--color-danger-500) 55%, transparent);
+    background: color-mix(in srgb, var(--color-danger-bg) 82%, transparent);
+    color: var(--color-danger-500);
+}
+
+.ml-orch__controls-skeletons,
+.ml-orch__table-skeletons {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.ml-orch__aggregate-table-ds {
+    --table-max-height: 420px;
+}
+
+.ml-orch__results-table-ds {
+    --table-max-height: min(68vh, 980px);
+    --ds-table-cell-padding-y: 12px;
+}
+
+.ml-orch__main {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
+    gap: var(--space-xl);
+    align-items: start;
+}
+
+.ml-orch__column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+.ml-orch__aggregate-link {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ml-orch__aggregate-link strong,
+.ml-orch__summary-item strong,
+.ml-orch__sidebar-row strong,
+.ml-orch__run-item-top strong,
+.ml-orch__notes-list li::marker {
+    color: var(--color-text-primary);
+}
+
+.ml-orch__aggregate-link span,
+.ml-orch__sidebar-row span,
+.ml-orch__run-item-meta span,
+.ml-orch__sidebar-empty {
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+}
+
+.ml-orch__summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.ml-orch__summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-slate-950) 45%, transparent);
+    border: 1px solid var(--glass-border);
+}
+
+.ml-orch__summary-label {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-dim);
+}
+
+.ml-orch__market-filters {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-md);
+}
+
+.ml-orch__market-filter-btn {
+    min-width: 84px;
+}
+
+.ml-orch__table-date,
+.ml-orch__result-score,
+.ml-orch__insight-title,
+.ml-orch__verdict-subline,
+.ml-orch__prediction-confidence {
+    color: var(--color-text-primary);
+}
+
+.ml-orch__table-round,
+.ml-orch__prob-grid,
+.ml-orch__insight-detail {
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+}
+
+.ml-orch__matchup {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: var(--space-xs);
+    align-items: center;
+}
+
+.ml-orch__team-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text-primary);
+}
+
+.ml-orch__matchup-sep {
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.ml-orch__prediction-cell,
+.ml-orch__result-cell,
+.ml-orch__verdict-cell,
+.ml-orch__insight-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.ml-orch__prediction-head,
+.ml-orch__result-cell,
+.ml-orch__verdict-cell,
+.ml-orch__sidebar-row,
+.ml-orch__run-item-top,
+.ml-orch__run-item-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.ml-orch__prob-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.ml-orch__metric-pills {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.ml-orch__metric-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-slate-950) 42%, transparent);
+    border: 1px solid var(--glass-border);
+}
+
+.ml-orch__run-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.ml-orch__run-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-slate-950) 32%, transparent);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ml-orch__run-item--active {
+    border-color: color-mix(in srgb, var(--color-primary-500) 56%, transparent);
+    background: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+}
+
+.ml-orch__notes-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: var(--space-sm);
+    color: var(--color-text-secondary);
+}
+
+@media (max-width: 1180px) {
+    .ml-orch__main {
+        grid-template-columns: 1fr;
+    }
+
+    .ml-orch__summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .ml-orch__summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ml-orch__matchup {
+        grid-template-columns: 1fr;
+    }
+}

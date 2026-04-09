@@ -1,0 +1,678 @@
+{
+  "generated_at": "2026-03-14T21:22:25.661707+00:00",
+  "ft_1x2": {
+    "active": [],
+    "shadow": [
+      2,
+      30,
+      34
+    ],
+    "rejected": [
+      15,
+      11,
+      19,
+      1,
+      32
+    ],
+    "decisions": [
+      {
+        "league_id": 2,
+        "league_name": "Premier League",
+        "beats_global": true,
+        "global_metrics": {
+          "accuracy": 0.5366614664586583,
+          "log_loss": 0.978418597202753,
+          "brier_score": 0.583507466309583
+        },
+        "league_metrics": {
+          "accuracy": 0.5512249443207127,
+          "log_loss": 0.9541170951781495,
+          "brier_score": 0.5667687753474366,
+          "f1_weighted": 0.4730946202203468
+        },
+        "mode": "shadow",
+        "recommended_horizon": "FULL_HISTORICAL"
+      },
+      {
+        "league_id": 15,
+        "league_name": "Serie A",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.5555555555555556,
+          "log_loss": 0.9168557909990637,
+          "brier_score": 0.5438587806488057
+        },
+        "league_metrics": {
+          "accuracy": 0.5545657015590201,
+          "log_loss": 0.9307062271561314,
+          "brier_score": 0.5526128996823195,
+          "f1_weighted": 0.5057251075029585
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 11,
+        "league_name": "La Liga",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.6072013093289689,
+          "log_loss": 0.8792421143873931,
+          "brier_score": 0.5133602583783509
+        },
+        "league_metrics": {
+          "accuracy": 0.5803571428571429,
+          "log_loss": 0.9147937626079105,
+          "brier_score": 0.5386900289443706,
+          "f1_weighted": 0.4950562259713435
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 19,
+        "league_name": "Bundesliga",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.5902912621359223,
+          "log_loss": 0.9162469901556175,
+          "brier_score": 0.5393801929089733
+        },
+        "league_metrics": {
+          "accuracy": 0.5737931034482758,
+          "log_loss": 0.9332459026618067,
+          "brier_score": 0.5508778433834711,
+          "f1_weighted": 0.5117894118095547
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 1,
+        "league_name": "Ligue 1",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.5830039525691699,
+          "log_loss": 0.9029123211806099,
+          "brier_score": 0.5293523500347954
+        },
+        "league_metrics": {
+          "accuracy": 0.5662368112543963,
+          "log_loss": 0.9472327124764889,
+          "brier_score": 0.5601941540288763,
+          "f1_weighted": 0.5070071566513954
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 30,
+        "league_name": "Eredivisie",
+        "beats_global": true,
+        "global_metrics": {
+          "accuracy": 0.5578512396694215,
+          "log_loss": 0.9459723915500732,
+          "brier_score": 0.5623781493083859
+        },
+        "league_metrics": {
+          "accuracy": 0.5708390646492435,
+          "log_loss": 0.9177944102582652,
+          "brier_score": 0.5445771757828642,
+          "f1_weighted": 0.4877940213080787
+        },
+        "mode": "shadow",
+        "recommended_horizon": "FULL_HISTORICAL"
+      },
+      {
+        "league_id": 32,
+        "league_name": "Jupiler Pro League",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.5509761388286334,
+          "log_loss": 0.9416086540299065,
+          "brier_score": 0.5600400010882265
+        },
+        "league_metrics": {
+          "accuracy": 0.5605187319884726,
+          "log_loss": 0.9453577224638959,
+          "brier_score": 0.5585629650368923,
+          "f1_weighted": 0.49335324206073894
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 34,
+        "league_name": "Primeira Liga",
+        "beats_global": true,
+        "global_metrics": {
+          "accuracy": 0.5882352941176471,
+          "log_loss": 0.8715289678184706,
+          "brier_score": 0.5130588373309344
+        },
+        "league_metrics": {
+          "accuracy": 0.6126656848306333,
+          "log_loss": 0.8692789694329501,
+          "brier_score": 0.5089139164370368,
+          "f1_weighted": 0.5434703966084092
+        },
+        "mode": "shadow",
+        "recommended_horizon": "FULL_HISTORICAL"
+      }
+    ]
+  },
+  "goals_ou": {
+    "active": [],
+    "shadow": [
+      30,
+      32
+    ],
+    "rejected": [
+      2,
+      15,
+      11,
+      19,
+      1,
+      34
+    ],
+    "decisions": [
+      {
+        "league_id": 2,
+        "league_name": "Premier League",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 1.618051553945092,
+          "over_2_5_accuracy": 0.5625
+        },
+        "league_metrics": {
+          "total_rmse": 1.6984676556143636,
+          "over_2_5_accuracy": 0.5580618212197159
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 15,
+        "league_name": "Serie A",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 1.517722353491562,
+          "over_2_5_accuracy": 0.5153129161118508
+        },
+        "league_metrics": {
+          "total_rmse": 1.5449281514733944,
+          "over_2_5_accuracy": 0.5079365079365079
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 11,
+        "league_name": "La Liga",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 1.5028190166222937,
+          "over_2_5_accuracy": 0.5357624831309041
+        },
+        "league_metrics": {
+          "total_rmse": 1.6089979614181193,
+          "over_2_5_accuracy": 0.551926298157454
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 19,
+        "league_name": "Bundesliga",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 1.737373312072423,
+          "over_2_5_accuracy": 0.6194398682042833
+        },
+        "league_metrics": {
+          "total_rmse": 1.7276679516207285,
+          "over_2_5_accuracy": 0.6086956521739131
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 1,
+        "league_name": "Ligue 1",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 1.710243098962753,
+          "over_2_5_accuracy": 0.5683690280065898
+        },
+        "league_metrics": {
+          "total_rmse": 1.6802929948607708,
+          "over_2_5_accuracy": 0.5382585751978892
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 30,
+        "league_name": "Eredivisie",
+        "beats_global": true,
+        "global_metrics": {
+          "total_rmse": 1.709553049865431,
+          "over_2_5_accuracy": 0.6026490066225165
+        },
+        "league_metrics": {
+          "total_rmse": 1.7074533314812024,
+          "over_2_5_accuracy": 0.6150670794633643
+        },
+        "mode": "shadow",
+        "recommended_horizon": "FULL_HISTORICAL"
+      },
+      {
+        "league_id": 32,
+        "league_name": "Jupiler Pro League",
+        "beats_global": true,
+        "global_metrics": {
+          "total_rmse": 1.6706935553279298,
+          "over_2_5_accuracy": 0.5154639175257731
+        },
+        "league_metrics": {
+          "total_rmse": 1.6666791202390736,
+          "over_2_5_accuracy": 0.5183585313174947
+        },
+        "mode": "shadow",
+        "recommended_horizon": "3Y_ROLLING"
+      },
+      {
+        "league_id": 34,
+        "league_name": "Primeira Liga",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 1.4780682349533782,
+          "over_2_5_accuracy": 0.6105263157894737
+        },
+        "league_metrics": {
+          "total_rmse": 1.5921746990815904,
+          "over_2_5_accuracy": 0.5878453038674033
+        },
+        "mode": "rejected"
+      }
+    ]
+  },
+  "corners_ou": {
+    "active": [],
+    "shadow": [],
+    "rejected": [
+      2,
+      15,
+      11,
+      19,
+      1,
+      30,
+      32,
+      34
+    ],
+    "decisions": [
+      {
+        "league_id": 2,
+        "league_name": "Premier League",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 3.2507932973213824,
+          "over_9_5_accuracy": 0.564
+        },
+        "league_metrics": {
+          "total_rmse": 3.373701047838496,
+          "over_9_5_accuracy": 0.5594315245478036
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 15,
+        "league_name": "Serie A",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 3.096441452157502,
+          "over_9_5_accuracy": 0.6160337552742616
+        },
+        "league_metrics": {
+          "total_rmse": 3.4826850140881573,
+          "over_9_5_accuracy": 0.5475880052151239
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 11,
+        "league_name": "La Liga",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 3.188463885662067,
+          "over_9_5_accuracy": 0.6035242290748899
+        },
+        "league_metrics": {
+          "total_rmse": 3.2803546755543804,
+          "over_9_5_accuracy": 0.5039164490861618
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 19,
+        "league_name": "Bundesliga",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 3.512167720392467,
+          "over_9_5_accuracy": 0.5425531914893617
+        },
+        "league_metrics": {
+          "total_rmse": 3.3863208219566103,
+          "over_9_5_accuracy": 0.4967637540453074
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 1,
+        "league_name": "Ligue 1",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 3.3369184973082757,
+          "over_9_5_accuracy": 0.5404040404040404
+        },
+        "league_metrics": {
+          "total_rmse": 3.3662660071943487,
+          "over_9_5_accuracy": 0.5180555555555556
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 30,
+        "league_name": "Eredivisie",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 3.219681278367911,
+          "over_9_5_accuracy": 0.6224489795918368
+        },
+        "league_metrics": {
+          "total_rmse": 3.804189714652054,
+          "over_9_5_accuracy": 0.47115384615384615
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 32,
+        "league_name": "Jupiler Pro League",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 3.1370641465106694,
+          "over_9_5_accuracy": 0.5543478260869565
+        },
+        "league_metrics": {
+          "total_rmse": 3.089071466020317,
+          "over_9_5_accuracy": 0.5098039215686274
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 34,
+        "league_name": "Primeira Liga",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 3.119423895019068,
+          "over_9_5_accuracy": 0.5721925133689839
+        },
+        "league_metrics": {
+          "total_rmse": 3.201052492720531,
+          "over_9_5_accuracy": 0.47474747474747475
+        },
+        "mode": "rejected"
+      }
+    ]
+  },
+  "cards_ou": {
+    "active": [],
+    "shadow": [
+      11,
+      1
+    ],
+    "rejected": [
+      2,
+      15,
+      19,
+      30,
+      32,
+      34
+    ],
+    "decisions": [
+      {
+        "league_id": 2,
+        "league_name": "Premier League",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 2.075829819987534,
+          "over_4_5_accuracy": 0.632
+        },
+        "league_metrics": {
+          "total_rmse": 2.3528092422031355,
+          "over_4_5_accuracy": 0.5697674418604651
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 15,
+        "league_name": "Serie A",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 1.8934892576160436,
+          "over_4_5_accuracy": 0.6286919831223629
+        },
+        "league_metrics": {
+          "total_rmse": 2.0598860313788037,
+          "over_4_5_accuracy": 0.5932203389830508
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 11,
+        "league_name": "La Liga",
+        "beats_global": true,
+        "global_metrics": {
+          "total_rmse": 2.4353558905434802,
+          "over_4_5_accuracy": 0.5286343612334802
+        },
+        "league_metrics": {
+          "total_rmse": 2.396737347589483,
+          "over_4_5_accuracy": 0.5522193211488251
+        },
+        "mode": "shadow",
+        "recommended_horizon": "5Y_ROLLING"
+      },
+      {
+        "league_id": 19,
+        "league_name": "Bundesliga",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 2.164767678543952,
+          "over_4_5_accuracy": 0.6063829787234043
+        },
+        "league_metrics": {
+          "total_rmse": 2.287235189333131,
+          "over_4_5_accuracy": 0.6067961165048543
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 1,
+        "league_name": "Ligue 1",
+        "beats_global": true,
+        "global_metrics": {
+          "total_rmse": 2.1443075763507338,
+          "over_4_5_accuracy": 0.6161616161616161
+        },
+        "league_metrics": {
+          "total_rmse": 2.092564309342602,
+          "over_4_5_accuracy": 0.6388888888888888
+        },
+        "mode": "shadow",
+        "recommended_horizon": "FULL_HISTORICAL"
+      },
+      {
+        "league_id": 30,
+        "league_name": "Eredivisie",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 2.0211571253919614,
+          "over_4_5_accuracy": 0.6377551020408163
+        },
+        "league_metrics": {
+          "total_rmse": 2.2328762841875145,
+          "over_4_5_accuracy": 0.6826923076923077
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 32,
+        "league_name": "Jupiler Pro League",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 2.095876377919371,
+          "over_4_5_accuracy": 0.6358695652173914
+        },
+        "league_metrics": {
+          "total_rmse": 2.1482556685091563,
+          "over_4_5_accuracy": 0.5490196078431373
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 34,
+        "league_name": "Primeira Liga",
+        "beats_global": false,
+        "global_metrics": {
+          "total_rmse": 2.7649422247624797,
+          "over_4_5_accuracy": 0.6417112299465241
+        },
+        "league_metrics": {
+          "total_rmse": 2.6911324877206577,
+          "over_4_5_accuracy": 0.5959595959595959
+        },
+        "mode": "rejected"
+      }
+    ]
+  },
+  "ht_1x2": {
+    "active": [],
+    "shadow": [],
+    "rejected": [
+      2,
+      15,
+      11,
+      19,
+      1,
+      30,
+      32,
+      34
+    ],
+    "decisions": [
+      {
+        "league_id": 2,
+        "league_name": "Premier League",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.44113263785394935,
+          "log_loss": 1.0444673389264534
+        },
+        "league_metrics": {
+          "accuracy": 0.3441938178780284,
+          "log_loss": 1.105538050710848
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 15,
+        "league_name": "Serie A",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.45606060606060606,
+          "log_loss": 1.0212273802749436
+        },
+        "league_metrics": {
+          "accuracy": 0.3377926421404682,
+          "log_loss": 1.1166696806747307
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 11,
+        "league_name": "La Liga",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.4938461538461538,
+          "log_loss": 1.0075656666499904
+        },
+        "league_metrics": {
+          "accuracy": 0.31155778894472363,
+          "log_loss": 1.1029357864670302
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 19,
+        "league_name": "Bundesliga",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.4634146341463415,
+          "log_loss": 1.0082191478771325
+        },
+        "league_metrics": {
+          "accuracy": 0.35093167701863354,
+          "log_loss": 1.0829678292666156
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 1,
+        "league_name": "Ligue 1",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.4333958724202627,
+          "log_loss": 1.0317674312653926
+        },
+        "league_metrics": {
+          "accuracy": 0.3306948109058927,
+          "log_loss": 1.104237342880312
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 30,
+        "league_name": "Eredivisie",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.48549323017408125,
+          "log_loss": 1.013353154933019
+        },
+        "league_metrics": {
+          "accuracy": 0.347781217750258,
+          "log_loss": 1.1105513384749817
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 32,
+        "league_name": "Jupiler Pro League",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.4280078895463511,
+          "log_loss": 1.0384453913307796
+        },
+        "league_metrics": {
+          "accuracy": 0.3027027027027027,
+          "log_loss": 1.1011179965786195
+        },
+        "mode": "rejected"
+      },
+      {
+        "league_id": 34,
+        "league_name": "Primeira Liga",
+        "beats_global": false,
+        "global_metrics": {
+          "accuracy": 0.5272727272727272,
+          "log_loss": 0.9781148245692666
+        },
+        "league_metrics": {
+          "accuracy": 0.30718232044198895,
+          "log_loss": 1.135046901174518
+        },
+        "mode": "rejected"
+      }
+    ]
+  },
+  "shadow_horizon_generated_at": "2026-03-14T22:05:54.416154+00:00"
+}

@@ -7,22 +7,46 @@
   "scripts": {
     "start": "node --max-old-space-size=4096 src/server.js",
     "dev": "node --max-old-space-size=4096 --watch src/server.js",
-    "init-db": "node scripts/initDatabase.js"
+    "init-db": "node scripts/v3/migrate.js",
+    "migrate": "node scripts/v3/migrate.js",
+    "import:v4-sql": "node scripts/v4/import_sql_v4.js",
+    "canonicalize:v4-competitions": "node scripts/v4/canonicalize_competitions.js",
+    "rank:v4": "node scripts/v4/apply_importance_rankings.js",
+    "sync:v4-upcoming": "node scripts/v4/sync-upcoming-matches.js",
+    "import:v4-upcoming-json": "node scripts/v4/import-upcoming-from-json.js",
+    "smoke:v3-routes": "node scripts/smoke_v3_routes.mjs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "football",
     "api",
-    "sqlite"
+    "postgresql"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.5",
+    "axios": "1.13.6",
+
+    "canvas": "^3.2.1",
+    "colorthief": "^2.7.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2",
+    "express": "5.2.1",
     "express-rate-limit": "^8.2.1",
-    "sql.js": "^1.10.3",
-    "zod": "^4.3.6"
+    "helmet": "^8.1.0",
+    "node-cache": "^5.1.2",
+    "node-cron": "^4.2.1",
+    "pg": "^8.20.0",
+    "pino": "^10.3.1",
+    "pino-pretty": "^13.1.3",
+    "uuid": "^13.0.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "2.1.9",
+    "supertest": "7.2.2",
+    "vitest": "2.1.9"
   }
 }

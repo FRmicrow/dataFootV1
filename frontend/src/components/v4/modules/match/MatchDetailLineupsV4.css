@@ -1,0 +1,121 @@
+.match-lineups-container {
+    display: flex;
+    justify-content: space-between;
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    color: white;
+    gap: 20px;
+}
+
+.team-lineup-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.lineup-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #64748b;
+    /* vertical line */
+    border-left: 1px solid #334155;
+    padding: 0 10px;
+}
+
+.lineup-header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 10px;
+}
+
+.lineup-header h3 {
+    margin: 0;
+    color: #e2e8f0;
+}
+
+.formation-badge {
+    display: inline-block;
+    background: #0ea5e9;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.coach-name {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.lineup-list {
+    margin-bottom: 20px;
+}
+
+.lineup-list h4 {
+    color: #cbd5e1;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 5px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.player-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #334155;
+    font-size: 0.95rem;
+}
+
+.player-row:last-child {
+    border-bottom: none;
+}
+
+.player-num {
+    width: 30px;
+    font-weight: bold;
+    color: #fbbf24;
+    /* Amber numbering */
+    text-align: center;
+}
+
+.player-name {
+    flex: 1;
+}
+
+.player-pos {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    width: 30px;
+    /* Position code like 'G', 'D' */
+    text-align: right;
+}
+
+.sub .player-name {
+    color: #94a3b8;
+}
+
+/* Home usually left, Away usually right */
+.home .lineup-header {
+    text-align: left;
+}
+
+.away .lineup-header {
+    text-align: right;
+}
+
+.away .player-row {
+    flex-direction: row-reverse;
+    /* Flip layout for away team */
+}
+
+.away .player-pos {
+    text-align: left;
+}

@@ -1,0 +1,9 @@
+.ds-select-container {
+    min-width: 140px;
+    font-family: var(--font-family);
+}
+
+/* Specific labels for within filter boxes if used */
+.ds-filter-box .ds-select-container {
+    width: 100%;
+}

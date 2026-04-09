@@ -1,0 +1,132 @@
+.v3-leagues-content {
+    min-height: 100vh;
+}
+
+.ds-section-subtitle {
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: 0.1em;
+    padding-left: var(--spacing-xs);
+    border-left: 2px solid var(--color-primary-500);
+}
+
+/* Country Accordion */
+.v3-country-accordion {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: var(--transition-base);
+}
+
+.v3-country-accordion:hover {
+    border-color: var(--color-border-hover);
+}
+
+.v3-country-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    background: var(--glass-bg);
+    transition: var(--transition-base);
+}
+
+.v3-country-header:hover {
+    background: var(--color-bg-card-hover);
+}
+
+.v3-flag-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--glass-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+.v3-flag-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.v3-zone-badge {
+    height: 32px;
+    padding: 0 var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    background: var(--glass-bg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.v3-chevron {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    transition: transform var(--transition-base);
+    margin-left: var(--spacing-md);
+}
+
+.v3-country-accordion.active .v3-chevron {
+    transform: rotate(180deg);
+}
+
+.v3-country-body {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-slate-900);
+}
+
+.animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ds-empty-state {
+    padding: var(--spacing-2xl);
+    background: var(--color-bg-card);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

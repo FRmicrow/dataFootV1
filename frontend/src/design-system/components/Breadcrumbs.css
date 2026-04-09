@@ -1,0 +1,87 @@
+/* ── Breadcrumbs ───────────────────────────────────────────────────────────
+ * Analytical navigation path for High-End Dashboard style.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+.ds-breadcrumb {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: -0.01em;
+    color: var(--color-text-dim);
+}
+
+.ds-breadcrumb__list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ds-breadcrumb__item {
+    display: flex;
+    align-items: center;
+}
+
+.ds-breadcrumb__link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-dim);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    padding: 4px 6px;
+    border-radius: var(--radius-xs);
+}
+
+.ds-breadcrumb__link:hover {
+    color: var(--color-text-main);
+    background: var(--color-bg-card-hover);
+}
+
+.ds-breadcrumb__separator {
+    margin: 0 4px;
+    color: var(--color-border);
+    font-weight: 300;
+    font-size: 14px;
+    user-select: none;
+}
+
+.ds-breadcrumb__item--active {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-main);
+    padding: 4px 6px;
+    cursor: default;
+}
+
+.ds-breadcrumb__icon {
+    font-size: 14px;
+    filter: grayscale(1);
+    opacity: 0.6;
+    transition: all var(--transition-fast);
+}
+
+.ds-breadcrumb__link:hover .ds-breadcrumb__icon {
+    filter: none;
+    opacity: 1;
+}
+
+/* Specific styling for root dashboard item */
+.ds-breadcrumb .ds-breadcrumb__item--active .ds-breadcrumb__icon {
+    filter: none;
+    opacity: 1;
+}
+
+/* Ensure Breadcrumb title doesn't wrap on narrow screens */
+@media (max-width: 640px) {
+    .ds-breadcrumb__label {
+        display: none;
+    }
+    
+    .ds-breadcrumb__item:last-child .ds-breadcrumb__label {
+        display: block;
+    }
+}

@@ -4,7 +4,7 @@
 export function levenshteinDistance(s1, s2) {
     const len1 = s1.length;
     const len2 = s2.length;
-    const matrix = Array.from({ length: len1 + 1 }, () => Array(len2 + 1).fill(0));
+    const matrix = Array.from({ length: len1 + 1 }, () => new Array(len2 + 1).fill(0));
 
     for (let i = 0; i <= len1; i++) matrix[i][0] = i;
     for (let j = 0; j <= len2; j++) matrix[0][j] = j;

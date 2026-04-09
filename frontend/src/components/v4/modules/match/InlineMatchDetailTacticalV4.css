@@ -1,0 +1,173 @@
+.tactical-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-sm) 0;
+}
+
+.tactical-loading {
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.tactical-empty {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--color-text-dim);
+    font-size: var(--font-size-xs);
+}
+
+/* ── Section ──────────────────────────────────────── */
+.tactical-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.tactical-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tactical-section-title {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+}
+
+.tactical-stat-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* ── Period tabs ──────────────────────────────────── */
+.tactical-period-tabs {
+    display: flex;
+    gap: 4px;
+}
+
+.tactical-period-btn {
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-subtle);
+    background: transparent;
+    color: var(--color-text-dim);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.tactical-period-btn:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-main);
+}
+
+.tactical-period-btn.active {
+    background: var(--color-primary-500);
+    border-color: var(--color-primary-500);
+    color: #fff;
+}
+
+/* ── Forecast bar ─────────────────────────────────── */
+.tactical-forecast {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tactical-forecast-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.forecast-label--win  { color: var(--color-success-500); }
+.forecast-label--draw { color: var(--color-text-dim); text-align: center; flex: 1; }
+.forecast-label--loss { color: var(--color-danger-500); }
+
+.tactical-forecast-bar {
+    height: 6px;
+    border-radius: var(--radius-full);
+    display: flex;
+    overflow: hidden;
+    background: var(--color-bg-hover);
+}
+
+.forecast-seg {
+    height: 100%;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.forecast-seg--win  { background: var(--color-success-500); }
+.forecast-seg--draw { background: var(--color-text-dim); opacity: 0.5; }
+.forecast-seg--loss { background: var(--color-danger-500); }
+
+/* ── Odds ─────────────────────────────────────────── */
+.tactical-odds-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.tactical-odds-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tactical-odds-group-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+    opacity: 0.6;
+}
+
+.tactical-odds-row {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+}
+
+.tactical-odds-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: var(--color-bg-hover);
+    border-radius: var(--radius-sm);
+    padding: 5px 8px;
+    min-width: 44px;
+    border: 1px solid transparent;
+}
+
+.tactical-odds-cell--home { border-color: var(--color-primary-700); }
+.tactical-odds-cell--away { border-color: var(--color-accent-700); }
+.tactical-odds-cell--draw { border-color: var(--color-border-subtle); }
+.tactical-odds-cell--success { border-color: var(--color-success-500); }
+.tactical-odds-cell--danger  { border-color: var(--color-danger-500); opacity: 0.7; }
+
+.tactical-odds-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+}
+
+.tactical-odds-value {
+    font-size: var(--font-size-xs);
+    font-weight: 800;
+    color: var(--color-text-main);
+    font-variant-numeric: tabular-nums;
+}

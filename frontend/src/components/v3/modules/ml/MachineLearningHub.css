@@ -1,0 +1,42 @@
+/* ML Hub shell — padding géré par PageLayout */
+
+/* Neutralise les paddings horizontaux des sous-pages
+   (PageLayout gère déjà le padding de la page) */
+.ml-hub__content > .ml-catalog,
+.ml-hub__content > .ml-perf,
+.ml-hub__content > .ml-foresight,
+.ml-hub__content > .ml-submodel,
+.ml-hub__content > .ml-glossary,
+.ml-hub__content > .ml-orch,
+.ml-hub__content > .ml-sim-analytics,
+.ml-hub__content > .ml-match-premium,
+.ml-hub__content > .ml-error-lab,
+.ml-hub__content > .ml-league-premium {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.ml-hub__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    padding-bottom: var(--space-2xl);
+}
+
+.ml-hub__secondary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    border-top: 1px solid var(--glass-border);
+}
+
+.ml-hub__fallback-card {
+    min-height: 420px;
+}
+
+.ml-hub__fallback-grid {
+    display: grid;
+    gap: var(--space-md);
+}
+

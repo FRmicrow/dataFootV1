@@ -1,0 +1,14 @@
+fastapi
+pydantic
+joblib
+pandas
+numpy
+scikit-learn
+catboost
+optuna
+matplotlib
+seaborn
+uvicorn
+requests
+
+psycopg2-binary

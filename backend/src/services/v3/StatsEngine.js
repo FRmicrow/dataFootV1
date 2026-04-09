@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import footballApi from '../footballApi.js';
+import logger from '../../utils/logger.js';
 /**
  * Stats Engine Service V3
  * Handles high-performance aggregation for dynamic standings and statistics.
@@ -16,8 +17,8 @@ class StatsEngine {
      */
     static async getDynamicStandings(leagueId, season, fromRound = 1, toRound = 50) {
         // 1. Fetch Fixtures in Range
-        // Optimization: SQLite handles thousands of rows easily, so fetching ~380 matches is fine.
-        const matches = db.all(`
+        // Optimization: fetching ~380 matches per season is lightweight for PostgreSQL.
+        const matches = await db.all(`
             SELECT 
                 f.round,
                 f.home_team_id, f.away_team_id,
@@ -34,10 +35,13 @@ class StatsEngine {
 
         if (!matches || matches.length === 0) return [];
 
-        // 2. Helper to parse round
+        // 2. Helper to parse round — only matches "Name - N" patterns (league/regular season rounds).
+        // "1st Qualifying Round" would naively parse as 1 via parseInt; using a regex prevents that.
         const parseRound = (r) => {
-            const m = r.match(/(\d+)$/);
-            return m ? parseInt(m[1]) : 999;
+            if (!r || typeof r !== 'string') return 999;
+            const m = r.match(/\s*-\s*(\d+)\s*$/);
+            if (m) return Number.parseInt(m[1]);
+            return 999;
         };
 
         // 3. Aggregate Stats
@@ -174,22 +178,21 @@ class StatsEngine {
         );
         teams.forEach(t => teamsMap.set(t.api_id, t.team_id));
 
-        // 4. Insert Transaction
-        await db.run('BEGIN TRANSACTION');
+        // 4. Insert Data
         try {
             for (const teamLineup of lineups) {
                 const apiTeamId = teamLineup.team.id;
                 const localTeamId = teamsMap.get(apiTeamId);
 
                 if (!localTeamId) {
-                    console.warn(`[Sync] Could not map API Team ID ${apiTeamId} to Local Team ID. Skipping lineup.`);
+                    logger.warn({ apiTeamId, fixtureId }, 'Could not map API Team ID to Local Team ID. Skipping lineup');
                     continue;
                 }
 
                 // Prepare Data
                 const coach = teamLineup.coach || {};
                 const formation = teamLineup.formation;
-                const startingXI = JSON.stringify(teamLineup.startXI); // API: startXI
+                const startingXI = JSON.stringify(teamLineup.startXI);
                 const subs = JSON.stringify(teamLineup.substitutes);
 
                 // Upsert
@@ -203,7 +206,7 @@ class StatsEngine {
                         formation = excluded.formation,
                         starting_xi = excluded.starting_xi,
                         substitutes = excluded.substitutes,
-                        created_at = CURRENT_TIMESTAMP
+                        updated_at = CURRENT_TIMESTAMP
                 `, [
                     fixtureId,
                     localTeamId,
@@ -214,9 +217,8 @@ class StatsEngine {
                     subs
                 ]);
             }
-            await db.run('COMMIT');
         } catch (e) {
-            await db.run('ROLLBACK');
+            logger.error({ err: e, fixtureId }, 'Error inserting lineups for fixture');
             throw e;
         }
 

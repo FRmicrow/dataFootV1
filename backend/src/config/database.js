@@ -1,119 +1,180 @@
-import initSqlJs from 'sql.js';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFileSync, writeFileSync, existsSync, renameSync } from 'fs';
+import pkg from 'pg';
+const { Pool, types } = pkg;
+import { cleanParams } from '../utils/sqlHelpers.js';
+import logger from '../utils/logger.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Configure type parsers for PostgreSQL type coercion
+// 16 is the OID for 'bool' in Postgres. Return 1 for true, 0 for false (matches legacy int convention).
+types.setTypeParser(16, val => (val === 't' || val === true) ? 1 : 0);
+// 20 is the OID for 'int8' (BIGINT). Return as string to preserve precision of 64-bit Flake IDs.
+types.setTypeParser(20, val => val);
 
-const dbPath = join(__dirname, '..', '..', 'database.sqlite');
-const tempDbPath = join(__dirname, '..', '..', 'database.sqlite.tmp');
+let pool;
 
-let SQL;
-let db;
-let saveTimeout = null;
-const SAVE_DEBOUNCE_MS = 1000;
-
-// Initialize database connection
+/**
+ * Initialize database connection using node-postgres (pg).
+ */
 async function initDatabase() {
-    if (!SQL) {
-        SQL = await initSqlJs();
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+        throw new Error('DATABASE_URL is required. Copy backend/.env.example to backend/.env and fill in your credentials.');
     }
 
-    if (existsSync(dbPath)) {
-        try {
-            const buffer = readFileSync(dbPath);
-            db = new SQL.Database(buffer);
-        } catch (err) {
-            console.error("❌ Failed to load database file:", err);
-            if (existsSync(tempDbPath)) {
-                console.log("⚠️ Attempting to recover V3 from temp file...");
-                const buffer = readFileSync(tempDbPath);
-                db = new SQL.Database(buffer);
-            } else {
-                throw err;
-            }
-        }
-    } else {
-        console.warn("⚠️ Database file not found, creating new empty (in-memory) DB.");
-        db = new SQL.Database();
+    try {
+        logger.info({ url: connectionString.replace(/:[^:@]+@/, ':***@') }, '🧪 Connecting to PostgreSQL');
+
+        pool = new Pool({
+            connectionString,
+            max: 20,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 2000,
+        });
+
+        // Test the connection
+        const client = await pool.connect();
+        const res = await client.query('SELECT NOW()');
+        client.release();
+
+        logger.info({ connectedAt: res.rows[0].now }, '🔒 Database connected successfully to PostgreSQL');
+
+        return pool;
+    } catch (err) {
+        logger.error({ err }, '❌ Failed to connect to PostgreSQL');
+        throw err;
     }
-
-    console.log('🧪 Database connected:', dbPath);
-
-    // Enable Foreign Keys (Critical for Integrity)
-    db.run("PRAGMA foreign_keys = ON;");
-    const fkStatus = db.exec("PRAGMA foreign_keys;")[0].values[0][0];
-    console.log(`🔒 Foreign Keys: ${fkStatus ? 'ENABLED' : 'DISABLED'}`);
-
-    return db;
 }
 
-// Save database to file
-function saveDatabase(immediate = false) {
-    if (!db) return;
+/**
+ * Helper to convert standard SQL queries with ? to PostgreSQL $1, $2 format
+ */
+function convertToDollarParams(text) {
+    let index = 1;
+    return text.replace(/\?/g, () => `$${index++}`);
+}
 
-    const doSave = () => {
-        try {
-            saveTimeout = null;
-            const data = db.export();
-            writeFileSync(tempDbPath, data);
-            renameSync(tempDbPath, dbPath);
-        } catch (err) {
-            console.error('❌ Error saving database:', err);
+/**
+ * Async wrapper for the legacy 'run' method
+ * For INSERT/UPDATE/DELETE
+ * @param {string} sql
+ * @param {any[]} params
+ * @returns {Promise<{lastInsertRowid: number|null, changes: number}>}
+ */
+async function run(sql, params = []) {
+    if (!pool) throw new Error('Database not initialized');
+    const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+    const pgSql = convertToDollarParams(sql);
+    const result = await pool.query(pgSql, sanitized);
+
+    // Return the id of the inserted row if RETURNING clause is present in the query.
+    let lastInsertRowid = null;
+    if (result.command === 'INSERT' && result.rows.length > 0) {
+        // Postgres returns values only if RETURNING is in the query.
+        // We take the value of the first column of the first row as the ID.
+        const firstRow = result.rows[0];
+        const firstColName = Object.keys(firstRow)[0];
+        lastInsertRowid = firstRow[firstColName] || null;
+    }
+
+    return {
+        lastInsertRowid,
+        changes: result.rowCount
+    };
+}
+
+/**
+ * Async wrapper for the legacy 'get' method
+ * For SELECT LIMIT 1
+ * @param {string} sql
+ * @param {any[]} params
+ * @returns {Promise<any>}
+ */
+async function get(sql, params = []) {
+    if (!pool) throw new Error('Database not initialized');
+    const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+    const pgSql = convertToDollarParams(sql);
+    const result = await pool.query(pgSql, sanitized);
+    return result.rows.length > 0 ? result.rows[0] : undefined;
+}
+
+/**
+ * Async wrapper for the legacy 'all' method
+ * For SELECT multiple rows
+ * @param {string} sql
+ * @param {any[]} params
+ * @returns {Promise<any[]>}
+ */
+async function all(sql, params = []) {
+    if (!pool) throw new Error('Database not initialized');
+    const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+    const pgSql = convertToDollarParams(sql);
+    const result = await pool.query(pgSql, sanitized);
+    return result.rows;
+}
+
+/**
+ * Async wrapper for querying multiple results
+ */
+async function query(sql, params = []) {
+    return all(sql, params);
+}
+
+/**
+ * Wraps a pg Client with the same run/get/all interface
+ */
+function createWrapper(client) {
+    return {
+        run: async (sql, params = []) => {
+            const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+            const pgSql = convertToDollarParams(sql);
+            const result = await client.query(pgSql, sanitized);
+            let lastInsertRowid = null;
+            if (result.command === 'INSERT' && result.rows.length > 0) {
+                const firstRow = result.rows[0];
+                const firstColName = Object.keys(firstRow)[0];
+                lastInsertRowid = firstRow[firstColName] || null;
+            }
+            return { lastInsertRowid, changes: result.rowCount };
+        },
+        get: async (sql, params = []) => {
+            const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+            const pgSql = convertToDollarParams(sql);
+            const result = await client.query(pgSql, sanitized);
+            return result.rows.length > 0 ? result.rows[0] : undefined;
+        },
+        all: async (sql, params = []) => {
+            const sanitized = Array.isArray(params) ? cleanParams(params) : params;
+            const pgSql = convertToDollarParams(sql);
+            const result = await client.query(pgSql, sanitized);
+            return result.rows;
+        },
+        exec: async (sql) => {
+            return client.query(sql);
         }
     };
-
-    if (immediate) {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = null;
-        doSave();
-    } else {
-        if (!saveTimeout) {
-            saveTimeout = setTimeout(doSave, SAVE_DEBOUNCE_MS);
-        }
-    }
 }
 
-// Wrapper for queries
-function query(sql, params = []) {
-    if (!db) throw new Error('Database not initialized');
-    try {
-        const stmt = db.prepare(sql);
-        stmt.bind(params);
-        const results = [];
-        while (stmt.step()) {
-            results.push(stmt.getAsObject());
-        }
-        stmt.free();
-        return results;
-    } catch (e) {
-        console.error("Query Error:", sql, e.message);
-        throw e;
-    }
+/**
+ * Returns a wrapper that uses a dedicated client from the pool.
+ * Must call release() when done.
+ */
+async function getTransactionClient() {
+    if (!pool) throw new Error('Database not initialized');
+    const client = await pool.connect();
+    const wrapper = createWrapper(client);
+    return {
+        ...wrapper,
+        release: () => client.release(),
+        beginTransaction: () => client.query('BEGIN'),
+        commit: () => client.query('COMMIT'),
+        rollback: () => client.query('ROLLBACK')
+    };
 }
 
-// Wrapper for execution
-function run(sql, params = []) {
-    if (!db) throw new Error('Database not initialized');
-    db.run(sql, params);
-    saveDatabase(false);
-
-    try {
-        const result = query('SELECT last_insert_rowid() as id');
-        return { lastInsertRowid: result[0]?.id };
-    } catch (e) {
-        return { lastInsertRowid: null };
-    }
-}
-
-function get(sql, params = []) {
-    const results = query(sql, params);
-    return results[0] || null;
-}
-
-function all(sql, params = []) {
-    return query(sql, params);
+/**
+ * Empty 'save' method for backward compatibility.
+ */
+function saveDatabase() {
+    // No-op
 }
 
 export default {
@@ -122,5 +183,8 @@ export default {
     run,
     get,
     all,
-    query
+    query,
+    getTransactionClient,
+    get db() { return pool; }
 };
+

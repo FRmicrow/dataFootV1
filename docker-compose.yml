@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: statfoot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: statfoot_user
+      POSTGRES_PASSWORD: statfoot_password
+      POSTGRES_DB: statfoot
+    ports:
+      - "5432:5432"
+    volumes:
+      - statfoot-postgres-data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: statfoot-backend
+    command: npm run dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=postgres://statfoot_user:statfoot_password@db:5432/statfoot
+      - NODE_ENV=development
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: statfoot-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+      - VITE_BACKEND_URL=http://backend:3001
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: statfoot-ml-service
+    ports:
+      - "8008:8008"
+    volumes:
+      - statfoot-ml-models-vol:/app/models
+      - ./ml-service:/app
+    environment:
+      - DATABASE_URL=postgresql://statfoot_user:statfoot_password@db:5432/statfoot
+      - MODELS_PATH=/app/models
+    depends_on:
+      - db
+      - backend
+    restart: unless-stopped
+
+volumes:
+  statfoot-postgres-data:
+  statfoot-ml-models-vol:

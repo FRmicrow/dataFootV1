@@ -2,13 +2,14 @@ import db from '../../config/database.js';
 import footballApi from '../footballApi.js';
 import { BOOKMAKER_PRIORITY } from '../../config/betting.js';
 import MarketVolatilityService from './MarketVolatilityService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Bulk Odds Service (US_140)
  * Handles depth ingestion of multiple betting markets.
  */
 
-const TARGET_BET_IDS = [1, 3, 5, 8, 10, 12, 4];
+const TARGET_BET_IDS = new Set([1, 3, 5, 8, 10, 12, 4]);
 
 /**
  * Maps API odd values to V3_Odds database columns
@@ -63,7 +64,7 @@ const mapToOddsRow = (fixtureId, bookmakerId, marketId, marketValues) => {
                 awayUnder = awayAH.odd;
                 // Extract handicap from "Home -0.5" -> -0.5
                 const hVal = homeAH.value.split(' ')[1];
-                handicap = parseFloat(hVal);
+                handicap = Number.parseFloat(hVal);
             }
             break;
 
@@ -89,10 +90,17 @@ const mapToOddsRow = (fixtureId, bookmakerId, marketId, marketValues) => {
  * Ingests odds for a specific fixture and multiple markets
  */
 export const ingestMultiMarketOdds = async (fixtureId) => {
-    console.log(`📡 [US_140] Depth fetching odds for fixture ${fixtureId}...`);
+    logger.info(`📡 [US_140] Depth fetching odds for fixture ${fixtureId}...`);
 
     try {
-        const response = await footballApi.getOdds({ fixture: fixtureId });
+        // Fetch the external api_id from DB if not already provided
+        const fixture = await db.get("SELECT api_id FROM V3_Fixtures WHERE fixture_id = ?", [fixtureId]);
+        if (!fixture || !fixture.api_id) {
+            logger.error(`❌ [US_140] Fixture ${fixtureId} not found or missing api_id`);
+            return { success: false, reason: 'fixture_not_found' };
+        }
+
+        const response = await footballApi.getOdds({ fixture: fixture.api_id });
         const data = response.response?.[0];
         if (!data || !data.bookmakers?.length) {
             return { success: false, reason: 'no_odds_available' };
@@ -103,22 +111,28 @@ export const ingestMultiMarketOdds = async (fixtureId) => {
             data.bookmakers.find(b => b.id === BOOKMAKER_PRIORITY[1].id) ||
             data.bookmakers[0];
 
-        console.log(`   🎯 Selected Bookmaker: ${bookmaker.name} (ID: ${bookmaker.id})`);
+        logger.info(`   🎯 Selected Bookmaker: ${bookmaker.name} (ID: ${bookmaker.id})`);
 
         let savedCount = 0;
         const sql = `
-            REPLACE INTO V3_Odds (
+            INSERT INTO V3_Odds (
                 fixture_id, bookmaker_id, market_id, 
                 value_home_over, value_draw, value_away_under, 
                 handicap_value, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+            ON CONFLICT (fixture_id, bookmaker_id, market_id, handicap_value)
+            DO UPDATE SET 
+                value_home_over = EXCLUDED.value_home_over,
+                value_draw = EXCLUDED.value_draw,
+                value_away_under = EXCLUDED.value_away_under,
+                updated_at = CURRENT_TIMESTAMP
         `;
 
         for (const bet of bookmaker.bets) {
-            if (TARGET_BET_IDS.includes(bet.id)) {
+            if (TARGET_BET_IDS.has(bet.id)) {
                 const row = mapToOddsRow(fixtureId, bookmaker.id, bet.id, bet.values);
                 if (row) {
-                    db.run(sql, [
+                    await db.run(sql, [
                         row.fixture_id,
                         row.bookmaker_id,
                         row.market_id,
@@ -133,16 +147,16 @@ export const ingestMultiMarketOdds = async (fixtureId) => {
         }
 
         // Mark fixture as having odds
-        db.run("UPDATE V3_Fixtures SET has_odds = 1 WHERE fixture_id = ?", [fixtureId]);
+        await db.run("UPDATE V3_Fixtures SET has_odds = 1 WHERE fixture_id = ?", [fixtureId]);
 
         // US_142: Odds Volatility Tracking - Capture history snapshot
         await MarketVolatilityService.captureSnapshot(fixtureId);
 
-        console.log(`✅ [US_140] Saved ${savedCount} markets for fixture ${fixtureId} (${bookmaker.name})`);
+        logger.info(`✅ [US_140] Saved ${savedCount} markets for fixture ${fixtureId} (${bookmaker.name})`);
         return { success: true, count: savedCount, bookmaker: bookmaker.name };
 
     } catch (err) {
-        console.error(`❌ [US_140] Error ingesting multi-market odds for ${fixtureId}:`, err.message);
+        logger.error({ err }, `❌ [US_140] Error ingesting multi-market odds for ${fixtureId}`);
         throw err;
     }
 };
@@ -151,17 +165,17 @@ export const ingestMultiMarketOdds = async (fixtureId) => {
  * Bulk ingestion for all upcoming matches on a specific date
  */
 export const bulkIngestOddsByDate = async (date) => {
-    console.log(`🚀 [US_140] Bulk Ingestion started for date: ${date}`);
+    logger.info(`🚀 [US_140] Bulk Ingestion started for date: ${date}`);
 
     // 1. Find fixtures for this date in local DB that are NOT finished
-    const fixtures = db.all(`
+    const fixtures = await db.all(`
         SELECT fixture_id 
         FROM V3_Fixtures 
-        WHERE date LIKE ? 
+        WHERE date::date = ?::date
           AND status_short NOT IN ('FT', 'AET', 'PEN')
-    `, [`${date}%`]);
+    `, [date]);
 
-    console.log(`🔍 Found ${fixtures.length} fixtures to process depth ingestion.`);
+    logger.info(`🔍 Found ${fixtures.length} fixtures to process depth ingestion.`);
 
     const results = [];
     for (const f of fixtures) {

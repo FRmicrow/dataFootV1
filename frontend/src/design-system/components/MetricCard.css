@@ -1,0 +1,95 @@
+.ds-metric-card {
+    transition: var(--transition-base);
+}
+
+.ds-metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ds-metric-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ds-metric-icon {
+    font-size: var(--font-size-xl);
+    opacity: 0.5;
+}
+
+.ds-metric-body {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+}
+
+.ds-metric-value {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    color: var(--color-text-main);
+    margin: 0;
+    letter-spacing: -0.04em;
+}
+
+.ds-metric-trend {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+}
+
+.ds-metric-trend--up {
+    color: var(--color-success-500);
+    background: var(--color-success-bg);
+}
+
+.ds-metric-trend--down {
+    color: var(--color-danger-500);
+    background: var(--color-danger-bg);
+}
+
+.ds-metric-footer {
+    display: flex;
+    align-items: center;
+}
+
+.ds-metric-subvalue {
+    font-size: 10px;
+    color: var(--color-text-muted);
+}
+
+.ds-metric-skeleton {
+    height: 36px;
+    width: 60%;
+    background: var(--color-border);
+    border-radius: var(--radius-xs);
+    animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Featured variant */
+.ds-metric-card--featured {
+    background: var(--color-primary-bg);
+    border-color: var(--color-primary-400);
+    box-shadow: var(--shadow-premium);
+}
+
+.ds-metric-card--featured .ds-metric-value {
+    color: var(--color-primary-400);
+}

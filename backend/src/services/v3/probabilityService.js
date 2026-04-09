@@ -13,7 +13,7 @@
 const normalize = (rawProbs) => {
     const sum = rawProbs.reduce((acc, p) => acc + p, 0);
     if (sum === 0) return rawProbs.map(() => 0);
-    return rawProbs.map(p => parseFloat((p / sum).toFixed(4)));
+    return rawProbs.map(p => Number.parseFloat((p / sum).toFixed(4)));
 };
 
 /**
@@ -47,8 +47,8 @@ export const calculateFairProbabilities = (odds) => {
 
     return {
         probabilities: fairProbsMap,
-        margin: parseFloat(margin.toFixed(4)),
-        overround: parseFloat((sum * 100).toFixed(2))
+        margin: Number.parseFloat(margin.toFixed(4)),
+        overround: Number.parseFloat((sum * 100).toFixed(2))
     };
 };
 

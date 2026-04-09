@@ -1,0 +1,74 @@
+/* Season tab content — scroll handled by parent .v3-main-content */
+.season-tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Fixtures tab: the FixturesList body has its own fixed height.
+   This container scrolls the page when the expansion panel extends below. */
+.season-tab-content--fixtures {
+    overflow-y: auto;
+}
+
+.season-tab-content > div {
+    animation: season-tab-fade-in 0.3s ease-out;
+}
+
+@keyframes season-tab-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Groups tab view switcher */
+.groups-view-switcher {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+/* Split view layout for standings + fixtures */
+.standings-split-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.standings-split-container--active {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    align-items: start;
+    /* Both panels locked to viewport height — each scrolls internally */
+    height: calc(100vh - 210px);
+}
+
+.standings-split-left,
+.standings-split-right {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Direct children of split panels (Stack, Card) fill and scroll */
+.standings-split-left > *,
+.standings-split-right > * {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Override default table max-height so it fills the split panel */
+.standings-split-left .ds-table-container {
+    max-height: none;
+    flex: 1;
+}

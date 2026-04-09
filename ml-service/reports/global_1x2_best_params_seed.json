@@ -1,0 +1,8 @@
+{
+  "iterations": 687,
+  "learning_rate": 0.09409623577052194,
+  "depth": 8,
+  "l2_leaf_reg": 9.782468304412806,
+  "bootstrap_type": "MVS",
+  "random_strength": 1.308143732136561e-09
+}

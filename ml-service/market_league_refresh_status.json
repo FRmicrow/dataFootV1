@@ -1,0 +1,16 @@
+{
+  "updated_at": "2026-03-14T21:22:26.202603+00:00",
+  "status": "completed",
+  "stage": "done",
+  "league_ids": [
+    2,
+    11,
+    15,
+    19,
+    1,
+    30,
+    32,
+    34
+  ],
+  "report_path": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/reports/league_model_policy.json"
+}

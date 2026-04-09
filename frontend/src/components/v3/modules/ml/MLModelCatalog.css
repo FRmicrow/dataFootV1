@@ -1,0 +1,154 @@
+.ml-catalog {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.ml-catalog__hero-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.ml-catalog__market-copy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-md);
+}
+
+.ml-catalog__market-copy {
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+}
+
+.ml-catalog__market-copy strong,
+.ml-catalog__model-copy strong {
+    display: block;
+    margin-bottom: var(--space-xs);
+    color: var(--color-text-primary);
+}
+
+.ml-catalog__market-copy p,
+.ml-catalog__model-copy p {
+    margin: 0 0 var(--space-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.ml-catalog__market-copy span {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ml-catalog__league-cell,
+.ml-catalog__league-scope {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ml-catalog__league-cell span,
+.ml-catalog__league-scope span {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
+
+.ml-catalog .ds-table td,
+.ml-catalog .ds-table th {
+    vertical-align: top;
+}
+
+.ml-catalog__models-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.ml-catalog__model-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background: var(--color-bg-subtle);
+}
+
+.ml-catalog__model-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.ml-catalog__model-badges,
+.ml-catalog__feature-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.ml-catalog__training-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
+
+.ml-catalog__metric-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+}
+
+.ml-catalog__metric-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ml-catalog__metric-main span {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
+
+.ml-catalog__metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.ml-catalog__metric-box {
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+}
+
+.ml-catalog__metric-box span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
+
+.ml-catalog__metric-box strong {
+    color: var(--color-text-primary);
+}
+
+@media (max-width: 960px) {
+    .ml-catalog__model-row {
+        grid-template-columns: 1fr;
+    }
+}

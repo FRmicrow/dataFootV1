@@ -1,0 +1,19 @@
+[
+  {
+    "country": "France",
+    "status": "failed",
+    "freeze_status": "error",
+    "locked": false,
+    "matches": 47987,
+    "competitions": 5,
+    "clubs": 1505,
+    "people": 34054,
+    "events": 426769,
+    "lineups": 1213620,
+    "started_at": "2026-04-06T20:52:31.971Z",
+    "finished_at": "2026-04-06T20:52:31.971Z",
+    "duration_ms": 0,
+    "file": "France.sql",
+    "note": "Neither local psql nor docker-based psql is available."
+  }
+]

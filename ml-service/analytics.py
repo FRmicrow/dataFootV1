@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg2
 import pandas as pd
 import numpy as np
 import json
@@ -6,11 +6,10 @@ import os
 import logging
 from typing import Dict, Any, List
 from datetime import datetime
+from db_config import get_connection
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('ForgeAnalytics')
-
-DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'database.sqlite'))
 
 class ForgeAnalytics:
     """
@@ -18,11 +17,11 @@ class ForgeAnalytics:
     Focuses on Accuracy, Brier Score, and Log-Loss.
     Mandate: ZERO ROI Logic.
     """
-    def __init__(self, db_path: str = DB_PATH):
-        self.db_path = db_path
+    def __init__(self):
+        pass
 
     def get_connection(self):
-        return sqlite3.connect(self.db_path)
+        return get_connection()
 
     def settle_simulation(self, simulation_id: int):
         """
@@ -45,7 +44,7 @@ class ForgeAnalytics:
                     END as actual
                 FROM V3_Forge_Results r
                 JOIN V3_Fixtures f ON r.fixture_id = f.fixture_id
-                WHERE r.simulation_id = ? AND f.status_short IN ('FT', 'AET', 'PEN')
+                WHERE r.simulation_id = %s AND f.status_short IN ('FT', 'AET', 'PEN')
             """
             df = pd.read_sql_query(query, conn, params=(simulation_id,))
             
@@ -57,27 +56,30 @@ class ForgeAnalytics:
             summary = self._calculate_group_metrics(df)
             
             # 3. Save Summary to V3_Forge_Simulations
-            conn.execute("""
+            cur = conn.cursor()
+            cur.execute("""
                 UPDATE V3_Forge_Simulations 
-                SET summary_metrics_json = ?, status = 'COMPLETED'
-                WHERE id = ?
+                SET summary_metrics_json = %s, status = 'COMPLETED'
+                WHERE id = %s
             """, (json.dumps(summary), simulation_id))
             
             # 4. Settle into V3_Quant_Ledger (US_203 requirement)
             # Fetch context from simulation record
-            sim_info = conn.execute("SELECT league_id, model_id FROM V3_Forge_Simulations WHERE id = ?", (simulation_id,)).fetchone()
+            cur.execute("SELECT league_id, model_id FROM V3_Forge_Simulations WHERE id = %s", (simulation_id,))
+            sim_info = cur.fetchone()
             if sim_info and sim_info[1]:
                 league_id, model_id = sim_info
-                conn.execute("""
+                cur.execute("""
                     INSERT INTO V3_Quant_Ledger (
                         league_id, model_id, simulation_id, total_simulations, 
                         correct_winner_pct, accuracy, brier_score, log_loss, avg_confidence
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     league_id, model_id, simulation_id, 
                     summary['count'], summary['accuracy'], summary['accuracy'],
                     summary['brier_score'], summary['log_loss'], summary['avg_confidence']
                 ))
+            cur.close()
             
             conn.commit()
             logger.info(f"✅ Quant Ledger updated for Sim {simulation_id}. Accuracy: {summary['accuracy']:.2%}")

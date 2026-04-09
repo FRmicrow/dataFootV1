@@ -1,17 +1,18 @@
 import axios from 'axios';
+import logger from '../../utils/logger.js';
 
 /**
  * ML Service Integration (US_154)
  * Bridges the Node.js backend with the Python-based FastAPI predictive engine.
  */
-const ML_SERVICE_URL = 'http://localhost:8000';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://ml-service:8008';
 
 /**
  * Fallback Heuristic (Poisson-based approximation)
  * Used if the ML Service is unreachable (AC 2)
  */
 const calculateHeuristicPrediction = (fixtureId) => {
-    console.log(`📡 [US_154] ML Service unreachable. Falling back to Heuristic for ${fixtureId}...`);
+    logger.info(`📡 [US_154] ML Service unreachable. Falling back to Heuristic for ${fixtureId}...`);
     // Simple 1X2 baseline: 45% Home, 25% Draw, 30% Away
     return {
         success: true,
@@ -28,10 +29,10 @@ const calculateHeuristicPrediction = (fixtureId) => {
 
 export const getPredictionForFixture = async (fixtureId) => {
     try {
-        console.log(`🤖 [US_154] Requesting ML prediction from FastAPI for fixture ${fixtureId}...`);
+        logger.info(`🤖 [US_154] Requesting ML prediction from FastAPI for fixture ${fixtureId}...`);
 
         const response = await axios.post(`${ML_SERVICE_URL}/predict`, {
-            fixture_id: parseInt(fixtureId)
+            fixture_id: Number.parseInt(fixtureId)
         }, { timeout: 1000 }); // Fast timeout for responsiveness
 
         return response.data;
@@ -39,7 +40,7 @@ export const getPredictionForFixture = async (fixtureId) => {
         if (err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT') {
             return calculateHeuristicPrediction(fixtureId);
         }
-        console.error(`❌ ML Service API Error: ${err.message}`);
+        logger.error(`❌ ML Service API Error: ${err.message}`);
         return { success: false, reason: err.message };
     }
 };
@@ -50,11 +51,11 @@ export const getPredictionForFixture = async (fixtureId) => {
 export const getBatchPredictions = async (fixtureIds) => {
     try {
         const response = await axios.post(`${ML_SERVICE_URL}/batch_predict`, {
-            fixture_ids: fixtureIds.map(id => parseInt(id))
+            fixture_ids: fixtureIds.map(id => Number.parseInt(id))
         });
         return response.data;
     } catch (err) {
-        console.warn(`⚠️ Batch prediction failed, returning empty set.`);
+        logger.warn(`⚠️ Batch prediction failed, returning empty set.`);
         return { success: false, results: [] };
     }
 };
@@ -67,7 +68,7 @@ export const triggerRetraining = async () => {
         const response = await axios.post(`${ML_SERVICE_URL}/train`);
         return response.data;
     } catch (err) {
-        console.error(`❌ ML Retraining Trigger Error: ${err.message}`);
+        logger.error(`❌ ML Retraining Trigger Error: ${err.message}`);
         return { success: false, message: err.message };
     }
 };
@@ -84,91 +85,51 @@ export const getTrainingStatus = async () => {
     }
 };
 
-/**
- * Forge Model Building (V8)
- */
+const legacyForgeDisabled = (message = 'Legacy Forge pipeline removed. Use the PostgreSQL-only training and simulation stack.') => ({
+    success: false,
+    disabled: true,
+    message,
+});
+
 export const buildForgeModels = async (leagueId, seasonYear = null) => {
-    try {
-        const response = await axios.post(`${ML_SERVICE_URL}/forge/build-models`, {
-            league_id: parseInt(leagueId),
-            season_year: seasonYear ? parseInt(seasonYear) : null
-        });
-        return response.data;
-    } catch (err) {
-        console.error(`❌ Forge Build Error: ${err.message}`);
-        return { success: false, message: err.message };
-    }
+    return legacyForgeDisabled();
 };
 
 export const getForgeBuildStatus = async () => {
-    try {
-        const response = await axios.get(`${ML_SERVICE_URL}/forge/build-status`);
-        return response.data;
-    } catch (err) {
-        return { is_building: false, error: "ML Service Offline" };
-    }
+    return { is_building: false, disabled: true, error: 'Legacy Forge pipeline removed.' };
 };
 
 export const cancelForgeBuild = async () => {
-    try {
-        const response = await axios.post(`${ML_SERVICE_URL}/forge/cancel-build`);
-        return response.data;
-    } catch (err) {
-        return { success: false, message: "ML Service Offline" };
-    }
+    return legacyForgeDisabled();
 };
 
 export const getForgeModels = async () => {
-    try {
-        const response = await axios.get(`${ML_SERVICE_URL}/forge/models`);
-        return response.data;
-    } catch (err) {
-        return { success: false, models: [] };
-    }
+    return { success: false, disabled: true, models: [], message: 'Legacy Forge pipeline removed.' };
 };
 
-/**
- * Retrain model from simulation results (V8 Adaptive Refinement)
- */
 export const retrainFromSimulation = async (modelId, simulationId) => {
-    try {
-        const response = await axios.post(`${ML_SERVICE_URL}/forge/retrain`, {
-            model_id: parseInt(modelId),
-            simulation_id: parseInt(simulationId)
-        }, { timeout: 300000 }); // 5min timeout for retraining
-        return response.data;
-    } catch (err) {
-        console.error(`❌ Retrain Error: ${err.message}`);
-        return { success: false, message: err.message };
-    }
+    return legacyForgeDisabled();
 };
 
 export const getRetrainStatus = async () => {
-    try {
-        const response = await axios.get(`${ML_SERVICE_URL}/forge/retrain-status`);
-        return response.data;
-    } catch (err) {
-        return { is_retraining: false, error: "ML Service Offline" };
-    }
+    return { is_retraining: false, disabled: true, error: 'Legacy Forge pipeline removed.' };
 };
 
 export const getEligibleHorizons = async (leagueId, seasonYear) => {
-    try {
-        const response = await axios.get(`${ML_SERVICE_URL}/forge/eligible-horizons`, {
-            params: { league_id: leagueId, season_year: seasonYear }
-        });
-        return response.data;
-    } catch (err) {
-        return { success: false, eligible: ['FULL_HISTORICAL'] };
-    }
+    return legacyForgeDisabled();
 };
 
 export const getLeagueModels = async (leagueId) => {
+    return { success: false, disabled: true, models: [], has_models: false, message: 'Legacy Forge pipeline removed.' };
+};
+
+export const predictFixtureAll = async (fixtureId) => {
     try {
-        const response = await axios.get(`${ML_SERVICE_URL}/forge/league-models/${leagueId}`);
+        const response = await axios.get(`${ML_SERVICE_URL}/predict/fixture/${fixtureId}`);
         return response.data;
     } catch (err) {
-        return { success: false, models: [], has_models: false };
+        logger.error(`❌ ML Master Prediction Error: ${err.message}`);
+        return { success: false, message: err.message };
     }
 };
 
@@ -184,5 +145,6 @@ export default {
     retrainFromSimulation,
     getRetrainStatus,
     getEligibleHorizons,
-    getLeagueModels
+    getLeagueModels,
+    predictFixtureAll
 };

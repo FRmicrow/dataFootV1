@@ -1,0 +1,71 @@
+.ds-tabs {
+    width: 100%;
+}
+
+.ds-tabs-list {
+    display: flex;
+    gap: var(--spacing-xs);
+    border-bottom: 1px solid var(--color-border);
+    position: relative;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.ds-tabs-list::-webkit-scrollbar {
+    display: none;
+}
+
+.ds-tabs-trigger {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: var(--spacing-xs) var(--spacing-md);
+    color: var(--color-text-dim);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: var(--transition-base);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2xs);
+    outline: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ds-tabs-trigger:hover:not(.disabled) {
+    color: var(--color-text-main);
+    background: var(--glass-bg);
+}
+
+.ds-tabs-trigger.active {
+    color: var(--color-primary-400);
+    border-bottom-color: var(--color-primary-400);
+}
+
+.ds-tabs-trigger.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+.ds-tabs-icon {
+    font-size: 1.1em;
+}
+
+/* Pills Variant */
+.ds-tabs--pills .ds-tabs-list {
+    border-bottom: none;
+    gap: var(--spacing-2xs);
+}
+
+.ds-tabs--pills .ds-tabs-trigger {
+    border-bottom: none;
+    border-radius: var(--radius-full);
+}
+
+.ds-tabs--pills .ds-tabs-trigger.active {
+    background: var(--color-primary-600);
+    color: white;
+}

@@ -1,0 +1,139 @@
+/* Main Container */
+.studio-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    color: var(--color-text-main);
+    font-family: var(--font-family);
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Top bar: stepper + reset button */
+.studio-wizard-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: var(--spacing-2xl);
+    padding: 0 var(--spacing-xl);
+}
+
+.studio-wizard-top > .ds-button {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Stepper */
+.studio-stepper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-2xs);
+    cursor: pointer;
+    z-index: 2;
+    padding: 0 var(--spacing-md);
+    background: none;
+    border: none;
+    font-family: inherit;
+}
+
+.step-item:disabled {
+    cursor: default;
+}
+
+.step-num {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--color-slate-900);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-weight-black);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-dim);
+    transition: all var(--transition-base);
+}
+
+.step-label {
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-dim);
+    transition: var(--transition-base);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+}
+
+/* Active State */
+.step-item.active .step-num {
+    background: var(--color-primary-500);
+    border-color: var(--color-primary-400);
+    color: white;
+    box-shadow: var(--shadow-premium);
+}
+
+.step-item.active .step-label {
+    color: var(--color-primary-400);
+}
+
+/* Completed State */
+.step-item.completed .step-num {
+    background: var(--color-success-bg);
+    border-color: var(--color-success-500);
+    color: var(--color-success-500);
+}
+
+.step-item.completed .step-label {
+    color: var(--color-success-500);
+}
+
+/* Connecting Line */
+.step-line {
+    width: 60px;
+    height: 1px;
+    background: var(--color-border);
+    flex-shrink: 0;
+}
+
+/* Error Banner */
+.studio-error-banner {
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-500);
+    color: var(--color-danger-500);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* Content Area */
+.studio-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    .step-label {
+        display: none;
+    }
+
+    .step-line {
+        width: 30px;
+    }
+}

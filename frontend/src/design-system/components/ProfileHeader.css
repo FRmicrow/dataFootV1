@@ -1,0 +1,208 @@
+.ds-profile-header {
+    width: 100%;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: var(--spacing-xl);
+    background: var(--color-bg-main, #0f172a);
+    /* Left accent stripe anchors the color to the edge */
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 3px solid var(--header-accent, var(--color-primary-500));
+    box-shadow: var(--shadow-xl);
+}
+
+/* Main color wash — 6-stop power-ease-out curve for a cinematic fade */
+.ds-profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        var(--header-accent)    0%,
+        var(--header-accent)    8%,
+        var(--header-secondary) 24%,
+        var(--header-secondary) 36%,
+        transparent             62%
+    );
+    opacity: 0.82;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Depth layer: radial highlight near logo + dark readability veil */
+.ds-profile-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(ellipse at 6% 55%, rgba(255, 255, 255, 0.09) 0%, transparent 42%),
+        linear-gradient(to right, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.05) 45%, transparent 62%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.ds-profile-header-content {
+    position: relative;
+    z-index: 2;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.ds-profile-layout {
+    display: flex;
+    align-items: stretch;
+    gap: var(--spacing-md);
+}
+
+.ds-profile-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--spacing-2xs) 0;
+}
+
+.ds-profile-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.ds-profile-avatar-container {
+    /* Fixed size — never driven by adjacent text block height */
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    align-self: center;
+    background: white;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-3xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.ds-profile-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.ds-profile-title {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-black);
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.ds-badge-icon-wrap {
+    margin-right: var(--spacing-3xs);
+}
+
+.ds-profile-badges {
+    display: flex;
+    gap: var(--spacing-2xs);
+}
+
+.ds-profile-subtitles {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2xs);
+}
+
+.ds-profile-subtitle {
+    font-size: var(--font-size-md, 1rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.01em;
+}
+
+.ds-profile-separator {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.ds-profile-compact-stats {
+    display: flex;
+    gap: var(--spacing-xl);
+}
+
+.ds-profile-stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-profile-stat-label {
+    font-size: 10px;
+    font-weight: var(--font-weight-black);
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    margin-bottom: 3px;
+}
+
+.ds-profile-stat-value {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    color: var(--header-secondary, #FFFFFF);
+    line-height: 1;
+}
+
+.ds-profile-venue-preview {
+    width: 260px;
+    aspect-ratio: 2 / 1;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--color-bg-card);
+    box-shadow: var(--shadow-lg);
+    flex-shrink: 0;
+}
+
+.ds-profile-venue-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.65;
+}
+
+.ds-profile-generic-data {
+    display: flex;
+    gap: var(--spacing-2xs);
+}
+
+@media (max-width: 992px) {
+    .ds-profile-venue-preview {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .ds-profile-header {
+        padding: var(--spacing-md);
+    }
+
+    .ds-profile-avatar-container {
+        align-self: stretch;
+        aspect-ratio: 1 / 1;
+    }
+
+    .ds-profile-title {
+        font-size: var(--font-size-2xl);
+    }
+
+    .ds-profile-stats-bar {
+        display: none;
+    }
+}

@@ -1,0 +1,91 @@
+.ds-control-bar {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xs) var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    position: sticky;
+    top: 64px;
+    z-index: var(--z-index-sticky);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.ds-control-bar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+    min-width: 0;
+}
+
+.ds-control-bar-left {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+
+.ds-control-bar-left::-webkit-scrollbar {
+    display: none;
+}
+
+.ds-control-bar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-shrink: 0;
+}
+
+/* Filter Box used in ControlBars */
+.ds-filter-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ds-filter-box label {
+    font-size: 10px;
+    font-weight: var(--font-weight-black);
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ds-filter-box select {
+    background: var(--color-slate-800);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-main);
+    padding: 4px 8px;
+    border-radius: var(--radius-xs);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    outline: none;
+    cursor: pointer;
+}
+
+.ds-filter-box select:focus {
+    border-color: var(--color-primary-400);
+}
+
+@media (max-width: 768px) {
+    .ds-control-bar {
+        position: relative;
+        top: 0;
+        padding: var(--spacing-sm);
+    }
+
+    .ds-control-bar-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ds-control-bar-right {
+        flex-wrap: wrap;
+    }
+}

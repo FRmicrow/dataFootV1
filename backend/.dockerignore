@@ -1,0 +1,29 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+build
+dist
+
+# Data and Databases
+data/
+sql/*.db
+sql/*.sqlite
+*.db
+*.sqlite
+*.sql
+*.sqlite-journal
+*.sqlite-wal
+
+# Backups and Temporary files
+backups/
+node_modules_host_backup/
+tmp/
+exports/
+archive/
+temp_logos/
+coverage/
+node_modules_host_backup/

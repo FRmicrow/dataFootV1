@@ -1,6 +1,6 @@
 import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
-import axios from 'axios';
+import logger from '../../utils/logger.js';
 
 /**
  * Sync Predictions for Upcoming Matches
@@ -19,14 +19,14 @@ export const syncUpcomingProps = async (req, res) => {
             JOIN V3_Leagues l ON f.league_id = l.league_id
             JOIN V3_Countries c ON l.country_id = c.country_id
             WHERE f.status_short = 'NS' 
-            AND date(f.date) BETWEEN date('now') AND date('now', '+5 days')
+            AND f.date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '5 days')
             AND c.importance_rank < 10
             ORDER BY c.importance_rank ASC, f.date ASC
             LIMIT 20 -- Batch limit to avoid API quota hit
         `);
 
         if (fixtures.length === 0) {
-            return res.json({ message: 'No upcoming high-profile fixtures found to predict.' });
+            return res.json({ success: true, data: { message: 'No upcoming high-profile fixtures found to predict.' } });
         }
 
         let synced = 0;
@@ -53,12 +53,11 @@ export const syncUpcomingProps = async (req, res) => {
                             prob_home, prob_draw, prob_away,
                             goals_home, goals_away, advice,
                             comparison_data, h2h_data, teams_data
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     `, [
                         fixture.fixture_id,
                         fixture.league_id,
-                        fixture.league_id,
-                        null, // Season logic if needed
+                        '2024',
                         winner.id,
                         winner.name,
                         winner.comment,
@@ -79,16 +78,19 @@ export const syncUpcomingProps = async (req, res) => {
                 await new Promise(r => setTimeout(r, 200));
 
             } catch (e) {
-                console.error(`Failed prediction sync for fixture ${fixture.fixture_id}:`, e.message);
+                logger.error({ err: e, fixtureId: fixture.fixture_id }, 'Failed prediction sync for fixture');
                 errors++;
             }
         }
 
-        res.json({ message: 'Sync complete', synced, errors, total_candidates: fixtures.length });
+        res.json({
+            success: true,
+            data: { message: 'Sync complete', synced, errors, total_candidates: fixtures.length }
+        });
 
     } catch (error) {
-        console.error("Prediction Sync Error:", error);
-        res.status(500).json({ error: error.message });
+        logger.error({ err: error }, 'Prediction Sync Error');
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -142,9 +144,10 @@ export const getPredictions = async (req, res) => {
         sql += " ORDER BY f.date ASC LIMIT 50";
 
         const predictions = await db.all(sql, params);
-        res.json(predictions);
+        res.json({ success: true, data: predictions });
 
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        logger.error({ err: e }, 'Prediction fetch error');
+        res.status(500).json({ success: false, error: e.message });
     }
 };

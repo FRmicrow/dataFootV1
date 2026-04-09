@@ -1,28 +1,85 @@
-
 import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import api from '../services/api';
 
 const ImportContext = createContext();
 
-export const useImport = () => useContext(ImportContext);
+/** Hook moved to the bottom to avoid HMR export conflicts */
 
 export const ImportProvider = ({ children }) => {
     const [isImporting, setIsImporting] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
     const [logs, setLogs] = useState([]);
     const [progress, setProgress] = useState({
         overall: { current: 0, total: 100 },
         currentStep: '',
         stepProgress: { current: 0, total: 100 }
     });
-    const eventSourceRef = useRef(null);
+    const readerRef = useRef(null);
+    const abortControllerRef = useRef(null);
 
     const addLog = useCallback((log) => {
         setLogs(prev => [...prev, { ...log, id: Date.now() + Math.random(), timestamp: new Date() }].slice(-1000));
     }, []);
 
-    const startImport = useCallback((url, method = 'POST', body = null) => {
+    const processDataChunk = useCallback((chunk, decoder) => {
+        const text = decoder.decode(chunk, { stream: true });
+        const lines = text.split('\n');
+
+        for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+                const data = JSON.parse(line.substring(6));
+                handleServerEvent(data);
+            } catch (e) {
+                // Silently ignore malformed JSON lines in the SSE stream
+                console.warn('Malformed SSE line ignored:', line, e);
+            }
+        }
+    }, []);
+
+    const handleServerEvent = useCallback((data) => {
+        if (data.message) {
+            addLog({ text: data.message, type: data.type || 'info' });
+        }
+
+        if (data.type === 'progress') {
+            updateProgress(data);
+        }
+
+        if (data.type === 'complete') {
+            terminateImport('✅ Import process completed.', 'complete');
+        }
+
+        if (data.type === 'error') {
+            addLog({ text: `❌ ${data.message}`, type: 'error' });
+        }
+    }, [addLog]);
+
+    const updateProgress = (data) => {
+        if (data.step === 'overall') {
+            setProgress(prev => ({ ...prev, overall: { current: data.current, total: data.total } }));
+        } else {
+            setProgress(prev => ({
+                ...prev,
+                currentStep: data.label || data.step,
+                stepProgress: { current: data.current, total: data.total }
+            }));
+        }
+    };
+
+    const terminateImport = (msg, type) => {
+        setIsImporting(false);
+        setIsPaused(false);
+        if (msg) addLog({ text: msg, type });
+        readerRef.current = null;
+    };
+
+    const startImport = useCallback(async (url, method = 'POST', body = null) => {
         if (isImporting) return;
 
         setIsImporting(true);
+        setIsPaused(false);
         setLogs([]);
         setProgress({
             overall: { current: 0, total: 100 },
@@ -30,81 +87,87 @@ export const ImportProvider = ({ children }) => {
             stepProgress: { current: 0, total: 100 }
         });
 
-        // For SSE with POST, we usually need a special trick or just use GET with params.
-        // But the backend expects POST for imports. 
-        // We can use fetch with SSE-like handling or just start the sync and listen to a different endpoint? 
-        // Actually, many people use Fetch + readable stream for POST SSE.
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
 
-        fetch(`http://localhost:3001/api${url}`, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: body ? JSON.stringify(body) : null
-        }).then(response => {
+        try {
+            const response = await fetch(`/api${url}`, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: body ? JSON.stringify(body) : null,
+                signal: controller.signal
+            });
+
+            if (!response.body) throw new Error('Response body is null');
+
             const reader = response.body.getReader();
+            readerRef.current = reader;
             const decoder = new TextDecoder();
 
-            function read() {
-                reader.read().then(({ done, value }) => {
-                    if (done) {
-                        setIsImporting(false);
-                        return;
-                    }
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
-
-                    lines.forEach(line => {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-
-                                if (data.message) {
-                                    addLog({ text: data.message, type: data.type || 'info' });
-                                }
-
-                                if (data.type === 'progress') {
-                                    if (data.step === 'overall') {
-                                        setProgress(prev => ({ ...prev, overall: { current: data.current, total: data.total } }));
-                                    } else {
-                                        setProgress(prev => ({
-                                            ...prev,
-                                            currentStep: data.label || data.step,
-                                            stepProgress: { current: data.current, total: data.total }
-                                        }));
-                                    }
-                                }
-
-                                if (data.type === 'complete') {
-                                    setIsImporting(false);
-                                    addLog({ text: '✅ Import process completed successfully.', type: 'complete' });
-                                }
-
-                                if (data.type === 'error') {
-                                    setIsImporting(false);
-                                    addLog({ text: `❌ ${data.message}`, type: 'error' });
-                                }
-                            } catch (e) { }
-                        }
-                    });
-                    read();
-                });
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                processDataChunk(value, decoder);
             }
-            read();
-        }).catch(err => {
-            setIsImporting(false);
-            addLog({ text: `Critical Error: ${err.message}`, type: 'error' });
-        });
-    }, [addLog, isImporting]);
+            terminateImport();
 
-    const stopImport = () => {
-        if (eventSourceRef.current) {
-            eventSourceRef.current.close();
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                terminateImport(`Critical Error: ${err.message}`, 'error');
+            }
         }
+    }, [isImporting, addLog, processDataChunk]);
+
+    const stopImport = useCallback(async () => {
+        try {
+            await api.stopImport();
+        } catch (e) {
+            console.warn("Best-effort stopImport failed:", e.message);
+        }
+
+        // Also abort the fetch stream client-side
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        readerRef.current = null;
         setIsImporting(false);
-    };
+        setIsPaused(false);
+        addLog({ text: '🛑 Import stopped by user.', type: 'warning' });
+    }, [addLog]);
+
+    const pauseImport = useCallback(async () => {
+        try {
+            await api.pauseImport();
+            setIsPaused(true);
+            addLog({ text: '⏸️ Import paused.', type: 'warning' });
+        } catch (e) {
+            addLog({ text: `Pause failed: ${e.message}`, type: 'error' });
+        }
+    }, [addLog]);
+
+    const resumeImport = useCallback(async () => {
+        try {
+            await api.resumeImport();
+            setIsPaused(false);
+            addLog({ text: '▶️ Import resumed.', type: 'info' });
+        } catch (e) {
+            addLog({ text: `Resume failed: ${e.message}`, type: 'error' });
+        }
+    }, [addLog]);
 
     return (
-        <ImportContext.Provider value={{ isImporting, logs, progress, startImport, stopImport, setLogs }}>
+        <ImportContext.Provider value={{
+            isImporting, isPaused, logs, progress,
+            startImport, stopImport, pauseImport, resumeImport, setLogs
+        }}>
             {children}
         </ImportContext.Provider>
     );
 };
+
+ImportProvider.propTypes = {
+    children: PropTypes.node.isRequired
+};
+
+export const useImport = () => useContext(ImportContext);

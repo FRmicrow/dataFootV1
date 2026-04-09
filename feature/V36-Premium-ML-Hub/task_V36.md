@@ -1,0 +1,35 @@
+# Task: V36 - Data & ML Foundations Refactor
+
+- [ ] Phase 0: Audit remediation
+  - [ ] US-3601: Paths and artifacts source of truth
+  - [ ] US-3602: Training pipeline hardening
+  - [ ] US-3603: Fallback separation contract
+  - [ ] US-3604: Market alignment
+  - [ ] US-3605: Runtime source of truth
+  - [ ] US-3606: ML guardrails
+- [ ] Phase 1: Data contract and feature store target
+  - [ ] US-3610: ML contract audit and source of truth
+  - [ ] US-3611: Feature store target specification
+  - [ ] US-3612: ML persistence schema v2
+  - [ ] US-3613: Prediction status and persistence policy
+  - [ ] US-3614: Baseline core and form recomposition
+  - [ ] US-3615: Style process recomposition
+  - [ ] US-3616: Match context block
+  - [ ] US-3617: Market-specific feature blocks
+- [ ] Phase 2: Reference model pipelines
+  - [ ] US-3620: Clean 1X2 FT vertical slice
+  - [ ] US-3621: Clean 1X2 HT pipeline
+  - [ ] US-3622: Clean corners OU pipeline
+  - [ ] US-3623: Clean cards OU pipeline
+  - [ ] US-3624: Clean goals OU pipeline
+  - [ ] US-3625: Real full/5Y/3Y horizons
+  - [ ] US-3626: League-specific eligibility policy
+- [ ] Phase 3: Orchestration, evaluation, observability
+  - [ ] US-3630: Unified prediction orchestrator
+  - [ ] US-3631: Risk engine market mapping
+  - [ ] US-3632: Market-aware evaluation layer
+  - [ ] US-3633: ML observability cockpit
+- [ ] Phase 4: Validation and walkthrough
+  - [ ] Keep `feature-spec_V36.md` aligned with approved contracts
+  - [ ] Keep `implementation_plan_V36.md` aligned with delivery order
+  - [ ] Prepare `walkthrough_V36.md` after implementation

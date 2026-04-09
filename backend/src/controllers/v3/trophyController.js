@@ -1,5 +1,6 @@
 import db from '../../config/database.js';
 import footballApi from '../../services/footballApi.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Import trophies for a specific player from API-Football
@@ -7,21 +8,21 @@ import footballApi from '../../services/footballApi.js';
 export const importPlayerTrophies = async (req, res) => {
     const { playerId } = req.body;
 
-    if (!playerId) return res.status(400).json({ error: "Missing playerId" });
+    if (!playerId) return res.status(400).json({ success: false, error: "Missing playerId" });
 
     try {
         // Step 1: Get the correct API ID from V3_Players using the Local ID
-        const player = db.get("SELECT api_id, is_trophy_synced FROM V3_Players WHERE player_id = ?", [playerId]);
+        const player = await db.get("SELECT api_id, is_trophy_synced FROM V3_Players WHERE player_id = ?", [playerId]);
 
         if (!player || !player.api_id) {
-            console.error(`Player ${playerId} not found in V3_Players or missing API ID.`);
-            return res.status(404).json({ error: "Player not found or missing API ID" });
+            logger.warn({ playerId }, 'Player not found in V3_Players or missing API ID');
+            return res.status(404).json({ success: false, error: "Player not found or missing API ID" });
         }
 
         const { forceRefresh = false } = req.body;
         if (!forceRefresh && player.is_trophy_synced) {
-            console.log(`⏩ Skipping player ${playerId} trophies - already synced.`);
-            return res.json({ success: true, count: 0, inserted: 0, skipped: true });
+            logger.info({ playerId }, 'Skipping player trophies import because already synced');
+            return res.json({ success: true, data: { count: 0, inserted: 0, skipped: true } });
         }
 
         const apiId = player.api_id;
@@ -51,22 +52,22 @@ export const importPlayerTrophies = async (req, res) => {
 
             try {
                 // db.run is synchronous/wrapper in database_v3.js
-                db.run(sql, params);
+                await db.run(sql, params);
                 inserted++;
             } catch (err) {
-                console.error("Error inserting trophy:", err.message);
+                logger.error({ err, playerId }, 'Error inserting trophy');
             }
         }
         // Update sync flags
-        db.run(
-            "UPDATE V3_Players SET is_trophy_synced = 1, last_sync_trophies = CURRENT_TIMESTAMP WHERE player_id = ?",
+        await db.run(
+            "UPDATE V3_Players SET is_trophy_synced = true, last_sync_trophies = CURRENT_TIMESTAMP WHERE player_id = ?",
             [playerId]
         );
 
-        res.json({ success: true, count: trophies.length, inserted });
+        res.json({ success: true, data: { count: trophies.length, inserted } });
     } catch (e) {
-        console.error(`Trophy import failed for player ${playerId}`, e);
-        res.status(500).json({ error: e.message });
+        logger.error({ err: e, playerId }, 'Trophy import failed for player');
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 
@@ -83,10 +84,10 @@ export const getPlayerTrophiesLocal = async (req, res) => {
             WHERE t.player_id = ? 
             ORDER BY c.importance_rank ASC, t.season DESC
         `;
-        const rows = db.all(sql, [id]);
-        res.json(rows);
+        const rows = await db.all(sql, [id]);
+        res.json({ success: true, data: rows });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 
@@ -96,7 +97,7 @@ export const getPlayerTrophiesLocal = async (req, res) => {
 export const getPlayersMissingTrophies = async (req, res) => {
     const { leagueId } = req.query;
 
-    if (!leagueId) return res.status(400).json({ error: "Missing leagueId" });
+    if (!leagueId) return res.status(400).json({ success: false, error: "Missing leagueId" });
 
     try {
         // Find players who have stats in this league but NO entries in V3_Trophies
@@ -111,11 +112,11 @@ export const getPlayersMissingTrophies = async (req, res) => {
         `;
 
         // Synchronous call
-        const rows = db.all(sql, [leagueId]);
-        res.json(rows);
+        const rows = await db.all(sql, [leagueId]);
+        res.json({ success: true, data: rows });
 
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 
@@ -131,10 +132,10 @@ export const getNationalities = async (req, res) => {
             GROUP BY nationality 
             ORDER BY count DESC
         `;
-        const rows = db.all(sql);
-        res.json(rows);
+        const rows = await db.all(sql);
+        res.json({ success: true, data: rows });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 
@@ -143,7 +144,7 @@ export const getNationalities = async (req, res) => {
  */
 export const getPlayersByNationality = async (req, res) => {
     const { country } = req.query;
-    if (!country) return res.status(400).json({ error: "Missing country" });
+    if (!country) return res.status(400).json({ success: false, error: "Missing country" });
 
     try {
         const sql = `
@@ -154,9 +155,9 @@ export const getPlayersByNationality = async (req, res) => {
             WHERE p.nationality = ?
             ORDER BY p.name
         `;
-        const rows = db.all(sql, [country]);
-        res.json(rows);
+        const rows = await db.all(sql, [country]);
+        res.json({ success: true, data: rows });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ success: false, message: e.message });
     }
 };

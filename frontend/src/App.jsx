@@ -1,65 +1,34 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import ImportMatrixPage from './components/v3/ImportMatrixPage';
-import ImportV3Page from './components/v3/ImportV3Page';
-import SeasonOverviewPage from './components/v3/SeasonOverviewPage';
-import V3Layout from './components/v3/V3Layout';
-import V3Dashboard from './components/v3/V3Dashboard';
-import V3LeaguesList from './components/v3/V3LeaguesList';
-import PlayerProfilePageV3 from './components/v3/PlayerProfilePageV3';
-import SearchPageV3 from './components/v3/SearchPageV3';
-import ClubProfilePageV3 from './components/v3/ClubProfilePageV3';
-import ContentStudioV3 from './components/v3/ContentStudioV3';
-import HealthCenterPage from './components/v3/HealthCenterPage';
-import ImportTrophiesPage from './components/v3/ImportTrophiesPage';
-import ImportEventsPage from './components/v3/ImportEventsPage';
-import ImportLineupsPage from './components/v3/ImportLineupsPage';
-import MatchDetailPage from './components/v3/MatchDetailPage';
-import LiveBetHub from './components/v3/live-bet/LiveBetHub';
-import LiveBetDashboard from './components/v3/live-bet/LiveBetDashboard';
-import LiveBetMatchDetails from './components/v3/live-bet/LiveBetMatchDetails';
-import MonitoringConsole from './components/v3/live-bet/MonitoringConsole';
-import SimulationDashboard from './components/v3/live-bet/SimulationDashboard';
-import TelemetryConsole from './components/v3/TelemetryConsole';
-import ForgeLaboratory from './components/v3/ForgeLaboratory';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import ImportMatrixPage from './components/v3/pages/import/ImportMatrixPage';
+import ImportV3Page from './components/v3/pages/import/ImportV3Page';
+import SeasonOverviewPage from './components/v3/pages/league/SeasonOverviewPage';
+import V3Layout from './components/v3/layouts/V3Layout';
+import V3Dashboard from './components/v3/pages/dashboard/V3Dashboard';
+import V3LeaguesList from './components/v3/pages/league/V3LeaguesList';
+import PlayerProfilePageV3 from './components/v3/pages/profile/PlayerProfilePageV3';
+import SearchPageV3 from './components/v3/pages/search/SearchPageV3';
+import ClubProfilePageV3 from './components/v3/pages/profile/ClubProfilePageV3';
+import ContentStudioV3 from './components/v3/pages/studio/ContentStudioV3';
+import ImportEventsPage from './components/v3/pages/import/ImportEventsPage';
+import ImportLineupsPage from './components/v3/pages/import/ImportLineupsPage';
+import MatchDetailPage from './components/v3/pages/match/MatchDetailPage';
+import MachineLearningHub from './components/v3/modules/ml/MachineLearningHub';
+import DesignSystemPage from './components/v3/pages/system/DesignSystemPage';
+import SeasonOverviewPageV4 from './components/v4/pages/league/SeasonOverviewPageV4';
+import V4LeaguesList from './components/v4/pages/league/V4LeaguesList';
+
 import { ImportProvider } from './context/ImportContext.jsx';
+import ErrorBoundary from './design-system/components/ErrorBoundary';
+import './design-system/tokens.css';
 import './App.css';
 
 function App() {
     return (
+        <ErrorBoundary>
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <ImportProvider>
                 <div className="app">
-                    <nav className="nav">
-                        <div className="nav-content">
-                            <div className="nav-title">⚽ StatFoot</div>
-                            <NavLink to="/dashboard" className="nav-link">
-                                Dashboard
-                            </NavLink>
-                            <NavLink to="/leagues" className="nav-link">
-                                Leagues
-                            </NavLink>
-                            <NavLink to="/search" className="nav-link">
-                                Search
-                            </NavLink>
-                            <NavLink to="/studio" className="nav-link">
-                                Studio
-                            </NavLink>
-                            <NavLink to="/forge/lab" className="nav-link" style={{ color: '#8b5cf6', fontWeight: 'bold' }}>
-                                🧪 Forge Lab
-                            </NavLink>
-                            <NavLink to="/import" className="nav-link">
-                                Import
-                            </NavLink>
-                            <NavLink to="/live-bet" className="nav-link" style={{ color: '#f59e0b', fontWeight: 'bold' }}>
-                                🔥 Live Bet
-                            </NavLink>
-                            <NavLink to="/health" className="nav-link" style={{ color: '#10b981' }}>
-                                🛡️ Health
-                            </NavLink>
-                        </div>
-                    </nav>
-
                     <Routes>
                         {/* Redirect root to dashboard */}
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -70,33 +39,29 @@ function App() {
                             <Route path="/import" element={<ImportMatrixPage />} />
                             <Route path="/import/matrix-status" element={<ImportMatrixPage />} />
                             <Route path="/import/old" element={<ImportV3Page />} />
-                            <Route path="/leagues" element={<V3LeaguesList />} />
+                            <Route path="/leagues" element={<V4LeaguesList />} />
+                            <Route path="/leagues/:name/season/:year" element={<SeasonOverviewPageV4 />} />
+                            {/* V3 league detail — kept for backwards compat (player/club links) */}
                             <Route path="/league/:id" element={<SeasonOverviewPage />} />
                             <Route path="/league/:id/season/:year" element={<SeasonOverviewPage />} />
                             <Route path="/player/:id" element={<PlayerProfilePageV3 />} />
                             <Route path="/search" element={<SearchPageV3 />} />
                             <Route path="/club/:id" element={<ClubProfilePageV3 />} />
                             <Route path="/studio" element={<ContentStudioV3 />} />
-                            <Route path="/forge/lab" element={<ForgeLaboratory />} />
-                            <Route path="/health" element={<HealthCenterPage />} />
-                            <Route path="/trophies" element={<ImportTrophiesPage />} />
                             <Route path="/events" element={<ImportEventsPage />} />
                             <Route path="/lineups-import" element={<ImportLineupsPage />} />
-                            <Route path="/live-bet" element={<LiveBetHub />} />
-                            <Route path="/live-bet/board" element={<LiveBetDashboard />} />
-                            <Route path="/live-bet/monitoring" element={<MonitoringConsole />} />
-                            <Route path="/live-bet/match/:id" element={<LiveBetMatchDetails />} />
-                            <Route path="/live-bet/alpha" element={<SimulationDashboard />} />
                             <Route path="/match/:id" element={<MatchDetailPage />} />
-                        </Route>
+                            <Route path="/machine-learning/*" element={<MachineLearningHub />} />
+                            <Route path="/design" element={<DesignSystemPage />} />
+                        </Route >
 
                         {/* Legacy V3 path redirects */}
-                        <Route path="/v3/*" element={<Navigate to="/dashboard" replace />} />
-                    </Routes>
-                    <TelemetryConsole />
-                </div>
-            </ImportProvider>
-        </Router>
+                        < Route path="/v3/*" element={< Navigate to="/dashboard" replace />} />
+                    </Routes >
+                </div >
+            </ImportProvider >
+        </Router >
+        </ErrorBoundary>
     );
 }
 

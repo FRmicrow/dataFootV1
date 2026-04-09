@@ -1,0 +1,64 @@
+{
+  "updated_at": "2026-03-14T19:42:12.158122+00:00",
+  "activated_models": [
+    {
+      "name": "global_ht_1x2",
+      "horizon": "FULL_HISTORICAL",
+      "source_version": "catboost_ht_full_historical_v20260314_190820_active",
+      "activated_version": "catboost_ht_full_historical_v20260314_190820_active_active",
+      "promoted_files": {
+        "source_home": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/ht_result/catboost_baseline_v2_home_full_historical.cbm",
+        "source_away": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/ht_result/catboost_baseline_v2_away_full_historical.cbm",
+        "target_home": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/ht_result/catboost_baseline_v2_home.cbm",
+        "target_away": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/ht_result/catboost_baseline_v2_away.cbm",
+        "metadata_target": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/ht_result/catboost_baseline_v2_metadata.json",
+        "importance_target": null
+      }
+    },
+    {
+      "name": "global_goals_ou",
+      "horizon": "5Y_ROLLING",
+      "source_version": "catboost_goals_5y_rolling_v20260314_193140_active",
+      "activated_version": "catboost_goals_5y_rolling_v20260314_193140_active_active",
+      "promoted_files": {
+        "source_home": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/goals_total/catboost_goals_v1_home_5y_rolling.cbm",
+        "source_away": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/goals_total/catboost_goals_v1_away_5y_rolling.cbm",
+        "target_home": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/goals_total/catboost_goals_v1_home.cbm",
+        "target_away": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/goals_total/catboost_goals_v1_away.cbm",
+        "metadata_target": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/goals_total/catboost_goals_v1_metadata.json",
+        "importance_target": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/goals_total/catboost_goals_v1_importance.json"
+      }
+    },
+    {
+      "name": "global_corners_ou",
+      "horizon": "3Y_ROLLING",
+      "source_version": "catboost_corners_3y_rolling_v20260314_193903_active",
+      "activated_version": "catboost_corners_3y_rolling_v20260314_193903_active_active",
+      "promoted_files": {
+        "source_home": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/corners_total/catboost_corners_v2_home_3y_rolling.cbm",
+        "source_away": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/corners_total/catboost_corners_v2_away_3y_rolling.cbm",
+        "target_home": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/corners_total/catboost_corners_v2_home.cbm",
+        "target_away": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/corners_total/catboost_corners_v2_away.cbm",
+        "metadata_target": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/corners_total/catboost_corners_v2_metadata.json",
+        "importance_target": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/corners_total/catboost_corners_v2_importance.json"
+      }
+    },
+    {
+      "name": "global_cards_ou",
+      "horizon": "5Y_ROLLING",
+      "source_version": "catboost_cards_5y_rolling_v20260314_194002_active",
+      "activated_version": "catboost_cards_5y_rolling_v20260314_194002_active_active",
+      "promoted_files": {
+        "source_home": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/cards_total/catboost_cards_v2_home_5y_rolling.cbm",
+        "source_away": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/cards_total/catboost_cards_v2_away_5y_rolling.cbm",
+        "target_home": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/cards_total/catboost_cards_v2_home.cbm",
+        "target_away": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/cards_total/catboost_cards_v2_away.cbm",
+        "metadata_target": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/cards_total/catboost_cards_v2_metadata.json",
+        "importance_target": "/Users/domp6/Projet Dev/NinetyXI/dataFootV1/ml-service/models/cards_total/catboost_cards_v2_importance.json"
+      }
+    }
+  ],
+  "kept_unchanged": [
+    "global_1x2"
+  ]
+}

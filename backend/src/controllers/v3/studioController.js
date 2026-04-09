@@ -1,4 +1,5 @@
 import db from '../../config/database.js';
+import logger from '../../utils/logger.js';
 
 /**
  * GET /api/v3/studio/meta/stats
@@ -23,14 +24,14 @@ export const getStudioStats = (req, res) => {
         { key: 'games_appearences', label: 'Apps', category: 'General', unit: 'integer' },
         { key: 'games_rating', label: 'Rating', category: 'General', unit: 'decimal' }
     ];
-    res.json(stats);
+    res.json({ success: true, data: stats });
 };
 
 /**
  * GET /api/v3/studio/meta/nationalities
  * Returns distinct nationalities for the Country Dropdown
  */
-export const getStudioNationalities = (req, res) => {
+export const getStudioNationalities = async (req, res) => {
     try {
         // US_121: Sort by Top 10 nations by database weight (player count) first, then alphabetical
         const sql = `
@@ -48,11 +49,11 @@ export const getStudioNationalities = (req, res) => {
             FROM Stats
             ORDER BY group_rank ASC, nationality ASC
         `;
-        const rows = db.all(sql);
-        res.json(rows.map(r => r.nationality));
+        const rows = await db.all(sql);
+        res.json({ success: true, data: rows.map(r => r.nationality) });
     } catch (error) {
-        console.error('Error fetching nationalities:', error);
-        res.status(500).json({ error: error.message });
+        logger.error({ err: error }, 'Error fetching nationalities');
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -60,7 +61,7 @@ export const getStudioNationalities = (req, res) => {
  * GET /api/v3/studio/meta/leagues
  * Returns Leagues with valid data in V3_Player_Stats, grouped by Country
  */
-export const getStudioLeagues = (req, res) => {
+export const getStudioLeagues = async (req, res) => {
     try {
         const sql = `
             SELECT DISTINCT 
@@ -78,7 +79,7 @@ export const getStudioLeagues = (req, res) => {
             JOIN V3_Player_Stats s ON l.league_id = s.league_id
             ORDER BY c.importance_rank ASC, c.name ASC, l.importance_rank ASC, l.name ASC
         `;
-        const rows = db.all(sql);
+        const rows = await db.all(sql);
 
         // Group by country
         const grouped = rows.reduce((acc, row) => {
@@ -98,10 +99,10 @@ export const getStudioLeagues = (req, res) => {
             return acc;
         }, {});
 
-        res.json(Object.values(grouped));
+        res.json({ success: true, data: Object.values(grouped) });
     } catch (error) {
-        console.error('Error fetching studio leagues:', error);
-        res.status(500).json({ error: error.message });
+        logger.error({ err: error }, 'Error fetching studio leagues');
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -109,33 +110,54 @@ export const getStudioLeagues = (req, res) => {
  * GET /api/v3/studio/meta/players
  * Search endpoint for manual selection - Enhanced for Uniqueness
  */
-export const searchStudioPlayers = (req, res) => {
+export const searchStudioPlayers = async (req, res) => {
     const { search, league_id, season } = req.query;
 
     if (!search || search.length < 3) {
-        return res.json([]);
+        return res.json({ success: true, data: [] });
     }
 
     try {
-        // Query to get distinct players, prioritizing most recent team info
-        // We use GROUP BY player_id to ensure single entry per player
+        const searchTerm = `%${search}%`;
+
+        // Mirrors SearchRepository.globalSearch — same ILIKE + word-boundary + scout_rank pattern
         let sql = `
-            SELECT 
-                p.player_id, 
-                p.name, 
-                p.firstname, 
-                p.lastname, 
+            SELECT
+                p.player_id,
+                p.name,
+                p.firstname,
+                p.lastname,
                 p.photo_url,
+                p.scout_rank,
                 MAX(s.season_year) as last_season,
-                (SELECT t.name FROM V3_Teams t 
-                 JOIN V3_Player_Stats s2 ON t.team_id = s2.team_id 
-                 WHERE s2.player_id = p.player_id 
-                 ORDER BY s2.season_year DESC LIMIT 1) as team_name
+                (SELECT t.name FROM V3_Teams t
+                 JOIN V3_Player_Stats s2 ON t.team_id = s2.team_id
+                 WHERE s2.player_id = p.player_id
+                 ORDER BY s2.season_year DESC LIMIT 1) as team_name,
+                CASE
+                    WHEN p.name ILIKE ?
+                      OR p.name ILIKE ? || ' %'
+                      OR p.name ILIKE '% ' || ?
+                      OR p.name ILIKE '% ' || ? || ' %' THEN 0
+                    WHEN p.lastname ILIKE ?
+                      OR p.lastname ILIKE ? || ' %'
+                      OR p.lastname ILIKE '% ' || ?
+                      OR p.lastname ILIKE '% ' || ? || ' %' THEN 1
+                    WHEN p.name ILIKE ? OR p.lastname ILIKE ? THEN 2
+                    ELSE 3
+                END as relevance_priority,
+                COALESCE(c.importance_rank, 999) as country_importance
             FROM V3_Players p
             JOIN V3_Player_Stats s ON p.player_id = s.player_id
-            WHERE (p.name LIKE ? OR p.lastname LIKE ?)
+            LEFT JOIN V3_Countries c ON p.nationality = c.name
+            WHERE (p.name ILIKE ? OR p.firstname ILIKE ? OR p.lastname ILIKE ?)
         `;
-        const params = [`%${search}%`, `%${search}%`];
+        const params = [
+            search, search, search, search,
+            search, search, search, search,
+            searchTerm, searchTerm,
+            searchTerm, searchTerm, searchTerm
+        ];
 
         if (league_id) {
             sql += ` AND s.league_id = ?`;
@@ -146,13 +168,18 @@ export const searchStudioPlayers = (req, res) => {
             params.push(season);
         }
 
-        sql += ` GROUP BY p.player_id ORDER BY COALESCE(p.scout_rank, 0) DESC, last_season DESC, p.name ASC LIMIT 20`;
+        sql += ` GROUP BY p.player_id, p.name, p.firstname, p.lastname, p.photo_url, p.scout_rank, relevance_priority, country_importance
+            ORDER BY relevance_priority ASC, p.scout_rank DESC, country_importance ASC, p.name ASC
+            LIMIT 20`;
 
-        const rows = db.all(sql, params);
-        res.json(rows);
+        const rows = await db.all(sql, params);
+
+        // Strip internal ranking columns before sending to frontend
+        const data = rows.map(({ relevance_priority, country_importance, scout_rank, ...rest }) => rest);
+        res.json({ success: true, data });
     } catch (error) {
-        console.error('Error searching studio players:', error);
-        res.status(500).json({ error: error.message });
+        logger.error({ err: error }, 'Error searching studio players');
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -160,11 +187,11 @@ export const searchStudioPlayers = (req, res) => {
  * GET /api/v3/studio/meta/teams
  * Search endpoint for Club selection
  */
-export const searchStudioTeams = (req, res) => {
+export const searchStudioTeams = async (req, res) => {
     const { search } = req.query;
 
     if (!search || search.length < 2) {
-        return res.json([]);
+        return res.json({ success: true, data: [] });
     }
 
     try {
@@ -177,413 +204,153 @@ export const searchStudioTeams = (req, res) => {
             LIMIT 20
         `;
         const params = [`%${search}%`];
-        const rows = db.all(sql, params);
-        res.json(rows);
+        const rows = await db.all(sql, params);
+        res.json({ success: true, data: rows });
     } catch (error) {
-        console.error('Error searching studio teams:', error);
-        res.status(500).json({ error: error.message });
+        logger.error({ err: error }, 'Error searching studio teams');
+        res.status(500).json({ success: false, error: error.message });
     }
+};
+
+// --- Private Studio Helpers ---
+
+const getRoundNumber = (roundStr) => {
+    if (!roundStr || typeof roundStr !== 'string') return 0;
+    const parts = roundStr.split('-');
+    const lastPart = parts[parts.length - 1].trim();
+    const num = Number.parseInt(lastPart);
+    return Number.isNaN(num) ? 0 : num;
+};
+
+const buildStudioWhereClause = (filters, selection, stat) => {
+    const [minYear, maxYear] = filters.years;
+    let whereClauses = [`s.season_year BETWEEN ? AND ?`];
+    let params = [minYear, maxYear];
+
+    const addInClause = (items, column) => {
+        if (items && items.length > 0) {
+            whereClauses.push(`${column} IN (${items.map(() => '?').join(',')})`);
+            params.push(...items);
+        }
+    };
+
+    addInClause(filters.leagues, 's.league_id');
+    addInClause(filters.countries, 'p.nationality');
+    addInClause(filters.teams, 's.team_id');
+
+    const manualPlayers = selection?.mode === 'manual' ? selection.players : [];
+    addInClause(manualPlayers, 's.player_id');
+
+    return {
+        sql: `
+            SELECT s.season_year, s.player_id, p.name as player_name, p.photo_url, t.name as team_name, t.logo_url as team_logo, COALESCE(SUM(s.${stat}), 0) as value
+            FROM V3_Player_Stats s
+            JOIN V3_Players p ON s.player_id = p.player_id
+            JOIN V3_Teams t ON s.team_id = t.team_id
+            WHERE ${whereClauses.join(' AND ')}
+            GROUP BY s.season_year, s.player_id, p.name, p.photo_url, t.name, t.logo_url
+            ORDER BY s.season_year ASC
+        `,
+        params
+    };
 };
 
 /**
  * POST /api/v3/studio/query
- * The Data Aggregation Engine - Strict Contract Implementation
  */
-export const queryStudioData = (req, res) => {
+export const queryStudioData = async (req, res) => {
     const { stat, filters, selection, options } = req.body;
+    if (!stat || !filters?.years || filters.years.length !== 2) return res.status(400).json({ success: false, error: 'Stat key and Years range required' });
 
-    // 1. Validation
-    if (!stat) return res.status(400).json({ error: 'Stat key is required' });
-    if (!filters || !filters.years || filters.years.length !== 2) {
-        return res.status(400).json({ error: 'Years range [min, max] is required' });
-    }
-
-    // Security check for stat column
-    const allowedStats = [
-        'goals_total', 'goals_assists', 'shots_total', 'shots_on',
-        'dribbles_success', 'passes_key', 'tackles_total', 'duels_won', 'duels_total', // Added duels_total
-        'cards_yellow', 'cards_red', 'games_minutes', 'games_appearences', 'games_rating', 'passes_accuracy'
-    ];
-    if (!allowedStats.includes(stat)) {
-        return res.status(400).json({ error: 'Invalid stat key requested' });
-    }
+    const allowedStats = ['goals_total', 'goals_assists', 'shots_total', 'shots_on', 'dribbles_success', 'passes_key', 'tackles_total', 'duels_won', 'duels_total', 'cards_yellow', 'cards_red', 'games_minutes', 'games_appearences', 'games_rating', 'passes_accuracy'];
+    if (!allowedStats.includes(stat)) return res.status(400).json({ success: false, error: 'Invalid stat key' });
 
     try {
-        const [minYear, maxYear] = filters.years;
+        const { sql, params } = buildStudioWhereClause(filters, selection, stat);
+        const rows = await db.all(sql, params);
+
+        const runningTotals = {};
+        const playerMeta = {};
+        rows.forEach(row => {
+            playerMeta[row.player_id] = { id: row.player_id, label: row.player_name, subLabel: row.team_name, image: row.photo_url, team_logo: row.team_logo };
+        });
+
         const cumulative = options?.cumulative === true;
         const topN = selection?.mode === 'top_n' ? (selection.value || 10) : 1000;
-        const manualPlayers = selection?.mode === 'manual' ? selection.players : [];
-
-        // 2. Build Query
-        let whereClauses = [`s.season_year BETWEEN ? AND ?`];
-        let params = [minYear, maxYear];
-
-        // League Filter
-        if (filters.leagues && filters.leagues.length > 0) {
-            const placeholders = filters.leagues.map(() => '?').join(',');
-            whereClauses.push(`s.league_id IN (${placeholders})`);
-            params.push(...filters.leagues);
-        }
-
-        // Country Filter (Nationality)
-        // User requested: "If i select 'nationality' get the data when V3_player.nationality = selected country"
-        if (filters.countries && filters.countries.length > 0) {
-            const placeholders = filters.countries.map(() => '?').join(',');
-            whereClauses.push(`p.nationality IN (${placeholders})`);
-            params.push(...filters.countries);
-        }
-
-        // Team Filter (Club)
-        if (filters.teams && filters.teams.length > 0) {
-            const placeholders = filters.teams.map(() => '?').join(',');
-            whereClauses.push(`s.team_id IN (${placeholders})`);
-            params.push(...filters.teams);
-        }
-
-        // Manual Players Filter
-        if (manualPlayers.length > 0) {
-            const placeholders = manualPlayers.map(() => '?').join(',');
-            whereClauses.push(`s.player_id IN (${placeholders})`);
-            params.push(...manualPlayers);
-        }
-
-        // We fetch Raw Data: Player | Year | Team | Value
-        // We do NOT sum by player yet if we want year-by-year granularity for the timeline.
-        // But we DO sum if a player played for multiple teams in the SAME year?
-        // Usually simpler to take the max or sum. Let's SUM for the year.
-        const sql = `
-            SELECT 
-                s.season_year,
-                s.player_id,
-                p.name as player_name,
-                p.photo_url,
-                t.name as team_name,
-                t.logo_url as team_logo,
-                SUM(s.${stat}) as value
-            FROM V3_Player_Stats s
-            JOIN V3_Players p ON s.player_id = p.player_id
-            JOIN V3_Teams t ON s.team_id = t.team_id
-            JOIN V3_Leagues l ON s.league_id = l.league_id 
-            JOIN V3_Countries c ON l.country_id = c.country_id
-            WHERE ${whereClauses.join(' AND ')}
-            GROUP BY s.season_year, s.player_id
-            ORDER BY s.season_year ASC
-        `;
-
-        const rows = db.all(sql, params);
-
-        // 3. Process Data (Aggregation & Normalization)
-
-        // Map to store cumulative totals: { player_id: total }
-        const runningTotals = {};
-
-        // Map to store static player info: { player_id: { name, photo, team... } }
-        const playerMeta = {};
-
-        // Prepare timeline buckets
         const timeline = [];
+        const yearsSet = new Set(rows.map(r => r.season_year));
+        const sortedYears = Array.from(yearsSet).sort((a, b) => a - b);
 
-        // Populate player meta and process rows
-        rows.forEach(row => {
-            // Update meta (last seen team will overwrite, which is usually desired behavior for "current team")
-            playerMeta[row.player_id] = {
-                id: row.player_id,
-                label: row.player_name,
-                subLabel: row.team_name,
-                image: row.photo_url,
-                team_logo: row.team_logo
-            };
-        });
-
-        // If Manual Mode, fetch meta for players even if they have 0 stats in range?
-        // Query only returns rows matching WHERE clause. 
-        // If a manually selected player has NO stats in range, they won't appear.
-        // We might want to inject them with 0s if they exist in DB?
-        // For now, assume if selected, they appear if they played.
-
-        // ADD INITIAL ZERO FRAME (Year - 1)
-        // This is crucial for smooth start animation from 0
-        const startFrameRecords = Object.values(playerMeta).map(p => ({
-            ...p,
-            value: 0,
-            rank: 999 // Start off-screen
-        }));
-
-        // Only include if manual mode? Or always?
-        // Always good to have a "start" frame.
-        // But for optimization, keep it minimal.
-
-        timeline.push({
-            season: minYear - 1,
-            records: selection.mode === 'manual' ? startFrameRecords : [] // Only force 0s for manual? or top N?
-        });
-
-
-        // 4. Build Frames
-        // We iterate year by year to handle cumulative logic correctly
-        for (let y = minYear; y <= maxYear; y++) {
-            const currentYear = y;
-
-            // Get rows for this year
-            const yearRows = rows.filter(r => r.season_year === currentYear);
-
-            // Update totals
-            yearRows.forEach(row => {
-                if (cumulative) {
-                    runningTotals[row.player_id] = (runningTotals[row.player_id] || 0) + row.value;
-                } else {
-                    runningTotals[row.player_id] = row.value;
-                }
-
-                // Update team specifically for this year (so the bar shows the correct team at that time)
-                if (playerMeta[row.player_id]) {
-                    playerMeta[row.player_id].subLabel = row.team_name;
-                    playerMeta[row.player_id].team_logo = row.team_logo;
-                }
-            });
-
-            // If cumulative, we need to include ALL players who have a running total > 0 (even if they didn't play this year)
-            // If not cumulative, we only include players who played this year (yearRows)
-
-            let activePlayerIds = [];
-            if (cumulative) {
-                activePlayerIds = Object.keys(runningTotals);
-            } else {
-                activePlayerIds = yearRows.map(r => r.player_id);
-            }
-
-            // For Manual Mode: Ensure ALL selected players are included, even if 0
-            if (selection.mode === 'manual') {
-                const manualIds = selection.players.map(String); // ensure string key match
-                manualIds.forEach(mid => {
-                    if (!runningTotals[mid]) runningTotals[mid] = 0;
-                    if (!activePlayerIds.includes(mid)) activePlayerIds.push(mid);
-                });
-            }
-
-            // Build records for this frame
-            let frameRecords = activePlayerIds.map(pid => {
-                const val = runningTotals[pid] || 0;
-                const meta = playerMeta[pid];
-                if (!meta) return null; // Should not happen
-                return {
-                    id: parseInt(pid),
-                    label: meta.label,
-                    subLabel: meta.subLabel, // Team name
-                    image: meta.image,
-                    value: val
-                };
-            }).filter(Boolean);
-
-            // Filter out zero values if desired? Usually yes.
-            if (selection.mode !== 'manual') {
-                frameRecords = frameRecords.filter(r => r.value > 0);
-            }
-
-            // Sort DESC
-            frameRecords.sort((a, b) => b.value - a.value);
-
-            // Apply Top N (only keep top N for the frame)
-            // Note: In Bar Chart Race, we usually want to keep a few more for smooth enter/exit animations
-            // But strict Top N is safer for performance.
-            // Let's keep Top N + 5 for buffer if needed, but contract says "rank" is final.
-            // Let's just return Top N as requested strictly.
-
-            // Assign Ranks
-            frameRecords.forEach((r, idx) => {
-                r.rank = idx + 1;
-            });
-
-            // Slice
-            if (selection?.mode === 'top_n') {
-                frameRecords = frameRecords.slice(0, topN);
-            }
-
-            timeline.push({ season: y, records: frameRecords });
-
-            // Note: If timeline has no records for a year, frontend handles empty lists gracefully?
+        if (sortedYears.length > 0) {
+            timeline.push({ year: sortedYears[0] - 1, records: Object.values(playerMeta).map((m, idx) => ({ ...m, value: 0, rank: idx + 1 })) });
         }
 
-        // 5. Final Response Construction
-        const response = {
-            meta: {
-                stat_key: stat,
-                stat_label: allowedStats.find(s => s === stat) || stat, // Could map to pretty label if we had the map handy
-                unit: (stat.includes('rating') || stat.includes('ratio')) ? 'decimal' : 'integer'
-            },
-            timeline: timeline
-        };
+        sortedYears.forEach(year => {
+            const yearRows = rows.filter(r => r.season_year === year);
+            yearRows.forEach(row => {
+                runningTotals[row.player_id] = (cumulative ? (runningTotals[row.player_id] || 0) : 0) + (row.value || 0);
+            });
+            const frameRecords = Object.entries(runningTotals).map(([pid, val]) => ({ ...playerMeta[pid], value: Number.parseFloat((val || 0).toFixed(2)) }));
+            frameRecords.sort((a, b) => b.value - a.value);
+            timeline.push({ year, records: frameRecords.slice(0, topN).map((r, idx) => ({ ...r, rank: idx + 1 })) });
+        });
 
-        res.json(response);
-
+        res.json({ success: true, data: { meta: { stat, cumulative, count: rows.length }, timeline } });
     } catch (error) {
-        console.error('Error in queryStudioData:', error);
-        res.status(500).json({ error: error.message });
+        logger.error({ err: error }, "Error in queryStudioData");
+        res.status(500).json({ success: false, error: 'Data aggregation failed' });
     }
 };
+
 /**
  * POST /api/v3/studio/query/league-rankings
- * Specialized engine for "Racing Standings" animation
- * Calculates cumulative points, GD, and ranking matchday by matchday
  */
-export const queryLeagueRankings = (req, res) => {
+export const queryLeagueRankings = async (req, res) => {
     const { league_id, season } = req.body;
-
-    if (!league_id || !season) {
-        return res.status(400).json({ error: 'league_id and season are required' });
-    }
+    if (!league_id || !season) return res.status(400).json({ success: false, error: 'league_id and season required' });
 
     try {
-        // 1. Fetch all finished fixtures
-        const fixturesSql = `
-            SELECT 
-                f.fixture_id,
-                f.round,
-                f.date,
-                f.home_team_id,
-                f.away_team_id,
-                f.goals_home,
-                f.goals_away,
-                t1.name as home_team_name,
-                t1.logo_url as home_team_logo,
-                t2.name as away_team_name,
-                t2.logo_url as away_team_logo
-            FROM V3_Fixtures f
-            JOIN V3_Teams t1 ON f.home_team_id = t1.team_id
-            JOIN V3_Teams t2 ON f.away_team_id = t2.team_id
-            WHERE f.league_id = ? AND f.season_year = ? AND f.status_short = 'FT'
-            ORDER BY f.date ASC
-        `;
-        const fixtures = db.all(fixturesSql, [league_id, season]);
+        const fixtures = await db.all(`
+            SELECT f.*, t1.name as home_team_name, t1.logo_url as home_team_logo, t2.name as away_team_name, t2.logo_url as away_team_logo
+            FROM V3_Fixtures f JOIN V3_Teams t1 ON f.home_team_id = t1.team_id JOIN V3_Teams t2 ON f.away_team_id = t2.team_id
+            WHERE f.league_id = ? AND f.season_year = ? AND f.status_short = 'FT' ORDER BY f.date ASC
+        `, [league_id, season]);
 
-        // Fetch League Details for Metadata (Name, Logo)
-        const leagueSql = `SELECT name, logo_url FROM V3_Leagues WHERE league_id = ?`;
-        const leagueRow = db.get(leagueSql, [league_id]);
-        const leagueLogo = leagueRow ? leagueRow.logo_url : null;
-        const leagueName = leagueRow ? leagueRow.name : null;
+        const league = await db.get(`SELECT name, logo_url FROM V3_Leagues WHERE league_id = ?`, [league_id]);
+        if (fixtures.length === 0) return res.json({ success: true, data: { meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline: [] } });
 
-        if (fixtures.length === 0) {
-            return res.json({
-                meta: {
-                    type: 'league_rankings',
-                    league_logo: leagueLogo,
-                    league_name: leagueName
-                },
-                timeline: []
-            });
-        }
-
-        // 2. Helper to parse round number from string (e.g. "Regular Season - 18")
-        const getRoundNumber = (roundStr) => {
-            const match = roundStr.match(/(\d+)$/);
-            return match ? parseInt(match[1]) : 0;
-        };
-
-        // 3. Process data into Rounds
-        // Map to store current state of each team
         const teamsStats = {};
         const roundsData = {};
-
         fixtures.forEach(f => {
             const rd = getRoundNumber(f.round);
             if (rd === 0) return;
-
             if (!roundsData[rd]) roundsData[rd] = [];
             roundsData[rd].push(f);
-
-            // Initialize teams if not present
             [f.home_team_id, f.away_team_id].forEach((tid, idx) => {
-                if (!teamsStats[tid]) {
-                    teamsStats[tid] = {
-                        id: tid,
-                        label: idx === 0 ? f.home_team_name : f.away_team_name,
-                        image: idx === 0 ? f.home_team_logo : f.away_team_logo,
-                        points: 0,
-                        gd: 0,
-                        gf: 0
-                    };
-                }
+                if (!teamsStats[tid]) teamsStats[tid] = { id: tid, label: idx === 0 ? f.home_team_name : f.away_team_name, image: idx === 0 ? f.home_team_logo : f.away_team_logo, points: 0, gd: 0, gf: 0 };
             });
         });
 
-        const timeline = [];
+        const timeline = [{ round: 0, records: Object.values(teamsStats).map((t, idx) => ({ ...t, value: 0, rank: idx + 1 })) }];
         const sortedRounds = Object.keys(roundsData).map(Number).sort((a, b) => a - b);
 
-        // Add Day 0 (Start state)
-        timeline.push({
-            round: 0,
-            records: Object.values(teamsStats).map((t, idx) => ({
-                ...t,
-                value: 0,
-                rank: idx + 1
-            }))
-        });
-
-        // 4. Cumulative Tally Round by Round
         sortedRounds.forEach(rd => {
-            const matches = roundsData[rd];
-
-            matches.forEach(m => {
-                const home = teamsStats[m.home_team_id];
-                const away = teamsStats[m.away_team_id];
-
-                // Points & GD
-                home.gf += (m.goals_home || 0);
-                away.gf += (m.goals_away || 0);
-                home.gd += ((m.goals_home || 0) - (m.goals_away || 0));
-                away.gd += ((m.goals_away || 0) - (m.goals_home || 0));
-
-                if (m.goals_home > m.goals_away) {
-                    home.points += 3;
-                } else if (m.goals_home < m.goals_away) {
-                    away.points += 3;
-                } else if (m.goals_home !== null && m.goals_away !== null) {
-                    home.points += 1;
-                    away.points += 1;
-                }
+            roundsData[rd].forEach(m => {
+                const home = teamsStats[m.home_team_id], away = teamsStats[m.away_team_id];
+                const gh = m.goals_home || 0, ga = m.goals_away || 0;
+                home.gf += gh; away.gf += ga; home.gd += (gh - ga); away.gd += (ga - gh);
+                if (gh > ga) home.points += 3; else if (ga > gh) away.points += 3; else { home.points += 1; away.points += 1; }
             });
 
-            // Calculate Ranking for this Round
-            const frameRecords = Object.values(teamsStats).map(t => ({
-                id: t.id,
-                label: t.label,
-                image: t.image,
-                team_logo: t.image, // Using the same logo for color extraction
-                value: t.points,
-                gd: t.gd,
-                gf: t.gf
-            }));
+            const frameRecords = Object.values(teamsStats).map(t => ({ id: t.id, label: t.label, image: t.image, team_logo: t.image, value: t.points, gd: t.gd, gf: t.gf }))
+                .sort((a, b) => b.value - a.value || b.gd - a.gd || b.gf - a.gf);
 
-            // Tie-breaking: Points -> GD -> GF
-            frameRecords.sort((a, b) => {
-                if (b.value !== a.value) return b.value - a.value;
-                if (b.gd !== a.gd) return b.gd - a.gd;
-                return b.gf - a.gf;
-            });
-
-            // Assign Ranks
-            frameRecords.forEach((r, idx) => {
-                r.rank = idx + 1;
-            });
-
-            timeline.push({ round: rd, records: frameRecords });
+            timeline.push({ round: rd, records: frameRecords.map((r, idx) => ({ ...r, rank: idx + 1 })) });
         });
 
-        // 5. Response
-        res.json({
-            meta: {
-                type: 'league_rankings',
-                league_id,
-                league_name: leagueName,
-                league_logo: leagueLogo,
-                season,
-                total_rounds: sortedRounds.length
-            },
-            timeline
-        });
-
+        res.json({ success: true, data: { meta: { type: 'league_rankings', league_logo: league?.logo_url, league_name: league?.name }, timeline } });
     } catch (error) {
-        console.error('Error in queryLeagueRankings:', error);
-        res.status(500).json({ error: error.message });
+        logger.error({ err: error }, "Error in queryLeagueRankings");
+        res.status(500).json({ success: false, error: 'League processing failed' });
     }
 };

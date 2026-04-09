@@ -14,15 +14,15 @@ export const validateRequest = (schema) => async (req, res, next) => {
         // Parse validates and strips unknown keys if configured (optional)
         // We pass the whole request context we care about
         await schema.parseAsync({
-            body: req.body,
-            query: req.query,
-            params: req.params,
+            body:   req.body   ?? {},
+            query:  req.query  ?? {},
+            params: req.params ?? {},
         });
         next();
     } catch (error) {
         // Handle Zod Errors
         if (error instanceof z.ZodError || (error.errors && Array.isArray(error.errors))) {
-            const errorList = (error instanceof z.ZodError ? error.errors : error.errors) || [];
+            const errorList = error.errors || [];
 
             // Format nice error messages
             const issues = errorList.map(e => {

@@ -1,23 +1,19 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import apiQueue from './apiQueue.js';
 
-dotenv.config();
-
-const API_KEY = process.env.API_FOOTBALL_KEY;
-const BASE_URL = process.env.API_FOOTBALL_BASE_URL || 'https://v3.football.api-sports.io';
-
-/**
- * Football API Service
- * Wrapper for API-Football endpoints with rate limiting
- */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
 class FootballApi {
     constructor() {
         this.client = axios.create({
-            baseURL: BASE_URL,
+            baseURL: process.env.API_FOOTBALL_BASE_URL || 'https://v3.football.api-sports.io',
             headers: {
-                'x-apisports-key': API_KEY
+                'x-apisports-key': process.env.API_FOOTBALL_KEY
             }
         });
     }
@@ -146,7 +142,7 @@ class FootballApi {
         }
 
         // Create a deterministic requestId based on sorted keys
-        const paramKeys = Object.keys(params).sort();
+        const paramKeys = Object.keys(params).sort((a, b) => a.localeCompare(b));
         const paramString = paramKeys.map(k => `${k}-${params[k]}`).join('_');
         const requestId = `leagues-${paramString}`;
 
@@ -292,11 +288,7 @@ class FootballApi {
      * GET /teams?league={leagueId}&season={season}
      */
     async getTeamsByLeague(leagueId, season) {
-        const requestId = `teams-league-${leagueId}-${season}`;
-        return this.makeRequest('/teams', {
-            league: leagueId,
-            season: season
-        }, requestId);
+        return this.getTeamsFromLeague(leagueId, season);
     }
 
     /**

@@ -4,10 +4,10 @@ export const getBacktest = async (req, res) => {
     try {
         const { leagueId, minEdge, minConfidence, dateStart, dateEnd, pick } = req.query;
 
-        const results = SimulationService.runBacktest({
-            leagueId: leagueId ? parseInt(leagueId) : null,
-            minEdge: minEdge ? parseFloat(minEdge) : 3.0,
-            minConfidence: minConfidence ? parseInt(minConfidence) : 60,
+        const results = await SimulationService.runBacktest({
+            leagueId: leagueId ? Number.parseInt(leagueId) : null,
+            minEdge: minEdge ? Number.parseFloat(minEdge) : 3.0,
+            minConfidence: minConfidence ? Number.parseInt(minConfidence) : 60,
             dateRange: (dateStart && dateEnd) ? [dateStart, dateEnd] : null,
             pickFilter: pick
         });
@@ -21,7 +21,7 @@ export const getBacktest = async (req, res) => {
 export const getCalibrationAudit = async (req, res) => {
     try {
         const { leagueId } = req.query;
-        const results = SimulationService.runCalibrationAudit(leagueId ? parseInt(leagueId) : null);
+        const results = await SimulationService.runCalibrationAudit(leagueId ? Number.parseInt(leagueId) : null);
         res.json({ success: true, data: results });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
