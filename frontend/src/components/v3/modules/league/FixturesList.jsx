@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Stack, Badge, FixtureRow, Switch } from '../../../../design-system';
 import InlineFixtureDetails from '../match/InlineFixtureDetails';
@@ -121,6 +121,7 @@ const FixturesList = ({ fixturesData, selectedRound, setSelectedRound, compact =
     const [expandedFixtureId, setExpandedFixtureId] = useState(null);
     const [sortByDate, setSortByDate] = useState(false);
     const bodyRef = useRef(null);
+    const scrollRef = useRef(null);
 
     const expandedFixture = useMemo(() => {
         if (!expandedFixtureId) return null;
@@ -135,8 +136,25 @@ const FixturesList = ({ fixturesData, selectedRound, setSelectedRound, compact =
     }, [fixturesData.fixtures]);
 
     const enrichedFixtures = useMemo(() => {
-        if (!allRoundsNull) return fixturesData.fixtures || [];
-        return inferMatchdays(fixturesData.fixtures);
+        const raw = allRoundsNull ? inferMatchdays(fixturesData.fixtures || []) : (fixturesData.fixtures || []);
+
+        // Deduplication Logic:
+        // Group by [homeId]-[awayId]-[date] and keep only one (preferring sources that aren't scraped if possible)
+        const seen = new Map();
+        const deduplicated = [];
+
+        raw.forEach(f => {
+            const key = `${f.home_team_id}-${f.away_team_id}-${f.date?.split('T')[0]}`;
+            if (!seen.has(key)) {
+                seen.set(key, f);
+                deduplicated.push(f);
+            } else {
+                // If we find a duplicate, we could potentially prefer one source over another
+                // For now, the first one seen wins.
+            }
+        });
+
+        return deduplicated;
     }, [allRoundsNull, fixturesData.fixtures]);
 
     const effectiveRounds = useMemo(() => {
@@ -151,11 +169,39 @@ const FixturesList = ({ fixturesData, selectedRound, setSelectedRound, compact =
 
     const filteredFixtures = useMemo(() => {
         if (!selectedRound || selectedRound === 'ALL') return enrichedFixtures;
-        // When Final is selected, also pull in the 3rd place match so it appears in the same view
-        if (selectedRound === 'Final') {
-            return enrichedFixtures.filter(f => f.round === 'Final' || f.round === '3rd Place Final');
-        }
-        return enrichedFixtures.filter(f => f.round === selectedRound);
+
+        const base = enrichedFixtures.filter(f => f.round === selectedRound);
+        if (base.length === 0) return base;
+
+        // "Delayed Match" Logic:
+        // We want to include matches from other rounds (usually previous ones)
+        // that are played during the same week as the selected round.
+        const roundDates = base.map(f => new Date(f.match_date || f.date).getTime());
+        const minD = Math.min(...roundDates);
+        const maxD = Math.max(...roundDates);
+
+        // Window: 4 days before start, 2 days after end
+        const startLimit = minD - (4 * 86400000);
+        const endLimit = maxD + (2 * 86400000);
+
+        const currentMD = parseInt(selectedRound.replace('J', ''));
+
+        const extras = enrichedFixtures.filter(f => {
+            if (f.round === selectedRound) return false;
+            const fTime = new Date(f.match_date || f.date).getTime();
+            if (fTime < startLimit || fTime > endLimit) return false;
+
+            // Only include if it's a matchday (JX) and it's a PREVIOUS one (late match)
+            if (!isNaN(currentMD)) {
+                const otherMD = parseInt((f.round || '').replace('J', ''));
+                if (!isNaN(otherMD) && otherMD < currentMD) return true;
+                return false;
+            }
+            return true; // Non-matchday mixed rounds (rare)
+        });
+
+        // Combine and sort by date
+        return [...base, ...extras].sort((a, b) => new Date(a.match_date || a.date) - new Date(b.match_date || b.date));
     }, [enrichedFixtures, selectedRound]);
 
     const handleFixtureToggle = (fixtureId) => {
@@ -283,6 +329,21 @@ const FixturesList = ({ fixturesData, selectedRound, setSelectedRound, compact =
             : 'Journée';
     }, [effectiveRounds]);
 
+    // Auto-scroll to current matchday on mount
+    useEffect(() => {
+        const scrollContainer = scrollRef.current;
+        if (scrollContainer) {
+            const currentPill = scrollContainer.querySelector('.ds-md-round-pill--current');
+            if (currentPill) {
+                currentPill.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }
+        }
+    }, [effectiveRounds, currentRound]);
+
     return (
         <Card
             padding="0"
@@ -300,7 +361,7 @@ const FixturesList = ({ fixturesData, selectedRound, setSelectedRound, compact =
                                 : (getRoundLabel(selectedRound) || selectedRound)}
                         </Badge>
                     </div>
-                    <div className="ds-md-selector-scroll">
+                    <div className="ds-md-selector-scroll" ref={scrollRef}>
                     {phases.map(phaseGroup => (
                         <div key={phaseGroup.key} className="ds-md-phase-wrapper">
                             <span className="ds-md-phase-label">{phaseGroup.label}</span>
@@ -385,7 +446,14 @@ const FixturesList = ({ fixturesData, selectedRound, setSelectedRound, compact =
                                                 </div>
                                             );
                                         } else if (isFirstGroupOfDay && fIdx === 0) {
-                                            dateNode = formatDateShort(group.fixtures[0].date);
+                                            dateNode = (
+                                                <div className="ds-fixture-date-stack">
+                                                    <span>{formatDateShort(f.date)}</span>
+                                                    {f.round !== selectedRound && selectedRound !== 'ALL' && (
+                                                        <div className="ds-late-match-label">Retard {getRoundLabel(f.round)}</div>
+                                                    )}
+                                                </div>
+                                            );
                                         }
 
                                         return (
