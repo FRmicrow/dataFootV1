@@ -38,7 +38,7 @@ export const getV3Stats = async (req, res) => {
         });
     } catch (error) {
         logger.error({ err: error }, 'Error fetching V3 Intelligence Hub stats');
-        res.status(500).json({ success: false, message: "Failed to fetch aggregated intelligence" });
+        res.status(500).json({ success: false, error: "Failed to fetch aggregated intelligence" });
     }
 };
 

@@ -10,7 +10,6 @@ const ROUTE_LABELS = {
     'dashboard':        'Dashboard',
     'leagues':          'Leagues',
     'league':           'League',
-    'leagueV4':         'League Performance',
     'player':           'Athlete',
     'search':           'Intelligence',
     'machine-learning': 'ML Hub',

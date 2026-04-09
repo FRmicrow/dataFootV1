@@ -4,52 +4,22 @@ import PropTypes from 'prop-types';
 import api from '../../../../services/api';
 import MatchDetailEventsV4 from './MatchDetailEventsV4';
 import InlineMatchDetailTacticalV4 from './InlineMatchDetailTacticalV4';
-import InlinePlayerStatCardV4 from '../shared/InlinePlayerStatCardV4';
 import { Grid, Tabs, Badge } from '../../../../design-system';
 import './InlineFixtureDetailsV4.css';
 
 const InlineFixtureDetailsV4 = ({ fixtureId, homeTeamId, awayTeamId }) => {
     const [lineups, setLineups] = useState([]);
-    const [playerStats, setPlayerStats] = useState([]);
-    const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('events');
 
     useEffect(() => {
-        fetchAllData();
-    }, [fixtureId]);
-
-    const fetchAllData = async () => {
+        setActiveTab('events');
         setLoading(true);
-        try {
-            // Fetch Lineups (Essential)
-            try {
-                const lineupRes = await api.getFixtureLineupsV4(fixtureId);
-                setLineups(lineupRes.lineups || []);
-            } catch (e) {
-                console.error("V4 Lineups load failed", e);
-            }
-
-            // Fetch Player Stats (Optional/Supplementary)
-            try {
-                const pStatsRes = await api.getFixturePlayerTacticalStatsV4(fixtureId);
-                const stats = pStatsRes || [];
-                setPlayerStats(stats);
-
-                if (stats.length > 0) {
-                    const best = [...stats].sort((a, b) => Number.parseFloat(b.rating) - Number.parseFloat(a.rating))[0];
-                    setSelectedPlayer(best);
-                }
-            } catch (e) {
-                console.warn("V4 Player stats unavailable for this match", e);
-            }
-
-        } catch (error) {
-            console.error("Critical error in V4 match detail loader", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        api.getFixtureLineupsV4(fixtureId)
+            .then(res => setLineups(res.lineups || []))
+            .catch(() => setLineups([]))
+            .finally(() => setLoading(false));
+    }, [fixtureId]);
 
     if (loading) return (
         <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-dim)' }}>
@@ -71,27 +41,14 @@ const InlineFixtureDetailsV4 = ({ fixtureId, homeTeamId, awayTeamId }) => {
         const starting = lineup.starting_xi || [];
         const subs = lineup.substitutes || [];
 
-        const handlePlayerClick = (pId) => {
-            const fullStat = playerStats.find(s => s.player_id === pId);
-            if (fullStat) {
-                setSelectedPlayer(fullStat);
-                setActiveTab('player_intel');
-            }
-        };
-
         const PlayerRow = ({ entry }) => {
             const p = entry.player || {};
-            const isSelected = selectedPlayer?.player_id === p.id;
             return (
-                <button
-                    className={`ds-inline-player-row ${isSelected ? 'active' : ''}`}
-                    onClick={() => handlePlayerClick(p.id)}
-                    type="button"
-                >
+                <div className="ds-inline-player-row">
                     <span className="ds-inline-player-num">{p.number}</span>
                     <span className="ds-inline-player-name">{p.name}</span>
                     <Badge variant="neutral" size="sm" style={{ pointerEvents: 'none' }}>{p.pos || '?'}</Badge>
-                </button>
+                </div>
             );
         };
 
@@ -125,9 +82,8 @@ const InlineFixtureDetailsV4 = ({ fixtureId, homeTeamId, awayTeamId }) => {
     };
 
     const tabItems = [
-        { id: 'events', label: 'Timeline', icon: '⏱️' },
-        { id: 'tactical', label: 'Tactical', icon: '🎯' },
-        { id: 'player_intel', label: 'Intelligence', icon: '🧠' }
+        { id: 'events',   label: 'Timeline', icon: '⏱️' },
+        { id: 'tactical', label: 'Tactical',  icon: '🎯' },
     ];
 
     return (
@@ -136,13 +92,14 @@ const InlineFixtureDetailsV4 = ({ fixtureId, homeTeamId, awayTeamId }) => {
                 {renderSquad(homeLineup, 'Starting')}
 
                 <div className="ds-inline-center-panel">
-                    <Tabs
-                        items={tabItems}
-                        activeId={activeTab}
-                        onChange={setActiveTab}
-                        variant="pills"
-                        className="mb-md"
-                    />
+                    <div className="ds-inline-tabbar">
+                        <Tabs
+                            items={tabItems}
+                            activeId={activeTab}
+                            onChange={setActiveTab}
+                            variant="pills"
+                        />
+                    </div>
 
                     <div className="ds-inline-tab-content">
                         {activeTab === 'events' && (
@@ -152,9 +109,6 @@ const InlineFixtureDetailsV4 = ({ fixtureId, homeTeamId, awayTeamId }) => {
                         )}
                         {activeTab === 'tactical' && (
                             <InlineMatchDetailTacticalV4 fixtureId={fixtureId} />
-                        )}
-                        {activeTab === 'player_intel' && (
-                            <InlinePlayerStatCardV4 player={selectedPlayer} />
                         )}
                     </div>
                 </div>
@@ -166,9 +120,9 @@ const InlineFixtureDetailsV4 = ({ fixtureId, homeTeamId, awayTeamId }) => {
 };
 
 InlineFixtureDetailsV4.propTypes = {
-    fixtureId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    fixtureId:  PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     homeTeamId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    awayTeamId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
+    awayTeamId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 export default InlineFixtureDetailsV4;

@@ -68,7 +68,7 @@ const formatDateShort = (dateStr) =>
         month: 'short',
     });
 
-const FixturesListV4 = ({ fixturesData, selectedRound, setSelectedRound, compact = false }) => {
+const FixturesListV4 = ({ fixturesData, selectedRound, setSelectedRound, compact = false, league, season }) => {
     const [expandedFixtureId, setExpandedFixtureId] = useState(null);
     const [sortByDate, setSortByDate] = useState(false);
     const bodyRef = useRef(null);
@@ -347,6 +347,8 @@ const FixturesListV4 = ({ fixturesData, selectedRound, setSelectedRound, compact
                                             fixtureId={expandedFixture.fixture_id}
                                             homeTeamId={expandedFixture.home_team_id}
                                             awayTeamId={expandedFixture.away_team_id}
+                                            league={league}
+                                            season={season}
                                         />
                                     </div>
                                 )}
@@ -368,6 +370,8 @@ FixturesListV4.propTypes = {
     selectedRound: PropTypes.string,
     setSelectedRound: PropTypes.func.isRequired,
     compact: PropTypes.bool,
+    league:  PropTypes.string,
+    season:  PropTypes.string,
 };
 
 export default FixturesListV4;

@@ -111,6 +111,45 @@
     flex-direction: column;
 }
 
+/* Center the 2-tab bar and make tabs fill evenly */
+.ds-inline-tabbar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.ds-inline-tabbar .ds-tabs {
+    width: auto;
+}
+
+.ds-inline-tabbar .ds-tabs-list {
+    border-bottom: none;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-full);
+    padding: 3px;
+    gap: 2px;
+}
+
+.ds-inline-tabbar .ds-tabs-trigger {
+    border-bottom: none;
+    border-radius: var(--radius-full);
+    padding: 6px 20px;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-text-dim);
+}
+
+.ds-inline-tabbar .ds-tabs-trigger:hover:not(.disabled) {
+    background: rgba(255,255,255,0.05);
+    color: var(--color-text-main);
+}
+
+.ds-inline-tabbar .ds-tabs-trigger.active {
+    background: var(--color-primary-600);
+    color: #fff;
+}
+
 .ds-inline-tab-content {
     flex: 1;
     overflow-y: auto;

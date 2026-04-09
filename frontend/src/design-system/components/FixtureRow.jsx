@@ -56,7 +56,7 @@ const FixtureRow = ({
 
                 {/* Home xG */}
                 <span className="ds-fr-xg ds-fr-xg--home">
-                    {hasXg ? xgHome.toFixed(2) : ''}
+                    {hasXg ? Number(xgHome).toFixed(2) : ''}
                 </span>
 
                 {/* Score / time — no badge, status communicated via color/dot */}
@@ -81,7 +81,7 @@ const FixtureRow = ({
 
                 {/* Away xG */}
                 <span className="ds-fr-xg ds-fr-xg--away">
-                    {hasXg ? xgAway.toFixed(2) : ''}
+                    {hasXg ? Number(xgAway).toFixed(2) : ''}
                 </span>
 
                 {/* Away logo */}

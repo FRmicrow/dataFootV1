@@ -1,0 +1,246 @@
+.xga-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.xga-loading {
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.xga-empty {
+    padding: var(--spacing-2xl);
+    text-align: center;
+    color: var(--color-text-dim);
+    font-size: var(--font-size-xs);
+}
+
+/* ── Controls ─────────────────────────────────────── */
+.xga-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+}
+
+.xga-controls-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    font-weight: 600;
+    margin-right: var(--spacing-xs);
+}
+
+.xga-sort-btn {
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-subtle);
+    background: transparent;
+    color: var(--color-text-dim);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.xga-sort-btn:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-main);
+}
+
+.xga-sort-btn.active {
+    background: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    color: #fff;
+}
+
+/* ── Table ────────────────────────────────────────── */
+.xga-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.xga-thead,
+.xga-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 44px 52px 48px 1fr 1fr 60px 56px;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 8px var(--spacing-sm);
+}
+
+.xga-thead {
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 8px;
+}
+
+.xga-thead span {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+    cursor: default;
+}
+
+.xga-row {
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.xga-row:hover {
+    background: var(--color-bg-hover);
+}
+
+/* ── Columns ──────────────────────────────────────── */
+.xga-col-rank {
+    text-align: center;
+}
+
+.xga-rank {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    font-weight: 600;
+}
+
+.xga-col-club {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    min-width: 0;
+}
+
+.xga-club-logo {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.xga-club-name {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.xga-col-num {
+    text-align: right;
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+}
+
+.xga-pts {
+    color: var(--color-text-main);
+    font-weight: 700;
+}
+
+.xga-xpts {
+    color: var(--color-primary-400);
+    font-weight: 600;
+}
+
+.xga-col-ppda {
+    color: var(--color-accent-400);
+}
+
+/* ── Delta ────────────────────────────────────────── */
+.xga-col-delta {
+    text-align: center;
+}
+
+.xga-delta {
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-dim);
+}
+
+.xga-delta--over {
+    color: var(--color-success-500);
+}
+
+.xga-delta--under {
+    color: var(--color-danger-500);
+}
+
+.xga-dash {
+    color: var(--color-text-dim);
+    font-size: var(--font-size-xs);
+}
+
+/* ── xG bars ──────────────────────────────────────── */
+.xga-col-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    min-width: 0;
+}
+
+.xga-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--color-bg-hover);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.xga-bar {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.xga-bar--xg  { background: var(--color-primary-500); }
+.xga-bar--xga { background: var(--color-danger-500); opacity: 0.75; }
+
+.xga-bar-val {
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+    min-width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ── NPxGD colors ─────────────────────────────────── */
+.xga-pos { color: var(--color-success-500); font-weight: 700; }
+.xga-neg { color: var(--color-danger-500);  font-weight: 700; }
+
+/* ── Legend ───────────────────────────────────────── */
+.xga-legend {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.xga-legend-item {
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-dim);
+}
+
+.xga-legend-item::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 4px;
+    border-radius: 2px;
+}
+
+.xga-legend--xg::before   { background: var(--color-primary-500); }
+.xga-legend--xga::before  { background: var(--color-danger-500); opacity: 0.75; }
+.xga-legend--over::before { background: var(--color-success-500); }
+.xga-legend--under::before { background: var(--color-danger-500); }

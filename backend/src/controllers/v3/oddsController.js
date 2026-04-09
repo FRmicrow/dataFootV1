@@ -34,7 +34,7 @@ export const getFixtureOdds = async (req, res) => {
         });
     } catch (error) {
         logger.error({ err: error, fixtureId: req.params.fixtureId }, 'Error in getFixtureOdds');
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -71,7 +71,7 @@ export const getUpcomingOdds = async (req, res) => {
         });
     } catch (error) {
         logger.error({ err: error }, 'Error in getUpcomingOdds');
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -98,6 +98,6 @@ export const manualImportOdds = async (req, res) => {
         });
     } catch (error) {
         logger.error({ err: error, leagueId: req.body?.leagueId, seasonYear: req.body?.seasonYear }, 'Error in manualImportOdds');
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };

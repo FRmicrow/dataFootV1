@@ -1,108 +1,234 @@
+/* ── Event icons ────────────────────────────────────────────────────────────── */
+.ev-icon {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* ⚽ Goal — white circle with black pentagon pattern suggestion */
+.ev-icon--goal {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #1e293b;
+    box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 5px #1e293b;
+}
+
+/* Own goal — red tint */
+.ev-icon--own {
+    background: var(--color-danger-400, #f87171);
+    border-color: var(--color-danger-700, #b91c1c);
+    box-shadow: inset 0 0 0 3px var(--color-danger-400, #f87171), inset 0 0 0 5px var(--color-danger-700, #b91c1c);
+}
+
+/* 🟨 Yellow card */
+.ev-icon--yellow-card {
+    width: 11px;
+    height: 15px;
+    border-radius: 2px;
+    background: #facc15;
+}
+
+/* 🟥 Red card */
+.ev-icon--red-card {
+    width: 11px;
+    height: 15px;
+    border-radius: 2px;
+    background: #ef4444;
+}
+
+/* 🟨🟥 Second yellow / yellow-red */
+.ev-icon--yellow-red-card {
+    width: 16px;
+    height: 15px;
+    border-radius: 2px;
+    position: relative;
+    background: #facc15;
+}
+.ev-icon--yellow-red-card::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 9px;
+    height: 100%;
+    border-radius: 0 2px 2px 0;
+    background: #ef4444;
+}
+
+/* ⇄ Substitution — two arrows */
+.ev-icon--subst {
+    width: 18px;
+    height: 18px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.ev-icon--subst::before,
+.ev-icon--subst::after {
+    content: '';
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-style: solid;
+}
+.ev-icon--subst::before {
+    border-width: 0 2px 2px 0;
+    border-color: var(--color-success-400, #4ade80);
+    transform: rotate(-45deg) translate(-1px, 2px);
+    top: 2px;
+}
+.ev-icon--subst::after {
+    border-width: 2px 0 0 2px;
+    border-color: var(--color-danger-400, #f87171);
+    transform: rotate(-45deg) translate(1px, -2px);
+    bottom: 2px;
+}
+
+/* VAR — small screen icon */
+.ev-icon--var {
+    width: 18px;
+    height: 12px;
+    border-radius: 2px;
+    border: 2px solid var(--color-primary-400);
+    background: transparent;
+    position: relative;
+}
+.ev-icon--var::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-primary-400);
+}
+
+/* Fallback dot */
+.ev-icon--dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-border-subtle);
+}
+
+/* ── Timeline layout ───────────────────────────────────────────────────────── */
 .ds-match-events-list {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 0;
-    padding: var(--spacing-md) 0;
+    padding: var(--spacing-sm) 0;
     position: relative;
 }
 
+/* Vertical line */
 .ds-match-events-list::before {
     content: '';
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: 0; bottom: 0;
     left: 50%;
-    width: 2px;
-    background: var(--color-border);
+    width: 1px;
+    background: var(--color-border-subtle);
     transform: translateX(-50%);
     z-index: 0;
 }
 
 .ds-ev-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 60px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
     align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-2xs) var(--spacing-3xs);
+    gap: var(--spacing-xs);
+    padding: 5px 0;
     position: relative;
 }
 
-.ds-ev-row::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 2px;
-    background: var(--color-border);
-    transform: translateX(-50%);
-    z-index: 0;
+.ds-ev-row:hover {
+    background: rgba(255,255,255,0.015);
+    border-radius: var(--radius-sm);
 }
 
-/* Home Column (Left) */
-.ds-ev-col-home {
-    display: flex;
-    justify-content: flex-start;
-    text-align: left;
-    z-index: 1;
-}
-
-/* Center Column (Timeline) */
+/* ── Center column ─────────────────────────────────────────────────────────── */
 .ds-ev-col-center {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 3px;
     z-index: 1;
-    background: var(--color-bg-sidebar);
-    /* Mask the line behind icons */
-    padding: 4px 0;
-}
-
-/* Away Column (Right) */
-.ds-ev-col-away {
-    display: flex;
-    justify-content: flex-end;
-    text-align: right;
-    z-index: 1;
-}
-
-.ds-ev-data-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    max-width: 100%;
+    background: var(--color-bg-main);
+    padding: 2px 0;
 }
 
 .ds-ev-time-stamp {
     font-size: 10px;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--color-primary-400);
+    letter-spacing: 0.02em;
+    line-height: 1;
 }
 
 .ds-ev-timeline-icon {
-    font-size: 16px;
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+/* ── Home column (left, right-aligned) ────────────────────────────────────── */
+.ds-ev-col-home {
+    display: flex;
+    justify-content: flex-end;
+    text-align: right;
+    z-index: 1;
+    padding-right: var(--spacing-xs);
+}
+
+/* ── Away column (right, left-aligned) ────────────────────────────────────── */
+.ds-ev-col-away {
+    display: flex;
+    justify-content: flex-start;
+    text-align: left;
+    z-index: 1;
+    padding-left: var(--spacing-xs);
+}
+
+/* ── Event data ────────────────────────────────────────────────────────────── */
+.ds-ev-data-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    max-width: 100%;
 }
 
 .ds-ev-player {
     font-weight: 700;
     font-size: var(--font-size-sm);
     color: var(--color-text-main);
-    word-break: break-word;
-    overflow-wrap: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.ds-ev-row:hover .ds-ev-player {
+    color: var(--color-primary-300);
 }
 
 .ds-ev-meta {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
-.home .ds-ev-meta {
-    flex-direction: row;
+/* Right-align meta for home events */
+.ds-ev-col-home .ds-ev-meta {
+    justify-content: flex-end;
 }
 
 .ds-ev-detail {
@@ -110,14 +236,26 @@
     color: var(--color-text-dim);
     text-transform: uppercase;
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
 }
 
-/* Hover Effects */
-.ds-ev-row:hover {
-    background: rgba(255, 255, 255, 0.01);
+.ds-ev-assist {
+    font-size: 9px;
+    color: var(--color-primary-400);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
 }
 
-.ds-ev-row:hover .ds-ev-player {
-    color: var(--color-primary-300);
+/* ── State messages ────────────────────────────────────────────────────────── */
+.ds-events-loading,
+.ds-events-error,
+.ds-events-empty {
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--color-text-dim);
+    font-size: var(--font-size-sm);
 }

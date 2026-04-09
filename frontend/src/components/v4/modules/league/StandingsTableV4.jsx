@@ -1,259 +1,234 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { Card, Table, Stack, Button, Grid, Input } from '../../../../design-system';
+import './StandingsTableV4.css';
 
-const getRankTheme = (rank) => {
-    if (rank <= 4) return { background: 'var(--color-primary-600)', color: 'white' };
-    if (rank >= 18) return { background: 'var(--color-danger-500)', color: 'white' };
-    return { background: 'var(--glass-bg)', color: 'var(--color-text-main)' };
+const ZONE_THRESHOLDS = {
+    20: { cl: 4, el: 5, ecl: 6, rel: 18 },   // PL / Bundesliga / LaLiga / Serie A
+    18: { cl: 4, el: 5, ecl: 6, rel: 16 },   // Ligue 1
+    16: { cl: 3, el: 4, ecl: 5, rel: 14 },
 };
 
-const RankBadge = ({ rank }) => {
-    const theme = getRankTheme(rank);
-    return (
-        <div
-            style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: 'var(--radius-sm)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '11px',
-                fontWeight: 'bold',
-                ...theme
-            }}
-        >
-            {rank}
-        </div>
-    );
+const getZone = (rank, total) => {
+    const t = ZONE_THRESHOLDS[total] || { cl: 4, el: 5, ecl: 6, rel: total - 2 };
+    if (rank <= t.cl)  return 'cl';
+    if (rank <= t.el)  return 'el';
+    if (rank <= t.ecl) return 'ecl';
+    if (rank >= t.rel) return 'rel';
+    return '';
 };
 
-const StandingsTableV4 = ({
-    standings = [],
-    fixtures = [],
-    loading
-}) => {
-    const [rangeStart, setRangeStart] = React.useState('');
-    const [rangeEnd, setRangeEnd] = React.useState('');
-    const [activeFilterStart, setActiveFilterStart] = React.useState(null);
-    const [activeFilterEnd, setActiveFilterEnd] = React.useState(null);
+const ZONE_LABELS = { cl: 'CL', el: 'EL', ecl: 'ECL', rel: 'Relégation' };
 
-    // Auto-calculate max round from fixtures
-    const maxRound = React.useMemo(() => {
-        if (!fixtures || fixtures.length === 0) return 0;
+const getRoundNum = (roundStr) => {
+    const m = String(roundStr || '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : -1;
+};
+
+const StandingsTableV4 = ({ standings = [], fixtures = [], loading }) => {
+    const [filterStart, setFilterStart] = useState('');
+    const [filterEnd, setFilterEnd] = useState('');
+    const [applied, setApplied] = useState({ start: null, end: null });
+
+    const maxRound = useMemo(() => {
         let max = 0;
-        fixtures.forEach(f => {
-            const match = String(f.round).match(/\d+/);
-            const r = match ? parseInt(match[0], 10) : 0;
-            if (r > max) max = r;
-        });
+        fixtures.forEach(f => { const n = getRoundNum(f.round); if (n > max) max = n; });
         return max;
     }, [fixtures]);
 
-    // Initial default: 1 to MAX
-    React.useEffect(() => {
-        if (maxRound > 0 && activeFilterStart === null) {
-            setRangeStart('1');
-            setRangeEnd(String(maxRound));
-            setActiveFilterStart(1);
-            setActiveFilterEnd(maxRound);
+    useEffect(() => {
+        if (maxRound > 0 && applied.start === null) {
+            setFilterStart('1');
+            setFilterEnd(String(maxRound));
+            setApplied({ start: 1, end: maxRound });
         }
-    }, [maxRound, activeFilterStart]);
+    }, [maxRound]);
 
-    const handleRangeUpdate = () => {
-        setActiveFilterStart(rangeStart ? Number(rangeStart) : null);
-        setActiveFilterEnd(rangeEnd ? Number(rangeEnd) : null);
-    };
+    const computed = useMemo(() => {
+        if (!applied.start || !applied.end || !fixtures.length) return standings;
 
-    const computedStandings = React.useMemo(() => {
-        if (!activeFilterStart || !activeFilterEnd || fixtures.length === 0) {
-            return standings;
-        }
-
-        const teamsMap = {};
+        const map = {};
         standings.forEach(t => {
-            teamsMap[t.team_id] = {
-                team_id: t.team_id,
-                team_name: t.team_name,
-                team_logo: t.team_logo,
-                group_name: t.group_name || 'General Standings (V4)',
-                played: 0,
-                win: 0,
-                draw: 0,
-                lose: 0,
-                goals_for: 0,
-                goals_against: 0,
-                points: 0,
-                form: ''
+            map[t.team_id] = {
+                ...t,
+                played: 0, win: 0, draw: 0, lose: 0,
+                goals_for: 0, goals_against: 0, points: 0,
             };
         });
 
-        // Parse round number from strings like "1. Journée" or "Regular Season - 1"
-        const getRoundNum = (roundStr) => {
-            if (!roundStr) return -1;
-            const match = String(roundStr).match(/\d+/);
-            return match ? parseInt(match[0], 10) : -1;
-        };
+        fixtures
+            .filter(f => {
+                const r = getRoundNum(f.round);
+                return r >= applied.start && r <= applied.end && f.goals_home != null && f.goals_away != null;
+            })
+            .forEach(f => {
+                const h = map[f.home_team_id];
+                const a = map[f.away_team_id];
+                if (!h || !a) return;
+                h.played++; a.played++;
+                h.goals_for  += f.goals_home; h.goals_against += f.goals_away;
+                a.goals_for  += f.goals_away; a.goals_against += f.goals_home;
+                if (f.goals_home > f.goals_away)       { h.win++; h.points += 3; a.lose++; }
+                else if (f.goals_home < f.goals_away)  { a.win++; a.points += 3; h.lose++; }
+                else                                   { h.draw++; h.points++; a.draw++; a.points++; }
+            });
 
-        const validFixtures = fixtures.filter(f => {
-            const rNum = getRoundNum(f.round);
-            return rNum >= activeFilterStart && rNum <= activeFilterEnd && f.goals_home !== null && f.goals_away !== null;
+        return Object.values(map)
+            .sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                const da = a.goals_for - a.goals_against;
+                const db = b.goals_for - b.goals_against;
+                if (db !== da) return db - da;
+                return b.goals_for - a.goals_for;
+            })
+            .map((t, i) => ({ ...t, rank: i + 1, goals_diff: t.goals_for - t.goals_against }));
+    }, [standings, fixtures, applied]);
+
+    const groupMap = useMemo(() => {
+        const m = {};
+        computed.forEach(t => {
+            const g = t.group_name || 'Classement';
+            if (!m[g]) m[g] = [];
+            m[g].push(t);
         });
-
-        validFixtures.forEach(f => {
-            const home = teamsMap[f.home_team_id];
-            const away = teamsMap[f.away_team_id];
-            if (!home || !away) return;
-
-            home.played++;
-            away.played++;
-            home.goals_for += f.goals_home;
-            home.goals_against += f.goals_away;
-            away.goals_for += f.goals_away;
-            away.goals_against += f.goals_home;
-
-            if (f.goals_home > f.goals_away) {
-                home.win++; home.points += 3;
-                away.lose++;
-            } else if (f.goals_home < f.goals_away) {
-                away.win++; away.points += 3;
-                home.lose++;
-            } else {
-                home.draw++; home.points += 1;
-                away.draw++; away.points += 1;
-            }
-        });
-
-        const sortedTeams = Object.values(teamsMap).sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            const diffA = a.goals_for - a.goals_against;
-            const diffB = b.goals_for - b.goals_against;
-            if (diffB !== diffA) return diffB - diffA;
-            return b.goals_for - a.goals_for;
-        });
-
-        return sortedTeams.map((t, idx) => ({ ...t, rank: idx + 1, goals_diff: t.goals_for - t.goals_against }));
-    }, [standings, fixtures, activeFilterStart, activeFilterEnd]);
-
-    const groupMap = (computedStandings || []).reduce((acc, curr) => {
-        const group = curr.group_name || 'General Standings (V4)';
-        if (!acc[group]) acc[group] = [];
-        acc[group].push(curr);
-        return acc;
-    }, {});
+        return m;
+    }, [computed]);
 
     const groups = Object.entries(groupMap);
 
-    const allColumns = [
-        {
-            title: '#',
-            dataIndex: 'rank',
-            key: 'rank',
-            align: 'center',
-            width: '60px',
-            render: (rank) => <RankBadge rank={rank} />
-        },
-        {
-            title: 'Club',
-            key: 'team',
-            render: (_, t) => (
-                <Link to={`/v4/club/${t.team_id}`} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', textDecoration: 'none', color: 'inherit' }}>
-                    <img src={t.team_logo} alt={`${t.team_name} logo`} style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
-                    <span style={{ fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-sm)' }}>{t.team_name}</span>
-                </Link>
-            )
-        },
-        { title: 'P', dataIndex: 'played', key: 'played', align: 'center', width: '40px' },
-        { title: 'W', dataIndex: 'win', key: 'win', align: 'center', width: '40px', render: (val) => <span style={{ color: 'var(--color-success-500)', fontWeight: 'bold' }}>{val}</span> },
-        { title: 'D', dataIndex: 'draw', key: 'draw', align: 'center', width: '40px' },
-        { title: 'L', dataIndex: 'lose', key: 'lose', align: 'center', width: '40px', render: (val) => <span style={{ color: 'var(--color-danger-500)' }}>{val}</span> },
-        { title: 'GF', dataIndex: 'goals_for', key: 'gf', align: 'center', width: '40px', render: (val) => <span style={{ opacity: 0.7 }}>{val}</span> },
-        { title: 'GA', dataIndex: 'goals_against', key: 'ga', align: 'center', width: '40px', render: (val) => <span style={{ opacity: 0.7 }}>{val}</span> },
-        {
-            title: 'GD',
-            dataIndex: 'goals_diff',
-            key: 'diff',
-            align: 'center',
-            width: '50px',
-            render: (val) => {
-                const getGDColor = (v) => {
-                    if (v > 0) return 'var(--color-success-500)';
-                    if (v < 0) return 'var(--color-danger-500)';
-                    return 'inherit';
-                };
-                let displayVal = val;
-                if (val > 0) displayVal = `+${val}`;
-                return <span style={{ color: getGDColor(val), fontWeight: 'bold' }}>{displayVal}</span>;
-            }
-        },
-        {
-            title: 'PTS',
-            dataIndex: 'points',
-            key: 'points',
-            align: 'center',
-            width: '60px',
-            render: (pts) => <span style={{ fontSize: 'var(--font-size-base)', fontWeight: '900', color: 'var(--color-primary-400)' }}>{pts}</span>
-        }
-    ];
-
-    const columns = allColumns;
-
-    if (standings.length === 0) {
-        return (
-            <Card style={{ minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center', maxWidth: '500px', padding: 'var(--spacing-xl)' }}>
-                    <h3 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-black)', marginBottom: 'var(--spacing-sm)' }}>V4 Matrix Loading...</h3>
-                    <p style={{ color: 'var(--color-text-dim)', fontSize: 'var(--font-size-sm)', lineHeight: '1.6' }}>
-                        Processing historical calculation for this temporal context.
-                    </p>
-                </div>
-            </Card>
-        );
-    }
+    if (!standings.length) return (
+        <div className="sov4-standings-empty">Aucune donnée de classement.</div>
+    );
 
     return (
-        <Stack gap="var(--spacing-lg)" className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            {groups.map(([groupName, teams], idx) => (
-                <Card 
-                    key={groupName} 
-                    title={groupName} 
-                    padding="0" 
-                    style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
-                    extra={idx === 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', background: 'rgba(255,255,255,0.03)', padding: '4px 12px', borderRadius: 'var(--radius-full)' }}>
-                            <label htmlFor="range-start" style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--color-text-dim)' }}>FILTER RANKS</label>
-                            <Input
-                                id="range-start"
-                                type="number"
-                                value={rangeStart}
-                                onChange={e => setRangeStart(e.target.value)}
-                                style={{ width: '48px', textAlign: 'center', padding: '4px' }}
-                            />
-                            <label htmlFor="range-end" style={{ opacity: 0.3 }}>-</label>
-                            <Input
-                                id="range-end"
-                                type="number"
-                                value={rangeEnd}
-                                onChange={e => setRangeEnd(e.target.value)}
-                                style={{ width: '48px', textAlign: 'center', padding: '4px' }}
-                            />
-                            <Button size="xs" variant="ghost" onClick={handleRangeUpdate} loading={loading} style={{ padding: '2px 8px' }}>APPLY</Button>
-                        </div>
-                    )}
+        <div className="sov4-standings">
+            {/* Filter bar */}
+            <div className="sov4-standings-bar">
+                <span className="sov4-filter-label">Journées</span>
+                <input
+                    type="number" min="1" max={maxRound}
+                    value={filterStart}
+                    onChange={e => setFilterStart(e.target.value)}
+                    className="sov4-filter-input"
+                    placeholder="1"
+                />
+                <span className="sov4-filter-sep">—</span>
+                <input
+                    type="number" min="1" max={maxRound}
+                    value={filterEnd}
+                    onChange={e => setFilterEnd(e.target.value)}
+                    className="sov4-filter-input"
+                    placeholder={maxRound || '38'}
+                />
+                <button
+                    className="sov4-filter-btn"
+                    onClick={() => setApplied({ start: Number(filterStart) || null, end: Number(filterEnd) || null })}
+                    type="button"
                 >
-                    <Table columns={columns} data={teams} className="plain" interactive style={{ flex: 1, minHeight: 0 }} />
-                </Card>
-            ))}
-        </Stack>
+                    Appliquer
+                </button>
+                {loading && <span className="sov4-filter-spinner" />}
+            </div>
+
+            {groups.map(([groupName, teams]) => {
+                const total = teams.length;
+                const hasZones = total >= 16;
+                let lastZone = '';
+
+                return (
+                    <div key={groupName} className="sov4-standings-group">
+                        {groups.length > 1 && (
+                            <div className="sov4-group-title">{groupName}</div>
+                        )}
+
+                        <table className="sov4-table">
+                            <thead>
+                                <tr>
+                                    <th className="col-rank">#</th>
+                                    <th className="col-club">Club</th>
+                                    <th className="col-num">J</th>
+                                    <th className="col-num col-hide-sm">W</th>
+                                    <th className="col-num col-hide-sm">D</th>
+                                    <th className="col-num col-hide-sm">L</th>
+                                    <th className="col-num col-hide-md">BM</th>
+                                    <th className="col-num col-hide-md">BE</th>
+                                    <th className="col-num">DB</th>
+                                    <th className="col-pts">Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {teams.map(t => {
+                                    const zone = hasZones ? getZone(t.rank, total) : '';
+                                    const zoneBorder = hasZones && zone !== lastZone && t.rank > 1;
+                                    lastZone = zone;
+                                    const gd = t.goals_diff ?? (t.goals_for - t.goals_against);
+
+                                    return (
+                                        <tr
+                                            key={t.team_id}
+                                            className={`sov4-row ${zone ? `sov4-zone--${zone}` : ''} ${zoneBorder ? 'sov4-zone-border' : ''}`}
+                                        >
+                                            <td className="col-rank">
+                                                <span className={`sov4-rank sov4-rank--${zone || 'neutral'}`}>
+                                                    {t.rank}
+                                                </span>
+                                            </td>
+                                            <td className="col-club">
+                                                <Link to={`/club/${t.team_id}`} className="sov4-club-link">
+                                                    <img
+                                                        src={t.team_logo}
+                                                        alt=""
+                                                        className="sov4-club-logo"
+                                                        onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
+                                                    />
+                                                    <span className="sov4-club-name">{t.team_name}</span>
+                                                    {zone && (
+                                                        <span className={`sov4-zone-badge sov4-zone-badge--${zone}`}>
+                                                            {ZONE_LABELS[zone]}
+                                                        </span>
+                                                    )}
+                                                </Link>
+                                            </td>
+                                            <td className="col-num">{t.played}</td>
+                                            <td className="col-num col-hide-sm sov4-win">{t.win}</td>
+                                            <td className="col-num col-hide-sm">{t.draw}</td>
+                                            <td className="col-num col-hide-sm sov4-lose">{t.lose}</td>
+                                            <td className="col-num col-hide-md sov4-muted">{t.goals_for}</td>
+                                            <td className="col-num col-hide-md sov4-muted">{t.goals_against}</td>
+                                            <td className="col-num">
+                                                <span className={gd > 0 ? 'sov4-pos' : gd < 0 ? 'sov4-neg' : ''}>
+                                                    {gd > 0 ? `+${gd}` : gd}
+                                                </span>
+                                            </td>
+                                            <td className="col-pts">
+                                                <strong className="sov4-pts">{t.points}</strong>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            })}
+
+            {/* Zone legend */}
+            {computed.length >= 16 && (
+                <div className="sov4-legend">
+                    <span className="sov4-legend-item sov4-legend--cl">Champions League</span>
+                    <span className="sov4-legend-item sov4-legend--el">Europa League</span>
+                    <span className="sov4-legend-item sov4-legend--ecl">Conference League</span>
+                    <span className="sov4-legend-item sov4-legend--rel">Relégation</span>
+                </div>
+            )}
+        </div>
     );
 };
 
 StandingsTableV4.propTypes = {
     standings: PropTypes.array,
-    fixtures: PropTypes.array,
-    loading: PropTypes.bool
+    fixtures:  PropTypes.array,
+    loading:   PropTypes.bool,
 };
 
 export default StandingsTableV4;

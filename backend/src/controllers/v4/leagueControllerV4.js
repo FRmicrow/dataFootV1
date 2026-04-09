@@ -201,7 +201,7 @@ export const getFixtureLineupsV4 = async (req, res) => {
 export const getFixtureTacticalStatsV4 = async (req, res) => {
     try {
         fixtureRouteIdSchema.parse(req.params);
-        const stats = await MatchDetailV4Service.getFixtureTacticalStats();
+        const stats = await MatchDetailV4Service.getFixtureTacticalStats(req.params.id);
         res.json({ success: true, data: stats });
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -223,6 +223,22 @@ export const getFixturePlayerTacticalStatsV4 = async (req, res) => {
         }
 
         res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
+    }
+};
+
+export const getPlayerSeasonStatsV4 = async (req, res) => {
+    try {
+        const params = leagueSeasonParamsSchema.parse(req.params);
+        const { playerId } = req.params;
+        const leagueData = await LeagueServiceV4.getCompetitionByName(params.league);
+        if (!leagueData) return res.status(404).json({ success: false, error: 'League not found' });
+        const stats = await LeagueServiceV4.getPlayerSeasonStats(leagueData.competition_id, params.season, playerId);
+        if (!stats) return res.status(404).json({ success: false, error: 'Player not found' });
+        res.json({ success: true, data: stats });
+    } catch (error) {
+        if (error instanceof z.ZodError) return handleValidationError(res, error);
+        logger.error({ err: error }, 'V4 getPlayerSeasonStats error');
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 };
 

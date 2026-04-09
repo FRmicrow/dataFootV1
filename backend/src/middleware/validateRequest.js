@@ -14,9 +14,9 @@ export const validateRequest = (schema) => async (req, res, next) => {
         // Parse validates and strips unknown keys if configured (optional)
         // We pass the whole request context we care about
         await schema.parseAsync({
-            body: req.body,
-            query: req.query,
-            params: req.params,
+            body:   req.body   ?? {},
+            query:  req.query  ?? {},
+            params: req.params ?? {},
         });
         next();
     } catch (error) {

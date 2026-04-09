@@ -5,7 +5,7 @@ import {
     Stack, Grid, Badge,
     PlayerCard, TeamSelector
 } from '../../../../design-system';
-import '../../../v3/modules/league/SquadList.css';
+import './SquadListV4.css';
 
 const DEFAULT_PHOTO = 'https://tmssl.akamaized.net//images/foto/normal/default.jpg?lm=1';
 

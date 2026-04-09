@@ -26,7 +26,7 @@ dev       ← intégration features     ← Claude merge ici
 ├── settings.json          # Permissions équipe (commité)
 ├── settings.local.json    # Permissions machine-spécifiques (gitignored)
 │
-├── commands/              # Slash commands /project:*
+├── commands/              # Slash commands /project:* (aussi invocables via Skill tool)
 │   ├── create-new-feature.md
 │   ├── implement-feature.md
 │   ├── gitflow.md
@@ -42,6 +42,7 @@ dev       ← intégration features     ← Claude merge ici
 ├── rules/                 # Rôles et standards (chargés en système prompt)
 │   ├── ai-cognition.md
 │   ├── development-best-practices.md
+│   ├── engineering-standards.md
 │   ├── visual-manifesto.md
 │   ├── backend-engineer.md
 │   ├── frontend-engineer.md
@@ -54,20 +55,69 @@ dev       ← intégration features     ← Claude merge ici
 │   ├── devops-engineer.md
 │   └── docker-engineer.md
 │
-├── skills/                # Skills auto-invoqués par contexte
-│   ├── frontend-design/
-│   ├── qa-automation/
-│   ├── machine-learning/
-│   ├── technical-specification/
-│   └── ...
+├── skills/                # Skills invocables via Skill tool ou /nom-skill
+│   ├── frontend-design/          # UI React + Design System V3
+│   ├── qa-automation/            # Batterie de tests complète
+│   ├── machine-learning/         # Modèles de prédiction
+│   ├── technical-specification/  # Rédaction TSD
+│   ├── docker/                   # Gestion conteneurs Docker
+│   ├── backend/
+│   │   ├── authentication-authorization/
+│   │   ├── caching-and-performance/
+│   │   ├── error-handling/
+│   │   ├── input-validation/
+│   │   └── rest-endpoint-design/
+│   ├── database/
+│   │   ├── indexing-strategy/
+│   │   ├── migration-script/
+│   │   └── normalization/
+│   ├── design/
+│   │   ├── api-specification/
+│   │   ├── architecture/
+│   │   └── c4-modelling/
+│   ├── devops/
+│   │   ├── ci-setup-github-actions/
+│   │   ├── containerization-docker/
+│   │   └── deployment-guide/
+│   ├── documentation/
+│   │   ├── api-documentation/
+│   │   └── readme-guidelines/
+│   ├── frontend/
+│   │   ├── accessibility-and-ux/
+│   │   ├── component-architecture/
+│   │   ├── data-visualization/
+│   │   ├── form-validation/
+│   │   └── state-management/
+│   ├── fullstack/
+│   │   ├── api-integration/
+│   │   └── cross-layer-coordination/
+│   ├── performance/
+│   │   ├── caching-strategies/
+│   │   └── load-testing/
+│   ├── planning/
+│   │   ├── requirement-gathering/
+│   │   └── roadmap-definition/
+│   ├── security/
+│   │   ├── authentication-best-practices/
+│   │   ├── sql-injection-mitigation/
+│   │   └── xss-prevention/
+│   └── testing/
+│       ├── e2e-testing-playwright/
+│       ├── frontend-testing-react/
+│       ├── integration-testing/
+│       └── unit-testing-node/
 │
-└── project-architecture/  # Référence architecture (lue par Claude avant chaque feature)
-    ├── architecture-globale.md
-    ├── backend-apis.md
-    ├── backend-swagger.yaml
-    ├── frontend-pages.md
-    ├── ml-services.md
-    └── sonarGoodPractice.md
+├── project-architecture/  # Référence architecture (lue par Claude avant chaque feature)
+│   ├── architecture-globale.md
+│   ├── backend-apis.md
+│   ├── backend-swagger.yaml
+│   ├── frontend-pages.md
+│   ├── ml-services.md
+│   └── sonarGoodPractice.md
+│
+└── tasks/                 # Suivi de session (non commité)
+    ├── todo.md            # Plan + checkboxes de la tâche en cours
+    └── lessons.md         # Règles auto-apprises après corrections
 ```
 
 ---
@@ -75,6 +125,8 @@ dev       ← intégration features     ← Claude merge ici
 ## Slash Commands
 
 Tape `/project:` dans Claude Code pour voir la liste complète. Chaque commande injecte automatiquement du contexte shell (branche git, état Docker, etc.) avant que Claude reçoive le prompt.
+
+> **Note** : les commandes principales (`create-new-feature`, `implement-feature`, `gitflow`, `run-tests`, `deploy`) existent aussi comme **Skills** invocables directement via le Skill tool (sans le préfixe `/project:`). Les deux syntaxes sont fonctionnelles.
 
 ### `/project:create-new-feature`
 
@@ -315,6 +367,17 @@ les rounds quand rangeStart > 5. Voici l'erreur : [stack trace]"
 # Si Claude boucle sur une erreur :
 "Stop. Explique-moi le bloquant et propose 3 approches alternatives."
 ```
+
+---
+
+## Suivi de session (`tasks/`)
+
+Claude utilise deux fichiers de session (non commités, gitignored) :
+
+- `tasks/todo.md` — plan de la tâche en cours avec checkboxes, marquées au fil de l'avancement
+- `tasks/lessons.md` — règles auto-apprises après chaque correction utilisateur (self-improvement loop)
+
+Ces fichiers sont éphémères par session. Ne pas les commiter.
 
 ---
 

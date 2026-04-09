@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Grid } from '../../../../design-system';
-import '../../../v3/modules/league/LeagueLeaders.css';
+import './LeagueLeadersV4.css';
 
 const RANK_COLORS = {
     1: { bg: 'var(--color-accent-500)', color: '#000' },
@@ -31,7 +31,7 @@ const LeaderRow = ({ player, rank, value, secondaryLabel, secondaryValue }) => {
                 <span className="ll-value">{value}</span>
                 {secondaryValue !== undefined && (
                     <span className="ll-secondary">
-                        {typeof secondaryValue === 'number' ? secondaryValue.toFixed(2) : secondaryValue}
+                        {secondaryValue != null ? Number(secondaryValue).toFixed(2) : ''}
                         <span className="ll-secondary-label"> {secondaryLabel}</span>
                     </span>
                 )}
