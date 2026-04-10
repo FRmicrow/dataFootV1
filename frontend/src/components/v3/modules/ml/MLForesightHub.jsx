@@ -7,6 +7,78 @@ import MLGlossaryTooltip from './shared/MLGlossaryTooltip';
 import { ForesightFixtureCard, HistoricalFixtureRow } from './submodules/MLForesightComponents';
 import './MLForesightHub.css';
 
+// ─── V4 History Row ───────────────────────────────────────────────────────────
+const OUTCOME_LABEL = { '1': 'Domicile', 'N': 'Nul', '2': 'Extérieur' };
+
+const V4HistoryRow = ({ row, idx }) => {
+    const correct = row.was_correct;
+    const probPct = (p) => (p != null ? `${Math.round(p * 100)}%` : '—');
+    const predictedAt = row.predicted_at
+        ? new Date(row.predicted_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+        : null;
+
+    return (
+        <div
+            className="ml-foresight__history-row"
+            style={{ animationDelay: `${idx * 30}ms` }}
+        >
+            <div className="ml-foresight__history-head">
+                <div className="ml-foresight__history-main">
+                    <strong>
+                        {row.home_team}
+                        <span className="ml-foresight__edge-vs"> vs </span>
+                        {row.away_team}
+                    </strong>
+                    <span>
+                        {row.match_date
+                            ? new Date(row.match_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+                            : '—'}
+                        {row.competition_name ? ` · ${row.competition_name}` : ''}
+                    </span>
+                </div>
+                <div className="ml-foresight__history-badges">
+                    {row.model_name && <Badge variant="neutral" size="sm">{row.model_name}</Badge>}
+                    {predictedAt && <Badge variant="neutral" size="sm">pred. {predictedAt}</Badge>}
+                    <Badge variant={correct ? 'success' : 'danger'} size="sm">
+                        {correct ? 'Hit' : 'Miss'}
+                    </Badge>
+                </div>
+            </div>
+
+            <div className="ml-foresight__history-grid">
+                <div>
+                    <span>Score réel</span>
+                    <strong>
+                        {row.actual_home != null ? `${row.actual_home} – ${row.actual_away}` : '—'}
+                    </strong>
+                </div>
+                <div>
+                    <span>Résultat réel</span>
+                    <strong>{OUTCOME_LABEL[row.actual_outcome] ?? '—'}</strong>
+                </div>
+                <div>
+                    <span>Prédiction ML</span>
+                    <strong>
+                        {row.predicted_outcome
+                            ? `${OUTCOME_LABEL[row.predicted_outcome] ?? row.predicted_outcome} · ${probPct(
+                                  row.predicted_outcome === '1'
+                                      ? row.prob_home
+                                      : row.predicted_outcome === 'N'
+                                      ? row.prob_draw
+                                      : row.prob_away
+                              )}`
+                            : 'Indisponible'}
+                    </strong>
+                </div>
+                <div>
+                    <span>Probas 1 / N / 2</span>
+                    <strong>{probPct(row.prob_home)} / {probPct(row.prob_draw)} / {probPct(row.prob_away)}</strong>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ─── Power level badge variant ────────────────────────────────────────────────
 const powerVariant = (level) => ({ elite: 'success', strong: 'primary', moderate: 'warning', weak: 'neutral' }[level] || 'neutral');
 
@@ -76,6 +148,21 @@ const MLForesightHub = () => {
     const [edgesOpen, setEdgesOpen] = useState(true);
     const [recosOpen, setRecosOpen] = useState(false);
 
+    // V4 Prediction History
+    const [v4History, setV4History] = useState([]);
+    const [v4HistoryLoading, setV4HistoryLoading] = useState(true);
+    const [v4HistoryError, setV4HistoryError] = useState(null);
+    const [v4CompFilter, setV4CompFilter] = useState('');
+    const [v4HistoryOpen, setV4HistoryOpen] = useState(true);
+
+    // V4 Upcoming matches
+    const [v4Comps, setV4Comps] = useState([]);
+    const [v4CompsLoading, setV4CompsLoading] = useState(true);
+    const [selectedV4CompId, setSelectedV4CompId] = useState('');
+    const [v4Upcoming, setV4Upcoming] = useState([]);
+    const [v4UpcomingLoading, setV4UpcomingLoading] = useState(false);
+    const [v4UpcomingError, setV4UpcomingError] = useState(null);
+
     useEffect(() => {
         api.getTopEdges({ limit: 8 })
             .then((rows) => setEdges(Array.isArray(rows) ? rows.map((e, i) => ({ ...e, _idx: i })) : []))
@@ -89,6 +176,25 @@ const MLForesightHub = () => {
             })
             .catch(() => setRecos([]))
             .finally(() => setRecosLoading(false));
+
+        // Load V4 prediction history
+        api.getV4PredictionHistory({ limit: 100 })
+            .then((payload) => {
+                const rows = payload?.data ?? (Array.isArray(payload) ? payload : []);
+                setV4History(rows);
+            })
+            .catch((err) => setV4HistoryError(err.message || 'Impossible de charger l\'historique V4.'))
+            .finally(() => setV4HistoryLoading(false));
+
+        // Load V4 competitions with upcoming matches
+        api.getV4ForesightCompetitions()
+            .then((payload) => {
+                const comps = payload?.data ?? (Array.isArray(payload) ? payload : []);
+                setV4Comps(comps);
+                if (comps.length) setSelectedV4CompId(comps[0].competitionId);
+            })
+            .catch(() => setV4Comps([]))
+            .finally(() => setV4CompsLoading(false));
     }, []);
 
     useEffect(() => {
@@ -171,6 +277,29 @@ const MLForesightHub = () => {
         }
     }, [activeLeagueData, selectedSeasonYear]);
 
+    // Load V4 upcoming matches when competition changes
+    useEffect(() => {
+        if (!selectedV4CompId) return;
+        let cancelled = false;
+        setV4UpcomingLoading(true);
+        setV4UpcomingError(null);
+
+        api.getV4ForesightMatches(selectedV4CompId)
+            .then((payload) => {
+                if (cancelled) return;
+                const rows = payload?.data ?? (Array.isArray(payload) ? payload : []);
+                setV4Upcoming(rows);
+            })
+            .catch((err) => {
+                if (!cancelled) setV4UpcomingError(err.message || 'Impossible de charger les matchs V4.');
+            })
+            .finally(() => {
+                if (!cancelled) setV4UpcomingLoading(false);
+            });
+
+        return () => { cancelled = true; };
+    }, [selectedV4CompId]);
+
     const activeLeague = useMemo(
         () => leagues.find((league) => String(league.leagueId) === String(selectedLeagueId)) || null,
         [leagues, selectedLeagueId]
@@ -189,6 +318,31 @@ const MLForesightHub = () => {
         () => leagues.reduce((sum, league) => sum + Number(league.upcomingFixtureCount || 0), 0),
         [leagues]
     );
+
+    // V4 history derived data
+    const v4Competitions = useMemo(() => {
+        const seen = new Map();
+        v4History.forEach((r) => {
+            if (r.competition_id && r.competition_name && !seen.has(r.competition_id)) {
+                seen.set(r.competition_id, r.competition_name);
+            }
+        });
+        return Array.from(seen.entries()).map(([id, name]) => ({ id: String(id), name }));
+    }, [v4History]);
+
+    const filteredV4History = useMemo(
+        () => v4CompFilter
+            ? v4History.filter((r) => String(r.competition_id) === v4CompFilter)
+            : v4History,
+        [v4History, v4CompFilter]
+    );
+
+    const v4HitRate = useMemo(() => {
+        const done = filteredV4History.filter((r) => r.predicted_outcome != null);
+        if (!done.length) return null;
+        const hits = done.filter((r) => r.was_correct).length;
+        return Math.round((hits / done.length) * 100);
+    }, [filteredV4History]);
 
     const totalReadyFixtures = useMemo(
         () => leagues.reduce((sum, league) => sum + Number(league.predictionReadyCount || 0), 0),
@@ -253,7 +407,7 @@ const MLForesightHub = () => {
             <div className="ml-foresight">
                 <MLHubEmptyState
                     title="Aucune ligue couverte"
-                    message="Le contrat Prévisions n’a remonté aucune ligue V36 exploitable."
+                    message="Le contrat Prévisions n'a remonté aucune ligue V36 exploitable."
                 />
             </div>
         );
@@ -263,7 +417,7 @@ const MLForesightHub = () => {
         <div className="ml-foresight">
             <MLHubHero
                 title="Prévisions des matchs à venir"
-                subtitle="Les ligues affichées ici viennent du contrat ML Hub V36. Les matchs à venir sont lus depuis l’application, puis enrichis avec les outputs ML persistés."
+                subtitle="Les ligues affichées ici viennent du contrat ML Hub V36. Les matchs à venir sont lus depuis l'application, puis enrichis avec les outputs ML persistés."
                 actions={(
                     <div className="ml-foresight__hero-actions">
                         <MLGlossaryTooltip topic="foresight" label="Glossaire prévisions" />
@@ -345,7 +499,7 @@ const MLForesightHub = () => {
 
             <MLHubSection
                 title="Saisons avec modèles"
-                subtitle="Choisis l’année à lire. Les saisons passées viennent des runs complétés; la saison active garde aussi les matchs à venir."
+                subtitle="Choisis l'année à lire. Les saisons passées viennent des runs complétés; la saison active garde aussi les matchs à venir."
                 badge={{ label: `${seasonOptions.length} saisons`, variant: 'neutral' }}
             >
                 {detailLoading && !activeLeagueData ? (
@@ -374,33 +528,60 @@ const MLForesightHub = () => {
                 ) : (
                     <MLHubEmptyState
                         title="Aucune saison exploitable"
-                        message="La ligue sélectionnée n’a ni run historique complété ni match futur remonté dans le contrat ML Hub."
+                        message="La ligue sélectionnée n'a ni run historique complété ni match futur remonté dans le contrat ML Hub."
                     />
                 )}
             </MLHubSection>
 
+            {/* ── V4 Matchs à venir ── */}
             <MLHubSection
-                title="Matchs à venir & en cours"
-                subtitle="Tous les matchs non terminés pour la ligue et la saison sélectionnées, avec les prédictions ML associées."
-                badge={{ label: `${upcomingFixtures.length} match${upcomingFixtures.length > 1 ? 's' : ''}`, variant: upcomingFixtures.length ? 'primary' : 'neutral' }}
+                title="Matchs à venir"
+                subtitle="Source Transfermarkt (V4) — matchs non encore joués, enrichis avec les prédictions ML disponibles via bridge V3."
+                badge={{
+                    label: v4CompsLoading ? '…' : `${v4Upcoming.length} match${v4Upcoming.length > 1 ? 's' : ''}`,
+                    variant: v4Upcoming.length ? 'primary' : 'neutral'
+                }}
             >
-                {detailLoading ? (
+                {/* Competition picker */}
+                {!v4CompsLoading && v4Comps.length > 0 && (
+                    <div className="ml-foresight__league-picker" style={{ marginBottom: 'var(--spacing-md)' }}>
+                        {v4Comps.map((comp) => (
+                            <button
+                                key={comp.competitionId}
+                                type="button"
+                                className={`ml-foresight__league-chip ${selectedV4CompId === comp.competitionId ? 'is-active' : ''}`}
+                                onClick={() => setSelectedV4CompId(comp.competitionId)}
+                            >
+                                {comp.logo && <img src={comp.logo} alt="" />}
+                                <span>{comp.competitionName}</span>
+                                <Badge variant="neutral" size="sm">{comp.upcomingCount}</Badge>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {v4CompsLoading || v4UpcomingLoading ? (
                     <div className="ml-foresight__fixture-list">
                         <Skeleton height="220px" />
                         <Skeleton height="220px" />
                     </div>
-                ) : detailError ? (
-                    <MLHubEmptyState title="Chargement impossible" message={detailError} />
-                ) : upcomingFixtures.length ? (
+                ) : v4UpcomingError ? (
+                    <MLHubEmptyState title="Chargement impossible" message={v4UpcomingError} />
+                ) : !v4Comps.length ? (
+                    <MLHubEmptyState
+                        title="Aucune compétition V4 avec des matchs à venir"
+                        message="Les données Transfermarkt ne contiennent pas encore de matchs futurs programmés."
+                    />
+                ) : v4Upcoming.length ? (
                     <div className="ml-foresight__fixture-list">
-                        {upcomingFixtures.map((fixture) => (
+                        {v4Upcoming.map((fixture) => (
                             <ForesightFixtureCard key={fixture.fixtureId} fixture={fixture} />
                         ))}
                     </div>
                 ) : (
                     <MLHubEmptyState
                         title="Aucun match à venir"
-                        message="La ligue et la saison selectionnees n’ont actuellement aucun match futur dans les donnees applicatives."
+                        message="Cette compétition n'a pas de matchs futurs dans la base Transfermarkt."
                     />
                 )}
             </MLHubSection>
@@ -427,9 +608,80 @@ const MLForesightHub = () => {
                     <MLHubEmptyState
                         title="Aucun match historique"
                         message={activeSeason?.hasHistoricalRun
-                            ? 'Le run existe pour cette saison, mais aucune fixture terminee n’a ete remontee dans le contrat.'
-                            : 'Aucun run historique complete n’est disponible pour cette saison sur cette ligue.'}
+                            ? "Le run existe pour cette saison, mais aucune fixture terminee n'a ete remontee dans le contrat."
+                            : "Aucun run historique complete n'est disponible pour cette saison sur cette ligue."}
                     />
+                )}
+            </MLHubSection>
+
+            {/* ── V4 Prédiction Historique ── */}
+            <MLHubSection
+                title="Historique des prédictions V4"
+                subtitle="Matchs Transfermarkt complétés avec prédictions stockées dans v4.ml_predictions. Hit/Miss calculé par proba dominante."
+                badge={{
+                    label: v4HistoryLoading
+                        ? '…'
+                        : v4HitRate != null
+                        ? `${filteredV4History.length} matchs · ${v4HitRate}% hit`
+                        : `${filteredV4History.length} matchs`,
+                    variant: v4HitRate != null && v4HitRate >= 50 ? 'success' : 'neutral'
+                }}
+                actions={
+                    <Button variant="ghost" size="sm" onClick={() => setV4HistoryOpen((o) => !o)}>
+                        {v4HistoryOpen ? 'Réduire' : 'Afficher'}
+                    </Button>
+                }
+            >
+                {v4HistoryOpen && (
+                    <>
+                        {/* Competition filter */}
+                        {v4Competitions.length > 1 && !v4HistoryLoading && (
+                            <div className="ml-foresight__league-picker" style={{ marginBottom: 'var(--spacing-md)' }}>
+                                <button
+                                    type="button"
+                                    className={`ml-foresight__league-chip ${!v4CompFilter ? 'is-active' : ''}`}
+                                    onClick={() => setV4CompFilter('')}
+                                >
+                                    <span>Toutes compétitions</span>
+                                    <Badge variant="neutral" size="sm">{v4History.length}</Badge>
+                                </button>
+                                {v4Competitions.map((comp) => (
+                                    <button
+                                        key={comp.id}
+                                        type="button"
+                                        className={`ml-foresight__league-chip ${v4CompFilter === comp.id ? 'is-active' : ''}`}
+                                        onClick={() => setV4CompFilter(comp.id)}
+                                    >
+                                        <span>{comp.name}</span>
+                                        <Badge variant="neutral" size="sm">
+                                            {v4History.filter((r) => String(r.competition_id) === comp.id).length}
+                                        </Badge>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {v4HistoryLoading ? (
+                            <div className="ml-foresight__history-list">
+                                <Skeleton height="120px" />
+                                <Skeleton height="120px" />
+                                <Skeleton height="120px" />
+                            </div>
+                        ) : v4HistoryError ? (
+                            <MLHubEmptyState title="Chargement impossible" message={v4HistoryError} />
+                        ) : filteredV4History.length ? (
+                            <div className="ml-foresight__history-list">
+                                {filteredV4History.map((row, idx) => (
+                                    <V4HistoryRow key={row.match_id} row={row} idx={idx} />
+                                ))}
+                            </div>
+                        ) : (
+                            <MLHubEmptyState
+                                title="Aucun résultat"
+                                message="Aucune prédiction V4 enregistrée. Lance le pipeline features_v4_pipeline.py puis train_1x2_v4.py pour alimenter v4.ml_predictions."
+                            />
+                        )}
+                    </>
                 )}
             </MLHubSection>
         </div>

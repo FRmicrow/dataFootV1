@@ -241,6 +241,124 @@ def predict_fixture_all(fixture_id: int):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+class V4PredictionRequest(BaseModel):
+    match_id: int
+
+
+@app.post("/predict/v4")
+def predict_v4_match(request: V4PredictionRequest):
+    """
+    Compute V4 ML prediction for a single match_id.
+    Uses predictor_v4 pipeline: reads/computes features from v4.ml_feature_store,
+    runs all V4 models (1X2, Goals, HT, Corners, Cards), stores in v4.ml_predictions.
+    Falls back to V3 model + features_v4_pipeline if V4 models are not yet trained.
+    """
+    try:
+        from predictor_v4 import predict_match_v4, get_models as get_v4_models
+        v4_models = get_v4_models()
+
+        if v4_models and "1x2" in v4_models:
+            # V4 models available — use full V4 pipeline
+            return predict_match_v4(request.match_id)
+
+        # Fallback: V3 model + V4 features (cross-competition rolling windows)
+        if model is None:
+            raise HTTPException(status_code=503, detail="No ML model loaded")
+
+        from features_v4_pipeline import compute_feature_vector_v4, V4_FEATURE_COLUMNS
+        import math
+
+        start = time.time()
+        vector = compute_feature_vector_v4(request.match_id)
+        # Align to V3 schema for backward compat
+        from feature_schema import GLOBAL_1X2_FEATURE_COLUMNS, normalize_feature_vector
+        aligned = normalize_feature_vector({k: (0.0 if (isinstance(v, float) and math.isnan(v)) else v)
+                                            for k, v in vector.items()})
+        feature_df = pd.DataFrame([aligned], columns=GLOBAL_1X2_FEATURE_COLUMNS)
+        probs = model.predict_proba(feature_df)[0]
+        latency_ms = round((time.time() - start) * 1000, 1)
+
+        return {
+            "success":   True,
+            "match_id":  request.match_id,
+            "source":    "v4_fallback_v3_model",
+            "probabilities": {
+                "home": round(float(probs[1]), 4),
+                "draw": round(float(probs[0]), 4),
+                "away": round(float(probs[2]), 4),
+            },
+            "top_features": importance[:5],
+            "latency_ms": latency_ms,
+        }
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+class V4BatchPredictionRequest(BaseModel):
+    match_ids: List[int]
+
+
+@app.post("/predict/v4/batch")
+def predict_v4_batch(request: V4BatchPredictionRequest):
+    """
+    Batch V4 ML prediction for multiple match_ids (up to 50).
+    Uses predictor_v4 pipeline when V4 models are available.
+    Falls back to V3 model + v4 features otherwise.
+    """
+    if not request.match_ids:
+        return {"success": True, "results": []}
+
+    match_ids = request.match_ids[:50]  # hard cap
+
+    try:
+        from predictor_v4 import predict_matches_v4_batch, get_models as get_v4_models
+        v4_models = get_v4_models()
+
+        if v4_models and "1x2" in v4_models:
+            results = predict_matches_v4_batch(match_ids, store=True)
+            return {"success": True, "results": results}
+    except Exception as exc:
+        print(f"[predict/v4/batch] V4 predictor unavailable, falling back: {exc}")
+
+    # Fallback: V3 model + cross-competition V4 features
+    if model is None:
+        raise HTTPException(status_code=503, detail="No ML model loaded")
+
+    from features_v4_pipeline import compute_feature_vector_v4, V4_FEATURE_COLUMNS
+    from feature_schema import GLOBAL_1X2_FEATURE_COLUMNS, normalize_feature_vector
+    import math
+
+    results = []
+    for match_id in match_ids:
+        try:
+            vector = compute_feature_vector_v4(match_id)
+            aligned = normalize_feature_vector({
+                k: (0.0 if (isinstance(v, float) and math.isnan(v)) else v)
+                for k, v in vector.items()
+            })
+            feature_df = pd.DataFrame([aligned], columns=GLOBAL_1X2_FEATURE_COLUMNS)
+            probs = model.predict_proba(feature_df)[0]
+            results.append({
+                "match_id": match_id,
+                "success":  True,
+                "probabilities": {
+                    "home": round(float(probs[1]), 4),
+                    "draw": round(float(probs[0]), 4),
+                    "away": round(float(probs[2]), 4),
+                },
+            })
+        except Exception as exc:
+            results.append({"match_id": match_id, "success": False, "error": str(exc)})
+
+    return {"success": True, "results": results}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8008)
