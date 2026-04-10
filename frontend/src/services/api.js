@@ -202,8 +202,6 @@ export default {
     },
     getMLUpcomingPredictions: (params) => api.get('/ml-platform/predictions/upcoming', { params }),
 
-    getMLRecommendations: () => api.get('/ml-platform/recommendations'),
-
     syncMLUpcomingOdds: () => api.post('/ml-platform/odds/sync', {}),
     syncMLAdvancedOdds: () => api.post('/ml-platform/odds/advanced-sync', {}),
     runMLOddsCatchup: () => api.post('/ml-platform/odds/catchup', {}),
@@ -223,21 +221,22 @@ export default {
     getDiscoveryLeagues: (country) => api.get(`/import/discovery/leagues?country=${country}`),
     triggerDiscoveryImport: (data) => api.post('/import/discovery/import', data),
 
-    // --- ML Hub V37 ---
+    // --- ML Hub V37 (résidus non-hub) ---
     getModelsCatalog: (params) => api.get('/ml-platform/models/catalog', { params }),
-    getMLForesightLeagues: () => api.get('/ml-platform/foresight/leagues'),
-    getMLForesightLeague: (leagueId, seasonYear) => {
-        const params = new URLSearchParams();
-        if (seasonYear) params.append('seasonYear', seasonYear);
-        const query = params.toString();
-        return api.get(`/ml-platform/foresight/league/${leagueId}${query ? `?${query}` : ''}`);
-    },
     calculateROI: (data) => api.post('/ml-platform/performance/roi', data),
     getLeaguesWithOdds: () => api.get('/ml-platform/performance/leagues-with-odds'),
-    getTopEdges: (params) => api.get('/ml-platform/edges/top', { params }),
     getSubmodels: () => api.get('/ml-platform/submodels'),
     createSubmodel: (data) => api.post('/ml-platform/submodels', data),
     deleteSubmodel: (id) => api.delete(`/ml-platform/submodels/${id}`),
+
+    // --- V4 ML ---
+    getV4MatchPrediction: (matchId) => api.get(`/v4/match/${matchId}/prediction`),
+    predictV4Match: (matchId) => api.post(`/v4/match/${matchId}/predict`),
+    getV4PredictionHistory: (params) => api.get('/v4/ml/predictions/history', { params }),
+    getV4ForesightCompetitions: () => api.get('/v4/ml/foresight/competitions'),
+    getV4ForesightMatches: (competitionId, season) =>
+        api.get(`/v4/ml/foresight/competition/${competitionId}`, { params: season ? { season } : {} }),
+    getV4MLStats: () => api.get('/v4/ml/stats'),
 
     // --- Odds (V28) ---
     getUpcomingOdds: () => api.get('/odds/upcoming'),

@@ -2,6 +2,7 @@ import express from 'express';
 import leagueRoutesV4 from './league_routes.js';
 import oddsRoutesV4 from './odds_routes.js';
 import xgRoutesV4 from './xg_routes.js';
+import mlRoutesV4 from './ml_routes_v4.js';
 
 const router = express.Router();
 
@@ -12,5 +13,6 @@ const router = express.Router();
 router.use('/v4', leagueRoutesV4);
 router.use('/v4', oddsRoutesV4);
 router.use('/v4', xgRoutesV4);
+router.use('/v4', mlRoutesV4);
 
 export default router;

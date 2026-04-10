@@ -115,3 +115,43 @@ export const getLeagueSeasonTeamXgSchema = z.object({
     query:  z.object({}).passthrough(),
     body:   z.object({}).passthrough(),
 });
+
+/** GET /v4/match/:matchId/prediction */
+export const getMatchPredictionSchema = z.object({
+    params: matchIdParams,
+    query:  z.object({}).passthrough(),
+    body:   z.object({}).passthrough(),
+});
+
+/** POST /v4/match/:matchId/predict */
+export const predictV4MatchSchema = z.object({
+    params: matchIdParams,
+    query:  z.object({}).passthrough(),
+    body:   z.object({}).passthrough(),
+});
+
+/** GET /v4/ml/foresight/competitions */
+export const getV4ForesightCompetitionsSchema = z.object({
+    params: z.object({}).passthrough(),
+    query:  z.object({}).passthrough(),
+    body:   z.object({}).passthrough(),
+});
+
+/** GET /v4/ml/foresight/competition/:competitionId */
+export const getV4ForesightMatchesSchema = z.object({
+    params: z.object({ competitionId: z.string().min(1) }),
+    query:  z.object({ season: z.string().optional() }),
+    body:   z.object({}).passthrough(),
+});
+
+/** GET /v4/ml/predictions/history */
+export const getPredictionHistorySchema = z.object({
+    params: z.object({}).passthrough(),
+    query: z.object({
+        competition_id: z.string().optional(),
+        season_label:   z.string().optional(),
+        limit:          z.string().optional(),
+        offset:         z.string().optional(),
+    }),
+    body: z.object({}).passthrough(),
+});
