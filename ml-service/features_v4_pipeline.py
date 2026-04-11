@@ -37,8 +37,8 @@ from db_config import get_connection
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-FEATURE_SET_ID  = "v4_global_1x2_v1"
-SCHEMA_VERSION  = "1.0"
+FEATURE_SET_ID  = "v4_global_1x2_v2"
+SCHEMA_VERSION  = "2.0"
 
 # ---------------------------------------------------------------------------
 # Feature columns — the schema the model will be trained on
@@ -83,6 +83,13 @@ V4_FEATURE_COLUMNS = [
     "odds_home_prob", "odds_draw_prob", "odds_away_prob", "odds_margin",
     "is_cup", "is_league", "is_international_competition", "competition_type_code",
     "rest_h", "rest_a",
+    # H2H
+    "h2h_h_wins", "h2h_draws", "h2h_a_wins",
+    "h2h_goals_h_avg", "h2h_goals_a_avg", "h2h_n",
+    # Elo
+    "elo_h", "elo_a", "elo_diff",
+    # Player impact
+    "home_squad_strength", "away_squad_strength", "squad_strength_diff",
 ]
 
 # ---------------------------------------------------------------------------
@@ -443,6 +450,248 @@ def encode_competition(competition_type: Optional[str]) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Step 6a: Elo rating index (chronological pass over all history)
+# ---------------------------------------------------------------------------
+
+ELO_K_NEW   = 40      # < 10 matches
+ELO_K_EST   = 20      # >= 10 matches
+ELO_HOME_ADV = 100.0
+ELO_INIT    = 1500.0
+
+
+def build_elo_index(history: pd.DataFrame) -> dict:
+    """
+    Single chronological pass. Returns {club_id: (dates_ns_array, elos_before_array)}.
+    dates_ns_array is sorted ascending — use np.searchsorted for O(log n) lookup.
+    """
+    logger.info("Building Elo index…")
+    elo: dict[int, float] = {}
+    apps: dict[int, int] = {}
+    raw: dict[int, list] = {}  # club_id -> [(date_ns, elo_before)]
+
+    # history is already sorted chronologically
+    for row in history.itertuples():
+        hid = int(row.home_club_id)
+        aid = int(row.away_club_id)
+        elo_h = elo.get(hid, ELO_INIT)
+        elo_a = elo.get(aid, ELO_INIT)
+        ts_ns = row.match_date.value
+
+        if hid not in raw: raw[hid] = []
+        if aid not in raw: raw[aid] = []
+        raw[hid].append((ts_ns, elo_h))
+        raw[aid].append((ts_ns, elo_a))
+
+        exp_h = 1.0 / (1.0 + 10 ** ((elo_a - (elo_h + ELO_HOME_ADV)) / 400.0))
+        hs, as_ = int(row.home_score), int(row.away_score)
+        actual_h = 1.0 if hs > as_ else (0.5 if hs == as_ else 0.0)
+
+        k_h = ELO_K_NEW if apps.get(hid, 0) < 10 else ELO_K_EST
+        k_a = ELO_K_NEW if apps.get(aid, 0) < 10 else ELO_K_EST
+        elo[hid] = elo_h + k_h * (actual_h - exp_h)
+        elo[aid] = elo_a + k_a * ((1 - actual_h) - (1 - exp_h))
+        apps[hid] = apps.get(hid, 0) + 1
+        apps[aid] = apps.get(aid, 0) + 1
+
+    result = {}
+    for cid, entries in raw.items():
+        arr = np.array(entries)
+        result[int(cid)] = (arr[:, 0].astype(np.int64), arr[:, 1].astype(np.float64))
+
+    logger.info(f"Elo index built for {len(result):,} clubs")
+    return result
+
+
+def get_elo_at(club_id: int, before_date, elo_index: dict) -> float:
+    entry = elo_index.get(int(club_id))
+    if entry is None:
+        return np.nan
+    dates_ns, elos = entry
+    ts_ns = np.int64(pd.Timestamp(before_date).value)
+    idx = int(np.searchsorted(dates_ns, ts_ns, side="left"))
+    return float(elos[idx - 1]) if idx > 0 else np.nan
+
+
+# ---------------------------------------------------------------------------
+# Step 6b: H2H index
+# ---------------------------------------------------------------------------
+
+def build_h2h_index(history: pd.DataFrame) -> dict:
+    """
+    Returns {(min_id, max_id): (dates_ns, home_ids, h_scores, a_scores)} — all np arrays.
+    Canonical pair key; interpret from home_id perspective in get_h2h_stats.
+    """
+    logger.info("Building H2H index…")
+    raw: dict = {}
+    for row in history.itertuples():
+        hid = int(row.home_club_id)
+        aid = int(row.away_club_id)
+        key = (min(hid, aid), max(hid, aid))
+        if key not in raw:
+            raw[key] = []
+        raw[key].append((row.match_date.value, hid, int(row.home_score), int(row.away_score)))
+
+    result = {}
+    for key, matches in raw.items():
+        arr = np.array(matches)
+        result[key] = (
+            arr[:, 0].astype(np.int64),
+            arr[:, 1].astype(np.int64),
+            arr[:, 2].astype(np.int64),
+            arr[:, 3].astype(np.int64),
+        )
+    logger.info(f"H2H index built for {len(result):,} pairs")
+    return result
+
+
+def get_h2h_stats(home_id: int, away_id: int, before_date, h2h_index: dict, n: int = 10) -> dict:
+    nan = np.nan
+    empty = {"h2h_h_wins": nan, "h2h_draws": nan, "h2h_a_wins": nan,
+             "h2h_goals_h_avg": nan, "h2h_goals_a_avg": nan, "h2h_n": 0.0}
+    key = (min(home_id, away_id), max(home_id, away_id))
+    entry = h2h_index.get(key)
+    if entry is None:
+        return empty
+    dates, home_ids, h_scores, a_scores = entry
+    ts_ns = np.int64(pd.Timestamp(before_date).value)
+    idx = int(np.searchsorted(dates, ts_ns, side="left"))
+    if idx == 0:
+        return empty
+    start = max(0, idx - n)
+    hids_s = home_ids[start:idx]
+    hs_s   = h_scores[start:idx]
+    as_s   = a_scores[start:idx]
+    # From home_id perspective
+    hid_goals = np.where(hids_s == home_id, hs_s, as_s)
+    aid_goals = np.where(hids_s == home_id, as_s, hs_s)
+    diff = hid_goals - aid_goals
+    n_m = len(diff)
+    return {
+        "h2h_h_wins":      float(np.sum(diff > 0)),
+        "h2h_draws":       float(np.sum(diff == 0)),
+        "h2h_a_wins":      float(np.sum(diff < 0)),
+        "h2h_goals_h_avg": float(np.mean(hid_goals)),
+        "h2h_goals_a_avg": float(np.mean(aid_goals)),
+        "h2h_n":           float(n_m),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Step 6c: Rest days index
+# ---------------------------------------------------------------------------
+
+def build_last_match_index(history: pd.DataFrame) -> dict:
+    """Returns {club_id: sorted np.int64 array of match_date nanoseconds}."""
+    logger.info("Building rest-days index…")
+    home = history[["home_club_id", "match_date"]].rename(columns={"home_club_id": "club_id"})
+    away = history[["away_club_id", "match_date"]].rename(columns={"away_club_id": "club_id"})
+    all_ = pd.concat([home, away], ignore_index=True)
+    all_["ts_ns"] = all_["match_date"].apply(lambda x: x.value)
+    all_.sort_values(["club_id", "ts_ns"], inplace=True)
+    result = {}
+    for cid, grp in all_.groupby("club_id", sort=False):
+        result[int(cid)] = grp["ts_ns"].values.astype(np.int64)
+    logger.info(f"Rest-days index built for {len(result):,} clubs")
+    return result
+
+
+def get_rest_days(club_id: int, match_date, last_match_idx: dict, cap: int = 30) -> float:
+    dates = last_match_idx.get(int(club_id))
+    if dates is None or len(dates) == 0:
+        return np.nan
+    ts_ns = np.int64(pd.Timestamp(match_date).value)
+    idx = int(np.searchsorted(dates, ts_ns, side="left"))
+    if idx == 0:
+        return np.nan
+    days = (ts_ns - dates[idx - 1]) / (1e9 * 86400)
+    return float(min(days, cap))
+
+
+# ---------------------------------------------------------------------------
+# Step 6d: Player impact scores
+# ---------------------------------------------------------------------------
+
+def load_player_impact_scores(conn) -> dict:
+    """
+    Returns {(player_id, club_id): impact_score}.
+    impact_score = avg_pts_when_player_starts − club_overall_avg_pts.
+    Minimum 10 starts per player-club pair.
+    """
+    logger.info("Loading player impact scores…")
+    cur = conn.cursor()
+    cur.execute("""
+        WITH club_pts AS (
+            SELECT match_id, home_club_id AS club_id,
+                   CASE WHEN home_score > away_score THEN 3
+                        WHEN home_score = away_score THEN 1 ELSE 0 END AS pts
+            FROM v4.matches WHERE home_score IS NOT NULL
+            UNION ALL
+            SELECT match_id, away_club_id,
+                   CASE WHEN away_score > home_score THEN 3
+                        WHEN home_score = away_score THEN 1 ELSE 0 END
+            FROM v4.matches WHERE home_score IS NOT NULL
+        ),
+        club_avg AS (
+            SELECT club_id, AVG(pts) AS avg_pts
+            FROM club_pts GROUP BY club_id HAVING COUNT(*) >= 10
+        ),
+        player_with AS (
+            SELECT l.player_id, l.club_id, AVG(cp.pts) AS avg_pts_with
+            FROM v4.match_lineups l
+            JOIN club_pts cp ON cp.match_id = l.match_id AND cp.club_id = l.club_id
+            WHERE l.is_starter = true
+            GROUP BY l.player_id, l.club_id
+            HAVING COUNT(*) >= 10
+        )
+        SELECT pw.player_id, pw.club_id,
+               pw.avg_pts_with - ca.avg_pts AS impact_score
+        FROM player_with pw
+        JOIN club_avg ca USING (club_id)
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    result = {(int(r[0]), int(r[1])): float(r[2]) for r in rows}
+    logger.info(f"Player impact scores loaded: {len(result):,} player-club pairs")
+    return result
+
+
+def build_match_lineup_index(match_ids: list, conn) -> dict:
+    """
+    Returns {match_id: {club_id: [player_ids]}} starters only.
+    """
+    if not match_ids:
+        return {}
+    logger.info(f"Loading lineups for {len(match_ids):,} matches…")
+    placeholders = ",".join(["%s"] * len(match_ids))
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT match_id, club_id, player_id FROM v4.match_lineups "
+        f"WHERE match_id IN ({placeholders}) AND is_starter = true",
+        match_ids,
+    )
+    rows = cur.fetchall()
+    cur.close()
+    result: dict = {}
+    for mid, cid, pid in rows:
+        mid, cid, pid = int(mid), int(cid), int(pid)
+        if mid not in result: result[mid] = {}
+        if cid not in result[mid]: result[mid][cid] = []
+        result[mid][cid].append(pid)
+    logger.info(f"Lineups loaded for {len(result):,} matches")
+    return result
+
+
+def get_squad_strength(club_id: int, match_id: int,
+                        lineup_idx: dict, impact_idx: dict) -> float:
+    players = lineup_idx.get(int(match_id), {}).get(int(club_id))
+    if not players:
+        return np.nan
+    scores = [impact_idx.get((pid, int(club_id)), np.nan) for pid in players]
+    valid  = [s for s in scores if not np.isnan(s)]
+    return float(np.mean(valid)) if valid else np.nan
+
+
+# ---------------------------------------------------------------------------
 # Step 6: Build one feature vector
 # ---------------------------------------------------------------------------
 
@@ -450,7 +699,12 @@ def build_feature_vector(row: pd.Series,
                           club_idx: dict,
                           season_idx: dict,
                           matchday_idx: dict,
-                          odds_map: dict) -> dict:
+                          odds_map: dict,
+                          elo_idx: Optional[dict] = None,
+                          h2h_idx: Optional[dict] = None,
+                          last_match_idx: Optional[dict] = None,
+                          lineup_idx: Optional[dict] = None,
+                          impact_idx: Optional[dict] = None) -> dict:
     nan = np.nan
     home_id = int(row.home_club_id)
     away_id = int(row.away_club_id)
@@ -487,6 +741,38 @@ def build_feature_vector(row: pd.Series,
             }
 
     comp_feats = encode_competition(row.competition_type if hasattr(row, "competition_type") else None)
+
+    # Elo
+    elo_feats = {"elo_h": nan, "elo_a": nan, "elo_diff": nan}
+    if elo_idx is not None:
+        eh = get_elo_at(home_id, match_date, elo_idx)
+        ea = get_elo_at(away_id, match_date, elo_idx)
+        elo_feats = {
+            "elo_h":    eh,
+            "elo_a":    ea,
+            "elo_diff": (eh - ea) if not (np.isnan(eh) or np.isnan(ea)) else nan,
+        }
+
+    # H2H
+    h2h_feats = {"h2h_h_wins": nan, "h2h_draws": nan, "h2h_a_wins": nan,
+                 "h2h_goals_h_avg": nan, "h2h_goals_a_avg": nan, "h2h_n": 0.0}
+    if h2h_idx is not None:
+        h2h_feats = get_h2h_stats(home_id, away_id, match_date, h2h_idx)
+
+    # Rest days (real value, replaces hardcoded 7.0)
+    rest_h = get_rest_days(home_id, match_date, last_match_idx) if last_match_idx is not None else nan
+    rest_a = get_rest_days(away_id, match_date, last_match_idx) if last_match_idx is not None else nan
+
+    # Squad strength
+    squad_feats = {"home_squad_strength": nan, "away_squad_strength": nan, "squad_strength_diff": nan}
+    if lineup_idx is not None and impact_idx is not None:
+        ss_h = get_squad_strength(home_id, match_id, lineup_idx, impact_idx)
+        ss_a = get_squad_strength(away_id, match_id, lineup_idx, impact_idx)
+        squad_feats = {
+            "home_squad_strength": ss_h,
+            "away_squad_strength": ss_a,
+            "squad_strength_diff": (ss_h - ss_a) if not (np.isnan(ss_h) or np.isnan(ss_a)) else nan,
+        }
 
     # Performance diffs
     h_shots5   = h["shots5"];   a_shots5   = a["shots5"]
@@ -580,7 +866,13 @@ def build_feature_vector(row: pd.Series,
         # Competition
         **comp_feats,
         # Rest
-        "rest_h": 7.0, "rest_a": 7.0,
+        "rest_h": rest_h, "rest_a": rest_a,
+        # H2H
+        **h2h_feats,
+        # Elo
+        **elo_feats,
+        # Squad strength
+        **squad_feats,
     }
 
 
@@ -764,6 +1056,113 @@ def compute_feature_vector_v4(match_id: int, conn=None) -> dict:
         def ns(x,y): return (0 if np.isnan(x) else x)+(0 if np.isnan(y) else y) if not(np.isnan(x) and np.isnan(y)) else nan
         def nad(x,y): return abs(x-y) if not(np.isnan(x) or np.isnan(y)) else nan
 
+        # --- Rest days (from last match before this date) ---
+        def _rest_days(club_id):
+            try:
+                c = conn.cursor()
+                c.execute(
+                    """SELECT match_date FROM v4.matches
+                       WHERE (home_club_id=%s OR away_club_id=%s)
+                         AND home_score IS NOT NULL AND match_date < %s
+                       ORDER BY match_date DESC LIMIT 1""",
+                    (club_id, club_id, match_date),
+                )
+                r = c.fetchone(); c.close()
+                if r:
+                    days = (pd.Timestamp(match_date) - pd.Timestamp(r[0])).days
+                    return float(min(days, 30))
+            except Exception: conn.rollback()
+            return nan
+
+        rest_h = _rest_days(home_id)
+        rest_a = _rest_days(away_id)
+
+        # --- Elo (simple per-club query on recent Elo-sorted history) ---
+        def _elo(club_id):
+            """Quick Elo estimate: iterate chronological matches before this date."""
+            try:
+                c = conn.cursor()
+                c.execute(
+                    """SELECT home_club_id, away_club_id, home_score, away_score
+                       FROM v4.matches
+                       WHERE (home_club_id=%s OR away_club_id=%s)
+                         AND home_score IS NOT NULL AND match_date < %s
+                       ORDER BY match_date ASC""",
+                    (club_id, club_id, match_date),
+                )
+                rows = c.fetchall(); c.close()
+                elo = ELO_INIT; apps = 0
+                for hid, aid, hs, as_ in rows:
+                    hid, aid = int(hid), int(aid)
+                    elo_opp = ELO_INIT  # simplified: no opp tracking here
+                    exp = 1.0 / (1.0 + 10 ** ((elo_opp - (elo + ELO_HOME_ADV if hid==club_id else elo)) / 400.0))
+                    actual = 1.0 if (hs>as_ and hid==club_id) or (as_>hs and aid==club_id) else (0.5 if hs==as_ else 0.0)
+                    k = ELO_K_NEW if apps < 10 else ELO_K_EST
+                    elo += k * (actual - exp); apps += 1
+                return float(elo)
+            except Exception: conn.rollback()
+            return nan
+
+        elo_h_v = _elo(home_id)
+        elo_a_v = _elo(away_id)
+        elo_diff_v = (elo_h_v - elo_a_v) if not (np.isnan(elo_h_v) or np.isnan(elo_a_v)) else nan
+
+        # --- H2H (last 10 direct meetings before this date) ---
+        h2h_feats = {"h2h_h_wins":nan,"h2h_draws":nan,"h2h_a_wins":nan,
+                     "h2h_goals_h_avg":nan,"h2h_goals_a_avg":nan,"h2h_n":0.0}
+        try:
+            c = conn.cursor()
+            c.execute(
+                """SELECT home_club_id, home_score, away_score
+                   FROM v4.matches
+                   WHERE ((home_club_id=%s AND away_club_id=%s) OR (home_club_id=%s AND away_club_id=%s))
+                     AND home_score IS NOT NULL AND match_date < %s
+                   ORDER BY match_date DESC LIMIT 10""",
+                (home_id, away_id, away_id, home_id, match_date),
+            )
+            h2h_rows = c.fetchall(); c.close()
+            if h2h_rows:
+                h_w=d=a_w=0; hg_sum=ag_sum=0
+                for hid, hs, as_ in h2h_rows:
+                    hg = hs if int(hid)==home_id else as_
+                    ag = as_ if int(hid)==home_id else hs
+                    hg_sum+=hg; ag_sum+=ag
+                    if hg>ag: h_w+=1
+                    elif hg==ag: d+=1
+                    else: a_w+=1
+                n = len(h2h_rows)
+                h2h_feats = {"h2h_h_wins":float(h_w),"h2h_draws":float(d),"h2h_a_wins":float(a_w),
+                             "h2h_goals_h_avg":hg_sum/n,"h2h_goals_a_avg":ag_sum/n,"h2h_n":float(n)}
+        except Exception: conn.rollback()
+
+        # --- Squad strength (mean impact of last-known lineup) ---
+        squad_feats = {"home_squad_strength":nan,"away_squad_strength":nan,"squad_strength_diff":nan}
+        try:
+            impact_idx = load_player_impact_scores(conn)
+            def _squad_strength(club_id):
+                c = conn.cursor()
+                # Use last 5 actual lineups to estimate typical squad strength
+                c.execute(
+                    """SELECT l.player_id FROM v4.match_lineups l
+                       JOIN v4.matches m ON m.match_id = l.match_id
+                       WHERE l.club_id=%s AND l.is_starter=true
+                         AND m.home_score IS NOT NULL AND m.match_date < %s
+                       ORDER BY m.match_date DESC LIMIT 55""",
+                    (club_id, match_date),
+                )
+                rows = c.fetchall(); c.close()
+                scores = [impact_idx.get((int(r[0]), int(club_id)), nan) for r in rows]
+                valid = [s for s in scores if not np.isnan(s)]
+                return float(np.mean(valid)) if valid else nan
+            ss_h = _squad_strength(home_id)
+            ss_a = _squad_strength(away_id)
+            squad_feats = {
+                "home_squad_strength": ss_h,
+                "away_squad_strength": ss_a,
+                "squad_strength_diff": (ss_h-ss_a) if not(np.isnan(ss_h) or np.isnan(ss_a)) else nan,
+            }
+        except Exception: conn.rollback()
+
         vector = {
             "mom_gd_h3":h["gd3"],"mom_gd_h5":h["gd5"],"mom_gd_h10":h["gd10"],"mom_gd_h20":h["gd20"],
             "mom_pts_h3":h["pts3"],"mom_pts_h5":h["pts5"],"mom_pts_h10":h["pts10"],"mom_pts_h20":h["pts20"],
@@ -798,7 +1197,10 @@ def compute_feature_vector_v4(match_id: int, conn=None) -> dict:
             "matchup_corner_pressure_sum_5":ns(h_corners5,a_corners5),"matchup_discipline_sum_5":ns(h_yellow5,a_yellow5),
             "matchup_shot_quality_gap_5":nad(sdv(h_xgf5,h_shots5),sdv(a_xgf5,a_shots5)),
             **odds_feats,**comp_feats,
-            "rest_h":7.0,"rest_a":7.0,
+            "rest_h":rest_h,"rest_a":rest_a,
+            **h2h_feats,
+            "elo_h":elo_h_v,"elo_a":elo_a_v,"elo_diff":elo_diff_v,
+            **squad_feats,
         }
         return {col: vector.get(col, nan) for col in V4_FEATURE_COLUMNS}
 
@@ -914,10 +1316,14 @@ def run_batch(from_date: str = "2015-01-01",
     try:
         # Load all data into memory
         history = load_all_history(conn)
-        club_idx = build_club_index(history)
-        season_idx = build_season_index(history)
-        matchday_idx = build_matchday_index(history)
-        odds_map = load_all_odds(conn)
+        club_idx       = build_club_index(history)
+        season_idx     = build_season_index(history)
+        matchday_idx   = build_matchday_index(history)
+        odds_map       = load_all_odds(conn)
+        elo_idx        = build_elo_index(history)
+        h2h_idx        = build_h2h_index(history)
+        last_match_idx = build_last_match_index(history)
+        impact_idx     = load_player_impact_scores(conn)
 
         # Load target matches
         target = load_all_matches(from_date, to_date, comp_type, conn)
@@ -937,12 +1343,20 @@ def run_batch(from_date: str = "2015-01-01",
             target = target[mask].reset_index(drop=True)
             logger.info(f"After min_history={min_history} filter: {len(target):,} matches")
 
+        # Build lineup index for all target matches (bulk load)
+        target_ids = target["match_id"].astype(int).tolist()
+        lineup_idx = build_match_lineup_index(target_ids, conn)
+
         ok = err = 0
         pending: list[tuple] = []
 
         for i, row in enumerate(target.itertuples(), 1):
             try:
-                vector = build_feature_vector(row, club_idx, season_idx, matchday_idx, odds_map)
+                vector = build_feature_vector(
+                    row, club_idx, season_idx, matchday_idx, odds_map,
+                    elo_idx=elo_idx, h2h_idx=h2h_idx, last_match_idx=last_match_idx,
+                    lineup_idx=lineup_idx, impact_idx=impact_idx,
+                )
                 if not dry_run:
                     pending.append((
                         int(row.match_id), feature_set_id, SCHEMA_VERSION, vector_to_json(vector)
