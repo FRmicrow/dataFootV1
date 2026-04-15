@@ -603,7 +603,7 @@ def get_rest_days(club_id: int, match_date, last_match_idx: dict, cap: int = 30)
     idx = int(np.searchsorted(dates, ts_ns, side="left"))
     if idx == 0:
         return np.nan
-    days = (ts_ns - dates[idx - 1]) / (1e9 * 86400)
+    days = (float(ts_ns) - float(dates[idx - 1])) / (1e9 * 86400)
     return float(min(days, cap))
 
 

@@ -70,7 +70,7 @@ const SquadExplorerV4 = ({ leagueId, season, teams }) => {
             dataIndex: 'team_name',
             width: '140px',
             render: (name, player) => (
-                <Link to={`/club/${player.team_id}`} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2xs)', textDecoration: 'none' }}>
+                <Link to={`/club/${player.team_slug || player.team_id}`} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2xs)', textDecoration: 'none' }}>
                     <img src={player.team_logo} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
                     <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                 </Link>

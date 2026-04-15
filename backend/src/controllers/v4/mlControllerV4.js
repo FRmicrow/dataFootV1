@@ -239,7 +239,7 @@ export const getPredictionHistory = async (req, res) => {
             };
         });
 
-        return res.json({ success: true, data: enriched, total: totalCount });
+        return res.json({ success: true, data: { rows: enriched, total: totalCount } });
     } catch (err) {
         logger.error({ err }, 'getPredictionHistory error');
         res.status(500).json({ success: false, error: err.message });
@@ -524,18 +524,28 @@ export const getV4MLStats = async (_req, res) => {
                 (SELECT COUNT(*) FROM v4.ml_predictions) AS total_predictions`
         );
 
-        // Hit rate on last 500 completed matches
+        // Hit rate logic - broader sample for analytics
         const sample = await db.all(
-            `SELECT m.home_score, m.away_score, p.prediction_json
+            `SELECT m.home_score, m.away_score, p.prediction_json, comp.name AS competition_name
              FROM v4.ml_predictions p
              JOIN v4.matches m ON m.match_id = p.match_id
+             JOIN v4.competitions comp ON m.competition_id = comp.competition_id
              WHERE m.home_score IS NOT NULL
                AND p.model_name = 'v4_global_1x2'
              ORDER BY m.match_date DESC
-             LIMIT 500`
+             LIMIT 1000`
         );
 
         let hits = 0;
+        const compStats = {};
+        const confidenceBuckets = {
+            '40-50%': { total: 0, hits: 0 },
+            '50-60%': { total: 0, hits: 0 },
+            '60-70%': { total: 0, hits: 0 },
+            '70-80%': { total: 0, hits: 0 },
+            '80%+':   { total: 0, hits: 0 },
+        };
+
         for (const row of sample) {
             let pred = null;
             try {
@@ -551,12 +561,54 @@ export const getV4MLStats = async (_req, res) => {
             const pd = parseFloat(ft.draw ?? 0);
             const pa = parseFloat(ft.away ?? 0);
 
-            const predicted = ph >= pd && ph >= pa ? '1' : pd >= ph && pd >= pa ? 'N' : '2';
+            const probPairs = [
+                { s: '1', p: ph },
+                { s: 'N', p: pd },
+                { s: '2', p: pa }
+            ].sort((a, b) => b.p - a.p);
+
+            const predicted = probPairs[0].s;
+            const topProb = probPairs[0].p;
             const actual = row.home_score > row.away_score ? '1'
                 : row.home_score < row.away_score ? '2' : 'N';
 
-            if (predicted === actual) hits++;
+            const isHit = predicted === actual;
+            if (isHit) hits++;
+
+            // Confidence Analysis
+            let bucket = '40-50%';
+            if (topProb >= 0.8) bucket = '80%+';
+            else if (topProb >= 0.7) bucket = '70-80%';
+            else if (topProb >= 0.6) bucket = '60-70%';
+            else if (topProb >= 0.5) bucket = '50-60%';
+            
+            confidenceBuckets[bucket].total++;
+            if (isHit) confidenceBuckets[bucket].hits++;
+
+            // Competition Analysis
+            if (!compStats[row.competition_name]) {
+                compStats[row.competition_name] = { total: 0, hits: 0 };
+            }
+            compStats[row.competition_name].total++;
+            if (isHit) compStats[row.competition_name].hits++;
         }
+
+        // Format analytics
+        const accuracy_by_competition = Object.entries(compStats)
+            .map(([name, s]) => ({
+                name,
+                total: s.total,
+                accuracy: s.hits / s.total
+            }))
+            .filter(c => c.total >= 5)
+            .sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)
+            .slice(0, 15);
+
+        const accuracy_by_confidence = Object.entries(confidenceBuckets).map(([range, s]) => ({
+            range,
+            total: s.total,
+            accuracy: s.total > 0 ? s.hits / s.total : null
+        }));
 
         return res.json({
             success: true,
@@ -566,6 +618,8 @@ export const getV4MLStats = async (_req, res) => {
                 total_predictions: Number(counts?.total_predictions ?? 0),
                 hit_rate: sample.length > 0 ? hits / sample.length : null,
                 hit_rate_sample: sample.length,
+                accuracy_by_competition,
+                accuracy_by_confidence
             }
         });
     } catch (err) {

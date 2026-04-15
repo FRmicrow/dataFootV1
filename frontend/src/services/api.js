@@ -237,6 +237,11 @@ export default {
     getV4ForesightMatches: (competitionId, season) =>
         api.get(`/v4/ml/foresight/competition/${competitionId}`, { params: season ? { season } : {} }),
     getV4MLStats: () => api.get('/v4/ml/stats'),
+    getV4ClubProfile: (idOrName, params) => api.get(`/v4/club/${idOrName}`, { params }),
+    getV4ClubMatches: (id, params) => api.get(`/v4/club/${id}/matches`, { params }),
+    getV4ClubSquad: (id, params) => api.get(`/v4/club/${id}/squad`, { params }),
+    getV4TypicalLineup: (id, params) => api.get(`/v4/club/${id}/typical-lineup`, { params }),
+    getV4ClubTacticalSummary: (id, params) => api.get(`/v4/club/${id}/tactical-summary`, { params }),
 
     // --- Odds (V28) ---
     getUpcomingOdds: () => api.get('/odds/upcoming'),

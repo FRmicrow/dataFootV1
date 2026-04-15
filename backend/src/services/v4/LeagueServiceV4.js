@@ -226,9 +226,9 @@ class LeagueServiceV4 {
                  p.full_name                                     AS player_name,
                  gc.goals_total,
                  tt.team_id,
-                 cl.name                                         AS team_name,
+                 cl.name                                         AS team_name, cl.slug AS team_slug,
                  COALESCE(ll.logo_url, cl.current_logo_url, ?)  AS team_logo,
-                 ?                                               AS photo_url,
+                 COALESCE(p.photo_url, ?)                        AS photo_url,
                  psx.xg, psx.npxg, psx.xg_90
              FROM goal_counts gc
              JOIN v4.people p              ON p.person_id = gc.player_id
@@ -276,9 +276,9 @@ class LeagueServiceV4 {
                  p.full_name                                     AS player_name,
                  ac.goals_assists,
                  tt.team_id,
-                 cl.name                                         AS team_name,
+                 cl.name                                         AS team_name, cl.slug AS team_slug,
                  COALESCE(ll.logo_url, cl.current_logo_url, ?)  AS team_logo,
-                 ?                                               AS photo_url,
+                 COALESCE(p.photo_url, ?)                        AS photo_url,
                  psx.xa, psx.xg, psx.xg_chain
              FROM assist_counts ac
              JOIN v4.people p              ON p.person_id = ac.player_id
@@ -339,7 +339,7 @@ class LeagueServiceV4 {
                  pcs.player_id,
                  p.full_name                                     AS name,
                  pcs.team_id,
-                 cl.name                                         AS team_name,
+                 cl.name                                         AS team_name, cl.slug AS team_slug,
                  COALESCE(ll.logo_url, cl.current_logo_url, ?)  AS team_logo,
                  pcs.number,
                  pcs.appearances,
@@ -348,7 +348,7 @@ class LeagueServiceV4 {
                  COALESCE(gc.goals, 0)                           AS goals,
                  COALESCE(ac.assists, 0)                         AS assists,
                  pcs.primary_position_code,
-                 ?                                               AS photo_url,
+                 COALESCE(p.photo_url, ?)                        AS photo_url,
                  psx.xg, psx.xa, psx.npxg,
                  psx.xg_90, psx.xa_90, psx.npxg_90,
                  psx.xg_chain, psx.xg_chain_90,
@@ -435,9 +435,11 @@ class LeagueServiceV4 {
                  END AS status_short,
                  m.home_club_id::text AS home_team_id,
                  home.name            AS home_team,
+                 home.slug            AS home_team_slug,
                  COALESCE(hl.logo_url, home.current_logo_url, ?) AS home_team_logo,
                  m.away_club_id::text AS away_team_id,
                  away.name            AS away_team,
+                 away.slug            AS away_team_slug,
                  COALESCE(al.logo_url, away.current_logo_url, ?) AS away_team_logo,
                  m.xg_home, m.xg_away,
                  m.forecast_win, m.forecast_draw, m.forecast_loss
@@ -459,7 +461,7 @@ class LeagueServiceV4 {
              SELECT
                  p.person_id::text,
                  p.full_name        AS name,
-                 p.photo_url,
+                 COALESCE(p.photo_url, ?) AS photo_url,
                  c.name             AS club_name,
                  COALESCE(ll.logo_url, c.current_logo_url) AS club_logo,
                  psx.apps,
@@ -497,7 +499,7 @@ class LeagueServiceV4 {
                  psx.xg, psx.npxg, psx.xa, psx.xg_chain, psx.xg_buildup,
                  psx.xg_90, psx.npxg_90, psx.xa_90, psx.xg_chain_90, psx.xg_buildup_90
              LIMIT 1`,
-            [competitionId, season, season, personId]
+            [DEFAULT_PHOTO, competitionId, season, season, personId]
         );
         return row ?? null;
     }
