@@ -3,6 +3,8 @@ import leagueRoutesV4 from './league_routes.js';
 import oddsRoutesV4 from './odds_routes.js';
 import xgRoutesV4 from './xg_routes.js';
 import mlRoutesV4 from './ml_routes_v4.js';
+import clubRoutesV4 from './club_routes.js';
+import adminRoutesV4 from './admin_routes.js';
 
 const router = express.Router();
 
@@ -14,5 +16,7 @@ router.use('/v4', leagueRoutesV4);
 router.use('/v4', oddsRoutesV4);
 router.use('/v4', xgRoutesV4);
 router.use('/v4', mlRoutesV4);
+router.use('/v4', clubRoutesV4);
+router.use('/v4/admin', adminRoutesV4);
 
 export default router;
