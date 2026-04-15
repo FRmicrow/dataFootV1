@@ -24,7 +24,9 @@ class StandingsV4Service {
                      m.home_club_id::text    AS home_team_id,
                      m.away_club_id::text    AS away_team_id,
                      home.name               AS home_name,
+                     home.slug               AS home_slug,
                      away.name               AS away_name,
+                     away.slug               AS away_slug,
                      COALESCE(hl.logo_url, home.current_logo_url, ?) AS home_logo_url,
                      COALESCE(al.logo_url, away.current_logo_url, ?) AS away_logo_url
                  FROM v4.matches m
@@ -42,11 +44,12 @@ class StandingsV4Service {
 
             const teams = {};
 
-            const getTeam = (id, name, logo) => {
+            const getTeam = (id, name, logo, slug) => {
                 if (!teams[id]) {
                     teams[id] = {
                         team_id: id,
                         team_name: name,
+                        team_slug: slug,
                         team_logo: logo || DEFAULT_LOGO,
                         played: 0,
                         win: 0,
@@ -63,8 +66,8 @@ class StandingsV4Service {
             };
 
             for (const fixture of fixtures) {
-                const home = getTeam(fixture.home_team_id, fixture.home_name, fixture.home_logo_url);
-                const away = getTeam(fixture.away_team_id, fixture.away_name, fixture.away_logo_url);
+                const home = getTeam(fixture.home_team_id, fixture.home_name, fixture.home_logo_url, fixture.home_slug);
+                const away = getTeam(fixture.away_team_id, fixture.away_name, fixture.away_logo_url, fixture.away_slug);
 
                 home.played += 1;
                 away.played += 1;

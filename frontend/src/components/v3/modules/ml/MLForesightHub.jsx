@@ -1,30 +1,33 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Skeleton, Tabs } from '../../../../design-system';
+import { Badge, Button, Card, Progress, Skeleton, Stack, Tabs } from '../../../../design-system';
 import api from '../../../../services/api';
 import { MLHubEmptyState, MLHubHero, MLHubMetricStrip } from './shared/MLHubSurface';
 import './MLForesightHub.css';
 
 // ─── ProbaBar ─────────────────────────────────────────────────────────────────
 const ProbaBar = ({ probs, best }) => (
-    <div className="mf4__proba-bar">
+    <Stack gap="xs" className="mf4__proba-container">
         {[
             { key: '1', label: '1' },
             { key: 'N', label: 'N' },
             { key: '2', label: '2' },
         ].map(({ key, label }) => {
-            const pct = Math.round((probs[key] ?? 0) * 100);
+            const val = Math.round((probs[key] ?? 0) * 100);
             const isBest = key === best;
             return (
-                <div key={key} className={`mf4__proba-item${isBest ? ' is-best' : ''}`}>
+                <div key={key} className="mf4__proba-row">
                     <span className="mf4__proba-label">{label}</span>
-                    <div className="mf4__proba-track">
-                        <div className="mf4__proba-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                    <strong className="mf4__proba-value">{pct}%</strong>
+                    <Progress
+                        value={val}
+                        variant={isBest ? 'success' : 'primary'}
+                        size="xs"
+                        showValue
+                        className={isBest ? 'is-best' : ''}
+                    />
                 </div>
             );
         })}
-    </div>
+    </Stack>
 );
 
 // ─── MatchPredictionCard ──────────────────────────────────────────────────────
@@ -39,8 +42,8 @@ const MatchPredictionCard = ({ fixture, idx }) => {
         : '—';
 
     return (
-        <div
-            className={`mf4__match-card${ft ? '' : ' mf4__match-card--pending'}`}
+        <Card
+            className={`mf4__match-card ${!ft ? 'is-pending' : ''}`}
             style={{ animationDelay: `${idx * 25}ms` }}
         >
             <div className="mf4__match-meta">
@@ -49,40 +52,47 @@ const MatchPredictionCard = ({ fixture, idx }) => {
                 {!ft && <Badge variant="neutral" size="sm">En attente</Badge>}
             </div>
 
-            <div className="mf4__teams">
-                <div className="mf4__team">
-                    {fixture.homeTeam?.logo && (
-                        <img src={fixture.homeTeam.logo} alt="" className="mf4__team-logo" />
-                    )}
-                    <span className="mf4__team-name">{fixture.homeTeam?.name}</span>
+            <Stack gap="md" className="mf4__match-body">
+                <div className="mf4__teams">
+                    <div className="mf4__team">
+                        {fixture.homeTeam?.logo && (
+                            <img src={fixture.homeTeam.logo} alt="" className="mf4__team-logo" />
+                        )}
+                        <span className="mf4__team-name">{fixture.homeTeam?.name}</span>
+                    </div>
+                    <div className="mf4__vs-container">
+                        <span className="mf4__vs">VS</span>
+                    </div>
+                    <div className="mf4__team mf4__team--away">
+                        <span className="mf4__team-name">{fixture.awayTeam?.name}</span>
+                        {fixture.awayTeam?.logo && (
+                            <img src={fixture.awayTeam.logo} alt="" className="mf4__team-logo" />
+                        )}
+                    </div>
                 </div>
-                <span className="mf4__vs">vs</span>
-                <div className="mf4__team mf4__team--away">
-                    <span className="mf4__team-name">{fixture.awayTeam?.name}</span>
-                    {fixture.awayTeam?.logo && (
-                        <img src={fixture.awayTeam.logo} alt="" className="mf4__team-logo" />
-                    )}
-                </div>
-            </div>
 
-            {ft?.probabilities ? (
-                <ProbaBar probs={ft.probabilities} best={ft.selection} />
-            ) : (
-                <div className="mf4__no-pred">Prédiction indisponible</div>
-            )}
+                {ft?.probabilities ? (
+                    <div className="mf4__predictions">
+                        <ProbaBar probs={ft.probabilities} best={ft.selection} />
+                    </div>
+                ) : (
+                    <div className="mf4__no-pred">
+                        <MLHubEmptyState title="" message="Prédiction en cours..." className="is-small" />
+                    </div>
+                )}
 
-            {goals?.expected_total != null && (
-                <div className="mf4__goals-row">
-                    <span>Buts attendus</span>
-                    <strong>{Number(goals.expected_total).toFixed(2)}</strong>
-                    {goals.expected_home != null && (
-                        <span className="mf4__goals-split">
-                            ({Number(goals.expected_home).toFixed(1)} – {Number(goals.expected_away).toFixed(1)})
-                        </span>
-                    )}
-                </div>
-            )}
-        </div>
+                {goals?.expected_total != null && (
+                    <div className="mf4__goals-row">
+                        <Badge variant="neutral" size="sm">Buts attendus : {Number(goals.expected_total).toFixed(2)}</Badge>
+                        {goals.expected_home != null && (
+                            <span className="mf4__goals-split">
+                                ({Number(goals.expected_home).toFixed(1)} – {Number(goals.expected_away).toFixed(1)})
+                            </span>
+                        )}
+                    </div>
+                )}
+            </Stack>
+        </Card>
     );
 };
 
@@ -100,9 +110,9 @@ const PredictionHistoryRow = ({ row, idx }) => {
                     {row.home_logo && <img src={row.home_logo} alt="" className="mf4__history-logo" />}
                     <span>{row.home_team}</span>
                 </div>
-                <span className="mf4__history-score">
+                <div className="mf4__history-score-capsule">
                     {row.actual_home != null ? `${row.actual_home} – ${row.actual_away}` : 'vs'}
-                </span>
+                </div>
                 <div className="mf4__history-team mf4__history-team--away">
                     <span>{row.away_team}</span>
                     {row.away_logo && <img src={row.away_logo} alt="" className="mf4__history-logo" />}
@@ -110,16 +120,18 @@ const PredictionHistoryRow = ({ row, idx }) => {
             </div>
 
             <div className="mf4__history-context">
-                <span>{date}</span>
+                <span className="mf4__history-date">{date}</span>
                 {row.competition_name && <span className="mf4__history-comp">· {row.competition_name}</span>}
             </div>
 
             <div className="mf4__history-verdict">
-                <span className="mf4__history-proba">
-                    {pct(row.prob_home)} / {pct(row.prob_draw)} / {pct(row.prob_away)}
-                </span>
-                <Badge variant={row.was_correct ? 'success' : 'danger'} size="sm">
-                    {row.was_correct ? 'Hit' : 'Miss'}
+                <div className="mf4__history-probas">
+                    <Badge variant="ghost" size="sm">{pct(row.prob_home)}</Badge>
+                    <Badge variant="ghost" size="sm">{pct(row.prob_draw)}</Badge>
+                    <Badge variant="ghost" size="sm">{pct(row.prob_away)}</Badge>
+                </div>
+                <Badge variant={row.was_correct ? 'success' : 'danger'} size="sm" className="mf4__history-status">
+                    {row.was_correct ? 'HIT' : 'MISS'}
                 </Badge>
             </div>
         </div>
@@ -133,12 +145,14 @@ const CompPicker = ({ comps, selected, onSelect }) => (
             <button
                 key={comp.competitionId}
                 type="button"
-                className={`mf4__comp-chip${selected === comp.competitionId ? ' is-active' : ''}`}
+                className={`mf4__comp-chip ${selected === comp.competitionId ? 'is-active' : ''}`}
                 onClick={() => onSelect(comp.competitionId)}
             >
-                {comp.logo && <img src={comp.logo} alt="" />}
-                <span>{comp.competitionName}</span>
-                <Badge variant="neutral" size="sm">{comp.upcomingCount}</Badge>
+                {comp.logo && <img src={comp.logo} alt="" className="mf4__comp-logo" />}
+                <span className="mf4__comp-name">{comp.competitionName}</span>
+                <Badge variant={selected === comp.competitionId ? 'primary' : 'neutral'} size="sm">
+                    {comp.upcomingCount}
+                </Badge>
             </button>
         ))}
     </div>
@@ -224,7 +238,7 @@ const MLForesightHub = () => {
         api.getV4PredictionHistory(params)
             .then((payload) => {
                 if (cancelled) return;
-                setHistory(payload?.data ?? []);
+                setHistory(payload?.rows ?? []);
                 setHistoryTotal(payload?.total ?? 0);
             })
             .catch((err) => {

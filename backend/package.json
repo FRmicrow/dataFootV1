@@ -14,6 +14,8 @@
     "rank:v4": "node scripts/v4/apply_importance_rankings.js",
     "sync:v4-upcoming": "node scripts/v4/sync-upcoming-matches.js",
     "import:v4-upcoming-json": "node scripts/v4/import-upcoming-from-json.js",
+    "maintenance:prep": "node scripts/v4/maintenance_prep.js",
+    "maintenance:deduplicate": "node -e \"import AdminServiceV4 from './src/services/v4/AdminServiceV4.js'; console.log('🚀 Running systemic deduplication...'); await AdminServiceV4.deduplicatePeople(); console.log('✅ Done.'); process.exit(0);\"",
     "smoke:v3-routes": "node scripts/smoke_v3_routes.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"

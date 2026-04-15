@@ -174,7 +174,7 @@ const StandingsTableV4 = ({ standings = [], fixtures = [], loading }) => {
                                                 </span>
                                             </td>
                                             <td className="col-club">
-                                                <Link to={`/club/${t.team_id}`} className="sov4-club-link">
+                                                <Link to={`/club/${t.team_slug || t.team_id}`} className="sov4-club-link">
                                                     <img
                                                         src={t.team_logo}
                                                         alt=""

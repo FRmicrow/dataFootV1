@@ -53,6 +53,7 @@ class MatchDetailV4Service {
     }
 
     async getFixtureLineups(fixtureId) {
+        const DEFAULT_PHOTO = 'https://tmssl.akamaized.net//images/foto/normal/default.jpg?lm=1';
         const [rows, matchInfo] = await Promise.all([
             db.all(
                 `SELECT
@@ -61,6 +62,7 @@ class MatchDetailV4Service {
                      l.player_id::text AS player_id,
                      l.side, l.is_starter, l.jersey_number, l.position_code, l.role_code,
                      p.full_name AS player_name,
+                     COALESCE(p.photo_url, ?) AS photo_url,
                      c.name      AS team_name
                  FROM v4.match_lineups l
                  JOIN v4.people p ON p.person_id = l.player_id
@@ -68,7 +70,7 @@ class MatchDetailV4Service {
                  WHERE l.match_id = ?::BIGINT
                  ORDER BY l.side ASC, l.is_starter DESC,
                           NULLIF(l.jersey_number, '') ASC NULLS LAST, p.full_name ASC`,
-                [fixtureId]
+                [DEFAULT_PHOTO, fixtureId]
             ),
             db.get(
                 `SELECT
@@ -95,13 +97,13 @@ class MatchDetailV4Service {
                     .filter(r => r.is_starter === true || r.is_starter === 1)
                     .map(r => ({
                         player_id: r.player_id,
-                        player: { id: r.player_id, name: r.player_name, number: r.jersey_number, pos: r.position_code || r.role_code || '?' },
+                        player: { id: r.player_id, name: r.player_name, number: r.jersey_number, pos: r.position_code || r.role_code || '?', photo_url: r.photo_url },
                     })),
                 substitutes: teamRows
                     .filter(r => r.is_starter === false || r.is_starter === 0)
                     .map(r => ({
                         player_id: r.player_id,
-                        player: { id: r.player_id, name: r.player_name, number: r.jersey_number, pos: r.position_code || r.role_code || '?' },
+                        player: { id: r.player_id, name: r.player_name, number: r.jersey_number, pos: r.position_code || r.role_code || '?', photo_url: r.photo_url },
                     })),
             };
         };

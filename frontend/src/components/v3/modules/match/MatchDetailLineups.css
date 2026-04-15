@@ -6,12 +6,15 @@
     padding: 20px;
     color: white;
     gap: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .team-lineup-col {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 300px;
 }
 
 .lineup-divider {

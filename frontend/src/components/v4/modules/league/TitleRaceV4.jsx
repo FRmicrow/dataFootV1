@@ -2,11 +2,11 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Stack, Badge, Grid } from '../../../../design-system';
 
-const MatchRow = ({ fixture, teamId, top6Ids, simResult, onSimulate }) => {
+const MatchRow = ({ fixture, teamId, top7Ids, simResult, onSimulate }) => {
     const isHome = fixture.home_team_id === teamId;
     const opponentName = isHome ? fixture.away_team : fixture.home_team;
     const opponentId = isHome ? fixture.away_team_id : fixture.home_team_id;
-    const isTop6Clash = top6Ids.has(opponentId);
+    const isTop6Clash = top7Ids.has(opponentId);
     const score = fixture.goals_home !== null ? `${fixture.goals_home}-${fixture.goals_away}` : null;
 
     // Map global simulated result (H, D, A) to local (V, N, D)
@@ -126,7 +126,7 @@ const MatchRow = ({ fixture, teamId, top6Ids, simResult, onSimulate }) => {
     );
 };
 
-const TeamSprintCard = ({ team, teamFixtures, top6Ids, simResults, onSimulate, totalPoints }) => {
+const TeamSprintCard = ({ team, teamFixtures, top7Ids, simResults, onSimulate, totalPoints }) => {
     const simIncrease = useMemo(() => {
         let inc = 0;
         teamFixtures.forEach(f => {
@@ -188,7 +188,7 @@ const TeamSprintCard = ({ team, teamFixtures, top6Ids, simResults, onSimulate, t
                         key={f.fixture_id} 
                         fixture={f} 
                         teamId={team.team_id} 
-                        top6Ids={top6Ids}
+                        top7Ids={top7Ids}
                         simResult={simResults[f.fixture_id]}
                         onSimulate={onSimulate}
                     />
@@ -213,8 +213,8 @@ const TitleRaceV4 = ({ standings, fixtures }) => {
         }));
     };
 
-    const top6 = useMemo(() => {
-        const teams = [...standings].sort((a, b) => a.rank - b.rank).slice(0, 6);
+    const top7 = useMemo(() => {
+        const teams = [...standings].sort((a, b) => a.rank - b.rank).slice(0, 7);
         return teams.map(t => {
             // Calculate simulated points
             let simPts = 0;
@@ -233,11 +233,11 @@ const TitleRaceV4 = ({ standings, fixtures }) => {
         });
     }, [standings, fixtures, simResults]);
 
-    const sortedTop6 = useMemo(() => {
-        return [...top6].sort((a, b) => b.totalPoints - a.totalPoints || a.rank - b.rank);
-    }, [top6]);
+    const sortedTop7 = useMemo(() => {
+        return [...top7].sort((a, b) => b.totalPoints - a.totalPoints || a.rank - b.rank);
+    }, [top7]);
 
-    const top6Ids = useMemo(() => new Set(top6.map(t => t.team_id)), [top6]);
+    const top7Ids = useMemo(() => new Set(top7.map(t => t.team_id)), [top7]);
 
     const runInFixtures = useMemo(() => {
         if (!fixtures || fixtures.length === 0) return {};
@@ -259,19 +259,19 @@ const TitleRaceV4 = ({ standings, fixtures }) => {
         }
 
         const map = {};
-        top6.forEach(team => {
-            map[team.team_id] = targetFixtures.filter(f => 
+        top7.forEach(team => {
+            map[team.team_id] = targetFixtures.filter(f =>
                 f.home_team_id === team.team_id || f.away_team_id === team.team_id
             ).sort((a, b) => new Date(a.date) - new Date(b.date));
         });
         return map;
-    }, [fixtures, top6]);
+    }, [fixtures, top7]);
 
     const isHistorical = useMemo(() => {
         return fixtures.filter(f => f.status_short === 'NS' || f.status_short === 'TBD').length === 0;
     }, [fixtures]);
 
-    if (!top6.length) return null;
+    if (!top7.length) return null;
 
     return (
         <div className="ds-title-race animate-fade-in" style={{ paddingBottom: 'var(--spacing-xl)' }}>
@@ -292,13 +292,13 @@ const TitleRaceV4 = ({ standings, fixtures }) => {
                 </div>
             </div>
             
-            <Grid columns="repeat(3, 1fr)" gap="var(--spacing-md)">
-                {sortedTop6.map(team => (
-                    <TeamSprintCard 
+            <Grid columns="repeat(4, 1fr)" gap="var(--spacing-md)">
+                {sortedTop7.map(team => (
+                    <TeamSprintCard
                         key={team.team_id}
                         team={team}
                         teamFixtures={runInFixtures[team.team_id] || []}
-                        top6Ids={top6Ids}
+                        top7Ids={top7Ids}
                         simResults={simResults}
                         onSimulate={handleSimulate}
                         totalPoints={team.totalPoints}
