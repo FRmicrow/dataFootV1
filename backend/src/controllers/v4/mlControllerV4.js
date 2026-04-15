@@ -149,6 +149,18 @@ export const getPredictionHistory = async (req, res) => {
         const limitIdx  = params.length - 1;
         const offsetIdx = params.length;
 
+        // Total count for pagination
+        const countParams = params.slice(0, params.length - 2);
+        const countRow = await db.get(
+            `SELECT COUNT(*) AS total
+             FROM v4.ml_predictions p
+             JOIN v4.matches m      ON m.match_id       = p.match_id
+             LEFT JOIN v4.competitions comp ON m.competition_id = comp.competition_id
+             WHERE ${conditions.join(' AND ')}`,
+            countParams
+        );
+        const totalCount = Number(countRow?.total ?? 0);
+
         const rows = await db.all(
             `SELECT
                 m.match_id,
@@ -227,7 +239,7 @@ export const getPredictionHistory = async (req, res) => {
             };
         });
 
-        return res.json({ success: true, data: enriched, total: enriched.length });
+        return res.json({ success: true, data: enriched, total: totalCount });
     } catch (err) {
         logger.error({ err }, 'getPredictionHistory error');
         res.status(500).json({ success: false, error: err.message });
@@ -284,11 +296,17 @@ export const predictV4Match = async (req, res) => {
     }
 };
 
+// Top leagues shown first in competition picker
+const TOP_LEAGUE_NAMES = [
+    'Premier League', 'Ligue 1', 'LaLiga', 'Bundesliga', 'Serie A',
+    'Champions League', 'Europa League', 'Eredivisie', 'Liga Portugal', 'Süper Lig'
+];
+
 /**
  * GET /v4/ml/foresight/competitions
  *
- * Returns V4 competitions that have upcoming matches (home_score IS NULL, match_date >= today).
- * Used to populate the league/competition picker in MLForesightHub.
+ * Returns V4 competitions that have upcoming matches with predictions.
+ * Sorted: top leagues first, then by upcoming count desc.
  */
 export const getV4ForesightCompetitions = async (_req, res) => {
     try {
@@ -298,26 +316,37 @@ export const getV4ForesightCompetitions = async (_req, res) => {
                 comp.name AS competition_name,
                 comp.competition_type,
                 comp.current_logo_url AS logo,
-                COUNT(m.match_id) AS upcoming_count
+                COUNT(DISTINCT m.match_id) AS upcoming_count,
+                COUNT(DISTINCT p.match_id) AS predicted_count
              FROM v4.matches m
              JOIN v4.competitions comp ON m.competition_id = comp.competition_id
+             LEFT JOIN v4.ml_predictions p ON p.match_id = m.match_id
              WHERE m.home_score IS NULL
                AND m.match_date >= CURRENT_DATE
              GROUP BY comp.competition_id, comp.name, comp.competition_type, comp.current_logo_url
-             HAVING COUNT(m.match_id) > 0
-             ORDER BY COUNT(m.match_id) DESC`
+             HAVING COUNT(DISTINCT m.match_id) > 0`
         );
 
-        return res.json({
-            success: true,
-            data: rows.map((r) => ({
-                competitionId: String(r.competition_id),
-                competitionName: r.competition_name,
-                competitionType: r.competition_type,
-                logo: r.logo || null,
-                upcomingCount: Number(r.upcoming_count)
-            }))
+        const data = rows.map((r) => ({
+            competitionId: String(r.competition_id),
+            competitionName: r.competition_name,
+            competitionType: r.competition_type,
+            logo: r.logo || null,
+            upcomingCount: Number(r.upcoming_count),
+            predictedCount: Number(r.predicted_count),
+        }));
+
+        // Sort: top leagues first, then by upcoming count
+        data.sort((a, b) => {
+            const ra = TOP_LEAGUE_NAMES.indexOf(a.competitionName);
+            const rb = TOP_LEAGUE_NAMES.indexOf(b.competitionName);
+            const priorityA = ra >= 0 ? ra : 999;
+            const priorityB = rb >= 0 ? rb : 999;
+            if (priorityA !== priorityB) return priorityA - priorityB;
+            return b.upcomingCount - a.upcomingCount;
         });
+
+        return res.json({ success: true, data });
     } catch (err) {
         logger.error({ err }, 'getV4ForesightCompetitions error');
         res.status(500).json({ success: false, error: err.message });
@@ -327,17 +356,14 @@ export const getV4ForesightCompetitions = async (_req, res) => {
 /**
  * GET /v4/ml/foresight/competition/:competitionId
  *
- * Returns upcoming V4 matches for a competition, enriched with ML predictions
- * (via v4.fixture_match_mapping → V3_Submodel_Outputs when available).
- *
- * Shape is compatible with ForesightFixtureCard.
+ * Returns upcoming V4 matches with ML predictions from v4.ml_predictions.
+ * All markets (FT 1X2, Goals, HT, Corners, Cards) are exposed when available.
  */
 export const getV4ForesightMatches = async (req, res) => {
     const { competitionId } = req.params;
     const { season } = req.query;
 
     try {
-        // 1. Build WHERE clause
         const conditions = [
             `m.competition_id = $1`,
             `m.home_score IS NULL`,
@@ -363,102 +389,109 @@ export const getV4ForesightMatches = async (req, res) => {
                 ac.name              AS away_team_name,
                 ac.current_logo_url  AS away_team_logo,
                 comp.name            AS competition_name,
-                fmm.v3_fixture_id,
-                fmm.confidence       AS mapping_confidence
+                pred.prediction_json,
+                pred.model_name
              FROM v4.matches m
              JOIN v4.clubs hc  ON m.home_club_id  = hc.club_id
              JOIN v4.clubs ac  ON m.away_club_id  = ac.club_id
              JOIN v4.competitions comp ON m.competition_id = comp.competition_id
-             LEFT JOIN v4.fixture_match_mapping fmm
-                ON fmm.v4_match_id = m.match_id
-               AND fmm.confidence IN ('HIGH', 'MEDIUM')
+             LEFT JOIN LATERAL (
+                 SELECT prediction_json, model_name
+                 FROM v4.ml_predictions
+                 WHERE match_id = m.match_id
+                 ORDER BY created_at DESC
+                 LIMIT 1
+             ) pred ON true
              WHERE ${conditions.join(' AND ')}
              ORDER BY m.match_date ASC
              LIMIT 50`,
             params
         );
 
-        if (!matches.length) {
-            return res.json({ success: true, data: [] });
-        }
+        const LABEL_MAP = { '1': 'Victoire domicile', 'N': 'Nul', '2': 'Victoire extérieur' };
 
-        // 2. Fetch ML predictions via ml-service /predict/v4/batch
-        // match_ids are BigInt from pg — normalize to Number for JSON serialization
-        // (all V4 match_ids are within Number.MAX_SAFE_INTEGER range)
-        const matchIds = matches.map((m) => Number(m.match_id));
-        const predictionMap = new Map(); // String(match_id) → { home, draw, away }
-
-        try {
-            const mlResponse = await axios.post(
-                `${ML_SERVICE_URL}/predict/v4/batch`,
-                { match_ids: matchIds },
-                { timeout: 30000 }
-            );
-
-            const results = mlResponse.data?.results || [];
-            results.forEach((r) => {
-                if (r.success && r.probabilities) {
-                    predictionMap.set(String(r.match_id), r.probabilities);
-                }
-            });
-        } catch (mlErr) {
-            // ml-service unavailable — proceed without predictions
-            logger.warn({ err: mlErr.message }, 'ml-service batch prediction unavailable for V4 foresight');
-        }
-
-        // 3. Build response payload compatible with ForesightFixtureCard
         const data = matches.map((m) => {
-            const probs = predictionMap.get(String(m.match_id)) || null;
-            // probs shape: { home, draw, away } → convert to 1N2 keys for projectedResult logic
-            const probs1N2 = probs ? { '1': probs.home, 'N': probs.draw, '2': probs.away } : null;
+            let predData = null;
+            try {
+                predData = m.prediction_json
+                    ? (typeof m.prediction_json === 'string' ? JSON.parse(m.prediction_json) : m.prediction_json)
+                    : null;
+            } catch { /* ignore */ }
 
-            // Derive projected result from 1N2 probs
+            // FT 1X2
+            const ft = predData?.ft_1x2 || null;
+            const probs1N2 = ft ? { '1': ft.home, 'N': ft.draw, '2': ft.away } : null;
             let projectedResult = null;
             if (probs1N2) {
                 const best = Object.entries(probs1N2).sort((a, b) => b[1] - a[1])[0];
-                if (best) {
-                    const labelMap = { '1': 'Victoire domicile', 'N': 'Nul', '2': 'Victoire extérieur' };
-                    projectedResult = {
-                        selection: best[0],
-                        label: labelMap[best[0]] ?? best[0],
-                        probability: best[1]
-                    };
-                }
+                projectedResult = best ? {
+                    selection: best[0],
+                    label: LABEL_MAP[best[0]] ?? best[0],
+                    probability: best[1]
+                } : null;
             }
 
-            const predictionStatus = projectedResult ? 'ready' : 'missing';
+            // Goals
+            const goalsRaw = predData?.goals || null;
+            const goals = goalsRaw ? {
+                expected_home: goalsRaw.expected_home ?? null,
+                expected_away: goalsRaw.expected_away ?? null,
+                expected_total: goalsRaw.expected_total ?? null,
+            } : null;
+
+            // HT
+            const htRaw = predData?.ht || null;
+            const ht = htRaw ? {
+                expected_home: htRaw.expected_home ?? null,
+                expected_away: htRaw.expected_away ?? null,
+                '1x2': htRaw['1x2'] || null,
+            } : null;
+
+            // Corners
+            const cornersRaw = predData?.corners || null;
+            const corners = cornersRaw ? {
+                expected_total: cornersRaw.expected_total ?? null,
+                expected_home: cornersRaw.expected_home ?? null,
+                expected_away: cornersRaw.expected_away ?? null,
+            } : null;
+
+            // Cards
+            const cardsRaw = predData?.cards || null;
+            const cards = cardsRaw ? {
+                expected_total_yellows: cardsRaw.expected_total_yellows ?? null,
+                expected_home_yellows: cardsRaw.expected_home_yellows ?? null,
+                expected_away_yellows: cardsRaw.expected_away_yellows ?? null,
+            } : null;
 
             return {
-                fixtureId: m.match_id,
-                matchId: m.match_id,
-                v3FixtureId: m.v3_fixture_id || null,
+                fixtureId: String(m.match_id),
+                matchId: String(m.match_id),
                 leagueName: m.competition_name,
                 date: m.match_date,
                 round: m.round_label || '',
-                status: 'NS',
-                matchState: 'upcoming',
                 homeTeam: {
-                    teamId: m.home_club_id,
+                    teamId: String(m.home_club_id),
                     name: m.home_team_name,
                     logo: m.home_team_logo || null
                 },
                 awayTeam: {
-                    teamId: m.away_club_id,
+                    teamId: String(m.away_club_id),
                     name: m.away_team_name,
                     logo: m.away_team_logo || null
                 },
-                actualScore: null,
-                actualResult: null,
-                verdict: null,
-                predictionStatus,
+                predictionStatus: projectedResult ? 'ready' : 'missing',
+                modelName: m.model_name || null,
                 projectedResult,
                 markets: {
                     ftResult: probs1N2 ? {
                         selection: projectedResult?.selection,
-                        selectionLabel: projectedResult?.label,
                         probability: projectedResult?.probability,
                         probabilities: probs1N2
-                    } : null
+                    } : null,
+                    goals,
+                    ht,
+                    corners,
+                    cards,
                 }
             };
         });
@@ -466,6 +499,77 @@ export const getV4ForesightMatches = async (req, res) => {
         return res.json({ success: true, data });
     } catch (err) {
         logger.error({ err, competitionId }, 'getV4ForesightMatches error');
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+/**
+ * GET /v4/ml/stats
+ *
+ * Aggregate stats for the ML hub MetricStrip.
+ */
+export const getV4MLStats = async (_req, res) => {
+    try {
+        const counts = await db.get(
+            `SELECT
+                (SELECT COUNT(DISTINCT p.match_id)
+                 FROM v4.ml_predictions p
+                 JOIN v4.matches m ON m.match_id = p.match_id
+                 WHERE m.home_score IS NULL AND m.match_date >= CURRENT_DATE
+                ) AS upcoming_with_pred,
+                (SELECT COUNT(DISTINCT m.competition_id)
+                 FROM v4.ml_predictions p
+                 JOIN v4.matches m ON m.match_id = p.match_id
+                ) AS covered_competitions,
+                (SELECT COUNT(*) FROM v4.ml_predictions) AS total_predictions`
+        );
+
+        // Hit rate on last 500 completed matches
+        const sample = await db.all(
+            `SELECT m.home_score, m.away_score, p.prediction_json
+             FROM v4.ml_predictions p
+             JOIN v4.matches m ON m.match_id = p.match_id
+             WHERE m.home_score IS NOT NULL
+               AND p.model_name = 'v4_global_1x2'
+             ORDER BY m.match_date DESC
+             LIMIT 500`
+        );
+
+        let hits = 0;
+        for (const row of sample) {
+            let pred = null;
+            try {
+                pred = typeof row.prediction_json === 'string'
+                    ? JSON.parse(row.prediction_json)
+                    : row.prediction_json;
+            } catch { continue; }
+
+            const ft = pred?.ft_1x2 || pred?.probabilities || pred;
+            if (!ft) continue;
+
+            const ph = parseFloat(ft.home ?? 0);
+            const pd = parseFloat(ft.draw ?? 0);
+            const pa = parseFloat(ft.away ?? 0);
+
+            const predicted = ph >= pd && ph >= pa ? '1' : pd >= ph && pd >= pa ? 'N' : '2';
+            const actual = row.home_score > row.away_score ? '1'
+                : row.home_score < row.away_score ? '2' : 'N';
+
+            if (predicted === actual) hits++;
+        }
+
+        return res.json({
+            success: true,
+            data: {
+                upcoming_with_pred: Number(counts?.upcoming_with_pred ?? 0),
+                covered_competitions: Number(counts?.covered_competitions ?? 0),
+                total_predictions: Number(counts?.total_predictions ?? 0),
+                hit_rate: sample.length > 0 ? hits / sample.length : null,
+                hit_rate_sample: sample.length,
+            }
+        });
+    } catch (err) {
+        logger.error({ err }, 'getV4MLStats error');
         res.status(500).json({ success: false, error: err.message });
     }
 };

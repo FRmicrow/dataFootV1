@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { Card, Stack, Badge } from '../index';
 import './PlayerCard.css';
 
+const DEFAULT_FALLBACK = 'https://tmssl.akamaized.net//images/foto/normal/default.jpg?lm=1';
+
 /**
  * Reusable PlayerCard for squad lists and rosters.
  */
@@ -34,7 +36,13 @@ const PlayerCard = ({
         >
             <Stack direction="row" gap="var(--spacing-md)" align="center">
                 <div className="ds-player-media">
-                    <img src={photo} alt={name} className="ds-player-photo" loading="lazy" />
+                    <img
+                        src={photo || DEFAULT_FALLBACK}
+                        alt={name}
+                        className="ds-player-photo"
+                        loading="lazy"
+                        onError={(e) => { e.currentTarget.src = DEFAULT_FALLBACK; e.currentTarget.onerror = null; }}
+                    />
                     <div
                         className="ds-player-pos-badge"
                         style={{ backgroundColor: getPosColor(position) }}
@@ -71,7 +79,7 @@ PlayerCard.propTypes = {
     name: PropTypes.string.isRequired,
     position: PropTypes.string,
     number: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    appearances: PropTypes.number,
+    appearances: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     goals: PropTypes.number,
     rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     onClick: PropTypes.func,

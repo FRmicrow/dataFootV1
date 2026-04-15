@@ -12,7 +12,8 @@ import {
     getPredictionHistory,
     predictV4Match,
     getV4ForesightCompetitions,
-    getV4ForesightMatches
+    getV4ForesightMatches,
+    getV4MLStats
 } from '../../controllers/v4/mlControllerV4.js';
 
 const router = express.Router();
@@ -36,5 +37,9 @@ router.get('/ml/foresight/competitions', validateRequest(getV4ForesightCompetiti
 // GET /v4/ml/foresight/competition/:competitionId
 // Upcoming V4 matches with ML predictions
 router.get('/ml/foresight/competition/:competitionId', validateRequest(getV4ForesightMatchesSchema), getV4ForesightMatches);
+
+// GET /v4/ml/stats
+// Aggregate stats for the ML hub MetricStrip (hit rate, coverage, total predictions)
+router.get('/ml/stats', getV4MLStats);
 
 export default router;

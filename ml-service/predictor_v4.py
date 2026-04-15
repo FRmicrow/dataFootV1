@@ -48,7 +48,7 @@ PATHS = {
 }
 
 IMPORTANCE_PATH = os.path.join(MODELS_V4, "global_1x2", "importance.json")
-FEATURE_SET_ID  = "v4_global_1x2_v1"
+FEATURE_SET_ID  = "v4_global_1x2_v2"
 MODEL_NAME      = "v4_global_1x2"
 
 # ---------------------------------------------------------------------------
