@@ -1,6 +1,5 @@
 import db from '../../config/database.js';
-
-const DEFAULT_LOGO = 'https://tmssl.akamaized.net//images/logo/normal/tm.png';
+import { DEFAULT_LOGO } from '../../config/mediaConstants.js';
 
 // Latest logo per club in a single pass — replaces N+1 LATERAL subqueries
 const LATEST_CLUB_LOGOS_CTE = `
@@ -61,15 +60,16 @@ class MatchDetailV4Service {
                      l.club_id::text  AS team_id,
                      l.player_id::text AS player_id,
                      l.side, l.is_starter, l.jersey_number, l.position_code, l.role_code,
-                     p.full_name AS player_name,
+                     COALESCE(p.full_name, l.player_name) AS player_name,
                      COALESCE(p.photo_url, ?) AS photo_url,
                      c.name      AS team_name
                  FROM v4.match_lineups l
-                 JOIN v4.people p ON p.person_id = l.player_id
+                 LEFT JOIN v4.people p ON p.person_id = l.player_id
                  JOIN v4.clubs c  ON c.club_id   = l.club_id
                  WHERE l.match_id = ?::BIGINT
                  ORDER BY l.side ASC, l.is_starter DESC,
-                          NULLIF(l.jersey_number, '') ASC NULLS LAST, p.full_name ASC`,
+                          NULLIF(l.jersey_number, '') ASC NULLS LAST,
+                          COALESCE(p.full_name, l.player_name) ASC`,
                 [DEFAULT_PHOTO, fixtureId]
             ),
             db.get(
@@ -153,7 +153,7 @@ class MatchDetailV4Service {
                 home_yellows_1h, away_yellows_1h,
                 home_yellows_2h, away_yellows_2h
              FROM v4.match_stats
-             WHERE match_id::text = $1`,
+             WHERE match_id::text = ?`,
             [fixtureId]
         );
 
@@ -165,7 +165,7 @@ class MatchDetailV4Service {
                 over_45, under_45,
                 btts_yes, btts_no
              FROM v4.match_odds
-             WHERE match_id::text = $1`,
+             WHERE match_id::text = ?`,
             [fixtureId]
         );
 
@@ -215,6 +215,8 @@ class MatchDetailV4Service {
         return { stats, odds: odds ?? null };
     }
 
+    // @STUB: Not yet implemented. Placeholder returns empty array.
+    // TODO V5: Implement tactical stats per player (position heatmaps, pass completion, duels, etc.)
     async getFixturePlayerTacticalStats() {
         return [];
     }

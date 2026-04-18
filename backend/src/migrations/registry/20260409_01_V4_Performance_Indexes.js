@@ -27,39 +27,9 @@ const INDEXES = [
               ON v4.matches(competition_id, season_label, match_date ASC NULLS LAST)`,
     },
 
-    // ── v4.match_events ────────────────────────────────────────────────────────
-    // Lookup by match (events timeline, goal/assist CTEs joining through matches)
-    {
-        name: 'idx_v4_match_events_match_id',
-        ddl: `CREATE INDEX idx_v4_match_events_match_id
-              ON v4.match_events(match_id)`,
-    },
-    // Partial index for goal events only — covers top scorers / assists / season player counts
-    {
-        name: 'idx_v4_match_events_match_goal',
-        ddl: `CREATE INDEX idx_v4_match_events_match_goal
-              ON v4.match_events(match_id, player_id, related_player_id)
-              WHERE event_type = 'goal'`,
-    },
-
-    // ── v4.match_lineups ───────────────────────────────────────────────────────
-    // Lookup by match (fixture lineups) and by match+player (club resolution)
-    {
-        name: 'idx_v4_match_lineups_match_id',
-        ddl: `CREATE INDEX idx_v4_match_lineups_match_id
-              ON v4.match_lineups(match_id)`,
-    },
-    {
-        name: 'idx_v4_match_lineups_match_player',
-        ddl: `CREATE INDEX idx_v4_match_lineups_match_player
-              ON v4.match_lineups(match_id, player_id)`,
-    },
-    // Season player aggregation: filter by match then group by player+club
-    {
-        name: 'idx_v4_match_lineups_player_club',
-        ddl: `CREATE INDEX idx_v4_match_lineups_player_club
-              ON v4.match_lineups(player_id, club_id)`,
-    },
+    // NOTE: indexes on v4.match_events and v4.match_lineups are created in
+    // migration 20260413_01_V4_Match_Events_Lineups.js (those tables did not
+    // exist when this migration was originally written).
 
     // ── v4.club_logos ──────────────────────────────────────────────────────────
     // Supports DISTINCT ON (club_id) ORDER BY end_year DESC — replaces N+1 LATERAL

@@ -1,7 +1,6 @@
 import db from '../../config/database.js';
 import logger from '../../utils/logger.js';
-
-const DEFAULT_LOGO = 'https://tmssl.akamaized.net//images/logo/normal/tm.png';
+import { DEFAULT_LOGO } from '../../config/mediaConstants.js';
 
 const LATEST_CLUB_LOGOS_CTE = `
     latest_club_logos AS (

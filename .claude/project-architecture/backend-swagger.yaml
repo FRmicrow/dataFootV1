@@ -1,12 +1,13 @@
 openapi: 3.0.0
 info:
-  title: StatFootV3 - API Reference
-  description: Documentation exhaustive des API Backend (V3) incluant les payloads et réponses exactes.
-  version: "3.0"
+  title: StatFootV3 & V4 - API Reference
+  description: Documentation exhaustive des API Backend V3 (legacy) et V4 (nouvelle architecture). V4 utilise un schéma PostgreSQL dédié (v4.*) et une architecture découplée sans couche Repository.
+  version: "4.0"
 servers:
   - url: "http://localhost:3001/api"
     description: Serveur local
 tags:
+  # ===== V3 TAGS (LEGACY) =====
   - name: Admin & Health
     description: Administration and health-check endpoints for the application and database.
   - name: Betting & ML
@@ -25,6 +26,20 @@ tags:
     description: Content studio management pathways.
   - name: Resolution & Intelligence
     description: Intelligent operations like duplication resolution and backtesting.
+
+  # ===== V4 TAGS (NEW ARCHITECTURE) =====
+  - name: V4 Leagues
+    description: League endpoints using V4 architecture (PostgreSQL v4.* schema).
+  - name: V4 Clubs
+    description: Club profile and match data endpoints (V4).
+  - name: V4 ML
+    description: Machine learning predictions and analytics (V4).
+  - name: V4 Odds
+    description: Betting odds endpoints (V4).
+  - name: V4 xG
+    description: Expected goals analytics (V4).
+  - name: V4 Admin
+    description: Administrative operations (secured by X-Admin-Key header).
 paths:
   /stats:
     get:
@@ -2889,5 +2904,363 @@ paths:
                 type: object
         400:
           description: Erreur de validation
+        500:
+          description: Erreur serveur
+
+# ============================================
+# V4 API ROUTES (NEW ARCHITECTURE)
+# ============================================
+
+  /v4/leagues:
+    get:
+      operationId: getLeaguesV4
+      tags:
+        - V4 Leagues
+      summary: Récupérer les ligues groupées par pays (V4)
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+        500:
+          description: Erreur serveur
+
+  /v4/league/{league}/season/{season}:
+    get:
+      operationId: getSeasonOverviewV4
+      tags:
+        - V4 Leagues
+      summary: Vue d'ensemble d'une saison V4
+      parameters:
+        - name: league
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: season
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+        404:
+          description: Ligue non trouvée
+        500:
+          description: Erreur serveur
+
+  /v4/league/{league}/season/{season}/fixtures:
+    get:
+      operationId: getFixturesV4
+      tags:
+        - V4 Leagues
+      summary: Récupérer les matchs d'une saison
+      parameters:
+        - name: league
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: season
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+        500:
+          description: Erreur serveur
+
+  /v4/league/{league}/season/{season}/standings:
+    get:
+      operationId: getStandingsV4
+      tags:
+        - V4 Leagues
+      summary: Classement de la saison
+      parameters:
+        - name: league
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: season
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Erreur serveur
+
+  /v4/league/{league}/season/{season}/squad/{teamId}:
+    get:
+      operationId: getTeamSquadV4
+      tags:
+        - V4 Leagues
+      summary: Effectif d'une équipe dans une saison
+      parameters:
+        - name: league
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: season
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Erreur serveur
+
+  /v4/club/{clubId}:
+    get:
+      operationId: getClubDetailsV4
+      tags:
+        - V4 Clubs
+      summary: Détails du club
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        404:
+          description: Club non trouvé
+        500:
+          description: Erreur serveur
+
+  /v4/club/{clubId}/matches:
+    get:
+      operationId: getClubMatchesV4
+      tags:
+        - V4 Clubs
+      summary: Matchs d'un club
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Erreur serveur
+
+  /v4/match/{matchId}/prediction:
+    get:
+      operationId: getMatchPredictionV4
+      tags:
+        - V4 ML
+      summary: Prédiction ML pour un match
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        404:
+          description: Match non trouvé
+        500:
+          description: Erreur serveur
+
+  /v4/match/{matchId}/predict:
+    post:
+      operationId: postMatchPredictV4
+      tags:
+        - V4 ML
+      summary: Générer une prédiction ML pour un match
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Erreur serveur
+
+  /v4/ml/foresight:
+    get:
+      operationId: getMLForesightV4
+      tags:
+        - V4 ML
+      summary: Vue d'ensemble des prédictions ML (foresight)
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Erreur serveur
+
+  /v4/ml/stats:
+    get:
+      operationId: getMLStatsV4
+      tags:
+        - V4 ML
+      summary: Statistiques globales des prédictions ML
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Erreur serveur
+
+  /v4/odds/{matchId}:
+    get:
+      operationId: getMatchOddsV4
+      tags:
+        - V4 Odds
+      summary: Cotes pour un match
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Erreur serveur
+
+  /v4/xg/{matchId}:
+    get:
+      operationId: getMatchXGV4
+      tags:
+        - V4 xG
+      summary: Statistiques xG pour un match
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        500:
+          description: Erreur serveur
+
+  /v4/admin/maintenance/deduplicate:
+    post:
+      operationId: postAdminDeduplicateV4
+      tags:
+        - V4 Admin
+      summary: Dédupliquer les personnes (SÉCURISÉ PAR X-Admin-Key)
+      security:
+        - AdminKeyHeader: []
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        401:
+          description: Non autorisé (X-Admin-Key invalide/manquant)
+        500:
+          description: Erreur serveur
+
+  /v4/admin/maintenance/status:
+    get:
+      operationId: getAdminMaintenanceStatusV4
+      tags:
+        - V4 Admin
+      summary: État des tâches de maintenance
+      security:
+        - AdminKeyHeader: []
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+        401:
+          description: Non autorisé
         500:
           description: Erreur serveur

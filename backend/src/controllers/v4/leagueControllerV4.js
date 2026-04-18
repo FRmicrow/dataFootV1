@@ -208,7 +208,8 @@ export const getFixtureTacticalStatsV4 = async (req, res) => {
             return handleValidationError(res, error);
         }
 
-        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
+        logger.error({ err: error }, 'V4 getFixtureTacticalStats error');
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 };
 
@@ -222,7 +223,8 @@ export const getFixturePlayerTacticalStatsV4 = async (req, res) => {
             return handleValidationError(res, error);
         }
 
-        res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
+        logger.error({ err: error }, 'V4 getFixturePlayerTacticalStats error');
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 };
 

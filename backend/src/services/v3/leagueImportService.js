@@ -3,6 +3,7 @@ import footballApi from '../footballApi.js';
 import { cleanParams } from '../../utils/sqlHelpers.js';
 import { Mappers, ImportRepository as DB } from './ImportService.js';
 import { syncLeagueEventsService } from './fixtureService.js';
+import logger from '../../utils/logger.js';
 import { CompetitionRanker } from '../../utils/v3/CompetitionRanker.js';
 import * as ImportControl from './importControlService.js';
 import { syncAllV3Sequences } from '../../utils/v3/dbMaintenance.js';
@@ -209,7 +210,7 @@ export const runImportJob = async (leagueId, seasonYear, sendLog, options = {}) 
         const disc = await db.get("SELECT is_discovered FROM V3_Leagues WHERE league_id = ?", cleanParams([localLeagueId]));
         if (disc?.is_discovered) await db.run("UPDATE V3_Leagues SET is_discovered = FALSE WHERE league_id = ?", cleanParams([localLeagueId]));
 
-        try { await syncLeagueEventsService(localLeagueId, seasonYear, 2000); } catch (e) { }
+        try { await syncLeagueEventsService(localLeagueId, seasonYear, 2000); } catch (e) { logger.warn({ err: e }, 'Event sync failed, continuing import'); }
 
         await ImportStatusService.resetFailures(leagueId, seasonYear, 'core');
         return { leagueId: targetApiId, season: seasonYear };

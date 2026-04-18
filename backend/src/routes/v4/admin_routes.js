@@ -1,14 +1,18 @@
 import express from 'express';
 import AdminServiceV4 from '../../services/v4/AdminServiceV4.js';
 import logger from '../../utils/logger.js';
+import { requireAdminKey } from '../../middleware/requireAdminKey.js';
 
 const router = express.Router();
+
+// @CRITICAL: All routes require X-Admin-Key header for security
+router.use(requireAdminKey);
 
 /**
  * POST /api/v4/admin/maintenance/deduplicate
  * Triggers the systemic deduplication of v4.people
  * ⚠️ WARNING: Destructive operation (merges duplicate records)
- * In a real app, this should be protected by industrial-grade auth.
+ * Protected by requireAdminKey middleware
  */
 router.post('/maintenance/deduplicate', async (req, res) => {
     try {

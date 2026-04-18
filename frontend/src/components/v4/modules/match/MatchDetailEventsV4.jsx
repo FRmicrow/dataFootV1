@@ -24,69 +24,63 @@ const MatchDetailEventsV4 = ({ fixtureId }) => {
         }
     };
 
-    const renderEventIcon = (type, detail) => {
+    const renderEventIcon = (type) => {
         const t = (type || '').toLowerCase();
-        const d = (detail || '').toLowerCase();
-        if (t === 'goal' || t === 'normalgoal' || t === 'owngoal') {
-            const isOwn = t === 'owngoal' || d.includes('own');
-            return <span className={`ev-icon ev-icon--goal ${isOwn ? 'ev-icon--own' : ''}`} title={isOwn ? 'Own goal' : 'Goal'} />;
-        }
-        if (t === 'card' || t === 'yellowcard' || t === 'redcard' || t === 'yellowredcard') {
-            if (d.includes('red') || t === 'redcard') return <span className="ev-icon ev-icon--red-card" title="Red card" />;
-            if (d.includes('yellow red') || t === 'yellowredcard') return <span className="ev-icon ev-icon--yellow-red-card" title="Second yellow" />;
-            return <span className="ev-icon ev-icon--yellow-card" title="Yellow card" />;
-        }
-        if (t === 'subst' || t === 'substitution') return <span className="ev-icon ev-icon--subst" title="Substitution" />;
-        if (t === 'var') return <span className="ev-icon ev-icon--var" title="VAR" />;
+        if (t === 'owngoal')         return <span className="ev-icon ev-icon--goal ev-icon--own"   title="Own goal" />;
+        if (t === 'goal')            return <span className="ev-icon ev-icon--goal"                 title="Goal" />;
+        if (t === 'penalty_missed')  return <span className="ev-icon ev-icon--penalty-missed"       title="Missed penalty" />;
+        if (t === 'redcard')         return <span className="ev-icon ev-icon--red-card"             title="Red card" />;
+        if (t === 'yellowred')       return <span className="ev-icon ev-icon--yellow-red-card"      title="Second yellow" />;
+        if (t === 'yellowcard')      return <span className="ev-icon ev-icon--yellow-card"          title="Yellow card" />;
+        if (t === 'substitution' || t === 'subst') return <span className="ev-icon ev-icon--subst" title="Substitution" />;
+        if (t === 'var')             return <span className="ev-icon ev-icon--var"                  title="VAR" />;
         return <span className="ev-icon ev-icon--dot" />;
     };
 
-    if (loading) return <div className="ds-events-loading">Synchronizing historical events...</div>;
-    if (error) return <div className="ds-events-error">Error: {error}</div>;
-    if (events.length === 0) return <div className="ds-events-empty">No strategic events recorded for this V4 match.</div>;
+    if (loading) return <div className="ds-events-loading">Chargement des événements...</div>;
+    if (error)   return <div className="ds-events-error">Erreur : {error}</div>;
+    if (events.length === 0) return <div className="ds-events-empty">Aucun événement enregistré pour ce match.</div>;
 
     return (
         <div className="ds-match-events-list animate-fade-in">
             {events.map((ev, index) => {
                 const isHome = Number(ev.is_home_team) === 1;
-                const timeStr = `${ev.time_elapsed}${ev.extra_minute ? `+${ev.extra_minute}` : ''}${ev.extra_minute ? '' : "'"}`;
+                const rawTime = String(ev.time_elapsed || '').replace(/'$/, '');
+                const timeStr = `${rawTime}${ev.extra_minute ? `+${ev.extra_minute}` : ''}'`;
                 const eventKey = ev.id || `${index}-${ev.time_elapsed}-${ev.type}`;
+
+                // Primary actor: resolved person name OR first part of detail fallback
+                // For Flashscore-scraped events player_name is null, detail = "Name1 | Name2"
+                const detailParts = (ev.detail || '').split(' | ');
+                const primaryName  = ev.player_name  || detailParts[0] || null;
+                const secondaryName = ev.assist_name || detailParts[1] || null;
+
+                const renderPlayerBlock = () => (
+                    <div className="ds-ev-data-wrap">
+                        <span className="ds-ev-player">{primaryName}</span>
+                        {secondaryName && (
+                            <span className={`ds-ev-assist ${ev.type === 'substitution' ? 'ds-ev-sub-on' : ''}`}>
+                                {ev.type === 'substitution' ? `↑ ${secondaryName}` : secondaryName}
+                            </span>
+                        )}
+                    </div>
+                );
 
                 return (
                     <div key={eventKey} className={`ds-ev-row ${isHome ? 'home' : 'away'}`}>
                         <div className="ds-ev-col-home">
-                            {isHome && (
-                                <div className="ds-ev-data-wrap">
-                                    <span className="ds-ev-player">{ev.player_name}</span>
-                                    <div className="ds-ev-meta">
-                                        <span className="ds-ev-detail">{ev.detail}</span>
-                                        {ev.assist_name && (
-                                            <span className="ds-ev-assist">{ev.assist_name}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+                            {isHome && renderPlayerBlock()}
                         </div>
 
                         <div className="ds-ev-col-center">
                             <div className="ds-ev-time-stamp">{timeStr}</div>
                             <div className="ds-ev-timeline-icon">
-                                {renderEventIcon(ev.type, ev.detail)}
+                                {renderEventIcon(ev.type)}
                             </div>
                         </div>
 
                         <div className="ds-ev-col-away">
-                            {!isHome && (
-                                <div className="ds-ev-data-wrap">
-                                    <span className="ds-ev-player">{ev.player_name}</span>
-                                    <div className="ds-ev-meta">
-                                        <span className="ds-ev-detail">{ev.detail}</span>
-                                        {ev.assist_name && (
-                                            <span className="ds-ev-assist">{ev.assist_name}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+                            {!isHome && renderPlayerBlock()}
                         </div>
                     </div>
                 );

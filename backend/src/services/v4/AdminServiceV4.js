@@ -1,7 +1,6 @@
 import db from '../../config/database.js';
 import logger from '../../utils/logger.js';
-
-const DEFAULT_PHOTO = 'https://tmssl.akamaized.net//images/foto/normal/default.jpg?lm=1';
+import { DEFAULT_PHOTO } from '../../config/mediaConstants.js';
 const NORM_EXPR = `LOWER(REGEXP_REPLACE(unaccent(full_name), '[^a-zA-Z0-9]', '', 'g'))`;
 
 class AdminServiceV4 {
@@ -55,6 +54,12 @@ class AdminServiceV4 {
                 WHERE table_schema = 'v4' AND table_name = 'player_season_xg'
             `);
             const xgPersonCol = xgSchema.some(c => c.column_name === 'person_id') ? 'person_id' : 'player_id';
+
+            // @CRITICAL: Guard dynamic column name against injection
+            const ALLOWED_XG_COLS = ['person_id', 'player_id'];
+            if (!ALLOWED_XG_COLS.includes(xgPersonCol)) {
+                throw new Error(`Invalid column name detected: ${xgPersonCol}. Only ${ALLOWED_XG_COLS.join(', ')} are allowed.`);
+            }
 
             let totalDeleted = 0;
             let errors = 0;

@@ -1,12 +1,14 @@
 /**
  * API Queue Service
- * 
+ *
  * Manages API request rate limiting and retry logic.
  * - Maximum 10 requests per minute
  * - Automatic retry after 60 seconds for rate limit errors
  * - Request deduplication
  * - Promise-based API
  */
+
+import logger from '../utils/logger.js';
 
 class ApiQueue {
     constructor() {
@@ -73,7 +75,7 @@ class ApiQueue {
                 const oldestRequest = this.requestsInLastMinute[0];
                 const waitTime = this.MINUTE_MS - (now - oldestRequest) + 100; // +100ms buffer
                 if (waitTime > 0) {
-                    console.log(`⏳ Rate limit reached (${this.requestsInLastMinute.length}/min). Waiting ${waitTime}ms...`);
+                    logger.info({ requestsInMinute: this.requestsInLastMinute.length, waitTime }, 'Rate limit reached, waiting');
                     await this.sleep(waitTime);
                     continue; // Re-evaluate logic
                 }
@@ -102,14 +104,14 @@ class ApiQueue {
                 if (isRateLimitError && item.retryCount < 3) {
                     // Rate limit error - retry after 60 seconds
                     item.retryCount++;
-                    console.log(`⚠️  Rate limit error for ${item.id}. Retrying... (Retry ${item.retryCount}/3)`);
+                    logger.warn({ itemId: item.id, retryCount: item.retryCount }, 'Rate limit error, retrying after 60s');
 
                     // Keep in queue but move to end? No, keep at front and wait.
                     // Actually, if we hit 429, we must wait.
                     await this.sleep(60000);
                 } else {
                     // Permanent failure or max retries reached
-                    console.error(`❌ Failed: ${item.id}`, error.message);
+                    logger.error({ err: error, itemId: item.id }, 'API request failed permanently');
                     item.callbacks.forEach(cb => cb.reject(error));
                     this.queue.shift();
                 }

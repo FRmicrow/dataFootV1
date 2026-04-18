@@ -31,10 +31,10 @@ statFootV3/
 ├── frontend/      # React (Vite) - UI/UX
 ├── backend/       # Node.js - Core Logic & Data
 ├── ml-service/    # Python - Predictions & Models
-└── .agents/       # Project intelligence & Architecture
+└── .claude/       # Project intelligence & Architecture
 ```
 
-For a detailed architectural breakdown, see **[.agents/project-architecture/architecture-globale.md](./.agents/project-architecture/architecture-globale.md)**.
+For a detailed architectural breakdown, see **[.claude/project-architecture/architecture-globale.md](./.claude/project-architecture/architecture-globale.md)**.
 
 ## 🛠️ Key Features
 

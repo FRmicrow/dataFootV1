@@ -1,8 +1,6 @@
 import db from '../../config/database.js';
 import logger from '../../utils/logger.js';
-
-const DEFAULT_LOGO  = 'https://tmssl.akamaized.net//images/logo/normal/tm.png';
-const DEFAULT_PHOTO = 'https://tmssl.akamaized.net//images/foto/normal/default.jpg?lm=1';
+import { DEFAULT_LOGO, DEFAULT_PHOTO } from '../../config/mediaConstants.js';
 
 // ── CTE fragments ─────────────────────────────────────────────────────────────
 // Pre-fetch the latest logo for every club/competition in one pass.
