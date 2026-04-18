@@ -20,15 +20,28 @@ class ClubServiceV4 {
     async getClubProfile(identifier) {
         return db.get(
             `WITH ${LATEST_CLUB_LOGOS_CTE}
-             SELECT 
-                c.*, 
+             SELECT
+                c.club_id,
+                c.name,
+                c.official_name,
+                c.short_name,
+                c.founded,
+                c.accent_color,
+                c.secondary_color,
+                c.tertiary_color,
+                c.description,
+                c.venue_name,
+                c.venue_city,
+                c.venue_capacity,
+                c.venue_image_url,
+                c.current_logo_url,
                 COALESCE(lcl.logo_url, c.current_logo_url, ?) as logo_url,
                 co.display_name as country_name,
                 co.flag_url as country_flag
              FROM v4.clubs c
              LEFT JOIN latest_club_logos lcl ON c.club_id = lcl.club_id
              LEFT JOIN v4.countries co ON c.country_id = co.country_id
-             WHERE c.club_id::text = ? 
+             WHERE c.club_id::text = ?
                 OR c.slug = ?
                 OR LOWER(REGEXP_REPLACE(c.short_name, '[^a-zA-Z0-9]+', '-', 'g')) = ?`,
             [DEFAULT_LOGO, identifier, identifier, identifier]
@@ -77,8 +90,13 @@ class ClubServiceV4 {
         query += `
                 GROUP BY ml.player_id
             )
-            SELECT 
-                ps.*,
+            SELECT
+                ps.player_id,
+                ps.appearances,
+                ps.starts,
+                ps.number,
+                ps.position_code,
+                ps.position,
                 p.full_name as name,
                 COALESCE(p.photo_url, ?) as photo,
                 NULL as nationality,

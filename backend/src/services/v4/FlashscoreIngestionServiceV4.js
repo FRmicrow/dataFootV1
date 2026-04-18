@@ -22,8 +22,8 @@
  */
 
 import { z } from 'zod';
-import db from '../config/database.js';
-import logger from '../utils/logger.js';
+import db from '../../config/database.js';
+import logger from '../../utils/logger.js';
 
 // ============================================================================
 // SCHEMAS — Flashscore Data Validation
@@ -105,48 +105,49 @@ export async function importFlashscoreMatchResult(flashscoreData) {
 
     // STEP 3: Business key lookup (match_date + clubs + competition)
     const existingMatch = await db.get(
-      `SELECT id, home_score, away_score, scraped_score_at
+      `SELECT match_id, home_score, away_score, scraped_score_at
        FROM v4.matches
        WHERE home_club_id = ? AND away_club_id = ?
          AND match_date = ? AND competition_id = ?`,
-      [homeClub.id, awayClub.id, validated.match_date, competition.id]
+      [homeClub.club_id, awayClub.club_id, validated.match_date, competition.competition_id]
     );
 
     // STEP 4: Idempotence check — don't re-scrape if already marked
     if (existingMatch) {
       if (existingMatch.scraped_score_at) {
         logger.info({
-          match_id: existingMatch.id,
+          match_id: existingMatch.match_id,
           scraped_at: existingMatch.scraped_score_at,
         }, 'Match already scraped — skipped (idempotent)');
-        return { action: 'skipped', match_id: existingMatch.id, reason: 'already_scraped' };
+        return { action: 'skipped', match_id: existingMatch.match_id, reason: 'already_scraped' };
       }
 
-      // UPDATE: match exists but not yet scored
+      // UPDATE: match exists but not yet scored (note: v4.matches has no 'status' column)
       await db.run(
         `UPDATE v4.matches
-         SET home_score = ?, away_score = ?, status = ?, scraped_score_at = NOW()
-         WHERE id = ?`,
-        [validated.home_score, validated.away_score, validated.status, existingMatch.id]
+         SET home_score = ?, away_score = ?, scraped_score_at = NOW()
+         WHERE match_id = ?`,
+        [validated.home_score, validated.away_score, existingMatch.match_id]
       );
 
       logger.info({
-        match_id: existingMatch.id,
+        match_id: existingMatch.match_id,
         action: 'UPDATE',
         old_score: `${existingMatch.home_score}-${existingMatch.away_score}`,
         new_score: `${validated.home_score}-${validated.away_score}`,
       }, 'Match score updated from Flashscore');
 
-      return { action: 'updated', match_id: existingMatch.id };
+      return { action: 'updated', match_id: existingMatch.match_id };
 
     } else {
       // INSERT: new match from Flashscore (likely a cup match)
+      // Note: v4.matches does NOT have a 'status' column
       const result = await db.run(
         `INSERT INTO v4.matches
-         (home_club_id, away_club_id, competition_id, match_date, home_score, away_score, status, scraped_score_at, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [homeClub.id, awayClub.id, competition.id, validated.match_date,
-         validated.home_score, validated.away_score, validated.status]
+         (home_club_id, away_club_id, competition_id, match_date, home_score, away_score, scraped_score_at, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        [homeClub.club_id, awayClub.club_id, competition.competition_id, validated.match_date,
+         validated.home_score, validated.away_score]
       );
 
       logger.info({
@@ -194,8 +195,8 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
 
     // STEP 2: Verify match exists and has score (idempotence check)
     const match = await db.get(
-      `SELECT id, home_club_id, away_club_id, home_score, away_score, scraped_events_at
-       FROM v4.matches WHERE id = ?`,
+      `SELECT match_id, home_club_id, away_club_id, home_score, away_score, scraped_events_at
+       FROM v4.matches WHERE match_id = ?`,
       [matchId]
     );
 
@@ -428,31 +429,20 @@ async function resolveCompetitionByName(competitionName, countryCode) {
 async function resolveClubByName(flashscoreClubName) {
   // Exact match first
   let club = await db.get(
-    `SELECT id, name FROM v4.clubs WHERE name = ?`,
+    `SELECT club_id, name FROM v4.clubs WHERE name = ?`,
     [flashscoreClubName]
   );
 
   if (club) return club;
 
-  // Check team aliases (mapping table)
-  const alias = await db.get(
-    `SELECT club_id FROM v4.team_aliases WHERE alias = ?`,
-    [flashscoreClubName]
-  );
-
-  if (alias) {
-    club = await db.get(
-      `SELECT id, name FROM v4.clubs WHERE id = ?`,
-      [alias.club_id]
-    );
-
-    if (club) return club;
-  }
+  // Check team aliases (mapping table — note: team_aliases table doesn't exist in V4 yet)
+  // This is a fallback for future use if aliases are added
+  // For now, team resolution falls through to fuzzy match
 
   // Fuzzy match (Levenshtein distance < 3)
   // Note: PostgreSQL needs `pg_trgm` extension for similarity()
   club = await db.get(
-    `SELECT id, name FROM v4.clubs
+    `SELECT club_id, name FROM v4.clubs
      WHERE similarity(name, ?) > 0.6
      ORDER BY similarity(name, ?) DESC
      LIMIT 1`,

@@ -472,9 +472,9 @@ class LeagueServiceV4 {
                  psx.xg_90, psx.npxg_90, psx.xa_90,
                  psx.xg_chain_90, psx.xg_buildup_90,
                  COUNT(DISTINCT ml.match_id)::int AS lineup_apps,
-                 SUM(CASE WHEN me.event_type ILIKE 'goal'       AND me.player_id = p.person_id THEN 1 ELSE 0 END)::int AS lineup_goals,
-                 SUM(CASE WHEN me.event_type ILIKE 'yellowcard' AND me.player_id = p.person_id THEN 1 ELSE 0 END)::int AS yellow_cards,
-                 SUM(CASE WHEN me.event_type ILIKE 'redcard'    AND me.player_id = p.person_id THEN 1 ELSE 0 END)::int AS red_cards
+                 SUM(CASE WHEN me.event_type = 'goal'       AND me.player_id = p.person_id THEN 1 ELSE 0 END)::int AS lineup_goals,
+                 SUM(CASE WHEN me.event_type = 'card'       AND me.player_id = p.person_id THEN 1 ELSE 0 END)::int AS yellow_cards,
+                 SUM(CASE WHEN me.event_type = 'red_card'   AND me.player_id = p.person_id THEN 1 ELSE 0 END)::int AS red_cards
              FROM v4.people p
              JOIN v4.match_lineups ml ON ml.player_id = p.person_id
              JOIN v4.matches m        ON m.match_id = ml.match_id
@@ -489,7 +489,7 @@ class LeagueServiceV4 {
              LEFT JOIN v4.match_events me
                     ON me.match_id  = m.match_id
                    AND me.player_id = p.person_id
-             WHERE p.person_id::text = ?
+             WHERE p.person_id = ?::BIGINT
              GROUP BY
                  p.person_id, p.full_name, p.photo_url,
                  c.name, ll.logo_url, c.current_logo_url,

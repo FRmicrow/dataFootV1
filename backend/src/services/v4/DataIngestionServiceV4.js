@@ -63,7 +63,7 @@ export async function insertMatchEvent(matchId, event) {
 
     // STEP 2: Verify match exists (FK check)
     const match = await db.get(
-      'SELECT id FROM v4.matches WHERE id = ?',
+      'SELECT match_id FROM v4.matches WHERE match_id = ?',
       [matchId]
     );
 
@@ -74,7 +74,7 @@ export async function insertMatchEvent(matchId, event) {
 
     // STEP 3: Check for duplicate via business key
     const existingEvent = await db.get(
-      `SELECT id FROM v4.match_events
+      `SELECT match_event_id FROM v4.match_events
        WHERE match_id = ? AND minute_label = ? AND event_type = ? AND player_id IS NOT DISTINCT FROM ?`,
       [matchId, validated.minute_label, validated.event_type, validated.player_id]
     );
@@ -91,7 +91,7 @@ export async function insertMatchEvent(matchId, event) {
     // STEP 4: Verify FK references
     if (validated.player_id) {
       const player = await db.get(
-        'SELECT id FROM v4.people WHERE id = ?',
+        'SELECT person_id FROM v4.people WHERE person_id = ?',
         [validated.player_id]
       );
       if (!player) {
@@ -101,7 +101,7 @@ export async function insertMatchEvent(matchId, event) {
     }
 
     const team = await db.get(
-      'SELECT id FROM v4.clubs WHERE id = ?',
+      'SELECT club_id FROM v4.clubs WHERE club_id = ?',
       [validated.team_id]
     );
 
@@ -325,11 +325,14 @@ export async function upsertPlayer(person) {
     // STEP 1: Validate
     const validated = PlayerInsertSchema.parse(person);
 
-    // STEP 2: Business key lookup (first_name + last_name + birth_date)
+    // STEP 2: Business key lookup (full_name — v4.people uses full_name, not split)
+    // Note: v4.people schema has 'full_name' text field, not first_name/last_name
+    const fullName = `${validated.first_name} ${validated.last_name}`.trim();
+
     const existing = await db.get(
-      `SELECT id FROM v4.people
-       WHERE first_name = ? AND last_name = ? AND birth_date IS NOT DISTINCT FROM ?`,
-      [validated.first_name, validated.last_name, validated.birth_date]
+      `SELECT person_id FROM v4.people
+       WHERE full_name = ? AND birth_date IS NOT DISTINCT FROM ?`,
+      [fullName, validated.birth_date]
     );
 
     if (existing) {
@@ -340,27 +343,26 @@ export async function upsertPlayer(person) {
              height = COALESCE(?, height),
              weight = COALESCE(?, weight),
              updated_at = NOW()
-         WHERE id = ?`,
-        [validated.nationality, validated.height, validated.weight, existing.id]
+         WHERE person_id = ?`,
+        [validated.nationality, validated.height, validated.weight, existing.person_id]
       );
 
       logger.info({
         operation: 'UPDATE',
         table: 'v4.people',
-        person_id: existing.id,
+        person_id: existing.person_id,
         timestamp: new Date().toISOString(),
       }, 'Player updated (upsert)');
 
-      return { status: 'updated', person_id: existing.id };
+      return { status: 'updated', person_id: existing.person_id };
 
     } else {
       // INSERT path
       const result = await db.run(
         `INSERT INTO v4.people
-         (first_name, last_name, birth_date, nationality, height, weight, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-        [validated.first_name, validated.last_name, validated.birth_date,
-         validated.nationality, validated.height, validated.weight]
+         (full_name, birth_date, nationality, height, weight, created_at)
+         VALUES (?, ?, ?, ?, ?, NOW())`,
+        [fullName, validated.birth_date, validated.nationality, validated.height, validated.weight]
       );
 
       logger.info({
@@ -394,7 +396,7 @@ export async function upsertPlayer(person) {
  */
 export async function findDuplicateMatches() {
   const duplicates = await db.all(
-    `SELECT home_club_id, away_club_id, match_date, competition_id, COUNT(*) as count, ARRAY_AGG(id) as ids
+    `SELECT home_club_id, away_club_id, match_date, competition_id, COUNT(*) as count, ARRAY_AGG(match_id) as ids
      FROM v4.matches
      GROUP BY home_club_id, away_club_id, match_date, competition_id
      HAVING COUNT(*) > 1
@@ -426,7 +428,7 @@ export async function mergeDuplicateMatches(keepId, deleteIds) {
     // Delete duplicates
     const placeholders = deleteIds.map((_, i) => `$${i + 1}`).join(',');
     await client.query(
-      `DELETE FROM v4.matches WHERE id IN (${placeholders})`,
+      `DELETE FROM v4.matches WHERE match_id IN (${placeholders})`,
       deleteIds
     );
 

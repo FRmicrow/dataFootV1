@@ -121,6 +121,7 @@ class StandingsV4Service {
                 FROM v4.matches m
                 JOIN v4.competitions c ON c.competition_id = m.competition_id
                 ORDER BY c.name ASC, m.season_label DESC
+                LIMIT 200
             `
         );
     }

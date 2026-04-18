@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import api from '../../../../services/api';
+import { useClubProfile } from '../../../../hooks/useV4Queries';
 import {
     Card, Stack, Button,
     Tabs, ProfileHeader, ControlBar, Select, TableSkeleton, Skeleton
@@ -35,12 +35,30 @@ const ClubProfilePageV4 = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('performance');
     const [selectedSeason, setSelectedSeason] = useState(null);
     const [selectedCompId, setSelectedCompId] = useState('all');
+
+    // Fetch club profile with React Query (handles caching, loading, error)
+    const { data, isLoading, error } = useClubProfile(identifier, selectedSeason, selectedCompId);
+
+    // Auto-select the latest season on first load (only once)
+    useEffect(() => {
+        if (!selectedSeason && data?.availableYears?.length > 0) {
+            const sortedYears = [...data.availableYears].sort((a, b) => b.localeCompare(a));
+            setSelectedSeason(sortedYears[0]);
+        }
+    }, [data?.availableYears, selectedSeason]);
+
+    // Reset comp filter when season changes to avoid stale selection
+    useEffect(() => {
+        if (selectedCompId !== 'all' && data?.seasons) {
+            const found = data.seasons.find(
+                s => s.season_label === selectedSeason && String(s.competition_id) === String(selectedCompId)
+            );
+            if (!found) setSelectedCompId('all');
+        }
+    }, [selectedSeason, data?.seasons]);
 
     // Sync tab with URL hash
     useEffect(() => {
@@ -54,43 +72,6 @@ const ClubProfilePageV4 = () => {
         setActiveTab(tabId);
         navigate(`#${tabId}`, { replace: true });
     };
-
-    useEffect(() => {
-        if (!identifier) return;
-        const fetchClub = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const res = await api.getV4ClubProfile(identifier, {
-                    season: selectedSeason,
-                    competitionId: selectedCompId === 'all' ? undefined : selectedCompId,
-                });
-                setData(res);
-                // Auto-select the latest season on first load
-                if (!selectedSeason && res?.availableYears?.length > 0) {
-                    const sortedYears = [...res.availableYears].sort((a, b) => b.localeCompare(a));
-                    setSelectedSeason(sortedYears[0]);
-                } else if (!selectedSeason && res?.rosterYear) {
-                    setSelectedSeason(res.rosterYear);
-                }
-            } catch (err) {
-                setError(err.message || 'Failed to load club data');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchClub();
-    }, [identifier, selectedSeason, selectedCompId]);
-
-    // Reset comp filter when season changes to avoid stale selection
-    useEffect(() => {
-        if (selectedCompId !== 'all' && data?.seasons) {
-            const found = data.seasons.find(
-                s => s.season_label === selectedSeason && String(s.competition_id) === String(selectedCompId)
-            );
-            if (!found) setSelectedCompId('all');
-        }
-    }, [selectedSeason, data]);
 
     // ⚠️ All hooks MUST be declared before any conditional returns
     const seasons = data?.seasons ?? [];
@@ -108,7 +89,7 @@ const ClubProfilePageV4 = () => {
     ];
 
     // Loading skeleton (initial)
-    if (loading && !data) return (
+    if (isLoading && !data) return (
         <div className="ds-club-page">
             <Skeleton height="300px" style={{ marginBottom: 'var(--spacing-lg)' }} />
             <ControlBar
@@ -122,11 +103,12 @@ const ClubProfilePageV4 = () => {
     );
 
     // Error / not found
-    if (error || (!loading && !data?.club)) return (
+    const errorMessage = error?.message || 'Club Not Found';
+    if (error || (!isLoading && !data?.club)) return (
         <div style={{ padding: '80px', textAlign: 'center' }}>
             <Card style={{ maxWidth: '400px', margin: '0 auto' }}>
                 <span style={{ fontSize: '48px' }}>⚠️</span>
-                <h2 style={{ margin: '24px 0 12px' }}>{error || 'Club Not Found'}</h2>
+                <h2 style={{ margin: '24px 0 12px' }}>{errorMessage}</h2>
                 <Button variant="primary" onClick={() => navigate('/leagues')}>Back to Leagues</Button>
             </Card>
         </div>

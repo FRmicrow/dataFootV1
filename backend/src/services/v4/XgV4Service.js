@@ -3,6 +3,14 @@ import { createChildLogger } from '../../utils/logger.js';
 
 const logger = createChildLogger('XgV4Service');
 
+// Latest logo per club in a single pass — replaces N+1 LATERAL subqueries
+const LATEST_CLUB_LOGOS_CTE = `
+    latest_club_logos AS (
+        SELECT DISTINCT ON (club_id) club_id, logo_url
+        FROM v4.club_logos
+        ORDER BY club_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
+    )`;
+
 const XgV4Service = {
     /**
      * Returns xG stats for all clubs in a competition/season.
@@ -19,7 +27,8 @@ const XgV4Service = {
      */
     async getTeamSeasonXg(leagueName, season) {
         const rows = await db.all(
-            `SELECT
+            `WITH ${LATEST_CLUB_LOGOS_CTE}
+             SELECT
                 tsx.id,
                 tsx.competition_id::text,
                 tsx.season_label,
@@ -47,12 +56,7 @@ const XgV4Service = {
              FROM v4.team_season_xg tsx
              JOIN v4.competitions comp ON comp.competition_id = tsx.competition_id
              JOIN v4.clubs c ON c.club_id = tsx.club_id
-             LEFT JOIN LATERAL (
-                 SELECT logo_url FROM v4.club_logos
-                 WHERE club_id = c.club_id
-                 ORDER BY end_year DESC NULLS LAST, start_year DESC NULLS LAST
-                 LIMIT 1
-             ) cl ON TRUE
+             LEFT JOIN latest_club_logos cl ON cl.club_id = c.club_id
              WHERE comp.name = $1
                AND tsx.season_label = $2
              ORDER BY tsx.position ASC NULLS LAST, tsx.xg DESC NULLS LAST`,

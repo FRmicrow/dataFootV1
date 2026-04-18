@@ -68,15 +68,20 @@ class AdminServiceV4 {
                 const canonicalId = group.ids[0];
                 const redundantIds = group.ids.slice(1);
 
-                try {
-                    for (const oldId of redundantIds) {
-                        await db.run('UPDATE v4.match_lineups SET player_id = $1 WHERE player_id = $2', [canonicalId, oldId]);
-                        await db.run('UPDATE v4.match_events SET player_id = $1 WHERE player_id = $2', [canonicalId, oldId]);
-                        await db.run('UPDATE v4.match_events SET related_player_id = $1 WHERE related_player_id = $2', [canonicalId, oldId]);
-                        await db.run('UPDATE v4.matches SET referee_person_id = $1 WHERE referee_person_id = $2', [canonicalId, oldId]);
+                for (const oldId of redundantIds) {
+                    let client;
+                    try {
+                        // @RACE-CONDITION: Wrap each merge in transaction for atomic operations
+                        client = await db.pool.connect();
+                        await client.query('BEGIN');
+
+                        await client.query('UPDATE v4.match_lineups SET player_id = $1 WHERE player_id = $2', [canonicalId, oldId]);
+                        await client.query('UPDATE v4.match_events SET player_id = $1 WHERE player_id = $2', [canonicalId, oldId]);
+                        await client.query('UPDATE v4.match_events SET related_player_id = $1 WHERE related_player_id = $2', [canonicalId, oldId]);
+                        await client.query('UPDATE v4.matches SET referee_person_id = $1 WHERE referee_person_id = $2', [canonicalId, oldId]);
 
                         // Resolve player_season_xg conflicts before update
-                        const conflicts = await db.query(`
+                        const conflicts = await client.query(`
                             SELECT s2.id AS old_stat_id
                             FROM v4.player_season_xg s1
                             JOIN v4.player_season_xg s2
@@ -87,17 +92,32 @@ class AdminServiceV4 {
                             WHERE s1.${xgPersonCol} = $1 AND s2.${xgPersonCol} = $2
                         `, [canonicalId, oldId]);
 
-                        for (const c of conflicts) {
-                            await db.run('DELETE FROM v4.player_season_xg WHERE id = $1', [c.old_stat_id]);
+                        for (const c of conflicts.rows) {
+                            await client.query('DELETE FROM v4.player_season_xg WHERE id = $1', [c.old_stat_id]);
                         }
 
-                        await db.run(`UPDATE v4.player_season_xg SET ${xgPersonCol} = $1 WHERE ${xgPersonCol} = $2`, [canonicalId, oldId]);
-                        await db.run('DELETE FROM v4.people WHERE person_id = $1', [oldId]);
+                        await client.query(`UPDATE v4.player_season_xg SET ${xgPersonCol} = $1 WHERE ${xgPersonCol} = $2`, [canonicalId, oldId]);
+                        await client.query('DELETE FROM v4.people WHERE person_id = $1', [oldId]);
+
+                        await client.query('COMMIT');
                         totalDeleted++;
+
+                    } catch (err) {
+                        if (client) {
+                            try {
+                                await client.query('ROLLBACK');
+                            } catch (rollbackErr) {
+                                logger.error({ err: rollbackErr }, 'Rollback failed during merge');
+                            }
+                        }
+                        errors++;
+                        logger.error({ err, canonicalId, oldId }, 'Failed to merge duplicate');
+
+                    } finally {
+                        if (client) {
+                            client.release();
+                        }
                     }
-                } catch (err) {
-                    errors++;
-                    logger.error({ err, canonicalId }, 'Failed to merge duplicate group');
                 }
             }
 

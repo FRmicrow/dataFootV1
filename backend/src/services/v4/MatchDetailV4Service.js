@@ -153,7 +153,7 @@ class MatchDetailV4Service {
                 home_yellows_1h, away_yellows_1h,
                 home_yellows_2h, away_yellows_2h
              FROM v4.match_stats
-             WHERE match_id::text = ?`,
+             WHERE match_id = ?::BIGINT`,
             [fixtureId]
         );
 
@@ -165,7 +165,7 @@ class MatchDetailV4Service {
                 over_45, under_45,
                 btts_yes, btts_no
              FROM v4.match_odds
-             WHERE match_id::text = ?`,
+             WHERE match_id = ?::BIGINT`,
             [fixtureId]
         );
 
