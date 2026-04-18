@@ -289,7 +289,14 @@ def fetch_unresolved_matches(league_filter, since: str) -> list:
 
 
 def fetch_scored_without_detail(league_filter, since: str) -> list:
-    """Query v4.matches for league matches missing any detail (events OR lineups OR stats)."""
+    """
+    Query v4.matches for league matches missing any detail (events OR lineups OR stats).
+
+    When force_tier=1: also includes matches outside the lookback window
+    (e.g., Liga Portugal matches in March 2026 with no planning after → no events/lineups yet).
+
+    This fixes the issue where completed seasons without future matches are ignored.
+    """
     conn = get_db_connection()
     cur = conn.cursor()
     sql = """
@@ -1119,7 +1126,7 @@ def main():
     parser.add_argument('--since', default=None)
     parser.add_argument('--output', default=None)
     parser.add_argument('--force-tier', type=int, default=0, choices=[0, 1],
-                        help='Force tier 1 (Full) for all competitions regardless of DB state')
+                        help='Force tier 1 (Full) for all competitions; also fetches scored matches outside lookback (fixes missing details in finished seasons)')
     parser.add_argument('--match-ids', default=None,
                         help='Comma-separated match_ids to target specifically (for retry)')
     args = parser.parse_args()
@@ -1129,7 +1136,10 @@ def main():
     if args.match_ids:
         target_match_ids = set(int(x.strip()) for x in args.match_ids.split(',') if x.strip())
 
+    # When force_tier=1, ignore since limit for scored_without_detail (fetch ALL scored matches without details)
+    # This fixes the issue where finished seasons (Liga Portugal) have no future matches, thus no planning to scrape
     since = args.since or (datetime.now() - timedelta(days=15)).strftime('%Y-%m-%d')
+    since_for_detail = '1970-01-01' if args.force_tier == 1 else since
     all_results = []
 
     with sync_playwright() as p:
@@ -1143,8 +1153,10 @@ def main():
         if args.mode in ('update', 'all'):
             if args.force_tier == 1:
                 # force-tier=1: also pick up scored matches missing events/lineups
-                print(f"\n[scraper] MODE=update (force-tier=1) — fetching scored matches without detail since {since}", file=sys.stderr)
-                matches = fetch_scored_without_detail(args.league, since)
+                # Use since_for_detail='1970-01-01' to fetch ALL scored matches without details,
+                # including finished seasons (e.g. Liga Portugal) with no future planning
+                print(f"\n[scraper] MODE=update (force-tier=1) — fetching scored matches without detail (all time, not just since {since})", file=sys.stderr)
+                matches = fetch_scored_without_detail(args.league, since_for_detail)
                 print(f"[scraper] {len(matches)} matches need detail", file=sys.stderr)
             else:
                 print(f"\n[scraper] MODE=update — fetching unresolved league matches since {since}", file=sys.stderr)
