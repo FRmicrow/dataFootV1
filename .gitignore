@@ -110,7 +110,7 @@ import-upcoming.js
 import_v4_upcoming.js
 scripts/v4/import-v4-upcoming.js
 
-# Agent config (ignore if requested, but adding for cleanliness)
+# Agent config
 .agents/
-.claude/
+.claude/scheduled_tasks.lock
 
