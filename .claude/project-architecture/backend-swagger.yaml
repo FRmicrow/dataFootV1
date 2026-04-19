@@ -2916,10 +2916,10 @@ paths:
       operationId: getLeaguesV4
       tags:
         - V4 Leagues
-      summary: Récupérer les ligues groupées par pays (V4)
+      summary: Récupérer les ligues groupées par pays avec progression et leader (V4)
       responses:
         200:
-          description: Succès
+          description: Succès — liste des ligues groupées par pays
           content:
             application/json:
               schema:
@@ -2927,8 +2927,75 @@ paths:
                 properties:
                   success:
                     type: boolean
+                    example: true
                   data:
-                    type: object
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        country_name:
+                          type: string
+                          example: "Germany"
+                        country_flag:
+                          type: string
+                          nullable: true
+                          example: "https://cdn.example.com/flags/de.png"
+                        country_rank:
+                          type: integer
+                          example: 1
+                        leagues:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              league_id:
+                                type: string
+                                example: "1"
+                              name:
+                                type: string
+                                example: "Bundesliga"
+                              competition_type:
+                                type: string
+                                enum: ["league", "cup", "super_cup"]
+                                example: "league"
+                              logo_url:
+                                type: string
+                                example: "https://cdn.example.com/bundesliga.png"
+                              seasons_count:
+                                type: integer
+                                example: 10
+                              latest_season:
+                                type: string
+                                example: "2024/2025"
+                              current_matchday:
+                                type: integer
+                                nullable: true
+                                description: "Current matchday for league competitions. Null for cups or if no data."
+                                example: 32
+                              total_matchdays:
+                                type: integer
+                                nullable: true
+                                description: "Total matchdays in season for league. Null for cups."
+                                example: 34
+                              latest_round_label:
+                                type: string
+                                nullable: true
+                                description: "Round label (e.g., 'Matchday 32' for leagues, 'Quarter-finals' for cups)"
+                                example: "Matchday 32"
+                              leader:
+                                type: object
+                                nullable: true
+                                description: "Current league leader. Null for cups or if no standings data."
+                                properties:
+                                  club_id:
+                                    type: string
+                                    example: "101"
+                                  name:
+                                    type: string
+                                    example: "Bayern München"
+                                  logo_url:
+                                    type: string
+                                    example: "https://cdn.example.com/bayern.png"
         500:
           description: Erreur serveur
 

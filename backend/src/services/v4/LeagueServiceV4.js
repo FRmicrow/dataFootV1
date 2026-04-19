@@ -1,6 +1,7 @@
 import db from '../../config/database.js';
 import logger from '../../utils/logger.js';
 import { DEFAULT_LOGO, DEFAULT_PHOTO } from '../../config/mediaConstants.js';
+import StandingsV4Service from './StandingsV4Service.js';
 
 // ── CTE fragments ─────────────────────────────────────────────────────────────
 // Pre-fetch the latest logo for every club/competition in one pass.
@@ -122,7 +123,21 @@ class LeagueServiceV4 {
     async getLeaguesGroupedByCountry() {
         try {
             const rows = await db.all(
-                `WITH ${LATEST_COMP_LOGOS_CTE}
+                `WITH ${LATEST_COMP_LOGOS_CTE},
+                 current_season_progress AS (
+                     SELECT
+                         m.competition_id,
+                         m.season_label,
+                         MAX(m.matchday) AS current_matchday,
+                         COUNT(DISTINCT m.match_id) FILTER (WHERE m.home_score IS NOT NULL) AS played_matches,
+                         COUNT(DISTINCT m.match_id) AS total_matches,
+                         MAX(m.round_label) FILTER (WHERE m.home_score IS NOT NULL) AS latest_round_label
+                     FROM v4.matches m
+                     WHERE (m.competition_id, m.season_label) IN (
+                         SELECT competition_id, MAX(season_label) FROM v4.matches GROUP BY competition_id
+                     )
+                     GROUP BY m.competition_id, m.season_label
+                 )
                  SELECT
                      c.competition_id::text AS league_id,
                      c.name,
@@ -133,16 +148,23 @@ class LeagueServiceV4 {
                      COALESCE(co.display_rank_override, co.importance_rank, 999) AS country_rank,
                      COUNT(DISTINCT m.season_label) AS seasons_count,
                      MAX(m.season_label) AS latest_season,
-                     COALESCE(c.display_rank_override, c.importance_rank, 999999) AS competition_rank
+                     COALESCE(c.display_rank_override, c.importance_rank, 999999) AS competition_rank,
+                     CASE WHEN c.competition_type = 'league' THEN cp.current_matchday ELSE NULL END AS current_matchday,
+                     CASE WHEN c.competition_type = 'league' THEN cp.total_matches ELSE NULL END AS total_matchdays,
+                     cp.latest_round_label
                  FROM v4.competitions c
                  LEFT JOIN v4.countries co ON co.country_id = c.country_id
                  LEFT JOIN latest_comp_logos lcl ON lcl.competition_id = c.competition_id
                  LEFT JOIN v4.matches m ON m.competition_id = c.competition_id
+                 LEFT JOIN current_season_progress cp
+                     ON cp.competition_id = c.competition_id
+                     AND cp.season_label = (SELECT MAX(season_label) FROM v4.matches WHERE competition_id = c.competition_id)
                  GROUP BY
                      c.competition_id, c.name, c.competition_type, c.current_logo_url,
                      lcl.logo_url, co.display_name, co.name, co.flag_url,
                      co.display_rank_override, co.importance_rank,
-                     c.display_rank_override, c.importance_rank
+                     c.display_rank_override, c.importance_rank,
+                     cp.current_matchday, cp.total_matches, cp.latest_round_label
                  HAVING COUNT(DISTINCT m.season_label) > 0
                  ORDER BY
                      COALESCE(co.display_rank_override, co.importance_rank, 999),
@@ -166,12 +188,56 @@ class LeagueServiceV4 {
                 grouped.get(key).leagues.push({
                     league_id:       row.league_id,
                     name:            row.name,
+                    competition_type: row.competition_type,
                     logo_url:        row.logo_url || DEFAULT_LOGO,
                     seasons_count:   Number(row.seasons_count || 0),
                     latest_season:   row.latest_season,
                     priority:        getLeaguePriority(row.name, row.competition_type),
                     competition_rank: Number(row.competition_rank || 999999),
+                    current_matchday: row.current_matchday ? Number(row.current_matchday) : null,
+                    total_matchdays:  row.total_matchdays ? Number(row.total_matchdays) : null,
+                    latest_round_label: row.latest_round_label || null,
+                    leader: null,  // Will be populated below
                 });
+            }
+
+            // Parallelize leader calculation for all leagues
+            const leaderPromises = [];
+            const leaderIndex = []; // Array of { country, leagueIdx }
+
+            for (const country of grouped.values()) {
+                for (let i = 0; i < country.leagues.length; i++) {
+                    const league = country.leagues[i];
+                    if (league.competition_type === 'league' && league.latest_season) {
+                        leaderIndex.push({ country, leagueIdx: i });
+                        leaderPromises.push(
+                            StandingsV4Service.calculateStandings(
+                                BigInt(league.league_id),
+                                league.latest_season
+                            ).catch((err) => {
+                                logger.warn({ err, competition_id: league.league_id }, 'Failed to calculate standings for leader');
+                                return null; // Gracefully handle error
+                            })
+                        );
+                    }
+                }
+            }
+
+            // Resolve all leader calculations in parallel
+            if (leaderPromises.length > 0) {
+                const standings = await Promise.all(leaderPromises);
+                for (let i = 0; i < standings.length; i++) {
+                    const leaderStandings = standings[i];
+                    const { country, leagueIdx } = leaderIndex[i];
+                    if (leaderStandings && leaderStandings.length > 0) {
+                        const leader = leaderStandings[0];
+                        country.leagues[leagueIdx].leader = {
+                            club_id: leader.team_id,
+                            name: leader.team_name,
+                            logo_url: leader.team_logo || DEFAULT_LOGO,
+                        };
+                    }
+                }
             }
 
             const result = Array.from(grouped.values()).sort((a, b) => a.country_rank - b.country_rank);
