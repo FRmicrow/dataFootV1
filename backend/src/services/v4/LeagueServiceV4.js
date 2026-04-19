@@ -57,21 +57,26 @@ function normalizePosition(code) {
 function getLeaguePriority(name, competitionType) {
     const n = String(name || '').toLowerCase();
     if (competitionType === 'league') {
+        // First-tier leagues (priority 1)
+        // Check for exact top leagues, excluding second divisions
         if (
-            n.includes('ligue 1') || n.includes('premier league') ||
-            n.includes('eredivisie') || n.includes('serie a') ||
-            n.includes('bundesliga') || n.includes('superlig') ||
-            n.includes('eliteserien') || n.includes('allsvenskan') ||
-            n.includes('j1 league') ||
-            (n.includes('liga') && !n.includes(' 2') && !n.includes(' 3') && !n.includes('b')) ||
-            n.includes('division 1') || n.includes('premier division')
+            n === 'ligue 1' || n === 'premier league' ||
+            n === 'eredivisie' || n === 'serie a' ||
+            n === 'bundesliga' || n === 'superlig' ||
+            n === 'eliteserien' || n === 'allsvenskan' ||
+            n === 'j1 league' ||
+            n === 'division 1' || n === 'premier division' ||
+            (n.includes('liga') && !n.includes('2') && !n.includes('3') && !n.includes('b'))
         ) return 1;
+
+        // Second-tier leagues (priority 2)
         if (
-            n.includes('ligue 2') || n.includes('championship') ||
-            n.includes('serie b') || n.includes('2. bundesliga') ||
+            n === 'ligue 2' || n === 'championship' ||
+            n === 'serie b' || n === '2. bundesliga' || n === '2 bundesliga' ||
             n.includes('liga 2') || n.includes('liga b') ||
-            n.includes('j2 league') || n.includes('division 2')
+            n === 'j2 league' || n === 'division 2'
         ) return 2;
+
         return 3;
     }
     if (competitionType === 'cup') {

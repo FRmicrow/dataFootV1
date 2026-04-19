@@ -135,17 +135,11 @@ const V4LeaguesList = () => {
 
             <PageContentV4>
                 <Stack gap="var(--spacing-md)">
-                    {leagues.map(country => {
-                        // Calculate league and cup breakdown
-                        const leagueCount = country.leagues.filter(l => l.competition_type === 'league').length;
-                        const cupCount = country.leagues.filter(l => l.competition_type === 'cup').length;
-                        const totalSeasons = country.leagues.reduce((sum, l) => sum + l.seasons_count, 0);
-
-                        return (
+                    {leagues.map(country => (
                         <Accordion
                             key={country.country_name}
                             title={
-                                <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1 }}>
+                                <Stack direction="row" align="center" gap="var(--spacing-md)">
                                     {country.country_flag
                                         ? (
                                             <div className="v4-flag-circle">
@@ -154,19 +148,19 @@ const V4LeaguesList = () => {
                                         )
                                         : <div className="v4-zone-badge">{country.country_name}</div>
                                     }
-                                    <div className="v4-accordion-header-wrapper">
-                                        <h3 className="v4-accordion-header-title">
+                                    <div>
+                                        <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>
                                             {country.country_name}
                                         </h3>
-                                        <div className="v4-accordion-header-meta">
-                                            {leagueCount} {leagueCount > 1 ? 'leagues' : 'league'} · {cupCount} {cupCount > 1 ? 'cups' : 'cup'}
-                                        </div>
+                                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>
+                                            {country.leagues.length} {country.leagues.length > 1 ? 'Competitions' : 'Competition'}
+                                        </span>
                                     </div>
                                 </Stack>
                             }
                             headerRight={
                                 <Badge variant="neutral" size="sm">
-                                    {totalSeasons} seasons
+                                    {country.leagues.reduce((sum, l) => sum + l.seasons_count, 0)} seasons
                                 </Badge>
                             }
                             defaultExpanded
@@ -179,21 +173,17 @@ const V4LeaguesList = () => {
                                             id={league.league_id}
                                             name={league.name}
                                             logo={league.logo_url || 'https://tmssl.akamaized.net//images/logo/normal/tm.png'}
-                                            countryName={country.country_name}
-                                            countryFlag={country.country_flag}
-                                            competition_type={league.competition_type}
-                                            current_matchday={league.current_matchday}
-                                            total_matchdays={league.total_matchdays}
-                                            latest_round_label={league.latest_round_label}
-                                            leader={league.leader}
+                                            isCup={league.competition_type === 'cup'}
+                                            leaderName={league.leader?.name}
+                                            leaderLogo={league.leader?.logo_url}
+                                            currentRound={league.latest_round_label}
                                             onClick={() => handleLeagueClick(league)}
                                         />
                                     ))}
                                 </Grid>
                             </div>
                         </Accordion>
-                        );
-                    })}
+                    ))}
                 </Stack>
             </PageContentV4>
         </PageLayoutV4>
