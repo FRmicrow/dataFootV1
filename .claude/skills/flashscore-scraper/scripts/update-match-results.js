@@ -169,18 +169,28 @@ async function upsertMatchEvents(matchId, events) {
         // and carries both names (out/in) for substitutions.
         const detail = [ev.player_name, ev.related_player_name].filter(Boolean).join(' | ') || null;
 
+        // Dedup by business key (match_id, minute_label, event_type, player_id)
+        // instead of ordinal match_event_id hash (which is fragile to event reordering)
         const { changes } = await db.run(
             `INSERT INTO v4.match_events
              (match_event_id, match_id, event_order, minute_label, side, event_type,
               player_id, related_player_id, goal_type, card_type, detail, score_at_event)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-             ON CONFLICT (match_event_id) DO NOTHING`,
+             SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM v4.match_events
+                 WHERE match_id = ?
+                   AND minute_label IS NOT DISTINCT FROM ?
+                   AND event_type = ?
+                   AND player_id IS NOT DISTINCT FROM ?
+             )`,
             [
                 eventId, matchId, ev.event_order, ev.minute_label ?? null,
                 ev.side ?? null, event_type,
                 playerId ?? null, relatedId ?? null,
                 meta.goal_type, meta.card_type, detail,
                 ev.score_at_event ?? null,
+                // WHERE NOT EXISTS params:
+                matchId, ev.minute_label ?? null, event_type, playerId ?? null,
             ]
         );
         if (changes > 0) written++;
@@ -426,15 +436,17 @@ async function processInsert(result, counters) {
             return;
         }
 
-        // 3. Deduplication: check if match already exists (by date + clubs)
+        // 3. Deduplication: check if match already exists (by date + clubs + competition)
+        // Competition_id prevents collision between same clubs on same day in different comps
         const existing = await db.get(
             `SELECT match_id, home_score
              FROM v4.matches
              WHERE match_date = ?::date
                AND home_club_id = ?
                AND away_club_id = ?
+               AND competition_id = ?
              LIMIT 1`,
-            [match_date, homeClub.club_id, awayClub.club_id]
+            [match_date, homeClub.club_id, awayClub.club_id, competition.competition_id]
         );
 
         if (existing) {
