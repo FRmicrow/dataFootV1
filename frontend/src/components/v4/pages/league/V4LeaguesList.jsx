@@ -175,6 +175,11 @@ const V4LeaguesList = () => {
                                             logo={league.logo_url || 'https://tmssl.akamaized.net//images/logo/normal/tm.png'}
                                             countryName={country.country_name}
                                             countryFlag={country.country_flag}
+                                            competition_type={league.competition_type}
+                                            current_matchday={league.current_matchday}
+                                            total_matchdays={league.total_matchdays}
+                                            latest_round_label={league.latest_round_label}
+                                            leader={league.leader}
                                             onClick={() => handleLeagueClick(league)}
                                         />
                                     ))}

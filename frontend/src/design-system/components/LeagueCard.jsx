@@ -27,6 +27,9 @@ const extractConfederation = (name) => {
 
 /**
  * Reusable LeagueCard component for lists and featured grids.
+ *
+ * Supports both legacy props (leaderName, currentRound) and new structured props
+ * (competition_type, current_matchday, total_matchdays, latest_round_label, leader)
  */
 const LeagueCard = ({
     id,
@@ -44,8 +47,22 @@ const LeagueCard = ({
     currentMatchday,
     currentRound,
     interactive = true,
-    featured = false
+    featured = false,
+    competition_type,
+    current_matchday,
+    total_matchdays,
+    latest_round_label,
+    leader
 }) => {
+    // Determine if this is a league with progression data
+    const isLeagueWithProgress = competition_type === 'league' && current_matchday !== null && current_matchday !== undefined;
+    const isCupWithRound = competition_type === 'cup' && latest_round_label;
+    const hasLeader = leader && competition_type === 'league';
+
+    // Progress bar width percentage
+    const progressPercent = isLeagueWithProgress && total_matchdays
+        ? Math.round((current_matchday / total_matchdays) * 100)
+        : 0;
     return (
         <Card
             onClick={onClick}
@@ -121,6 +138,45 @@ const LeagueCard = ({
                             <span className="ds-league-card-meta">{countryName}</span>
                         </div>
                     )}
+
+                    {/* Progress bar for leagues */}
+                    {isLeagueWithProgress && (
+                        <div className="ds-league-card-progress" style={{ marginTop: 'var(--spacing-xs)' }}>
+                            <div className="ds-league-card-progress-label">
+                                J{current_matchday}/{total_matchdays}
+                            </div>
+                            <div className="ds-league-card-progress-bar-bg">
+                                <div
+                                    className="ds-league-card-progress-bar-fill"
+                                    style={{ width: `${progressPercent}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Round label for cups */}
+                    {isCupWithRound && (
+                        <div className="ds-league-card-round" style={{ marginTop: 'var(--spacing-xs)' }}>
+                            {latest_round_label}
+                        </div>
+                    )}
+
+                    {/* Leader section for leagues */}
+                    {hasLeader && (
+                        <div className="ds-league-card-leader" style={{ marginTop: 'var(--spacing-xs)' }}>
+                            <span className="ds-league-card-leader-label">Leader:</span>
+                            {leader.logo_url && (
+                                <img
+                                    src={leader.logo_url}
+                                    alt=""
+                                    className="ds-league-card-leader-logo"
+                                />
+                            )}
+                            <span className="ds-league-card-leader-name" title={leader.name}>
+                                {leader.name}
+                            </span>
+                        </div>
+                    )}
                 </div>
                 {featured && (
                     <div className="ds-league-card-star" title="Featured Intelligence Module">⭐</div>
@@ -146,7 +202,17 @@ LeagueCard.propTypes = {
     currentMatchday: PropTypes.number,
     currentRound: PropTypes.string,
     interactive: PropTypes.bool,
-    featured: PropTypes.bool
+    featured: PropTypes.bool,
+    // New V45 props
+    competition_type: PropTypes.oneOf(['league', 'cup', 'super_cup']),
+    current_matchday: PropTypes.number,
+    total_matchdays: PropTypes.number,
+    latest_round_label: PropTypes.string,
+    leader: PropTypes.shape({
+        club_id: PropTypes.string,
+        name: PropTypes.string,
+        logo_url: PropTypes.string,
+    }),
 };
 
 export default LeagueCard;

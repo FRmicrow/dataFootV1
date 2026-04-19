@@ -102,3 +102,73 @@
         filter: drop-shadow(0 0 4px gold);
     }
 }
+
+/* Progress bar for leagues (V45) */
+.ds-league-card-progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xs);
+}
+
+.ds-league-card-progress-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-black);
+    color: var(--color-primary-400);
+    letter-spacing: 0.02em;
+}
+
+.ds-league-card-progress-bar-bg {
+    width: 100%;
+    height: 4px;
+    background: var(--color-slate-800);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.ds-league-card-progress-bar-fill {
+    height: 100%;
+    background: var(--color-primary-400);
+    transition: width var(--transition-base);
+    border-radius: var(--radius-sm);
+}
+
+/* Round label for cups (V45) */
+.ds-league-card-round {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.01em;
+}
+
+/* Leader section for leagues (V45) */
+.ds-league-card-leader {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2xs);
+    font-size: var(--font-size-xs);
+}
+
+.ds-league-card-leader-label {
+    color: var(--color-text-dim);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.ds-league-card-leader-logo {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.ds-league-card-leader-name {
+    font-weight: var(--font-weight-black);
+    color: var(--color-text-main);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
