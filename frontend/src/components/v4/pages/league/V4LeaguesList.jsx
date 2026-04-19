@@ -7,12 +7,14 @@ import {
 } from '../../../../design-system';
 import PageLayoutV4 from '../../layouts/PageLayoutV4';
 import PageContentV4 from '../../layouts/PageContentV4';
+import CoverageDashboardV4 from '../../modules/coverageDashboard/CoverageDashboardV4';
 import './V4LeaguesList.css';
 
 const V4LeaguesList = () => {
     const [leagues, setLeagues] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showCoverage, setShowCoverage] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -114,8 +116,22 @@ const V4LeaguesList = () => {
                         Transfermarkt historical data · V4 Engine
                     </p>
                 </div>
-                <Badge variant="primary" size="sm">{totalLeagues} Leagues</Badge>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                    <button
+                        className="v4-coverage-btn"
+                        onClick={() => setShowCoverage(true)}
+                        title="Voir la couverture des données"
+                    >
+                        <span className="v4-coverage-btn-icon">📊</span>
+                        Couverture
+                    </button>
+                    <Badge variant="primary" size="sm">{totalLeagues} Leagues</Badge>
+                </div>
             </div>
+
+            {showCoverage && (
+                <CoverageDashboardV4 onClose={() => setShowCoverage(false)} />
+            )}
 
             {/* Stats */}
             <div className="v4-leagues-stats">

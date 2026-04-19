@@ -54,6 +54,7 @@ export default {
     
     // --- V4 (Historical TM Data) ---
     getLeaguesV4: () => api.get('/v4/leagues'),
+    getCoverageV4: () => api.get('/v4/coverage'),
     getSeasonOverviewV4: (league, season) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}`),
     getFixturesV4: (league, season) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/fixtures`),
     getSeasonPlayersV4: (league, season, params) => api.get(`/v4/league/${encodeURIComponent(league)}/season/${season}/players`, { params }),

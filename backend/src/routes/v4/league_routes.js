@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-    getLeaguesV4, getSeasonOverviewV4, getFixturesV4, getSeasonPlayersV4, getTeamSquadV4,
+    getLeaguesV4, getCoverageV4, getSeasonOverviewV4, getFixturesV4, getSeasonPlayersV4, getTeamSquadV4,
     getFixtureDetailsV4, getFixtureEventsV4, getFixtureLineupsV4, getFixtureTacticalStatsV4,
     getFixturePlayerTacticalStatsV4, getPlayerSeasonStatsV4
 } from '../../controllers/v4/leagueControllerV4.js';
@@ -19,6 +19,9 @@ const router = express.Router();
 
 // Base leagues list
 router.get('/leagues', validateRequest(getLeaguesSchema), getLeaguesV4);
+
+// Coverage dashboard — no params needed
+router.get('/coverage', getCoverageV4);
 
 // Season overview (Standings + Top stats)
 router.get('/league/:league/season/:season', validateRequest(getSeasonOverviewSchema), getSeasonOverviewV4);

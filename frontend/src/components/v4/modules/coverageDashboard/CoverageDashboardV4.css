@@ -1,0 +1,280 @@
+/* ============================================================
+   Coverage Dashboard V4 — Modal plein-écran
+   ============================================================ */
+
+.cov-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    overflow-y: auto;
+    animation: cov-fade-in 0.15s ease;
+}
+
+@keyframes cov-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.cov-modal {
+    width: 100%;
+    max-width: 1100px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-premium);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 4rem);
+    animation: cov-slide-up 0.2s ease;
+}
+
+@keyframes cov-slide-up {
+    from { transform: translateY(16px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Header */
+.cov-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.cov-modal-title {
+    margin: 0 0 4px;
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+}
+
+.cov-modal-subtitle {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.cov-close-btn {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-lg);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition-base);
+}
+
+.cov-close-btn:hover {
+    background: var(--color-surface-elevated);
+    color: var(--color-text-primary);
+}
+
+/* Search */
+.cov-search-wrap {
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.cov-search {
+    width: 100%;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    padding: 10px var(--spacing-md);
+    outline: none;
+    transition: var(--transition-base);
+    box-sizing: border-box;
+}
+
+.cov-search:focus {
+    border-color: var(--color-primary);
+    box-shadow: var(--focus-ring);
+}
+
+/* Body */
+.cov-modal-body {
+    overflow-y: auto;
+    padding: var(--spacing-md) var(--spacing-xl);
+    flex: 1;
+}
+
+.cov-skeletons { padding: var(--spacing-sm) 0; }
+
+.cov-error {
+    color: var(--color-danger, #ef4444);
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+.cov-empty {
+    color: var(--color-text-muted);
+    padding: var(--spacing-xl);
+    text-align: center;
+}
+
+/* Competition block */
+.cov-comp-block {
+    margin-bottom: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-surface-elevated);
+}
+
+.cov-comp-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px var(--spacing-md);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    text-align: left;
+    gap: var(--spacing-md);
+    transition: background 0.12s ease;
+}
+
+.cov-comp-header:hover {
+    background: var(--color-surface-hover, rgba(255,255,255,0.04));
+}
+
+.cov-comp-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 0;
+}
+
+.cov-expand-icon {
+    font-size: 10px;
+    color: var(--color-text-dim);
+    flex-shrink: 0;
+    width: 12px;
+}
+
+.cov-comp-name {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 380px;
+}
+
+.cov-comp-meta {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    margin-top: 2px;
+}
+
+.cov-global-badge {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 100px;
+    flex-shrink: 0;
+    min-width: 44px;
+    text-align: center;
+}
+
+/* Season table */
+.cov-season-table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid var(--color-border);
+}
+
+.cov-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+}
+
+.cov-th {
+    padding: 8px 12px;
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cov-th-season { min-width: 90px; }
+.cov-th-num    { min-width: 60px; text-align: right; }
+
+.cov-season-row:nth-child(even) td {
+    background: var(--color-surface);
+}
+
+.cov-td {
+    padding: 7px 12px;
+    color: var(--color-text-primary);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.cov-td-season {
+    font-weight: 500;
+    color: var(--color-text-muted);
+    font-size: 11px;
+}
+
+.cov-td-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+}
+
+.cov-td-bar { min-width: 120px; }
+
+/* Progress bar */
+.cov-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 18px;
+    position: relative;
+}
+
+.cov-bar-fill {
+    height: 6px;
+    border-radius: 3px;
+    min-width: 2px;
+    max-width: 80px;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+}
+
+.cov-bar-label {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+    min-width: 30px;
+}

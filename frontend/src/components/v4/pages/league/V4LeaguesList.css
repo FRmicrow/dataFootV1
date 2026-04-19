@@ -93,6 +93,33 @@
     background: var(--color-slate-900);
 }
 
+/* Coverage button */
+.v4-coverage-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    padding: 7px var(--spacing-md);
+    cursor: pointer;
+    transition: var(--transition-base);
+    white-space: nowrap;
+}
+
+.v4-coverage-btn:hover {
+    background: var(--color-surface-hover, rgba(255,255,255,0.06));
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.v4-coverage-btn-icon {
+    font-size: 14px;
+}
+
 /* Empty / error state */
 .v4-leagues-empty {
     padding: var(--spacing-3xl);

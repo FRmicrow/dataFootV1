@@ -572,6 +572,54 @@ class LeagueServiceV4 {
         );
         return row ?? null;
     }
+
+    async getCoverageByCompetition() {
+        const rows = await db.all(`
+            SELECT
+                c.competition_id::text,
+                c.name                  AS competition_name,
+                COALESCE(co.name, 'International') AS country_name,
+                c.competition_type,
+                m.season_label,
+                COUNT(m.match_id)                                               AS total_matches,
+                COUNT(CASE WHEN m.home_score IS NOT NULL THEN 1 END)            AS with_score,
+                COUNT(CASE WHEN m.scraped_events_at IS NOT NULL THEN 1 END)     AS with_events,
+                COUNT(CASE WHEN m.scraped_lineups_at IS NOT NULL THEN 1 END)    AS with_lineups,
+                COUNT(CASE WHEN m.scraped_stats_at IS NOT NULL THEN 1 END)      AS with_stats,
+                COUNT(CASE WHEN m.xg_home IS NOT NULL THEN 1 END)               AS with_xg
+            FROM v4.matches m
+            JOIN v4.competitions c ON c.competition_id = m.competition_id
+            LEFT JOIN v4.countries co ON co.country_id = c.country_id
+            WHERE m.season_label IS NOT NULL
+            GROUP BY c.competition_id, c.name, co.name, c.competition_type, m.season_label
+            ORDER BY c.name, m.season_label
+        `);
+
+        // Regroup by competition
+        const map = new Map();
+        for (const row of rows) {
+            if (!map.has(row.competition_id)) {
+                map.set(row.competition_id, {
+                    competition_id: row.competition_id,
+                    competition_name: row.competition_name,
+                    country_name: row.country_name,
+                    competition_type: row.competition_type,
+                    seasons: [],
+                });
+            }
+            map.get(row.competition_id).seasons.push({
+                season_label:  row.season_label,
+                total_matches: Number(row.total_matches),
+                with_score:    Number(row.with_score),
+                with_events:   Number(row.with_events),
+                with_lineups:  Number(row.with_lineups),
+                with_stats:    Number(row.with_stats),
+                with_xg:       Number(row.with_xg),
+            });
+        }
+
+        return Array.from(map.values());
+    }
 }
 
 export default new LeagueServiceV4();

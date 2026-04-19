@@ -48,6 +48,16 @@ export const getLeaguesV4 = async (_req, res) => {
     }
 };
 
+export const getCoverageV4 = async (_req, res) => {
+    try {
+        const data = await LeagueServiceV4.getCoverageByCompetition();
+        res.json({ success: true, data });
+    } catch (error) {
+        logger.error({ err: error }, 'V4 getCoverage error');
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+};
+
 export const getSeasonOverviewV4 = async (req, res) => {
     try {
         const params = leagueSeasonParamsSchema.parse(req.params);
