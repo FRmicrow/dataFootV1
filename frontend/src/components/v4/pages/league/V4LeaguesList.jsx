@@ -135,11 +135,17 @@ const V4LeaguesList = () => {
 
             <PageContentV4>
                 <Stack gap="var(--spacing-md)">
-                    {leagues.map(country => (
+                    {leagues.map(country => {
+                        // Calculate league and cup breakdown
+                        const leagueCount = country.leagues.filter(l => l.competition_type === 'league').length;
+                        const cupCount = country.leagues.filter(l => l.competition_type === 'cup').length;
+                        const totalSeasons = country.leagues.reduce((sum, l) => sum + l.seasons_count, 0);
+
+                        return (
                         <Accordion
                             key={country.country_name}
                             title={
-                                <Stack direction="row" align="center" gap="var(--spacing-md)">
+                                <Stack direction="row" align="center" gap="var(--spacing-md)" style={{ flex: 1 }}>
                                     {country.country_flag
                                         ? (
                                             <div className="v4-flag-circle">
@@ -148,19 +154,19 @@ const V4LeaguesList = () => {
                                         )
                                         : <div className="v4-zone-badge">{country.country_name}</div>
                                     }
-                                    <div>
-                                        <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>
+                                    <div className="v4-accordion-header-wrapper">
+                                        <h3 className="v4-accordion-header-title">
                                             {country.country_name}
                                         </h3>
-                                        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-dim)' }}>
-                                            {country.leagues.length} {country.leagues.length > 1 ? 'Competitions' : 'Competition'}
-                                        </span>
+                                        <div className="v4-accordion-header-meta">
+                                            {leagueCount} {leagueCount > 1 ? 'leagues' : 'league'} · {cupCount} {cupCount > 1 ? 'cups' : 'cup'}
+                                        </div>
                                     </div>
                                 </Stack>
                             }
                             headerRight={
                                 <Badge variant="neutral" size="sm">
-                                    {country.leagues.reduce((sum, l) => sum + l.seasons_count, 0)} seasons
+                                    {totalSeasons} seasons
                                 </Badge>
                             }
                             defaultExpanded
@@ -186,7 +192,8 @@ const V4LeaguesList = () => {
                                 </Grid>
                             </div>
                         </Accordion>
-                    ))}
+                        );
+                    })}
                 </Stack>
             </PageContentV4>
         </PageLayoutV4>

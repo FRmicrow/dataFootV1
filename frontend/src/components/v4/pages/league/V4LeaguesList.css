@@ -26,8 +26,8 @@
 
 /* Country flag badge in accordion header */
 .v4-flag-circle {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: var(--radius-full);
     background: var(--glass-bg);
     display: flex;
@@ -36,6 +36,7 @@
     overflow: hidden;
     border: 1px solid var(--color-border);
     flex-shrink: 0;
+    box-shadow: var(--shadow-md);
 }
 
 .v4-flag-circle img {
@@ -61,9 +62,33 @@
     white-space: nowrap;
 }
 
+/* Accordion header wrapper (V45) */
+.v4-accordion-header-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* Accordion header title (V45) */
+.v4-accordion-header-title {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-main);
+}
+
+/* Accordion header meta breakdown (V45) */
+.v4-accordion-header-meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+    font-weight: var(--font-weight-medium);
+    margin-top: 2px;
+    letter-spacing: 0.01em;
+}
+
 /* Accordion body content */
 .v4-country-body {
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
     border-top: 1px solid var(--color-border);
     background: var(--color-slate-900);
 }
