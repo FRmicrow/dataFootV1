@@ -454,11 +454,12 @@ async function main() {
 
     if (!competition) {
         if (!isDryRun) {
-            // Use same country_id as UEFA Europa League (UEFA/European competitions share country context)
-            const uel = await db.get(
-                `SELECT country_id::text AS country_id FROM v4.competitions WHERE name = 'UEFA Europa League' LIMIT 1`
+            // Compétitions européennes de clubs → International-Club
+            // Ne JAMAIS copier le country_id d'une autre compétition (risque de propager des données corrompues)
+            const intlClub = await db.get(
+                `SELECT country_id::text AS country_id FROM v4.countries WHERE name = 'International-Club' LIMIT 1`
             );
-            const countryId = uel?.country_id ?? '8442409308853252363'; // fallback to UEL country_id
+            const countryId = intlClub?.country_id ?? '2308858345885688936'; // International-Club (stable)
             // Generate ID via hashtext (same pattern as import_sql_v4.js)
             const idRow = await db.get(
                 `SELECT ('x' || substr(md5(?), 1, 16))::bit(64)::bigint AS competition_id`,
