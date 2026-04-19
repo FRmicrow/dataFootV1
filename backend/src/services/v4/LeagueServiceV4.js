@@ -580,6 +580,8 @@ class LeagueServiceV4 {
                 c.name                  AS competition_name,
                 COALESCE(co.name, 'International') AS country_name,
                 c.competition_type,
+                COALESCE(co.display_rank_override, co.importance_rank, 999) AS country_rank,
+                COALESCE(c.display_rank_override, c.importance_rank, 999999) AS competition_rank,
                 m.season_label,
                 COUNT(m.match_id)                                               AS total_matches,
                 COUNT(CASE WHEN m.home_score IS NOT NULL THEN 1 END)            AS with_score,
@@ -591,8 +593,15 @@ class LeagueServiceV4 {
             JOIN v4.competitions c ON c.competition_id = m.competition_id
             LEFT JOIN v4.countries co ON co.country_id = c.country_id
             WHERE m.season_label IS NOT NULL
-            GROUP BY c.competition_id, c.name, co.name, c.competition_type, m.season_label
-            ORDER BY c.name, m.season_label
+            GROUP BY c.competition_id, c.name, co.name, c.competition_type,
+                     co.display_rank_override, co.importance_rank,
+                     c.display_rank_override, c.importance_rank,
+                     m.season_label
+            ORDER BY
+                COALESCE(co.display_rank_override, co.importance_rank, 999),
+                COALESCE(c.display_rank_override, c.importance_rank, 999999),
+                c.name,
+                m.season_label
         `);
 
         // Regroup by competition
