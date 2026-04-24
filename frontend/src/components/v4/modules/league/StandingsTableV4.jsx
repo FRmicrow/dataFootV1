@@ -179,6 +179,7 @@ const StandingsTableV4 = ({ standings = [], fixtures = [], loading }) => {
                                                         src={t.team_logo}
                                                         alt=""
                                                         className="sov4-club-logo"
+                                                        referrerPolicy="no-referrer"
                                                         onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
                                                     />
                                                     <span className="sov4-club-name">{t.team_name}</span>

@@ -24,6 +24,19 @@ const TAB_ITEMS = [
     { id: 'squads',    label: 'Squads',           icon: '👥' },
 ];
 
+function getVisibleTabs(displayMode) {
+    if (displayMode === 'super_cup') {
+        return TAB_ITEMS.filter(t => ['fixtures', 'squads'].includes(t.id));
+    }
+    if (displayMode === 'cup') {
+        return TAB_ITEMS.filter(t => ['standings', 'fixtures', 'overview', 'squads'].includes(t.id));
+    }
+    if (displayMode === 'hybrid') {
+        return TAB_ITEMS.filter(t => ['standings', 'fixtures', 'overview', 'squads'].includes(t.id));
+    }
+    return TAB_ITEMS;
+}
+
 const SeasonOverviewPageV4 = () => {
     const { name, year } = useParams();
     const navigate = useNavigate();
@@ -47,7 +60,15 @@ const SeasonOverviewPageV4 = () => {
         setCoreError(null);
         fixturesLoaded.current = false;
         api.getSeasonOverviewV4(name, year)
-            .then(res => setCoreData(res))
+            .then(res => {
+                setCoreData(res);
+                const dm = res?.league?.display_mode || 'league';
+                if (dm === 'cup' || dm === 'hybrid' || dm === 'super_cup') {
+                    setActiveTab('fixtures');
+                } else {
+                    setActiveTab('standings');
+                }
+            })
             .catch(err => setCoreError(err.message || 'Failed to load'))
             .finally(() => setCoreLoading(false));
     }, [name, year]);
@@ -93,17 +114,20 @@ const SeasonOverviewPageV4 = () => {
     const { league, topScorers, topAssists, topRated, availableYears } = coreData;
     const standings = coreData.standings || [];
 
+    const displayMode = league?.display_mode || 'league';
+    const visibleTabs = getVisibleTabs(displayMode);
+
     return (
         <div className="sov4-page animate-fade-in">
             <LeagueHeader
                 league={{
                     id: name,
                     name: league.league_name,
-                    logo: league.logo_url || 'https://tmssl.akamaized.net//images/logo/normal/tm.png',
+                    logo: league.logo_url || '/placeholder-league.png',
                     country: { name: league.country_name || 'Historical Data (V4)' },
                     type: league.type || 'League'
                 }}
-                activeSeason={year}
+                activeSeason={league.season_display || year}
                 availableYears={availableYears || [year]}
                 onYearChange={handleSeasonChange}
                 syncing={false}
@@ -113,7 +137,7 @@ const SeasonOverviewPageV4 = () => {
             <div className="sov4-body">
                 <div className="sov4-tabbar">
                     <Tabs
-                        items={TAB_ITEMS}
+                        items={visibleTabs}
                         activeId={activeTab}
                         onChange={setActiveTab}
                     />
@@ -146,6 +170,7 @@ const SeasonOverviewPageV4 = () => {
                             topScorers={topScorers}
                             topAssists={topAssists}
                             topRated={topRated}
+                            displayMode={displayMode}
                         />
                     )}
                     {activeTab === 'titlerace' && (

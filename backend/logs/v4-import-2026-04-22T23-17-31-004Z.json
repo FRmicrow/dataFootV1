@@ -1,0 +1,53 @@
+[
+  {
+    "country": "Angleterre",
+    "status": "imported",
+    "freeze_status": "imported",
+    "locked": false,
+    "matches": 11,
+    "competitions": 1,
+    "clubs": 22,
+    "people": 166,
+    "events": 121,
+    "lineups": 0,
+    "started_at": "2026-04-22T23:17:31.115Z",
+    "finished_at": "2026-04-22T23:17:31.705Z",
+    "duration_ms": 590,
+    "file": "Angleterre.sql",
+    "note": ""
+  },
+  {
+    "country": "International-Club",
+    "status": "imported",
+    "freeze_status": "imported",
+    "locked": false,
+    "matches": 27408,
+    "competitions": 11,
+    "clubs": 1332,
+    "people": 81232,
+    "events": 310770,
+    "lineups": 646707,
+    "started_at": "2026-04-22T23:17:31.705Z",
+    "finished_at": "2026-04-22T23:21:14.068Z",
+    "duration_ms": 222363,
+    "file": "International-Club.sql",
+    "note": ""
+  },
+  {
+    "country": "International-Nation",
+    "status": "imported",
+    "freeze_status": "imported",
+    "locked": false,
+    "matches": 12756,
+    "competitions": 15,
+    "clubs": 232,
+    "people": 52493,
+    "events": 144946,
+    "lineups": 314739,
+    "started_at": "2026-04-22T23:21:14.090Z",
+    "finished_at": "2026-04-22T23:22:59.955Z",
+    "duration_ms": 105865,
+    "file": "International-Nation.sql",
+    "note": ""
+  }
+]

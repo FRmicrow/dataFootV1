@@ -26,7 +26,7 @@
 }
 
 .ds-md-selector-label {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: var(--font-weight-black);
     text-transform: uppercase;
     color: var(--color-primary-400);
@@ -72,6 +72,9 @@
     background: transparent;
     color: var(--color-text-dim);
     border: 1px solid transparent;
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
 }
 
 .ds-md-round-pill--current {
@@ -113,6 +116,159 @@
     gap: 4px;
 }
 
+/* Clickable Phase Label */
+.ds-md-phase-label-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-primary-400);
+    white-space: nowrap;
+    opacity: 0.6;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    font-family: inherit;
+}
+
+.ds-md-phase-label-btn:hover {
+    opacity: 1;
+    color: var(--color-primary-300);
+}
+
+.ds-md-phase-label-btn.active {
+    opacity: 1;
+    color: var(--color-primary-500);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* Mini Standings Table */
+.ds-md-standings-mini {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 11px;
+    margin: var(--spacing-2xs) 0;
+    background: rgba(10, 10, 10, 0.4);
+    table-layout: fixed;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ds-md-standings-mini th,
+.ds-md-standings-mini td {
+    padding: 6px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    color: var(--color-text-main);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ds-md-standings-mini th {
+    color: var(--color-text-dim);
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px 6px;
+    letter-spacing: 0.05em;
+}
+
+.ds-md-standings-mini tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.ds-md-standings-mini tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Qualification Zone (Top 2) */
+.ds-md-standings-mini tbody tr:nth-child(-n+2) {
+    background: linear-gradient(to right, rgba(0, 163, 255, 0.05), transparent);
+}
+
+.ds-md-standings-mini tbody tr:nth-child(-n+2) td.col-club {
+    border-left: 2px solid var(--color-primary-500);
+    padding-left: 4px;
+}
+
+.ds-md-standings-mini .col-pts-total {
+    font-weight: 900;
+    color: var(--color-primary-300);
+    background: rgba(var(--color-primary-rgb), 0.1);
+    font-size: 12px;
+}
+
+.ds-md-standings-mini .sov4-win { color: var(--color-success-500); font-weight: 600; }
+.ds-md-standings-mini .sov4-lose { color: var(--color-danger-500); }
+.ds-md-standings-mini .sov4-pos { color: var(--color-success-500); font-weight: 700; }
+.ds-md-standings-mini .sov4-neg { color: var(--color-danger-500); font-weight: 700; }
+
+.ds-md-standings-mini .col-club {
+    text-align: left;
+    width: 45%;
+    display: table-cell; /* Fix display issues with table-layout fixed */
+}
+
+.ds-md-standings-mini .col-club-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.ds-md-mini-logo {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* Group Section in Schedule */
+.ds-md-group-section {
+    padding: var(--spacing-xs) var(--spacing-md);
+    transition: all 0.2s ease-out;
+    border-radius: var(--radius-lg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ds-md-group-section:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.ds-md-group-section.expanded {
+    background: rgba(var(--color-primary-rgb), 0.03);
+    margin: 2px 0;
+    border-left: 2px solid var(--color-primary-500);
+    border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.1);
+}
+
+.ds-md-compact-selector {
+    padding: 2px 0;
+    align-items: center;
+}
+
+.ds-md-compact-selector .ds-md-round-pill {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.ds-md-compact-selector .ds-md-round-pill:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ds-md-compact-selector .ds-md-round-pill--selected {
+    box-shadow: 0 0 15px rgba(var(--color-primary-rgb), 0.2);
+}
+
 /* ── Fixture list body — explicit height so rows fill it via flex-grow ──────
    Height = viewport - page chrome (nav + tabs) - card header.
    Must be explicit (not flex:1) so it stays stable when the expansion panel
@@ -126,7 +282,7 @@
 }
 
 /* Group wrappers — should not grow, they have intrinsic height. */
-.ds-fixtures-body > div:not(.ds-fixture-day-sep):not(.ds-fixture-expansion-panel):not(.ds-fixture-section-header) {
+.ds-fixtures-body > div:not(.ds-fixture-day-sep):not(.ds-fixture-expansion-panel):not(.ds-fixture-section-header):not(.ds-md-group-section) {
     flex: 0 0 auto;
     min-height: 56px;
     display: flex;
@@ -154,7 +310,7 @@
     align-items: center;
     justify-content: flex-end;
     padding-right: var(--spacing-sm);
-    font-size: 9px;
+    font-size: 10px;
     font-weight: var(--font-weight-bold);
     color: var(--color-text-dim);
     opacity: 0.55;
@@ -172,7 +328,7 @@
 
 .ds-tie-leg-name {
     color: var(--color-primary-400);
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -204,10 +360,15 @@
     background: rgba(255, 255, 255, 0.02);
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.2s ease;
+}
+
+.ds-fixture-section-header.collapsible:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .ds-fixture-section-header span {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.14em;

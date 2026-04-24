@@ -32,7 +32,8 @@ const V4LeaguesList = () => {
     }, []);
 
     const handleLeagueClick = (league) => {
-        navigate(`/leagues/${encodeURIComponent(league.name)}/season/${league.latest_season}`);
+        const season = league.latest_season_display || league.latest_season;
+        navigate(`/leagues/${encodeURIComponent(league.name)}/season/${season}`);
     };
 
     // --- Loading state ---

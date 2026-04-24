@@ -1,0 +1,35 @@
+[
+  {
+    "country": "Angleterre",
+    "output_file": "Angleterre.sql.gz",
+    "size_mb": 0.02,
+    "competitions": 2,
+    "matches": 11,
+    "events": 121,
+    "lineups": 0,
+    "clubs": 22,
+    "people": 166
+  },
+  {
+    "country": "International-Club",
+    "output_file": "International-Club.sql.gz",
+    "size_mb": 54.26,
+    "competitions": 11,
+    "matches": 27408,
+    "events": 310770,
+    "lineups": 646707,
+    "clubs": 1332,
+    "people": 98653
+  },
+  {
+    "country": "International-Nation",
+    "output_file": "International-Nation.sql.gz",
+    "size_mb": 25.26,
+    "competitions": 15,
+    "matches": 12756,
+    "events": 144946,
+    "lineups": 314739,
+    "clubs": 232,
+    "people": 63151
+  }
+]

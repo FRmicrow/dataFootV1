@@ -1,0 +1,165 @@
+/* PowerGrid — DA tactical-board */
+
+.power-grid .pg-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+    animation-delay: 50ms;
+}
+
+.power-grid .pg-title {
+    font-size: 60px;
+    max-width: 95%;
+}
+
+.power-grid.template-1x1 .pg-title {
+    font-size: 44px;
+}
+
+.power-grid.template-16x9 .pg-title {
+    font-size: 72px;
+}
+
+.power-grid .pg-subtitle {
+    font-size: 22px;
+    max-width: 85%;
+}
+
+.power-grid .pg-grid {
+    display: grid;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    align-content: start;
+    animation-delay: 150ms;
+}
+
+.power-grid .pg-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    background: var(--tpl-surface);
+    border: 1px solid var(--tpl-border);
+    border-radius: var(--tpl-radius);
+    box-shadow: var(--tpl-shadow);
+    animation: tpl-reveal-up 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    position: relative;
+}
+
+.power-grid .pg-cell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        var(--tpl-accent-soft) 0%,
+        transparent 50%
+    );
+    opacity: 0.4;
+}
+
+.power-grid .pg-cell-top {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+}
+
+.power-grid .pg-rank {
+    font-size: 44px;
+    color: var(--tpl-accent);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    min-width: 56px;
+}
+
+.power-grid .pg-cell-title-wrap {
+    min-width: 0;
+}
+
+.power-grid .pg-title-inner {
+    font-size: 26px;
+    color: var(--tpl-text);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.power-grid .pg-subtitle-inner {
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.power-grid .pg-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--tpl-surface-soft);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.power-grid .pg-logo img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+}
+
+.power-grid .pg-bar {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--tpl-surface-soft);
+    border: 1px solid var(--tpl-border);
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.power-grid .pg-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--tpl-accent);
+    box-shadow: 0 0 12px var(--tpl-accent);
+    transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.power-grid .pg-cell-bottom {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+}
+
+.power-grid .pg-score {
+    font-size: 38px;
+    color: var(--tpl-accent);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.power-grid .pg-meta {
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.power-grid .pg-footer {
+    margin-top: 20px;
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}

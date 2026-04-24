@@ -49,6 +49,59 @@ const POSITION_LABELS = {
     AD: 'Attacker', AIG: 'Attacker', AID: 'Attacker', SC: 'Attacker',
 };
 
+const COMPETITION_ALIASES = {
+    'UEFA Champions League': [
+        'Coupe des clubs champions européens', 
+        'Champions League', 
+        'UEFA Champions League',
+        'Champions Cup'
+    ],
+    'UEFA Europa League': [
+        'Coupe de l\'UEFA (- 2009)', 
+        'Europa League', 
+        'Coupe de l\'UEFA', 
+        'UEFA Europa League',
+        'UEFA Cup'
+    ],
+    'UEFA Conference League': [
+        'UEFA Conference League', 
+        'Conference League', 
+        'UEFA Europa Conference League'
+    ],
+    'UEFA Nations League': [
+        'UEFA Nations League', 
+        'Ligue des nations de l\'UEFA', 
+        'Nations League',
+        'UEFA Nations League A',
+        'UEFA Nations League B',
+        'UEFA Nations League C',
+        'UEFA Nations League D',
+        'UEFA Nations League Finals',
+        'UEFA Nations League Play-off'
+    ],
+    'FIFA World Cup': [
+        'Coupe du monde', 
+        'World Cup', 
+        'FIFA World Cup'
+    ],
+    'UEFA Euro': [
+        'Championnat d\'Europe', 
+        'Euro', 
+        'UEFA Euro', 
+        'Championnat d\'Europe 1960'
+    ],
+};
+
+function getUnifiedCompetitionName(name) {
+    if (!name) return name;
+    for (const [unified, aliases] of Object.entries(COMPETITION_ALIASES)) {
+        if (aliases.some(a => name.toLowerCase().includes(a.toLowerCase()))) {
+            return unified;
+        }
+    }
+    return name;
+}
+
 function normalizePosition(code) {
     if (!code) return 'Unknown';
     return POSITION_LABELS[String(code).trim().toUpperCase()] || 'Unknown';
@@ -87,12 +140,112 @@ function getLeaguePriority(name, competitionType) {
     return 10;
 }
 
+const formatSeasonLabelV4 = (label, competitionName = '', competitionType = '') => {
+    if (!label) return '';
+    const n = String(competitionName || '').toLowerCase();
+    const isInternational = competitionType === 'international' ||
+                           n.includes('europe') || 
+                           n.includes('world cup') || 
+                           n.includes('nations league') ||
+                           n.includes('euro') ||
+                           n.includes('coupe du monde');
+    
+    if (isInternational) {
+        // If range like "2023-2024", take second year
+        if (label.includes('-')) {
+            const parts = label.split('-');
+            let yearPart = parts[parts.length - 1].trim();
+            // Handle Euro 2020 -> 2021 exception
+            if (yearPart === '2020' && (n.includes('euro') || n.includes('europe'))) {
+                return '2021';
+            }
+            return yearPart;
+        }
+        // Handle single year labels
+        if (label === '2020' && (n.includes('euro') || n.includes('europe'))) {
+            return '2021';
+        }
+        return label;
+    }
+    return label;
+};
+
+const resolveSeasonFromDisplay = (displayLabel, competitionName = '', competitionType = '') => {
+    if (!displayLabel) return null;
+    const n = String(competitionName || '').toLowerCase();
+    // Reverse Euro 2021 -> 2020 for DB query
+    if (displayLabel === '2021' && (n.includes('euro') || n.includes('europe'))) {
+        return '2020';
+    }
+    return displayLabel;
+};
+
+const getSeasonCondition = (col, value, isInternational) => {
+    if (isInternational && value && value.length === 4 && !value.includes('-')) {
+        // Match exact year or end of a range
+        return `(${col} = '${value}' OR ${col} LIKE '%-${value}')`;
+    }
+    return `${col} = '${value}'`;
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 class LeagueServiceV4 {
 
+    formatSeasonLabel(label, competitionName = '', competitionType = '') {
+        return formatSeasonLabelV4(label, competitionName, competitionType);
+    }
+
+    async resolveSeason(displayLabel, competitionId, competitionName = '', competitionType = '') {
+        if (!displayLabel) return null;
+        const n = String(competitionName || '').toLowerCase();
+        const ids = Array.isArray(competitionId) ? competitionId : [competitionId];
+        
+        // Special case for Euro 2021 -> 2020
+        let searchLabel = displayLabel;
+        if (displayLabel === '2021' && (n.includes('euro') || n.includes('europe'))) {
+            searchLabel = '2020';
+        }
+        
+        try {
+            // 1. Try exact match across all related IDs
+            const exact = await db.get(
+                `SELECT season_label FROM v4.matches 
+                 WHERE competition_id IN (${ids.map(() => '?::BIGINT').join(', ')}) 
+                   AND season_label = ? LIMIT 1`,
+                [...ids, searchLabel]
+            );
+            if (exact) return exact.season_label;
+            
+            // 2. If international and searchLabel is a 4-digit year, try matching end of range
+            const isInternational = competitionType === 'international' ||
+                                   n.includes('europe') || 
+                                   n.includes('world cup') || 
+                                   n.includes('nations league') ||
+                                   n.includes('euro') ||
+                                   n.includes('coupe du monde');
+                                   
+            if (isInternational && searchLabel.length === 4 && !searchLabel.includes('-')) {
+                const fuzzy = await db.get(
+                    `SELECT season_label FROM v4.matches 
+                     WHERE competition_id IN (${ids.map(() => '?::BIGINT').join(', ')}) 
+                       AND season_label LIKE '%' || ? LIMIT 1`,
+                    [...ids, searchLabel]
+                );
+                if (fuzzy) return fuzzy.season_label;
+            }
+        } catch (err) {
+            logger.warn({ err, competitionId, displayLabel }, 'Failed to resolve season label from DB');
+        }
+        
+        return searchLabel;
+    }
+
     async getCompetitionByName(leagueName) {
-        return db.get(
+        const unified = getUnifiedCompetitionName(leagueName);
+        const aliases = COMPETITION_ALIASES[unified] || [leagueName];
+        
+        const rows = await db.all(
             `WITH ${LATEST_COMP_LOGOS_CTE}
              SELECT
                  c.competition_id::text AS competition_id,
@@ -107,22 +260,34 @@ class LeagueServiceV4 {
              FROM v4.competitions c
              LEFT JOIN v4.countries co ON co.country_id = c.country_id
              LEFT JOIN latest_comp_logos lcl ON lcl.competition_id = c.competition_id
-             WHERE c.name = ?
-             ORDER BY COALESCE(c.display_rank_override, c.importance_rank, 999999), c.name ASC
-             LIMIT 1`,
-            [DEFAULT_LOGO, leagueName]
+             WHERE c.name = ? OR c.name IN (${aliases.map(() => '?').join(', ')})
+             ORDER BY c.competition_id DESC`,
+            [DEFAULT_LOGO, leagueName, ...aliases]
         );
+
+        if (!rows || rows.length === 0) return null;
+
+        const primary = rows.find(r => r.name === unified) || rows[0];
+        return {
+            ...primary,
+            all_ids: rows.map(r => r.competition_id)
+        };
     }
 
-    async getAvailableSeasonsByCompetitionId(competitionId) {
+    async getAvailableSeasonsByCompetitionId(competitionId, competitionName = '', competitionType = '') {
+        const unified = getUnifiedCompetitionName(competitionName);
+        const aliases = COMPETITION_ALIASES[unified] || [competitionName];
+
         const rows = await db.all(
             `SELECT DISTINCT m.season_label
              FROM v4.matches m
-             WHERE m.competition_id = ?::BIGINT
+             JOIN v4.competitions c ON c.competition_id = m.competition_id
+             WHERE m.competition_id = ?::BIGINT 
+                OR c.name IN (${aliases.map(() => '?').join(', ')})
              ORDER BY m.season_label DESC`,
-            [competitionId]
+            [competitionId, ...aliases]
         );
-        return rows.map(r => r.season_label);
+        return rows.map(r => formatSeasonLabelV4(r.season_label, competitionName, competitionType));
     }
 
     async getLeaguesGroupedByCountry() {
@@ -164,6 +329,14 @@ class LeagueServiceV4 {
                  LEFT JOIN current_season_progress cp
                      ON cp.competition_id = c.competition_id
                      AND cp.season_label = (SELECT MAX(season_label) FROM v4.matches WHERE competition_id = c.competition_id)
+                 WHERE NOT EXISTS (
+                     SELECT 1 FROM v4.competition_relations cr 
+                     WHERE cr.source_id = c.competition_id 
+                       AND cr.relation_type = 'QUALIFICATION'
+                 )
+                 AND c.name NOT ILIKE '%Qualif%' 
+                 AND c.name NOT ILIKE '%Qualification%'
+                 AND c.name NOT ILIKE '%Barrages%'
                  GROUP BY
                      c.competition_id, c.name, c.competition_type, c.current_logo_url,
                      lcl.logo_url, co.display_name, co.name, co.flag_url,
@@ -181,28 +354,57 @@ class LeagueServiceV4 {
 
             const grouped = new Map();
             for (const row of rows) {
-                const key = row.country_name;
-                if (!grouped.has(key)) {
-                    grouped.set(key, {
+                const unifiedName = getUnifiedCompetitionName(row.name);
+                const countryKey = row.country_name;
+                
+                if (!grouped.has(countryKey)) {
+                    grouped.set(countryKey, {
                         country_name: row.country_name,
                         country_flag: row.country_flag || null,
                         country_rank: Number(row.country_rank || 999),
-                        leagues: [],
+                        leagues: new Map(), // Use Map to group by unified name
                     });
                 }
-                grouped.get(key).leagues.push({
-                    league_id:       row.league_id,
-                    name:            row.name,
-                    competition_type: row.competition_type,
-                    logo_url:        row.logo_url || DEFAULT_LOGO,
-                    seasons_count:   Number(row.seasons_count || 0),
-                    latest_season:   row.latest_season,
-                    priority:        getLeaguePriority(row.name, row.competition_type),
-                    competition_rank: Number(row.competition_rank || 999999),
-                    current_matchday: row.current_matchday ? Number(row.current_matchday) : null,
-                    total_matchdays:  row.total_matchdays ? Number(row.total_matchdays) : null,
-                    latest_round_label: row.latest_round_label || null,
-                    leader: null,  // Will be populated below
+                
+                const countryData = grouped.get(countryKey);
+                
+                if (countryData.leagues.has(unifiedName)) {
+                    const existing = countryData.leagues.get(unifiedName);
+                    // Add seasons
+                    existing.seasons_count += Number(row.seasons_count || 0);
+                    // If this entry is more recent, update metadata
+                    if (row.latest_season > existing.latest_season) {
+                        existing.league_id = row.league_id;
+                        existing.latest_season = row.latest_season;
+                        existing.latest_round_label = row.latest_round_label || null;
+                        existing.current_matchday = row.current_matchday ? Number(row.current_matchday) : null;
+                        existing.total_matchdays = row.total_matchdays ? Number(row.total_matchdays) : null;
+                    }
+                } else {
+                    countryData.leagues.set(unifiedName, {
+                        league_id:       row.league_id,
+                        name:            unifiedName, // Use unified name
+                        competition_type: row.competition_type,
+                        logo_url:        row.logo_url || DEFAULT_LOGO,
+                        seasons_count:   Number(row.seasons_count || 0),
+                        latest_season:   row.latest_season,
+                        priority:        getLeaguePriority(unifiedName, row.competition_type),
+                        competition_rank: Number(row.competition_rank || 999999),
+                        current_matchday: row.current_matchday ? Number(row.current_matchday) : null,
+                        total_matchdays:  row.total_matchdays ? Number(row.total_matchdays) : null,
+                        latest_round_label: row.latest_round_label || null,
+                        leader: null,
+                    });
+                }
+            }
+
+            // Convert Maps back to arrays and sort
+            const result = [];
+            for (const country of grouped.values()) {
+                const leaguesArray = Array.from(country.leagues.values());
+                result.push({
+                    ...country,
+                    leagues: leaguesArray
                 });
             }
 
@@ -210,7 +412,7 @@ class LeagueServiceV4 {
             const leaderPromises = [];
             const leaderIndex = []; // Array of { country, leagueIdx }
 
-            for (const country of grouped.values()) {
+            for (const country of result) {
                 for (let i = 0; i < country.leagues.length; i++) {
                     const league = country.leagues[i];
                     if (league.competition_type === 'league' && league.latest_season) {
@@ -245,7 +447,7 @@ class LeagueServiceV4 {
                 }
             }
 
-            const result = Array.from(grouped.values()).sort((a, b) => a.country_rank - b.country_rank);
+            result.sort((a, b) => a.country_rank - b.country_rank);
             for (const country of result) {
                 country.leagues.sort((a, b) => {
                     if (a.priority !== b.priority) return a.priority - b.priority;
@@ -253,6 +455,11 @@ class LeagueServiceV4 {
                     if (b.seasons_count !== a.seasons_count) return b.seasons_count - a.seasons_count;
                     return a.name.localeCompare(b.name);
                 });
+                
+                // Format latest_season for internationals
+                for (const league of country.leagues) {
+                    league.latest_season_display = formatSeasonLabelV4(league.latest_season, league.name, league.competition_type);
+                }
             }
             return result;
         } catch (error) {
@@ -262,6 +469,7 @@ class LeagueServiceV4 {
     }
 
     async getTopScorers(competitionId, season) {
+        const ids = Array.isArray(competitionId) ? competitionId : [competitionId];
         return db.all(
             `WITH
              ${LATEST_CLUB_LOGOS_CTE},
@@ -270,7 +478,7 @@ class LeagueServiceV4 {
                  SELECT e.player_id, COUNT(*) AS goals_total
                  FROM v4.match_events e
                  JOIN v4.matches m ON m.match_id = e.match_id
-                 WHERE m.competition_id = ?::BIGINT
+                 WHERE m.competition_id IN (${ids.map(() => '?::BIGINT').join(', ')})
                    AND m.season_label   = ?
                    AND e.event_type     = 'goal'
                    AND e.player_id IS NOT NULL
@@ -286,7 +494,7 @@ class LeagueServiceV4 {
                  FROM v4.match_lineups l
                  JOIN v4.matches m ON m.match_id = l.match_id
                  WHERE l.player_id IN (SELECT player_id FROM goal_counts)
-                   AND m.competition_id = ?::BIGINT
+                   AND m.competition_id IN (${ids.map(() => '?::BIGINT').join(', ')})
                    AND m.season_label   = ?
                  ORDER BY l.player_id, l.match_id DESC
              )
@@ -309,11 +517,12 @@ class LeagueServiceV4 {
                 AND psx.club_id::text = tt.team_id
                 AND psx.season_label = ?
              ORDER BY gc.goals_total DESC, p.full_name ASC`,
-            [competitionId, season, competitionId, season, DEFAULT_LOGO, DEFAULT_PHOTO, season]
+            [...ids, season, ...ids, season, DEFAULT_LOGO, DEFAULT_PHOTO, season]
         );
     }
 
     async getTopAssists(competitionId, season) {
+        const ids = Array.isArray(competitionId) ? competitionId : [competitionId];
         return db.all(
             `WITH
              ${LATEST_CLUB_LOGOS_CTE},
@@ -321,7 +530,7 @@ class LeagueServiceV4 {
                  SELECT e.related_player_id AS player_id, COUNT(*) AS goals_assists
                  FROM v4.match_events e
                  JOIN v4.matches m ON m.match_id = e.match_id
-                 WHERE m.competition_id = ?::BIGINT
+                 WHERE m.competition_id IN (${ids.map(() => '?::BIGINT').join(', ')})
                    AND m.season_label   = ?
                    AND e.event_type     = 'goal'
                    AND e.related_player_id IS NOT NULL
@@ -336,7 +545,7 @@ class LeagueServiceV4 {
                  FROM v4.match_lineups l
                  JOIN v4.matches m ON m.match_id = l.match_id
                  WHERE l.player_id IN (SELECT player_id FROM assist_counts)
-                   AND m.competition_id = ?::BIGINT
+                   AND m.competition_id IN (${ids.map(() => '?::BIGINT').join(', ')})
                    AND m.season_label   = ?
                  ORDER BY l.player_id, l.match_id DESC
              )
@@ -359,11 +568,12 @@ class LeagueServiceV4 {
                 AND psx.club_id::text = tt.team_id
                 AND psx.season_label  = ?
              ORDER BY ac.goals_assists DESC, p.full_name ASC`,
-            [competitionId, season, competitionId, season, DEFAULT_LOGO, DEFAULT_PHOTO, season]
+            [...ids, season, ...ids, season, DEFAULT_LOGO, DEFAULT_PHOTO, season]
         );
     }
 
     async getSeasonPlayers(competitionId, season, filters = {}) {
+        const ids = Array.isArray(competitionId) ? competitionId : [competitionId];
         const rows = await db.all(
             `WITH
              ${LATEST_CLUB_LOGOS_CTE},
@@ -382,15 +592,15 @@ class LeagueServiceV4 {
                      ) AS primary_position_code
                  FROM v4.match_lineups l
                  JOIN v4.matches m ON m.match_id = l.match_id
-                 WHERE m.competition_id = ?::BIGINT AND m.season_label = ?
+                 WHERE m.competition_id IN (${ids.map(() => '?::BIGINT').join(', ')}) 
+                   AND m.season_label = ?
                  GROUP BY l.player_id, l.club_id
              ),
-             -- Single scan of match_events for both goals and assists
              goal_assist_events AS (
                  SELECT e.player_id::text AS scorer_id, e.related_player_id::text AS assistant_id
                  FROM v4.match_events e
                  JOIN v4.matches m ON m.match_id = e.match_id
-                 WHERE m.competition_id = ?::BIGINT
+                 WHERE m.competition_id IN (${ids.map(() => '?::BIGINT').join(', ')})
                    AND m.season_label   = ?
                    AND e.event_type     = 'goal'
              ),
@@ -435,8 +645,8 @@ class LeagueServiceV4 {
                 AND psx.season_label    = ?
              WHERE (?::text IS NULL OR pcs.team_id = ?::text)`,
             [
-                competitionId, season,   // player_club_stats
-                competitionId, season,   // goal_assist_events
+                ...ids, season,   // player_club_stats
+                ...ids, season,   // goal_assist_events
                 DEFAULT_LOGO,
                 DEFAULT_PHOTO,
                 season,                  // psx join
@@ -485,7 +695,51 @@ class LeagueServiceV4 {
         });
     }
 
-    async getFixtures(competitionId, season) {
+    async getFixtures(competitionIds, season) {
+        const ids = Array.isArray(competitionIds) ? competitionIds : [competitionIds];
+        
+        // 1. Get the main competitions and their sub-competitions (Qualifiers, Groups, etc.)
+        const comps = await db.all(
+            `SELECT source_id AS comp_id, relation_type, NULL as name
+             FROM v4.competition_relations
+             WHERE target_id IN (${ids.map(() => '?::BIGINT').join(', ')})
+               AND relation_type IN ('QUALIFICATION', 'SUB_COMPETITION')
+             UNION
+             SELECT competition_id AS comp_id, 'MAIN' AS relation_type, name
+             FROM v4.competitions
+             WHERE competition_id IN (${ids.map(() => '?::BIGINT').join(', ')})`,
+            [...ids, ...ids]
+        );
+        
+        if (comps.length === 0) return [];
+        
+        // Build multi-season array to catch qualifications that started up to 2 years prior
+        let seasons = [season];
+        const isInternational = comps.some(c => c.relation_type === 'MAIN' && !String(c.name || '').toLowerCase().includes('league')); // Approximation
+        const competitionName = comps.find(c => c.relation_type === 'MAIN')?.name || '';
+        const n = String(competitionName || '').toLowerCase();
+        const isWorldCupOrEuro = n.includes('world cup') || n.includes('coupe du monde') || n.includes('euro') || n.includes('championnat d\'europe');
+        
+        if (isInternational && isWorldCupOrEuro) {
+            const startYear = parseInt(season.split('-')[0], 10);
+            seasons = [
+                season,
+                `${startYear - 1}-${startYear}`,
+                `${startYear - 2}-${startYear - 1}`,
+                String(startYear - 1),
+                String(startYear - 2)
+            ];
+        }
+        
+        const conditions = comps.map(() => {
+            return `(m.competition_id = ?::BIGINT AND m.season_label IN (${seasons.map(() => '?').join(', ')}))`;
+        });
+        
+        const params = [DEFAULT_LOGO, DEFAULT_LOGO];
+        for (const c of comps) {
+            params.push(c.comp_id, ...seasons);
+        }
+
         return db.all(
             `WITH
              ${LATEST_CLUB_LOGOS_CTE}
@@ -511,16 +765,18 @@ class LeagueServiceV4 {
                  away.slug            AS away_team_slug,
                  COALESCE(al.logo_url, away.current_logo_url, ?) AS away_team_logo,
                  m.xg_home, m.xg_away,
-                 m.forecast_win, m.forecast_draw, m.forecast_loss
+                 m.forecast_win, m.forecast_draw, m.forecast_loss,
+                 c.name               AS competition_name,
+                 c.competition_type   AS competition_type
              FROM v4.matches m
              JOIN v4.clubs home             ON home.club_id = m.home_club_id
              JOIN v4.clubs away             ON away.club_id = m.away_club_id
+             JOIN v4.competitions c         ON c.competition_id = m.competition_id
              LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_club_id
              LEFT JOIN latest_club_logos al ON al.club_id = m.away_club_id
-             WHERE m.competition_id = ?::BIGINT
-               AND m.season_label   = ?
+             WHERE (${conditions.join(' OR ')})
              ORDER BY m.match_date ASC NULLS LAST, m.match_id ASC`,
-            [DEFAULT_LOGO, DEFAULT_LOGO, competitionId, season]
+            params
         );
     }
 

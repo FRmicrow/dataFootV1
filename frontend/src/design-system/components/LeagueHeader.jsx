@@ -20,28 +20,9 @@ const KNOWN_COLORS = {
     '203': { accent: '#e30022', secondary: '#ffd700' }, // Super Lig
 };
 
-function formatSeasonLabel(value, isSingleYear) {
+function formatSeasonLabel(value) {
     if (value === null || value === undefined || value === '') return '';
-
-    const raw = String(value);
-    if (raw.includes('-')) {
-        const [start, end] = raw.split('-');
-        if (start && end) {
-            return `${start}-${end}`;
-        }
-        return raw;
-    }
-
-    const numeric = Number(raw);
-    if (Number.isNaN(numeric)) {
-        return raw;
-    }
-
-    if (isSingleYear) {
-        return String(numeric % 2 !== 0 ? numeric + 1 : numeric);
-    }
-
-    return `${numeric}-${numeric + 1}`;
+    return String(value);
 }
 
 /* Stable distinct color from league id when logo extraction fails */
@@ -55,11 +36,14 @@ function hashColors(id) {
 
 /* Extract dominant non-white/non-black colors from image via canvas */
 function extractImageColors(src, onSuccess) {
+    if (!src) return;
     const img = new Image();
+    // Some external domains like tmssl.akamaized.net block canvas extraction via CORS
     img.crossOrigin = 'anonymous';
+    
     img.onload = () => {
         try {
-            const size = 60;
+            const size = 32; // Smaller size for faster processing
             const canvas = document.createElement('canvas');
             canvas.width = size;
             canvas.height = size;
@@ -69,11 +53,11 @@ function extractImageColors(src, onSuccess) {
 
             const buckets = {};
             for (let i = 0; i < data.length; i += 4) {
-                if (data[i + 3] < 100) continue;
+                if (data[i + 3] < 128) continue;
                 const r = data[i], g = data[i + 1], b = data[i + 2];
                 const brightness = (r + g + b) / 3;
-                if (brightness > 215 || brightness < 25) continue;
-                const key = `${Math.round(r / 15) * 15},${Math.round(g / 15) * 15},${Math.round(b / 15) * 15}`;
+                if (brightness > 220 || brightness < 35) continue;
+                const key = `${Math.round(r / 20) * 20},${Math.round(g / 20) * 20},${Math.round(b / 20) * 20}`;
                 buckets[key] = (buckets[key] || 0) + 1;
             }
 
@@ -82,16 +66,21 @@ function extractImageColors(src, onSuccess) {
 
             const parse = (k) => k.split(',').map(Number);
             const [r1, g1, b1] = parse(top[0][0]);
-            const accent    = `rgb(${Math.round(r1 * 0.52)}, ${Math.round(g1 * 0.52)}, ${Math.round(b1 * 0.52)})`;
+            const accent    = `rgb(${Math.round(r1 * 0.45)}, ${Math.round(g1 * 0.45)}, ${Math.round(b1 * 0.45)})`;
             const secondary = top.length > 1
                 ? `rgb(${parse(top[1][0]).join(',')})`
                 : `rgb(${r1}, ${g1}, ${b1})`;
 
             onSuccess({ accent, secondary });
         } catch (_) {
-            /* CORS or security error — fallback already applied */
+            // Silently fail on CORS/Security errors
         }
     };
+
+    img.onerror = () => {
+        // Image failed to load or CORS block — skip extraction
+    };
+
     img.src = src;
 }
 
@@ -123,11 +112,9 @@ const LeagueHeader = ({
         extractImageColors(league.logo, setColors);
     }, [league.logo, league.id, key]);
 
-    const isSingleYear = [44, 42].includes(Number(league.id));
-
     const subtitles = [
         league.country?.name ?? 'International',
-        activeSeason ? formatSeasonLabel(activeSeason, isSingleYear) : null,
+        activeSeason ? formatSeasonLabel(activeSeason) : null,
     ].filter(Boolean);
 
     const rightSlot = (
@@ -141,7 +128,7 @@ const LeagueHeader = ({
                     aria-label="Season"
                 >
                     {availableYears.map(y => (
-                        <option key={y} value={y}>{formatSeasonLabel(y, isSingleYear)}</option>
+                        <option key={y} value={y}>{formatSeasonLabel(y)}</option>
                     ))}
                 </select>
             )}

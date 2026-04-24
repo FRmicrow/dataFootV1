@@ -1,0 +1,19 @@
+[
+  {
+    "country": "Angleterre",
+    "status": "failed",
+    "freeze_status": "error",
+    "locked": false,
+    "matches": 11,
+    "competitions": 1,
+    "clubs": 22,
+    "people": 166,
+    "events": 121,
+    "lineups": 0,
+    "started_at": "2026-04-22T23:16:47.175Z",
+    "finished_at": "2026-04-22T23:16:47.175Z",
+    "duration_ms": 0,
+    "file": "Angleterre.sql",
+    "note": "update or delete on table \"matches\" violates foreign key constraint \"fixture_match_mapping_v4_match_id_fkey\" on table \"fixture_match_mapping\""
+  }
+]

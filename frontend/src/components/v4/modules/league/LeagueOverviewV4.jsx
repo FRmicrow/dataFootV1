@@ -22,7 +22,8 @@ const LeagueOverviewV4 = ({
     standings,
     topScorers,
     topAssists,
-    topRated
+    topRated,
+    displayMode
 }) => {
     return (
         <Stack gap="var(--spacing-lg)" className="animate-fade-in scrollbar-custom" style={{ overflowY: 'auto', flex: 1, height: '100%', minHeight: 0 }}>
@@ -38,6 +39,7 @@ const LeagueOverviewV4 = ({
                 leagueId={leagueId}
                 season={season}
                 teams={standings}
+                displayMode={displayMode}
             />
         </Stack>
     );
@@ -49,7 +51,8 @@ LeagueOverviewV4.propTypes = {
     standings: PropTypes.array.isRequired,
     topScorers: PropTypes.array,
     topAssists: PropTypes.array,
-    topRated: PropTypes.array
+    topRated: PropTypes.array,
+    displayMode: PropTypes.string
 };
 
 export default LeagueOverviewV4;

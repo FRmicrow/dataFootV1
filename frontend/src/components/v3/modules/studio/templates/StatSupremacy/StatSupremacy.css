@@ -1,0 +1,151 @@
+/* StatSupremacy — DA editorial par défaut */
+
+.stat-supremacy .sup-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-bottom: 2px solid var(--tpl-text);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+    animation-delay: 50ms;
+}
+
+.stat-supremacy .sup-headline {
+    font-size: 96px;
+    max-width: 95%;
+    letter-spacing: -0.02em;
+}
+
+.stat-supremacy.template-1x1 .sup-headline {
+    font-size: 68px;
+}
+
+.stat-supremacy.template-16x9 .sup-headline {
+    font-size: 82px;
+}
+
+.stat-supremacy .sup-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+    padding: 40px 0;
+    animation-delay: 150ms;
+}
+
+.stat-supremacy.template-9x16 .sup-hero {
+    grid-template-columns: 1fr;
+}
+
+.stat-supremacy .sup-hero-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stat-supremacy .sup-hero-value {
+    font-size: 260px;
+    line-height: 0.9;
+    color: var(--tpl-accent);
+    letter-spacing: -0.05em;
+    display: flex;
+    align-items: flex-end;
+}
+
+.stat-supremacy.template-1x1 .sup-hero-value {
+    font-size: 180px;
+}
+
+.stat-supremacy.template-16x9 .sup-hero-value {
+    font-size: 220px;
+}
+
+.stat-supremacy .sup-hero-unit {
+    font-size: 52px;
+    margin-left: 16px;
+    color: var(--tpl-text);
+    opacity: 0.7;
+    letter-spacing: 0.04em;
+}
+
+.stat-supremacy .sup-hero-label {
+    font-family: var(--tpl-font-body);
+    font-size: 22px;
+    color: var(--tpl-text);
+    max-width: 540px;
+    line-height: 1.35;
+}
+
+.stat-supremacy .sup-trend {
+    width: 100%;
+    height: 140px;
+    display: flex;
+    align-items: center;
+}
+
+.stat-supremacy .sup-sparkline {
+    width: 100%;
+    height: 100%;
+}
+
+.stat-supremacy .sup-ranking {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 24px;
+    animation-delay: 220ms;
+}
+
+.stat-supremacy .sup-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 2fr 80px;
+    align-items: center;
+    gap: 20px;
+    padding: 14px 20px;
+    background: var(--tpl-surface);
+    border: 1px solid var(--tpl-border);
+    border-radius: var(--tpl-radius);
+    animation: tpl-reveal-up 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.stat-supremacy .sup-row-rank {
+    font-family: var(--tpl-font-display);
+    font-size: 36px;
+    color: var(--tpl-accent);
+    letter-spacing: -0.04em;
+}
+
+.stat-supremacy .sup-row-name {
+    font-size: 28px;
+    letter-spacing: -0.01em;
+}
+
+.stat-supremacy .sup-row-bar {
+    height: 16px;
+    border-radius: 999px;
+    background: var(--tpl-surface-soft);
+    overflow: hidden;
+    border: 1px solid var(--tpl-border);
+}
+
+.stat-supremacy .sup-row-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-supremacy .sup-row-value {
+    font-size: 40px;
+    text-align: right;
+    color: var(--tpl-text);
+    letter-spacing: -0.03em;
+}
+
+.stat-supremacy .sup-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-top: 1px solid var(--tpl-border);
+}

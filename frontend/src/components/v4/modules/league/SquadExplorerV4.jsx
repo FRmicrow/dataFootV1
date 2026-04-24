@@ -11,7 +11,7 @@ const VIEW_MODES = [
     { id: 'xg',       label: 'xG Deep' },
 ];
 
-const SquadExplorerV4 = ({ leagueId, season, teams }) => {
+const SquadExplorerV4 = ({ leagueId, season, teams, displayMode }) => {
     const [teamId, setTeamId] = useState('');
     const [position, setPosition] = useState('ALL');
     const [players, setPlayers] = useState([]);
@@ -81,6 +81,9 @@ const SquadExplorerV4 = ({ leagueId, season, teams }) => {
         { title: '90s', key: 'mins', dataIndex: 'minutes', align: 'center', width: '50px', render: (m) => Math.round(m / 90) },
     ];
 
+    const hasXg = players.some(p => p.xg !== null && p.xg > 0);
+    const hasCards = players.some(p => p.yellow_cards > 0 || p.red_cards > 0);
+
     const standardColumns = [
         ...baseColumns,
         {
@@ -107,10 +110,25 @@ const SquadExplorerV4 = ({ leagueId, season, teams }) => {
             }
         },
         { title: 'A', key: 'assists', dataIndex: 'assists', align: 'center', width: '40px', render: (v) => <span style={{ color: v > 0 ? 'var(--color-primary-400)' : 'inherit', fontWeight: v > 0 ? 'bold' : 'normal' }}>{v}</span> },
-        { title: 'xG', key: 'xg', dataIndex: 'xg', align: 'center', width: '60px', render: fmtXg },
-        { title: 'xA', key: 'xa', dataIndex: 'xa', align: 'center', width: '60px', render: fmtXg },
-        { title: 'npxG', key: 'npxg', dataIndex: 'npxg', align: 'center', width: '60px', render: fmtXg },
-        { title: 'xG/90', key: 'xg_90', dataIndex: 'xg_90', align: 'center', width: '60px', render: fmtXg },
+        ...(hasCards ? [{
+            title: 'Cards',
+            key: 'cards',
+            align: 'center',
+            width: '60px',
+            render: (_, p) => (
+                <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                    {p.yellow_cards > 0 && <span style={{ background: '#f59e0b', color: '#fff', fontSize: '10px', padding: '1px 4px', borderRadius: '2px' }}>{p.yellow_cards}</span>}
+                    {p.red_cards > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '10px', padding: '1px 4px', borderRadius: '2px' }}>{p.red_cards}</span>}
+                    {p.yellow_cards === 0 && p.red_cards === 0 && <span style={{ color: 'var(--color-text-dim)' }}>-</span>}
+                </div>
+            )
+        }] : []),
+        ...(hasXg ? [
+            { title: 'xG', key: 'xg', dataIndex: 'xg', align: 'center', width: '60px', render: fmtXg },
+            { title: 'xA', key: 'xa', dataIndex: 'xa', align: 'center', width: '60px', render: fmtXg },
+            { title: 'npxG', key: 'npxg', dataIndex: 'npxg', align: 'center', width: '60px', render: fmtXg },
+            { title: 'xG/90', key: 'xg_90', dataIndex: 'xg_90', align: 'center', width: '60px', render: fmtXg }
+        ] : []),
         {
             title: 'Rat',
             key: 'rating',
@@ -143,9 +161,9 @@ const SquadExplorerV4 = ({ leagueId, season, teams }) => {
             subtitle="Deep statistical drill-down"
             extra={
                 <Stack direction="row" gap="var(--spacing-xs)">
-                    {/* View mode toggle */}
+                    {/* View mode toggle - Hide xG mode if no xG data */}
                     <div style={{ display: 'flex', gap: '4px', marginRight: 'var(--spacing-xs)' }}>
-                        {VIEW_MODES.map(m => (
+                        {VIEW_MODES.filter(m => m.id === 'standard' || (m.id === 'xg' && hasXg)).map(m => (
                             <button
                                 key={m.id}
                                 type="button"

@@ -1,0 +1,163 @@
+/* TemplateFrame — cadre commun multi-aspect */
+
+.template-frame {
+    position: relative;
+    overflow: hidden;
+    color: var(--tpl-text);
+    background: var(--tpl-bg);
+    font-family: var(--tpl-font-body);
+    font-weight: var(--tpl-font-body-weight);
+    line-height: 1.35;
+    border-radius: var(--tpl-radius);
+    box-shadow: var(--tpl-shadow);
+    isolation: isolate;
+    /* Empêche le layout inner d'écraser les règles du frame */
+    contain: layout paint;
+}
+
+.template-frame-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--tpl-bg-gradient);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.template-frame-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(to right, var(--tpl-grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--tpl-grid) 1px, transparent 1px);
+    background-size: 80px 80px;
+    opacity: 0.35;
+    z-index: 1;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at center, #000 20%, transparent 80%);
+}
+
+.template-frame-inner {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.template-frame-brand {
+    position: absolute;
+    bottom: 24px;
+    right: 28px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--tpl-surface-soft);
+    border: 1px solid var(--tpl-border);
+    backdrop-filter: blur(6px);
+    font-family: var(--tpl-font-display);
+    font-size: 18px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tpl-text-soft);
+}
+
+.template-frame-brand-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tpl-accent);
+    box-shadow: var(--tpl-accent-glow);
+}
+
+/* Headline / display style primitive — à réutiliser par chaque template */
+.tpl-display {
+    font-family: var(--tpl-font-display);
+    font-weight: var(--tpl-font-display-weight);
+    letter-spacing: -0.015em;
+    line-height: 1.02;
+    color: var(--tpl-text);
+}
+
+.tpl-eyebrow {
+    font-family: var(--tpl-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 16px;
+    color: var(--tpl-accent);
+}
+
+.tpl-soft {
+    color: var(--tpl-text-soft);
+}
+
+.tpl-divider {
+    height: 1px;
+    background: var(--tpl-border);
+    width: 100%;
+}
+
+/* Accent pill réutilisable */
+.tpl-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--tpl-accent-soft);
+    color: var(--tpl-accent);
+    font-family: var(--tpl-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 14px;
+    border: 1px solid var(--tpl-border);
+}
+
+/* Ratios — contraintes dimensionnelles via classes */
+.template-frame.template-9x16 .template-frame-inner {
+    padding: 72px 64px 120px;
+}
+
+.template-frame.template-1x1 .template-frame-inner {
+    padding: 64px;
+}
+
+.template-frame.template-16x9 .template-frame-inner {
+    padding: 56px 88px;
+}
+
+/* Animation de révélation staggered pour tous les templates */
+@keyframes tpl-reveal-up {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.tpl-reveal {
+    animation: tpl-reveal-up 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Glow utilitaire pour accent */
+.tpl-glow {
+    box-shadow: var(--tpl-accent-glow);
+}
+
+/* Thème éditorial : pas de grille glow */
+.tpl-theme-editorial .template-frame-grid {
+    opacity: 0.18;
+    mask-image: none;
+}
+.tpl-theme-editorial .template-frame-brand {
+    background: rgba(17, 17, 17, 0.06);
+}
+.tpl-theme-editorial .template-frame-brand-dot {
+    box-shadow: none;
+}
