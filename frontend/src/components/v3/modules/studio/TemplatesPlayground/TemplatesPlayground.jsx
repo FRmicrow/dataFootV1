@@ -7,9 +7,12 @@ import {
     exportNodeToPNG,
 } from '../templates';
 import { themes } from '../templates/_shared/themes';
+import { useFitScale, ASPECT_DIMS } from '../templates/_shared/useFitScale';
 import './TemplatesPlayground.css';
 
 const ASPECTS = ['9:16', '1:1', '16:9'];
+
+const aspectClassSuffix = (a) => a.replace(':', 'x'); // "9:16" → "9x16"
 
 /**
  * Playground des 5 templates de contenu.
@@ -25,9 +28,14 @@ const TemplatesPlayground = () => {
     const [error, setError] = useState(null);
 
     const frameRef = useRef(null);
+    const wrapperRef = useRef(null);
 
     const tpl = useMemo(() => getTemplate(selectedId), [selectedId]);
     const Component = tpl?.component;
+
+    // V8.3-03 — fit-to-wrapper scaling at native resolution
+    const { w: nativeW, h: nativeH } = ASPECT_DIMS[aspect] ?? ASPECT_DIMS['9:16'];
+    const fitScale = useFitScale(wrapperRef, nativeW, nativeH);
 
     const handleTemplateSwitch = useCallback((id) => {
         const next = getTemplate(id);
@@ -175,22 +183,32 @@ const TemplatesPlayground = () => {
                     </div>
                 )}
 
-                <div className="tplpg-canvas">
-                    <div className={`tplpg-frame-wrap tplpg-frame-wrap--${aspect.replace(':', 'x')}`}>
-                        <TemplateFrame
-                            ref={frameRef}
-                            theme={theme}
-                            aspectRatio={aspect}
-                            accent={accent || undefined}
-                            scale={1}
+                <div className={`tplpg-canvas tplpg-canvas--${aspectClassSuffix(aspect)}`}>
+                    <div ref={wrapperRef} className="tplpg-canvas-wrap">
+                        <div
+                            className="tplpg-canvas-scaler"
+                            style={{
+                                width: `${nativeW}px`,
+                                height: `${nativeH}px`,
+                                transform: `scale(${fitScale})`,
+                                transformOrigin: 'top left',
+                            }}
                         >
-                            <Component
-                                data={tpl.demo}
+                            <TemplateFrame
+                                ref={frameRef}
                                 theme={theme}
-                                accent={accent || undefined}
                                 aspectRatio={aspect}
-                            />
-                        </TemplateFrame>
+                                accent={accent || undefined}
+                                scale={1}
+                            >
+                                <Component
+                                    data={tpl.demo}
+                                    theme={theme}
+                                    accent={accent || undefined}
+                                    aspectRatio={aspect}
+                                />
+                            </TemplateFrame>
+                        </div>
                     </div>
                 </div>
 

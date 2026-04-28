@@ -58,11 +58,22 @@ describe('ResolutionServiceV4', () => {
             db.get.mockResolvedValue(undefined); // No mapping, no heuristic match
             db.run.mockResolvedValueOnce({ lastInsertRowid: 999 }); // Create person
             db.run.mockResolvedValueOnce({ changes: 1 }); // Create mapping
-            
+
             const result = await ResolutionServiceV4.resolvePerson('fs', 'pNew', { name: 'New Player' });
-            
+
             expect(result).toBe(999);
-            expect(db.run).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO v4.people'), ['New Player', null, null]);
+            // 1st call: create the person row (full_name, person_type, nationality_1, birth_date)
+            expect(db.run).toHaveBeenNthCalledWith(
+                1,
+                expect.stringContaining('INSERT INTO v4.people'),
+                ['New Player', 'player', null, null]
+            );
+            // 2nd call: register the mapping for subsequent cache hits
+            expect(db.run).toHaveBeenNthCalledWith(
+                2,
+                expect.stringContaining('INSERT INTO v4.mapping_people'),
+                ['fs', 'pNew', 999, 'New Player']
+            );
         });
     });
 });

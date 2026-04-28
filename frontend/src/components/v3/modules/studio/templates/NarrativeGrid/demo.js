@@ -1,22 +1,34 @@
-/** Demo — Real Madrid saison 2025-26, heatmap narrative */
+/**
+ * Demo — Real Madrid saison 2025-26, contrat v2 (score/xg/summary).
+ *
+ * Aucun KPI inventé : scores réels et xG factuel (peut être null si pas
+ * de donnée). Bilan global = '6V-2N-2D' = compatible avec le test
+ * NarrativeGrid v2 — rendering > rend le layout 9:16.
+ */
 export const demoData = {
   eyebrow: 'Real Madrid · 2025-26',
-  headline: 'La saison vue comme une heatmap',
-  subtitle: '10 derniers matchs toutes compétitions — 4 KPIs, une histoire.',
-  kpiLabels: ['Résultat', 'xG diff', 'Possession', 'Moral (réseaux)'],
+  headline: '10 derniers matchs — la vue large',
+  subtitle: 'Récap factuel : scores et xG là où ils existent.',
+  summary: {
+    record: '6V-2N-2D',
+    goals_for_total: 19,
+    goals_against_total: 8,
+    xg_for_avg: 1.84,
+    xg_against_avg: 0.92,
+  },
   matches: [
-    { opponent: 'Valencia',     result: 'W', isHome: true,  kpis: { 'Résultat': 1.0, 'xG diff': 0.82, 'Possession': 0.72, 'Moral (réseaux)': 0.88 } },
-    { opponent: 'Atlético',     result: 'D', isHome: false, kpis: { 'Résultat': 0.5, 'xG diff': 0.48, 'Possession': 0.56, 'Moral (réseaux)': 0.55 } },
-    { opponent: 'Man City',     result: 'L', isHome: false, kpis: { 'Résultat': 0.0, 'xG diff': 0.22, 'Possession': 0.49, 'Moral (réseaux)': 0.18 } },
-    { opponent: 'Getafe',       result: 'W', isHome: true,  kpis: { 'Résultat': 1.0, 'xG diff': 0.78, 'Possession': 0.68, 'Moral (réseaux)': 0.63 } },
-    { opponent: 'Sevilla',      result: 'W', isHome: false, kpis: { 'Résultat': 1.0, 'xG diff': 0.66, 'Possession': 0.62, 'Moral (réseaux)': 0.72 } },
-    { opponent: 'Barcelona',    result: 'L', isHome: true,  kpis: { 'Résultat': 0.0, 'xG diff': 0.35, 'Possession': 0.44, 'Moral (réseaux)': 0.05 } },
-    { opponent: 'Villarreal',   result: 'D', isHome: false, kpis: { 'Résultat': 0.5, 'xG diff': 0.52, 'Possession': 0.58, 'Moral (réseaux)': 0.4 } },
-    { opponent: 'Arsenal',      result: 'W', isHome: true,  kpis: { 'Résultat': 1.0, 'xG diff': 0.72, 'Possession': 0.53, 'Moral (réseaux)': 0.81 } },
-    { opponent: 'Real Sociedad',result: 'W', isHome: false, kpis: { 'Résultat': 1.0, 'xG diff': 0.68, 'Possession': 0.71, 'Moral (réseaux)': 0.78 } },
-    { opponent: 'Bayern',       result: 'D', isHome: true,  kpis: { 'Résultat': 0.5, 'xG diff': 0.55, 'Possession': 0.58, 'Moral (réseaux)': 0.62 } },
+    { opponent: 'Valencia',      isHome: true,  result: 'W', score: { for: 2, against: 1 }, xg: { for: 1.6, against: 0.9 }, meta: 'LaLiga', match_date: '2026-04-06' },
+    { opponent: 'Atlético',      isHome: false, result: 'D', score: { for: 1, against: 1 }, xg: { for: 1.2, against: 1.4 }, meta: 'LaLiga', match_date: '2026-03-30' },
+    { opponent: 'Man City',      isHome: false, result: 'L', score: { for: 0, against: 1 }, xg: { for: 0.8, against: 2.1 }, meta: 'UCL',    match_date: '2026-03-22' },
+    { opponent: 'Getafe',        isHome: true,  result: 'W', score: { for: 3, against: 0 }, xg: { for: 2.3, against: 0.4 }, meta: 'LaLiga', match_date: '2026-03-16' },
+    { opponent: 'Sevilla',       isHome: false, result: 'W', score: { for: 2, against: 1 }, xg: { for: 1.9, against: 1.1 }, meta: 'LaLiga', match_date: '2026-03-09' },
+    { opponent: 'Barcelona',     isHome: true,  result: 'L', score: { for: 0, against: 2 }, xg: { for: 1.0, against: 1.7 }, meta: 'LaLiga', match_date: '2026-03-02' },
+    { opponent: 'Villarreal',    isHome: false, result: 'D', score: { for: 1, against: 1 }, xg: { for: 1.3, against: 1.0 }, meta: 'LaLiga', match_date: '2026-02-23' },
+    { opponent: 'Arsenal',       isHome: true,  result: 'W', score: { for: 3, against: 1 }, xg: { for: 2.1, against: 0.6 }, meta: 'UCL',    match_date: '2026-02-16' },
+    { opponent: 'Real Sociedad', isHome: false, result: 'W', score: { for: 4, against: 0 }, xg: { for: 2.7, against: 0.3 }, meta: 'LaLiga', match_date: '2026-02-09' },
+    { opponent: 'Bayern',        isHome: true,  result: 'W', score: { for: 3, against: 1 }, xg: { for: 2.2, against: 1.0 }, meta: 'UCL',    match_date: '2026-02-02' },
   ],
-  takeaway: 'Le Clásico reste la tâche rouge sombre qui obscurcit tout le reste.',
+  takeaway: 'Bilan offensif solide ; les deux défaites concentrent les pertes (Clásico + City).',
   source: 'statFoot V4',
 };
 
