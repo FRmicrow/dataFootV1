@@ -86,25 +86,37 @@ export async function importFlashscoreMatchResult(flashscoreData) {
       score: `${validated.home_score}-${validated.away_score}`,
     }, 'Starting Flashscore match import');
 
-    // STEP 2: Resolve FK references (teams & competition) via ResolutionService
-    const homeTeamId = await ResolutionServiceV4.resolveTeam(
-      'flashscore',
-      validated.home_club_id || `NAME:${validated.home_club_name}`,
-      { name: validated.home_club_name }
-    );
-    const awayTeamId = await ResolutionServiceV4.resolveTeam(
-      'flashscore',
-      validated.away_club_id || `NAME:${validated.away_club_name}`,
-      { name: validated.away_club_name }
-    );
-    const competitionId = await ResolutionServiceV4.resolveCompetition(
-      'flashscore',
-      validated.competition_id || `NAME:${validated.competition_name}`,
-      { name: validated.competition_name, country: validated.competition_country }
-    );
-    const venueId = validated.venue_name 
-      ? await ResolutionServiceV4.resolveVenue('flashscore', `NAME:${validated.venue_name}`, { name: validated.venue_name })
-      : null;
+    // STEP 2: Resolve FK references
+    let homeTeamId = null;
+    if (validated.home_club_id) {
+      homeTeamId = await ResolutionServiceV4.resolveTeam('flashscore', validated.home_club_id, { name: validated.home_club_name });
+    } else {
+      const t = await db.get(`SELECT team_id FROM v4.teams WHERE name = ? LIMIT 1`, [validated.home_club_name]);
+      if (t) homeTeamId = t.team_id;
+    }
+
+    let awayTeamId = null;
+    if (validated.away_club_id) {
+      awayTeamId = await ResolutionServiceV4.resolveTeam('flashscore', validated.away_club_id, { name: validated.away_club_name });
+    } else {
+      const t = await db.get(`SELECT team_id FROM v4.teams WHERE name = ? LIMIT 1`, [validated.away_club_name]);
+      if (t) awayTeamId = t.team_id;
+    }
+
+    let competitionId = null;
+    if (validated.competition_id) {
+      competitionId = await ResolutionServiceV4.resolveCompetition('flashscore', validated.competition_id, { name: validated.competition_name, country: validated.competition_country });
+    } else {
+      const c = await db.get(`SELECT competition_id FROM v4.competitions WHERE name = ? LIMIT 1`, [validated.competition_name]);
+      if (c) competitionId = c.competition_id;
+    }
+
+    let venueId = null;
+    if (validated.venue_name) {
+      // Venues rarely have reliable IDs in Flashscore match lists, lookup by name
+      const v = await db.get(`SELECT venue_id FROM v4.venues WHERE name = ? LIMIT 1`, [validated.venue_name]);
+      if (v) venueId = v.venue_id;
+    }
 
     if (!homeTeamId || !awayTeamId) {
       logger.warn({
@@ -245,20 +257,18 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
         // Resolve team (home or away) first so we can scope the player pseudo-ID
         const teamId = event.team_side === 'home' ? match.home_team_id : match.away_team_id;
 
-        // Resolve player via ResolutionServiceV4
+        // Resolve player safely
         let playerId = null;
-        if (event.player_name) {
-          const pseudoId = `TEAM:${teamId}_NAME:${event.player_name}`;
-          playerId = await ResolutionServiceV4.resolvePerson(
-            'flashscore',
-            event.player_id || pseudoId,
-            { name: event.player_name }
-          );
-          if (!playerId) {
-            logger.debug({
-              player_name: event.player_name,
-              match_id: matchId,
-            }, 'Player not resolved — using NULL');
+        if (event.player_id) {
+          playerId = await ResolutionServiceV4.resolvePerson('flashscore', event.player_id, { name: event.player_name });
+        } else if (event.player_name) {
+          // No ID provided by Flashscore. Do a strict heuristic lookup by name.
+          // We DO NOT create a mapping or a new person without a real ID.
+          const p = await client.query(`SELECT person_id FROM v4.people WHERE full_name = $1 LIMIT 1`, [event.player_name]);
+          if (p.rows.length > 0) {
+            playerId = p.rows[0].person_id;
+          } else {
+            logger.debug({ player_name: event.player_name, match_id: matchId }, 'Player not resolved by name — using NULL');
           }
         }
 
