@@ -54,13 +54,13 @@ class TransfermarktScraperService {
         }
     }
 
-    async resolveVenue(name, url) {
+    async resolveVenue(name, sourceId) {
         if (!name) return null;
         try {
-            // Using URL as source_id for venues in Transfermarkt
-            return await ResolutionServiceV4.resolveVenue('transfermarkt', url || name, { name });
+            // Using parsed ID (verein_X or stadion_X) or name as source_id for venues in Transfermarkt
+            return await ResolutionServiceV4.resolveVenue('transfermarkt', sourceId || name, { name });
         } catch (err) {
-            logger.error({ err, name, url }, 'Failed to resolve venue in TM scraper');
+            logger.error({ err, name, sourceId }, 'Failed to resolve venue in TM scraper');
             return null;
         }
     }
@@ -106,7 +106,13 @@ class TransfermarktScraperService {
             const attendance = attendanceMatch ? parseInt(attendanceMatch[1].replace(/\./g, '')) : null;
             const stadiumLink = html.match(/<a href="([^"]*?\/stadion\/[^"]*?)">([^<]+)<\/a>/);
             const venueName = stadiumLink ? stadiumLink[2].trim() : null;
-            const venueUrl = stadiumLink ? `https://www.transfermarkt.com${stadiumLink[1]}` : null;
+            let venueSourceId = venueName;
+            if (stadiumLink) {
+                const idMatch = stadiumLink[1].match(/\/(verein|stadion)\/(\d+)/);
+                if (idMatch) {
+                    venueSourceId = `${idMatch[1]}_${idMatch[2]}`;
+                }
+            }
             const refereeMatch = html.match(/Referee:.*?<a href="([^"]*?\/schiedsrichter\/[^"]*?)">([^<]+)<\/a>/);
             const refereeName = refereeMatch ? refereeMatch[2].trim() : null;
             const refereeTmId = refereeMatch ? refereeMatch[1].match(/\/(\d+)$/)?.[1] : null;
@@ -121,7 +127,7 @@ class TransfermarktScraperService {
             return {
                 date: tmDate,
                 attendance,
-                venue: { name: venueName, url: venueUrl },
+                venue: { name: venueName, sourceId: venueSourceId },
                 referee: { name: refereeName, tmId: refereeTmId },
                 home_formation: formations[0] || null,
                 away_formation: formations[1] || null
@@ -244,7 +250,7 @@ class TransfermarktScraperService {
                 // All these matches get relaxed verification (rank 1-20)
                 const details = await this.fetchMatchDetails(match.source_match_id, match, true);
                 if (details && details.date) {
-                    const venueId = details.venue.name ? await this.resolveVenue(details.venue.name, details.venue.url) : null;
+                    const venueId = details.venue.sourceId ? await this.resolveVenue(details.venue.name, details.venue.sourceId) : null;
                     const refereeId = details.referee.tmId ? await this.resolvePerson(details.referee.name, details.referee.tmId, 'referee') : null;
 
                     await db.run(`
