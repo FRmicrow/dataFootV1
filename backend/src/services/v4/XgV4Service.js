@@ -6,9 +6,9 @@ const logger = createChildLogger('XgV4Service');
 // Latest logo per club in a single pass — replaces N+1 LATERAL subqueries
 const LATEST_CLUB_LOGOS_CTE = `
     latest_club_logos AS (
-        SELECT DISTINCT ON (club_id) club_id, logo_url
-        FROM v4.club_logos
-        ORDER BY club_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
+        SELECT DISTINCT ON (team_id) team_id AS club_id, logo_url
+        FROM v4.team_logos
+        ORDER BY team_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
     )`;
 
 const XgV4Service = {
@@ -28,36 +28,36 @@ const XgV4Service = {
     async getTeamSeasonXg(leagueName, season) {
         const rows = await db.all(
             `WITH ${LATEST_CLUB_LOGOS_CTE}
-             SELECT
-                tsx.id,
-                tsx.competition_id::text,
-                tsx.season_label,
-                tsx.club_id::text,
-                c.name             AS club_name,
-                COALESCE(cl.logo_url, c.current_logo_url) AS club_logo,
-                tsx.position,
-                tsx.matches,
-                tsx.wins,
-                tsx.draws,
-                tsx.losses,
-                tsx.goals,
-                tsx.goals_against,
-                tsx.points,
-                tsx.xg,
-                tsx.npxg,
-                tsx.xga,
-                tsx.npxga,
-                tsx.npxgd,
-                tsx.ppda,
-                tsx.ppda_allowed,
-                tsx.deep,
-                tsx.deep_allowed,
-                tsx.xpts
-             FROM v4.team_season_xg tsx
-             JOIN v4.competitions comp ON comp.competition_id = tsx.competition_id
-             JOIN v4.clubs c ON c.club_id = tsx.club_id
-             LEFT JOIN latest_club_logos cl ON cl.club_id = c.club_id
-             WHERE comp.name = $1
+              SELECT
+                 tsx.id,
+                 tsx.competition_id::text,
+                 tsx.season_label,
+                 tsx.team_id::text,
+                 c.name             AS club_name,
+                 COALESCE(cl.logo_url, c.current_logo_url) AS club_logo,
+                 tsx.position,
+                 tsx.matches,
+                 tsx.wins,
+                 tsx.draws,
+                 tsx.losses,
+                 tsx.goals,
+                 tsx.goals_against,
+                 tsx.points,
+                 tsx.xg,
+                 tsx.npxg,
+                 tsx.xga,
+                 tsx.npxga,
+                 tsx.npxgd,
+                 tsx.ppda,
+                 tsx.ppda_allowed,
+                 tsx.deep,
+                 tsx.deep_allowed,
+                 tsx.xpts
+              FROM v4.team_season_xg tsx
+              JOIN v4.competitions comp ON comp.competition_id = tsx.competition_id
+              JOIN v4.teams c ON c.team_id = tsx.team_id
+              LEFT JOIN latest_club_logos cl ON cl.club_id = c.team_id
+              WHERE comp.name = $1
                AND tsx.season_label = $2
              ORDER BY tsx.position ASC NULLS LAST, tsx.xg DESC NULLS LAST`,
             [leagueName, season]

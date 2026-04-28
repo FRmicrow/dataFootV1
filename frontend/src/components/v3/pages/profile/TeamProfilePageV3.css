@@ -1,0 +1,27 @@
+.ds-team-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-sm);
+}
+
+.ds-team-page .ds-profile-header {
+    margin-bottom: var(--spacing-3xs);
+}
+
+.ds-team-content {
+    padding-top: var(--spacing-3xs);
+    padding-bottom: var(--spacing-xl);
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

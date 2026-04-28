@@ -24,6 +24,7 @@
 import { z } from 'zod';
 import db from '../../config/database.js';
 import logger from '../../utils/logger.js';
+import ResolutionServiceV4 from './ResolutionServiceV4.js';
 
 // ============================================================================
 // SCHEMAS — Flashscore Data Validation
@@ -32,18 +33,23 @@ import logger from '../../utils/logger.js';
 const FlashscoreMatchSchema = z.object({
   match_date: z.string().datetime('Invalid ISO datetime'),
   home_club_name: z.string().min(1),
+  home_club_id: z.string().optional(), // Flashscore internal ID
   away_club_name: z.string().min(1),
+  away_club_id: z.string().optional(), // Flashscore internal ID
   competition_name: z.string().min(1),
+  competition_id: z.string().optional(), // Flashscore internal ID
   competition_country: z.string().length(2).optional(),
   home_score: z.number().int().nonnegative().nullable(),
   away_score: z.number().int().nonnegative().nullable(),
   status: z.enum(['scheduled', 'live', 'finished']),
+  venue_name: z.string().optional(),
 });
 
 const FlashscoreEventSchema = z.object({
   minute: z.string().regex(/^\d+(\+\d+)?$/),
   type: z.enum(['goal', 'own_goal', 'penalty', 'card', 'substitution']),
   player_name: z.string().max(255).optional(),
+  player_id: z.string().optional(), // Flashscore player ID
   team_side: z.enum(['home', 'away']),
   detail: z.string().max(500).optional(),
 });
@@ -80,36 +86,48 @@ export async function importFlashscoreMatchResult(flashscoreData) {
       score: `${validated.home_score}-${validated.away_score}`,
     }, 'Starting Flashscore match import');
 
-    // STEP 2: Resolve FK references (clubs & competition)
-    const homeClub = await resolveClubByName(validated.home_club_name);
-    const awayClub = await resolveClubByName(validated.away_club_name);
-    const competition = await resolveCompetitionByName(
-      validated.competition_name,
-      validated.competition_country
+    // STEP 2: Resolve FK references (teams & competition) via ResolutionService
+    const homeTeamId = await ResolutionServiceV4.resolveTeam(
+      'flashscore',
+      validated.home_club_id || `NAME:${validated.home_club_name}`,
+      { name: validated.home_club_name }
     );
+    const awayTeamId = await ResolutionServiceV4.resolveTeam(
+      'flashscore',
+      validated.away_club_id || `NAME:${validated.away_club_name}`,
+      { name: validated.away_club_name }
+    );
+    const competitionId = await ResolutionServiceV4.resolveCompetition(
+      'flashscore',
+      validated.competition_id || `NAME:${validated.competition_name}`,
+      { name: validated.competition_name, country: validated.competition_country }
+    );
+    const venueId = validated.venue_name 
+      ? await ResolutionServiceV4.resolveVenue('flashscore', `NAME:${validated.venue_name}`, { name: validated.venue_name })
+      : null;
 
-    if (!homeClub || !awayClub) {
+    if (!homeTeamId || !awayTeamId) {
       logger.warn({
         home_club: validated.home_club_name,
         away_club: validated.away_club_name,
-      }, 'Club not found — match skipped');
-      return { error: 'Club not found', action: 'skipped' };
+      }, 'Team resolution failed — match skipped');
+      return { error: 'Team not resolved', action: 'skipped' };
     }
 
-    if (!competition) {
+    if (!competitionId) {
       logger.warn({
         competition: validated.competition_name,
-      }, 'Competition not found');
-      return { error: 'Competition not found', action: 'skipped' };
+      }, 'Competition resolution failed');
+      return { error: 'Competition not resolved', action: 'skipped' };
     }
 
-    // STEP 3: Business key lookup (match_date + clubs + competition)
+    // STEP 3: Business key lookup (match_date + teams + competition)
     const existingMatch = await db.get(
       `SELECT match_id, home_score, away_score, scraped_score_at
        FROM v4.matches
-       WHERE home_club_id = ? AND away_club_id = ?
+       WHERE home_team_id = ? AND away_team_id = ?
          AND match_date = ? AND competition_id = ?`,
-      [homeClub.club_id, awayClub.club_id, validated.match_date, competition.competition_id]
+      [homeTeamId, awayTeamId, validated.match_date, competitionId]
     );
 
     // STEP 4: Idempotence check — don't re-scrape if already marked
@@ -125,9 +143,9 @@ export async function importFlashscoreMatchResult(flashscoreData) {
       // UPDATE: match exists but not yet scored (note: v4.matches has no 'status' column)
       await db.run(
         `UPDATE v4.matches
-         SET home_score = ?, away_score = ?, scraped_score_at = NOW()
+         SET home_score = ?, away_score = ?, venue_id = COALESCE(?, venue_id), scraped_score_at = NOW()
          WHERE match_id = ?`,
-        [validated.home_score, validated.away_score, existingMatch.match_id]
+        [validated.home_score, validated.away_score, venueId, existingMatch.match_id]
       );
 
       logger.info({
@@ -140,13 +158,12 @@ export async function importFlashscoreMatchResult(flashscoreData) {
       return { action: 'updated', match_id: existingMatch.match_id };
 
     } else {
-      // INSERT: new match from Flashscore (likely a cup match)
-      // Note: v4.matches does NOT have a 'status' column
+      // INSERT: new match from Flashscore
       const result = await db.run(
         `INSERT INTO v4.matches
-         (home_club_id, away_club_id, competition_id, match_date, home_score, away_score, scraped_score_at, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [homeClub.club_id, awayClub.club_id, competition.competition_id, validated.match_date,
+         (home_team_id, away_team_id, competition_id, venue_id, match_date, home_score, away_score, scraped_score_at, source_provider)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'flashscore')`,
+        [homeTeamId, awayTeamId, competitionId, venueId, validated.match_date,
          validated.home_score, validated.away_score]
       );
 
@@ -195,7 +212,7 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
 
     // STEP 2: Verify match exists and has score (idempotence check)
     const match = await db.get(
-      `SELECT match_id, home_club_id, away_club_id, home_score, away_score, scraped_events_at
+      `SELECT match_id, home_team_id, away_team_id, home_score, away_score, scraped_events_at
        FROM v4.matches WHERE match_id = ?`,
       [matchId]
     );
@@ -222,24 +239,28 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
     // STEP 5: Process each event
     for (const event of validated) {
       try {
-        // Resolve player by name (FK resolution)
+        // Resolve player via ResolutionServiceV4
         let playerId = null;
         if (event.player_name) {
-          playerId = await resolvePlayerByName(event.player_name);
+          playerId = await ResolutionServiceV4.resolvePerson(
+            'flashscore',
+            event.player_id || `NAME:${event.player_name}`,
+            { name: event.player_name }
+          );
           if (!playerId) {
             logger.debug({
               player_name: event.player_name,
               match_id: matchId,
-            }, 'Player not found in DB — using NULL');
+            }, 'Player not resolved — using NULL');
           }
         }
 
         // Resolve team (home or away)
-        const team = event.team_side === 'home' ? match.home_club_id : match.away_club_id;
+        const teamId = event.team_side === 'home' ? match.home_team_id : match.away_team_id;
 
         // Check for duplicate event (business key)
         const existing = await client.query(
-          `SELECT id FROM v4.match_events
+          `SELECT match_event_id FROM v4.match_events
            WHERE match_id = $1 AND minute_label = $2 AND event_type = $3
            AND player_id IS NOT DISTINCT FROM $4`,
           [matchId, event.minute, event.type, playerId]
@@ -255,7 +276,7 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
           `INSERT INTO v4.match_events
            (match_id, minute_label, event_type, player_id, team_id, detail, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
-          [matchId, event.minute, event.type, playerId, team, event.detail]
+          [matchId, event.minute, event.type, playerId, teamId, event.detail]
         );
 
         insertCount++;
@@ -272,7 +293,7 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
 
     // STEP 6: Mark match as "events scraped" (idempotence marker)
     await client.query(
-      `UPDATE v4.matches SET scraped_events_at = NOW() WHERE id = $1`,
+      `UPDATE v4.matches SET scraped_events_at = NOW() WHERE match_id = $1`,
       [matchId]
     );
 
@@ -315,151 +336,7 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
   }
 }
 
-// ============================================================================
-// CHALLENGE 3: Player Resolution (Multi-Strategy FK Resolution)
-// ============================================================================
-
-/**
- * Resolve Flashscore player name to DB person_id
- *
- * Strategies (in order):
- * 1. Exact name match (ILIKE)
- * 2. Abbreviated format "Nom I." → split + regex
- * 3. Last name only → search as surname
- *
- * Returns: person_id or null (unknown player)
- */
-async function resolvePlayerByName(flashscoreName) {
-  if (!flashscoreName || flashscoreName.trim() === '') {
-    return null;
-  }
-
-  const searchName = flashscoreName.trim();
-
-  // Strategy 1: Exact match
-  let player = await db.get(
-    `SELECT id FROM v4.people
-     WHERE CONCAT(first_name, ' ', last_name) ILIKE ?`,
-    [`%${searchName}%`]
-  );
-
-  if (player) return player.id;
-
-  // Strategy 2: Abbreviated format (e.g., "De Bruyne K." → Kevin De Bruyne)
-  const abbreviated = searchName.match(/^(.+)\s+([A-Z])\.?$/);
-  if (abbreviated) {
-    const [, lastName, initial] = abbreviated;
-    player = await db.get(
-      `SELECT id FROM v4.people
-       WHERE last_name ILIKE ? AND first_name LIKE ?`,
-      [lastName, `${initial}%`]
-    );
-
-    if (player) return player.id;
-  }
-
-  // Strategy 3: Last name only
-  player = await db.get(
-    `SELECT id FROM v4.people
-     WHERE last_name ILIKE ?`,
-    [searchName]
-  );
-
-  if (player) return player.id;
-
-  // Not found
-  logger.debug({ player_name: flashscoreName }, 'Player not resolved');
-  return null;
-}
-
-// ============================================================================
-// CHALLENGE 4: Competition Resolution (Dynamic Cup Creation)
-// ============================================================================
-
-/**
- * Resolve or create competition from Flashscore data
- * For cups (Champions League, etc.), create if doesn't exist
- *
- * Returns: { id: string, name: string, is_cup: boolean }
- */
-async function resolveCompetitionByName(competitionName, countryCode) {
-  // Check if competition exists
-  let competition = await db.get(
-    `SELECT id, name FROM v4.competitions WHERE name = ?`,
-    [competitionName]
-  );
-
-  if (competition) return competition;
-
-  // Determine if it's a cup (not a league)
-  const isCup = /cup|coupe|coppa|pokal|liga|champions|europa|conference/i.test(competitionName);
-
-  // Create new competition (for cups, Flashscore may introduce new competitions)
-  if (isCup) {
-    const result = await db.run(
-      `INSERT INTO v4.competitions (name, country, is_cup, created_at)
-       VALUES (?, ?, ?, NOW())`,
-      [competitionName, countryCode || null, true]
-    );
-
-    logger.info({
-      competition_id: result.lastID,
-      competition_name: competitionName,
-      is_cup: true,
-    }, 'New competition created from Flashscore');
-
-    return { id: result.lastID, name: competitionName, is_cup: true };
-  }
-
-  // League not found and not a cup → error
-  logger.warn({ competition_name: competitionName }, 'Competition not found (not a cup)');
-  return null;
-}
-
-// ============================================================================
-// CHALLENGE 5: Club Resolution with Aliases
-// ============================================================================
-
-/**
- * Resolve Flashscore club name to DB club_id
- * Uses team aliases + Levenshtein distance for fuzzy matching
- *
- * Returns: { id: string, name: string } or null
- */
-async function resolveClubByName(flashscoreClubName) {
-  // Exact match first
-  let club = await db.get(
-    `SELECT club_id, name FROM v4.clubs WHERE name = ?`,
-    [flashscoreClubName]
-  );
-
-  if (club) return club;
-
-  // Check team aliases (mapping table — note: team_aliases table doesn't exist in V4 yet)
-  // This is a fallback for future use if aliases are added
-  // For now, team resolution falls through to fuzzy match
-
-  // Fuzzy match (Levenshtein distance < 3)
-  // Note: PostgreSQL needs `pg_trgm` extension for similarity()
-  club = await db.get(
-    `SELECT club_id, name FROM v4.clubs
-     WHERE similarity(name, ?) > 0.6
-     ORDER BY similarity(name, ?) DESC
-     LIMIT 1`,
-    [flashscoreClubName, flashscoreClubName]
-  );
-
-  if (club) {
-    logger.info({
-      flashscore_name: flashscoreClubName,
-      matched_club: club.name,
-    }, 'Club fuzzy-matched');
-    return club;
-  }
-
-  logger.warn({ flashscore_club_name: flashscoreClubName }, 'Club not found');
-  return null;
-}
+// All resolution logic now delegated to ResolutionServiceV4
 
 // ============================================================================
 // CHALLENGE 6: Self-Healing (Repair Empty Markers)
@@ -479,7 +356,7 @@ export async function repairEmptyMarkers(matchId) {
 
     // Check if events marker is set but no events exist
     const hasMarker = await db.get(
-      `SELECT scraped_events_at FROM v4.matches WHERE id = ?`,
+      `SELECT scraped_events_at FROM v4.matches WHERE match_id = ?`,
       [matchId]
     );
 
@@ -494,7 +371,7 @@ export async function repairEmptyMarkers(matchId) {
 
     // Check if match has goals (if yes, should have events)
     const match = await db.get(
-      `SELECT home_score, away_score FROM v4.matches WHERE id = ?`,
+      `SELECT home_score, away_score FROM v4.matches WHERE match_id = ?`,
       [matchId]
     );
 
@@ -503,7 +380,7 @@ export async function repairEmptyMarkers(matchId) {
     // If goals > 0 but no events, marker was set without data → repair
     if (totalGoals > 0 && eventCount.count === 0) {
       await db.run(
-        `UPDATE v4.matches SET scraped_events_at = NULL WHERE id = ?`,
+        `UPDATE v4.matches SET scraped_events_at = NULL WHERE match_id = ?`,
         [matchId]
       );
 

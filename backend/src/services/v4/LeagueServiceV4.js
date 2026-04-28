@@ -8,9 +8,9 @@ import StandingsV4Service from './StandingsV4Service.js';
 // Using DISTINCT ON instead of LATERAL removes N+1 logo lookups.
 const LATEST_CLUB_LOGOS_CTE = `
     latest_club_logos AS (
-        SELECT DISTINCT ON (club_id) club_id, logo_url
-        FROM v4.club_logos
-        ORDER BY club_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
+        SELECT DISTINCT ON (team_id) team_id AS club_id, logo_url
+        FROM v4.team_logos
+        ORDER BY team_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
     )`;
 
 const LATEST_COMP_LOGOS_CTE = `
@@ -318,7 +318,7 @@ class LeagueServiceV4 {
                      COALESCE(co.display_rank_override, co.importance_rank, 999) AS country_rank,
                      COUNT(DISTINCT m.season_label) AS seasons_count,
                      MAX(m.season_label) AS latest_season,
-                     COALESCE(c.display_rank_override, c.importance_rank, 999999) AS competition_rank,
+                     COALESCE(c.importance_rank, 999999) AS competition_rank,
                      CASE WHEN c.competition_type = 'league' THEN cp.current_matchday ELSE NULL END AS current_matchday,
                      CASE WHEN c.competition_type = 'league' THEN cp.total_matches ELSE NULL END AS total_matchdays,
                      cp.latest_round_label
@@ -341,7 +341,7 @@ class LeagueServiceV4 {
                      c.competition_id, c.name, c.competition_type, c.current_logo_url,
                      lcl.logo_url, co.display_name, co.name, co.flag_url,
                      co.display_rank_override, co.importance_rank,
-                     c.display_rank_override, c.importance_rank,
+                     c.importance_rank,
                      cp.current_matchday, cp.total_matches, cp.latest_round_label
                  HAVING COUNT(DISTINCT m.season_label) > 0
                  ORDER BY
@@ -490,7 +490,7 @@ class LeagueServiceV4 {
              top_teams AS (
                  SELECT DISTINCT ON (l.player_id)
                      l.player_id::text AS player_id,
-                     l.club_id::text   AS team_id
+                     l.team_id::text   AS team_id
                  FROM v4.match_lineups l
                  JOIN v4.matches m ON m.match_id = l.match_id
                  WHERE l.player_id IN (SELECT player_id FROM goal_counts)
@@ -510,11 +510,11 @@ class LeagueServiceV4 {
              FROM goal_counts gc
              JOIN v4.people p              ON p.person_id = gc.player_id
              LEFT JOIN top_teams tt        ON tt.player_id = gc.player_id::text
-             LEFT JOIN v4.clubs cl         ON cl.club_id::text = tt.team_id
-             LEFT JOIN latest_club_logos ll ON ll.club_id = cl.club_id
+             LEFT JOIN v4.teams cl         ON cl.team_id::text = tt.team_id
+             LEFT JOIN latest_club_logos ll ON ll.club_id = cl.team_id
              LEFT JOIN v4.player_season_xg psx
                  ON psx.person_id    = gc.player_id
-                AND psx.club_id::text = tt.team_id
+                AND psx.team_id::text = tt.team_id
                 AND psx.season_label = ?
              ORDER BY gc.goals_total DESC, p.full_name ASC`,
             [...ids, season, ...ids, season, DEFAULT_LOGO, DEFAULT_PHOTO, season]
@@ -541,7 +541,7 @@ class LeagueServiceV4 {
              top_teams AS (
                  SELECT DISTINCT ON (l.player_id)
                      l.player_id::text AS player_id,
-                     l.club_id::text   AS team_id
+                     l.team_id::text   AS team_id
                  FROM v4.match_lineups l
                  JOIN v4.matches m ON m.match_id = l.match_id
                  WHERE l.player_id IN (SELECT player_id FROM assist_counts)
@@ -561,11 +561,11 @@ class LeagueServiceV4 {
              FROM assist_counts ac
              JOIN v4.people p              ON p.person_id = ac.player_id
              LEFT JOIN top_teams tt        ON tt.player_id = ac.player_id::text
-             LEFT JOIN v4.clubs cl         ON cl.club_id::text = tt.team_id
-             LEFT JOIN latest_club_logos ll ON ll.club_id = cl.club_id
+             LEFT JOIN v4.teams cl         ON cl.team_id::text = tt.team_id
+             LEFT JOIN latest_club_logos ll ON ll.club_id = cl.team_id
              LEFT JOIN v4.player_season_xg psx
                  ON psx.person_id     = ac.player_id
-                AND psx.club_id::text = tt.team_id
+                AND psx.team_id::text = tt.team_id
                 AND psx.season_label  = ?
              ORDER BY ac.goals_assists DESC, p.full_name ASC`,
             [...ids, season, ...ids, season, DEFAULT_LOGO, DEFAULT_PHOTO, season]
@@ -581,7 +581,7 @@ class LeagueServiceV4 {
              player_club_stats AS (
                  SELECT
                      l.player_id::text  AS player_id,
-                     l.club_id::text    AS team_id,
+                     l.team_id::text    AS team_id,
                      COUNT(DISTINCT l.match_id) AS appearances,
                      COUNT(DISTINCT CASE WHEN l.is_starter THEN l.match_id END) AS starts,
                      MAX(NULLIF(l.jersey_number, '')) AS number,
@@ -594,7 +594,7 @@ class LeagueServiceV4 {
                  JOIN v4.matches m ON m.match_id = l.match_id
                  WHERE m.competition_id IN (${ids.map(() => '?::BIGINT').join(', ')}) 
                    AND m.season_label = ?
-                 GROUP BY l.player_id, l.club_id
+                 GROUP BY l.player_id, l.team_id
              ),
              goal_assist_events AS (
                  SELECT e.player_id::text AS scorer_id, e.related_player_id::text AS assistant_id
@@ -635,13 +635,13 @@ class LeagueServiceV4 {
                  psx.apps AS xg_apps, psx.minutes AS xg_minutes
              FROM player_club_stats pcs
              JOIN v4.people p              ON p.person_id::text = pcs.player_id
-             LEFT JOIN v4.clubs cl         ON cl.club_id::text  = pcs.team_id
-             LEFT JOIN latest_club_logos ll ON ll.club_id = cl.club_id
+             LEFT JOIN v4.teams cl         ON cl.team_id::text  = pcs.team_id
+             LEFT JOIN latest_club_logos ll ON ll.club_id = cl.team_id
              LEFT JOIN goal_counts gc      ON gc.player_id = pcs.player_id
              LEFT JOIN assist_counts ac    ON ac.player_id = pcs.player_id
              LEFT JOIN v4.player_season_xg psx
                  ON psx.person_id::text = pcs.player_id
-                AND psx.club_id::text   = pcs.team_id
+                AND psx.team_id::text   = pcs.team_id
                 AND psx.season_label    = ?
              WHERE (?::text IS NULL OR pcs.team_id = ?::text)`,
             [
@@ -756,11 +756,11 @@ class LeagueServiceV4 {
                          CASE WHEN m.match_date > CURRENT_DATE THEN 'NS' ELSE 'TBD' END
                      ELSE 'FT'
                  END AS status_short,
-                 m.home_club_id::text AS home_team_id,
+                 m.home_team_id::text AS home_team_id,
                  home.name            AS home_team,
                  home.slug            AS home_team_slug,
                  COALESCE(hl.logo_url, home.current_logo_url, ?) AS home_team_logo,
-                 m.away_club_id::text AS away_team_id,
+                 m.away_team_id::text AS away_team_id,
                  away.name            AS away_team,
                  away.slug            AS away_team_slug,
                  COALESCE(al.logo_url, away.current_logo_url, ?) AS away_team_logo,
@@ -769,11 +769,11 @@ class LeagueServiceV4 {
                  c.name               AS competition_name,
                  c.competition_type   AS competition_type
              FROM v4.matches m
-             JOIN v4.clubs home             ON home.club_id = m.home_club_id
-             JOIN v4.clubs away             ON away.club_id = m.away_club_id
+             JOIN v4.teams home             ON home.team_id = m.home_team_id
+             JOIN v4.teams away             ON away.team_id = m.away_team_id
              JOIN v4.competitions c         ON c.competition_id = m.competition_id
-             LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_club_id
-             LEFT JOIN latest_club_logos al ON al.club_id = m.away_club_id
+             LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_team_id
+             LEFT JOIN latest_club_logos al ON al.club_id = m.away_team_id
              WHERE (${conditions.join(' OR ')})
              ORDER BY m.match_date ASC NULLS LAST, m.match_id ASC`,
             params
@@ -807,8 +807,8 @@ class LeagueServiceV4 {
              JOIN v4.matches m        ON m.match_id = ml.match_id
                                      AND m.competition_id = ?::BIGINT
                                      AND m.season_label   = ?
-             JOIN v4.clubs c          ON c.club_id = ml.club_id
-             LEFT JOIN latest_club_logos ll ON ll.club_id = c.club_id
+             JOIN v4.teams c          ON c.team_id = ml.team_id
+             LEFT JOIN latest_club_logos ll ON ll.club_id = c.team_id
              LEFT JOIN v4.player_season_xg psx
                     ON psx.person_id     = p.person_id
                    AND psx.competition_id = m.competition_id

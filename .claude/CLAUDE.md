@@ -173,6 +173,7 @@ When adding a new V4 API endpoint, follow this structure:
 **All data insertion/import operations MUST follow these rules:**
 
 ### Core Rules
+0. **Mandatory ID Mapping (V4):** Every external entity (Teams, People, Competitions, Venues) MUST be resolved through `ResolutionServiceV4` before any insertion. Direct use of external IDs in business tables is forbidden.
 1. **Schema Validation First:** Every record must pass Zod validation BEFORE touching the database
 2. **Deduplication Always:** Check for existing records using business keys (not just technical IDs)
 3. **Business Key Definition:** Every entity has a unique constraint on its business key (name+country for leagues, etc.)

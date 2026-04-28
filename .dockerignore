@@ -1,0 +1,15 @@
+**/node_modules
+**/.git
+**/.DS_Store
+dist
+build
+*.db
+*.sqlite
+*.sql
+tmp/
+backups/
+catboost_info/
+sonar/
+.agents/
+.claude/
+.gemini/

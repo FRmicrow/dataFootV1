@@ -17,9 +17,9 @@ import { MatchPreviewDTOSchema, UpcomingMatchesDTOSchema } from '../../schemas/c
 
 const LATEST_CLUB_LOGOS_CTE = `
     latest_club_logos AS (
-        SELECT DISTINCT ON (club_id) club_id, logo_url
-        FROM v4.club_logos
-        ORDER BY club_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
+        SELECT DISTINCT ON (team_id) team_id AS club_id, logo_url
+        FROM v4.team_logos
+        ORDER BY team_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
     )`;
 
 const LATEST_COMP_LOGOS_CTE = `
@@ -69,8 +69,8 @@ class MatchPreviewContentServiceV4 {
                  m.match_date              AS match_date,
                  m.matchday                AS matchday,
                  m.round_label             AS round_label,
-                 m.home_club_id::text      AS home_club_id,
-                 m.away_club_id::text      AS away_club_id,
+                 m.home_team_id::text      AS home_club_id,
+                 m.away_team_id::text      AS away_club_id,
                  m.home_score              AS home_score,
                  m.away_score              AS away_score,
                  comp.name                 AS competition_name,
@@ -85,11 +85,11 @@ class MatchPreviewContentServiceV4 {
                  venue.city                AS venue_city
              FROM v4.matches m
              JOIN v4.competitions comp     ON comp.competition_id = m.competition_id
-             JOIN v4.clubs home            ON home.club_id = m.home_club_id
-             JOIN v4.clubs away            ON away.club_id = m.away_club_id
+             JOIN v4.teams home            ON home.team_id = m.home_team_id
+             JOIN v4.teams away            ON away.team_id = m.away_team_id
              LEFT JOIN v4.venues venue     ON venue.venue_id = m.venue_id
-             LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_club_id
-             LEFT JOIN latest_club_logos al ON al.club_id = m.away_club_id
+             LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_team_id
+             LEFT JOIN latest_club_logos al ON al.club_id = m.away_team_id
              LEFT JOIN latest_comp_logos cl ON cl.competition_id = m.competition_id
              WHERE m.match_id = ?::BIGINT`,
             [matchId]
@@ -99,13 +99,13 @@ class MatchPreviewContentServiceV4 {
     async fetchRecentForm(clubId, beforeDate, limit = 5) {
         const rows = await db.all(
             `SELECT
-                 m.home_club_id::text AS home_club_id,
-                 m.away_club_id::text AS away_club_id,
+                 m.home_team_id::text AS home_club_id,
+                 m.away_team_id::text AS away_club_id,
                  m.home_score,
                  m.away_score,
                  m.match_date
              FROM v4.matches m
-             WHERE (m.home_club_id = ?::BIGINT OR m.away_club_id = ?::BIGINT)
+             WHERE (m.home_team_id = ?::BIGINT OR m.away_team_id = ?::BIGINT)
                AND m.match_date < ?
                AND m.home_score IS NOT NULL
                AND m.away_score IS NOT NULL
@@ -123,13 +123,13 @@ class MatchPreviewContentServiceV4 {
     async fetchSeasonXgAvg(clubId, season) {
         const row = await db.get(
             `SELECT
-                 AVG(CASE WHEN m.home_club_id = ?::BIGINT THEN m.xg_home
-                          WHEN m.away_club_id = ?::BIGINT THEN m.xg_away END) AS xg_avg
+                 AVG(CASE WHEN m.home_team_id = ?::BIGINT THEN m.xg_home
+                          WHEN m.away_team_id = ?::BIGINT THEN m.xg_away END) AS xg_avg
              FROM v4.matches m
-             WHERE (m.home_club_id = ?::BIGINT OR m.away_club_id = ?::BIGINT)
+             WHERE (m.home_team_id = ?::BIGINT OR m.away_team_id = ?::BIGINT)
                AND m.season_label = ?
-               AND (CASE WHEN m.home_club_id = ?::BIGINT THEN m.xg_home
-                         WHEN m.away_club_id = ?::BIGINT THEN m.xg_away END) IS NOT NULL`,
+               AND (CASE WHEN m.home_team_id = ?::BIGINT THEN m.xg_home
+                         WHEN m.away_team_id = ?::BIGINT THEN m.xg_away END) IS NOT NULL`,
             [clubId, clubId, clubId, clubId, season, clubId, clubId]
         );
         if (!row || row.xg_avg == null) return null;
@@ -138,7 +138,7 @@ class MatchPreviewContentServiceV4 {
     }
 
     async fetchHomeAwayRecord(clubId, season, side /* 'home' | 'away' */) {
-        const sideColumn = side === 'home' ? 'm.home_club_id' : 'm.away_club_id';
+        const sideColumn = side === 'home' ? 'm.home_team_id' : 'm.away_team_id';
         const row = await db.get(
             `SELECT
                  COUNT(*) AS played,
@@ -182,13 +182,13 @@ class MatchPreviewContentServiceV4 {
                  away.name            AS away_name,
                  m.home_score         AS home_score,
                  m.away_score         AS away_score,
-                 m.home_club_id::text AS home_club_id
+                 m.home_team_id::text AS home_club_id
              FROM v4.matches m
              JOIN v4.competitions comp ON comp.competition_id = m.competition_id
-             JOIN v4.clubs home        ON home.club_id = m.home_club_id
-             JOIN v4.clubs away        ON away.club_id = m.away_club_id
-             WHERE ((m.home_club_id = ?::BIGINT AND m.away_club_id = ?::BIGINT)
-                    OR (m.home_club_id = ?::BIGINT AND m.away_club_id = ?::BIGINT))
+             JOIN v4.teams home        ON home.team_id = m.home_team_id
+             JOIN v4.teams away        ON away.team_id = m.away_team_id
+             WHERE ((m.home_team_id = ?::BIGINT AND m.away_team_id = ?::BIGINT)
+                    OR (m.home_team_id = ?::BIGINT AND m.away_team_id = ?::BIGINT))
                AND m.match_date < ?
                AND m.home_score IS NOT NULL
                AND m.away_score IS NOT NULL
@@ -423,20 +423,20 @@ class MatchPreviewContentServiceV4 {
                  m.competition_id::text  AS competition_id,
                  comp.name               AS competition_name,
                  COALESCE(cl.logo_url, comp.current_logo_url) AS competition_logo,
-                 m.home_club_id::text    AS home_club_id,
+                 m.home_team_id::text    AS home_club_id,
                  home.name               AS home_name,
                  COALESCE(hl.logo_url, home.current_logo_url) AS home_logo,
-                 m.away_club_id::text    AS away_club_id,
+                 m.away_team_id::text    AS away_club_id,
                  away.name               AS away_name,
                  COALESCE(al.logo_url, away.current_logo_url) AS away_logo,
                  venue.name              AS venue_name
              FROM v4.matches m
              JOIN v4.competitions comp      ON comp.competition_id = m.competition_id
-             JOIN v4.clubs home             ON home.club_id = m.home_club_id
-             JOIN v4.clubs away             ON away.club_id = m.away_club_id
+             JOIN v4.teams home             ON home.team_id = m.home_team_id
+             JOIN v4.teams away             ON away.team_id = m.away_team_id
              LEFT JOIN v4.venues venue      ON venue.venue_id = m.venue_id
-             LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_club_id
-             LEFT JOIN latest_club_logos al ON al.club_id = m.away_club_id
+             LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_team_id
+             LEFT JOIN latest_club_logos al ON al.club_id = m.away_team_id
              LEFT JOIN latest_comp_logos cl ON cl.competition_id = m.competition_id
              WHERE m.home_score IS NULL
                AND m.away_score IS NULL

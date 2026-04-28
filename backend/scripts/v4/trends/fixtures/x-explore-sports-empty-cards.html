@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!--
+  V47 fixture — trend cards present but all of them only contain the
+  category line (no label, no post count). Could happen if x.com renders
+  the cards as skeletons before the data arrives.
+  Expected: parse_trends_from_html raises NoTrendsError.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sports / X</title>
+</head>
+<body>
+  <main>
+    <section aria-label="Timeline: Explore">
+      <h1>Trends for you</h1>
+      <div data-testid="trend">
+        <div dir="ltr">Sports &middot; Trending</div>
+      </div>
+      <div data-testid="trend">
+        <div dir="ltr">Sports &middot; Trending</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

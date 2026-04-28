@@ -1,0 +1,76 @@
+{
+  "id": "player-comparison",
+  "version": 1,
+  "name": "Comparatif joueurs",
+  "description": "Comparaison de deux joueurs sur une saison : buts, passes, xG, minutes jouées.",
+  "category": "player",
+  "thumbnail": "/static/templates/player-comparison-thumb.png",
+  "form": {
+    "fields": [
+      {
+        "id": "player_a_id",
+        "type": "player-picker",
+        "label": "Joueur A",
+        "required": true
+      },
+      {
+        "id": "player_b_id",
+        "type": "player-picker",
+        "label": "Joueur B",
+        "required": true
+      },
+      {
+        "id": "season",
+        "type": "season-picker",
+        "label": "Saison",
+        "required": true,
+        "default": "current"
+      }
+    ]
+  },
+  "resolverContract": {
+    "requiredFields": [
+      "players[0].name",
+      "players[0].goals",
+      "players[1].name",
+      "players[1].goals"
+    ],
+    "optionalFields": [
+      "players[0].photo",
+      "players[0].xG",
+      "players[0].assists",
+      "players[0].minutes_played",
+      "players[0].club_name",
+      "players[0].club_logo",
+      "players[1].photo",
+      "players[1].xG",
+      "players[1].assists",
+      "players[1].minutes_played",
+      "players[1].club_name",
+      "players[1].club_logo"
+    ]
+  },
+  "styleVariants": [
+    {
+      "id": "dark-observatory",
+      "name": "Dark Observatory",
+      "description": "Fond sombre, glow analytique, accents néon. Typographie DM Sans."
+    },
+    {
+      "id": "editorial",
+      "name": "Editorial Sports",
+      "description": "Magazine sportif, fond clair, contraste élevé. Typographie Outfit."
+    },
+    {
+      "id": "tactical",
+      "name": "Tactical Board",
+      "description": "Tableau tactique, grille rigoureuse, tons mats. Typographie Space Grotesk."
+    }
+  ],
+  "outputDimensions": {
+    "width": 1200,
+    "height": 675,
+    "format": "png",
+    "dpr": 2
+  }
+}

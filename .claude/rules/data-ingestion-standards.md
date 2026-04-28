@@ -6,6 +6,13 @@ Garantir que chaque insertion, mise à jour ou suppression de donnée respecte l
 
 ## Core Principles
 
+### 0. V4 Canonical Identity (MANDATORY)
+**Règle d'OR:** Toute entité externe (Club, Joueur, Compétition, Stade) **DOIT** être résolue via le `ResolutionServiceV4` avant toute insertion ou liaison.
+
+- **Mapping Table First:** Le système vérifie d'abord si un mapping `(source, source_id)` existe.
+- **Heuristic Second:** Si non, il tente de trouver un match via les clés métier (nom, pays, naissance).
+- **Canonical ID only:** Seul l'ID interne (UUID/BigInt Snowflake) est autorisé dans les tables métier (`v4.matches`, etc.).
+
 ### 1. Validation Schema-First
 **Règle Absolue:** Aucune donnée n'entre en base sans validation Zod préalable.
 

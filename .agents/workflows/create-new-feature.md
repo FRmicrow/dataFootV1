@@ -21,7 +21,13 @@ Endosse le rôle **Product Owner** et pilote la feature de bout en bout :
 Dialogue avec l'utilisateur pour comprendre le "Pourquoi" et le "Quoi". Identifie la version (ex: V37) et le nom de la feature.
 
 ### Phase 1 — TSD (Product Architect)
-Consulte `.claude/project-architecture/` pour l'analyse d'impact. Rédige `technical-spec.md` avec : Data Contract (SQL + Zod), UI Blueprint, Logic & Edge Cases. **Soumets à l'utilisateur avant de continuer.**
+Consulte `.claude/project-architecture/` pour l'analyse d'impact. Rédige `technical-spec.md` avec : Data Contract (SQL + Zod), UI Blueprint, Logic & Edge Cases. 
+**RÈGLE D'OR (CANONICAL IDENTITY)** : 
+- Il est **STRICTEMENT INTERDIT** d'insérer des données externes directement avec leurs IDs sources dans les tables métier (`matches`, `people`, `teams`, etc.).
+- Chaque ingestion **doit** passer par une table de mapping dédiée : `v4.mapping_teams`, `v4.mapping_people`, `v4.mapping_competitions`, `v4.mapping_venues`.
+- La résolution d'identité doit être déléguée au `ResolutionServiceV4`.
+- Le TSD **doit** détailler le schéma des tables de mapping nécessaires.
+**Soumets à l'utilisateur avant de continuer.**
 
 ### Phase 2 — Branche Git (Git Engineer)
 Crée la branche `feature/Vxx-[Nom]` et le dossier `docs/features/Vxx-[Nom]/`.

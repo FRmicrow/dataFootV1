@@ -14,6 +14,7 @@
 import { z } from 'zod';
 import db from '../config/database.js';
 import logger from '../utils/logger.js';
+import ResolutionServiceV4 from './v4/ResolutionServiceV4.js';
 
 // ============================================================================
 // SCHEMAS — Validate BEFORE touching DB
@@ -39,6 +40,16 @@ const PlayerInsertSchema = z.object({
   nationality: z.string().length(2, 'ISO 2-letter country code').optional(),
   height: z.number().positive().optional(),
   weight: z.number().positive().optional(),
+});
+
+const MatchInsertSchema = z.object({
+  match_date: z.string().datetime(),
+  home_team_name: z.string(),
+  away_team_name: z.string(),
+  competition_name: z.string(),
+  venue_name: z.string().optional(),
+  home_score: z.number().int().optional(),
+  away_score: z.number().int().optional(),
 });
 
 // ============================================================================
@@ -101,7 +112,7 @@ export async function insertMatchEvent(matchId, event) {
     }
 
     const team = await db.get(
-      'SELECT club_id FROM v4.clubs WHERE club_id = ?',
+      'SELECT team_id FROM v4.teams WHERE team_id = ?',
       [validated.team_id]
     );
 
@@ -209,7 +220,7 @@ export async function importMatchEventsBatch(matchId, events) {
 
         // Verify FK: team
         const team = await client.query(
-          'SELECT id FROM v4.clubs WHERE id = $1',
+          'SELECT team_id FROM v4.teams WHERE team_id = $1',
           [event.team_id]
         );
 
@@ -396,9 +407,9 @@ export async function upsertPlayer(person) {
  */
 export async function findDuplicateMatches() {
   const duplicates = await db.all(
-    `SELECT home_club_id, away_club_id, match_date, competition_id, COUNT(*) as count, ARRAY_AGG(match_id) as ids
+    `SELECT home_team_id, away_team_id, match_date, competition_id, COUNT(*) as count, ARRAY_AGG(match_id) as ids
      FROM v4.matches
-     GROUP BY home_club_id, away_club_id, match_date, competition_id
+     GROUP BY home_team_id, away_team_id, match_date, competition_id
      HAVING COUNT(*) > 1
      ORDER BY count DESC`
   );

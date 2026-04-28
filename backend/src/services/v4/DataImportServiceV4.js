@@ -22,7 +22,7 @@ export class DataImportServiceV4 {
         // ID Mappings for deduplication
         this.peopleMap = new Map(); // source_tm_id -> person_id
         this.peopleNameMap = new Map(); // normalized_name -> person_id
-        this.clubsMap = new Map();  // source_tm_id -> club_id
+        this.teamsMap = new Map();  // source_tm_id -> team_id
         this.competitionsMap = new Map(); // source_key -> competition_id
 
         // Pending relations to be resolved after IDs are stable
@@ -60,9 +60,9 @@ export class DataImportServiceV4 {
             if (p.norm_name) this.peopleNameMap.set(p.norm_name, p.person_id);
         });
         
-        const clubs = await db.all('SELECT club_id, name, source_tm_id FROM v4.clubs');
-        clubs.forEach(c => {
-            if (c.source_tm_id) this.clubsMap.set(c.source_tm_id, c.club_id);
+        const teams = await db.all('SELECT team_id, name, source_tm_id FROM v4.teams');
+        teams.forEach(c => {
+            if (c.source_tm_id) this.teamsMap.set(c.source_tm_id, c.team_id);
         });
 
         const competitions = await db.all('SELECT competition_id, source_key FROM v4.competitions');
@@ -70,7 +70,7 @@ export class DataImportServiceV4 {
         
         logger.info({ 
             people: this.peopleMap.size, 
-            clubs: this.clubsMap.size,
+            teams: this.teamsMap.size,
             competitions: this.competitionsMap.size
         }, '✅ Mappings loaded');
     }
@@ -144,8 +144,8 @@ export class DataImportServiceV4 {
     async flushBuffer(table, columns, buffer) {
         if (table === 'competitions') {
             await this.processCompetitions(buffer);
-        } else if (table === 'clubs') {
-            await this.upsertGeneric(table, columns, buffer, ['club_id']);
+        } else if (table === 'teams') {
+            await this.upsertGeneric(table, columns, buffer, ['team_id']);
         } else if (table === 'people') {
             await this.upsertGeneric(table, columns, buffer, ['person_id']);
         } else {
@@ -172,7 +172,7 @@ export class DataImportServiceV4 {
             let key = null;
             if (table === 'people') {
                 key = row.source_tm_id ? `tm:${row.source_tm_id}` : `name:${NormalizationEngine.normalize(row.full_name)}`;
-            } else if (table === 'clubs') {
+            } else if (table === 'teams') {
                 key = row.source_tm_id ? `tm:${row.source_tm_id}` : `name:${NormalizationEngine.normalize(row.name)}`;
             } else {
                 key = pks.map(pk => row[pk]).join('|');
@@ -208,21 +208,21 @@ export class DataImportServiceV4 {
                         ${conflictTarget} 
                         DO UPDATE SET ${updateClause}
                     `;
-                } else if (table === 'clubs') {
+                } else if (table === 'teams') {
                     const tmIdIdx = colNames.indexOf('source_tm_id');
                     const nameIdx = colNames.indexOf('name');
-                    const clubIdIdx = colNames.indexOf('club_id');
+                    const teamIdIdx = colNames.indexOf('team_id');
                     
                     sql = `
                         WITH target_id AS (
-                            SELECT club_id FROM v4.clubs 
+                            SELECT team_id FROM v4.teams 
                             WHERE (source_tm_id IS NOT NULL AND source_tm_id = $${tmIdIdx + 1})
                                OR (lower(name) = lower($${nameIdx + 1}))
                             LIMIT 1
                         )
-                        INSERT INTO v4.clubs (${colNames.join(', ')})
-                        SELECT COALESCE((SELECT club_id FROM target_id), $${clubIdIdx + 1}), ${placeholders.split(', ').slice(1).join(', ')}
-                        ON CONFLICT (club_id) 
+                        INSERT INTO v4.teams (${colNames.join(', ')})
+                        SELECT COALESCE((SELECT team_id FROM target_id), $${teamIdIdx + 1}), ${placeholders.split(', ').slice(1).join(', ')}
+                        ON CONFLICT (team_id) 
                         DO UPDATE SET ${updateClause}
                     `;
                 } else {

@@ -1,0 +1,40 @@
+/* MissingDataBadge — overrides on top of .ds-badge */
+
+.ds-missing-badge {
+    /* Slightly tighter typographically since the badge has 4 inline parts */
+    gap: 4px;
+    letter-spacing: 0.01em;
+    text-transform: none; /* Some templates apply uppercase to badges; force normal here */
+    font-weight: var(--font-weight-medium, 500);
+}
+
+.ds-missing-badge-icon {
+    font-size: 1.05em;
+    line-height: 1;
+}
+
+.ds-missing-badge-prefix {
+    font-weight: var(--font-weight-bold, 700);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.92em;
+    opacity: 0.85;
+}
+
+.ds-missing-badge-sep {
+    opacity: 0.6;
+}
+
+.ds-missing-badge-label {
+    font-weight: var(--font-weight-medium, 500);
+}
+
+/* Severity-specific tweaks (color comes from the underlying Badge variant) */
+.ds-missing-badge--critical .ds-missing-badge-icon {
+    /* warn-glyph slight emphasis */
+    transform: translateY(-0.5px);
+}
+
+.ds-missing-badge--optional {
+    opacity: 0.92;
+}

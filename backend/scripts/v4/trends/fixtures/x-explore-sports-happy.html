@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!--
+  V47 fixture — happy path for parse_trends_from_html().
+  Synthetic HTML mirroring the x.com /explore/tabs/sports DOM contract
+  documented in TSD §5. When the user confirms real selectors, this
+  fixture should be regenerated from a real x.com page.html dump.
+
+  Expected parse result: 5 trends with mixed types and post counts.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sports / X</title>
+  <link rel="canonical" href="https://x.com/explore/tabs/sports">
+</head>
+<body>
+  <main>
+    <section aria-label="Timeline: Explore">
+      <h1>Trends for you</h1>
+
+      <!-- Trend 1 — topic with K-suffix post count -->
+      <div role="link" data-testid="trend">
+        <div>
+          <div dir="ltr">Sports &middot; Trending</div>
+          <div dir="ltr"><span>Mbappé</span></div>
+          <div dir="ltr">142K posts</div>
+        </div>
+      </div>
+
+      <!-- Trend 2 — hashtag with no post count -->
+      <div role="link" data-testid="trend">
+        <div>
+          <div dir="ltr">Sports &middot; Trending</div>
+          <div dir="ltr"><span>#ElClasico</span></div>
+        </div>
+      </div>
+
+      <!-- Trend 3 — event ("Real Madrid - Barcelona") with M-suffix -->
+      <div role="link" data-testid="trend">
+        <div>
+          <div dir="ltr">Sports &middot; Trending</div>
+          <div dir="ltr"><span>Real Madrid - Barcelona</span></div>
+          <div dir="ltr">1.2M posts</div>
+        </div>
+      </div>
+
+      <!-- Trend 4 — topic with comma-formatted post count -->
+      <div role="link" data-testid="trend">
+        <div>
+          <div dir="ltr">Sports &middot; Trending</div>
+          <div dir="ltr"><span>Haaland</span></div>
+          <div dir="ltr">86,500 posts</div>
+        </div>
+      </div>
+
+      <!-- Trend 5 — event with "vs" separator -->
+      <div role="link" data-testid="trend">
+        <div>
+          <div dir="ltr">Sports &middot; Trending</div>
+          <div dir="ltr"><span>France vs Spain</span></div>
+          <div dir="ltr">42K posts</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

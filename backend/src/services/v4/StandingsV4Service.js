@@ -4,9 +4,9 @@ import { DEFAULT_LOGO } from '../../config/mediaConstants.js';
 
 const LATEST_CLUB_LOGOS_CTE = `
     latest_club_logos AS (
-        SELECT DISTINCT ON (club_id) club_id, logo_url
-        FROM v4.club_logos
-        ORDER BY club_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
+        SELECT DISTINCT ON (team_id) team_id AS club_id, logo_url
+        FROM v4.team_logos
+        ORDER BY team_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
     )`;
 
 class StandingsV4Service {
@@ -21,8 +21,8 @@ class StandingsV4Service {
                      m.round_label           AS round,
                      m.home_score            AS goals_home,
                      m.away_score            AS goals_away,
-                     m.home_club_id::text    AS home_team_id,
-                     m.away_club_id::text    AS away_team_id,
+                     m.home_team_id::text    AS home_team_id,
+                     m.away_team_id::text    AS away_team_id,
                      home.name               AS home_name,
                      home.slug               AS home_slug,
                      away.name               AS away_name,
@@ -31,11 +31,11 @@ class StandingsV4Service {
                      COALESCE(al.logo_url, away.current_logo_url, ?) AS away_logo_url,
                      c.name                  AS comp_name
                  FROM v4.matches m
-                 JOIN v4.clubs home              ON home.club_id = m.home_club_id
-                 JOIN v4.clubs away              ON away.club_id = m.away_club_id
+                 JOIN v4.teams home              ON home.team_id = m.home_team_id
+                 JOIN v4.teams away              ON away.team_id = m.away_team_id
                  JOIN v4.competitions c          ON c.competition_id = m.competition_id
-                 LEFT JOIN latest_club_logos hl  ON hl.club_id = m.home_club_id
-                 LEFT JOIN latest_club_logos al  ON al.club_id = m.away_club_id
+                 LEFT JOIN latest_club_logos hl  ON hl.club_id = m.home_team_id
+                 LEFT JOIN latest_club_logos al  ON al.club_id = m.away_team_id
                  WHERE m.competition_id IN (${ids.map(() => '?::BIGINT').join(', ')})
                    AND m.season_label   = ?
                    AND m.home_score IS NOT NULL
@@ -137,7 +137,7 @@ class StandingsV4Service {
 
             return standings;
         } catch (error) {
-            logger.error({ err: error, competitionId, season }, 'V4 standings calculation error');
+            logger.error({ err: error, competitionIds, season }, 'V4 standings calculation error');
             throw error;
         }
     }

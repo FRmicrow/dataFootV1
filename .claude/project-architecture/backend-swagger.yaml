@@ -40,6 +40,8 @@ tags:
     description: Expected goals analytics (V4).
   - name: V4 Admin
     description: Administrative operations (secured by X-Admin-Key header).
+  - name: V4 Studio
+    description: Infographic Studio endpoints — template catalog, resolver, PNG export, tweet drafts (V48+).
 paths:
   /stats:
     get:
@@ -3331,3 +3333,79 @@ paths:
           description: Non autorisé
         500:
           description: Erreur serveur
+  # ===== V48 Phase 2 — Studio Templates =====
+
+  /v4/studio/templates:
+    get:
+      operationId: listStudioTemplatesV4
+      tags:
+        - V4 Studio
+      summary: Liste les manifests d'infographies disponibles (résumés)
+      description: |
+        Renvoie la liste des templates JSON présents dans frontend/src/infographic-templates/,
+        validés via Zod. Chaque entrée est un résumé : id, version, name, description, category,
+        thumbnail, styleVariantIds. Pour le manifest complet, utiliser /templates/{id}.
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:               { type: string, example: "player-comparison" }
+                        version:          { type: integer, example: 1 }
+                        name:             { type: string, example: "Comparatif joueurs" }
+                        description:      { type: string }
+                        category:         { type: string, enum: [player, club, match, league, season] }
+                        thumbnail:        { type: string, example: "/static/templates/player-comparison-thumb.png" }
+                        styleVariantIds:
+                          type: array
+                          items: { type: string }
+                          example: ["dark-observatory", "editorial", "tactical"]
+        500:
+          description: Erreur de chargement des manifests (FS / validation Zod)
+
+  /v4/studio/templates/{id}:
+    get:
+      operationId: getStudioTemplateV4
+      tags:
+        - V4 Studio
+      summary: Manifest complet d'un template d'infographie
+      description: |
+        Renvoie le manifest entier validé via Zod, y compris form fields, resolverContract,
+        styleVariants et outputDimensions. Utilisé par la future page Studio (Phase 4) pour
+        construire dynamiquement le formulaire et configurer le rendu.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z][a-z0-9-]+$"
+          example: "player-comparison"
+      responses:
+        200:
+          description: Succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data:
+                    type: object
+                    description: Manifest complet (cf. frontend/src/infographic-templates/_schema.js)
+        400:
+          description: Format d'id invalide (kebab-case lowercase requis)
+        404:
+          description: Template introuvable
+        500:
+          description: Erreur de chargement / validation Zod
+

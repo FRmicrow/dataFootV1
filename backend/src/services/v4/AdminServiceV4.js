@@ -80,6 +80,9 @@ class AdminServiceV4 {
                         await client.query('UPDATE v4.match_events SET related_player_id = $1 WHERE related_player_id = $2', [canonicalId, oldId]);
                         await client.query('UPDATE v4.matches SET referee_person_id = $1 WHERE referee_person_id = $2', [canonicalId, oldId]);
 
+                        // Redirect Mapping Tables (US-410)
+                        await client.query('UPDATE v4.mapping_people SET person_id = $1 WHERE person_id = $2', [canonicalId, oldId]);
+
                         // Resolve player_season_xg conflicts before update
                         const conflicts = await client.query(`
                             SELECT s2.id AS old_stat_id

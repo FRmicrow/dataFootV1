@@ -17,6 +17,7 @@ This workflow ensures that every new feature is implemented, tested, and documen
 
 2. **Backend Development**
    - Create/Update models in `backend/src/models/` (Prisma).
+   - **IMPORTANT: ID Resolution**: For any new data ingestion, ensure usage of `ResolutionServiceV4` to map external IDs to canonical V4 IDs. No external IDs should be stored in business tables.
    - Create services in `backend/src/services/`.
    - Create controllers in `backend/src/controllers/` using Zod for validation.
    - Register routes in `backend/src/routes/v3_routes.js`.

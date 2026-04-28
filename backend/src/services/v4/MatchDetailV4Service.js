@@ -4,9 +4,9 @@ import { DEFAULT_LOGO } from '../../config/mediaConstants.js';
 // Latest logo per club in a single pass — replaces N+1 LATERAL subqueries
 const LATEST_CLUB_LOGOS_CTE = `
     latest_club_logos AS (
-        SELECT DISTINCT ON (club_id) club_id, logo_url
-        FROM v4.club_logos
-        ORDER BY club_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
+        SELECT DISTINCT ON (team_id) team_id AS club_id, logo_url
+        FROM v4.team_logos
+        ORDER BY team_id, end_year DESC NULLS LAST, start_year DESC NULLS LAST
     )`;
 
 class MatchDetailV4Service {
@@ -28,22 +28,22 @@ class MatchDetailV4Service {
                  m.home_formation,  m.away_formation,
                  c.name             AS league,
                  c.name             AS league_name,
-                 home.club_id::text AS home_team_id,
+                 home.team_id::text AS home_team_id,
                  home.name          AS home_name,
                  COALESCE(hl.logo_url, home.current_logo_url, ?) AS home_logo,
-                 away.club_id::text AS away_team_id,
+                 away.team_id::text AS away_team_id,
                  away.name          AS away_name,
                  COALESCE(al.logo_url, away.current_logo_url, ?) AS away_logo,
                  venue.name         AS venue_name,
                  referee.full_name  AS referee_name
              FROM v4.matches m
              JOIN v4.competitions c    ON c.competition_id = m.competition_id
-             JOIN v4.clubs home        ON home.club_id = m.home_club_id
-             JOIN v4.clubs away        ON away.club_id = m.away_club_id
+             JOIN v4.teams home        ON home.team_id = m.home_team_id
+             JOIN v4.teams away        ON away.team_id = m.away_team_id
              LEFT JOIN v4.venues venue ON venue.venue_id = m.venue_id
              LEFT JOIN v4.people referee ON referee.person_id = m.referee_person_id
-             LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_club_id
-             LEFT JOIN latest_club_logos al ON al.club_id = m.away_club_id
+             LEFT JOIN latest_club_logos hl ON hl.club_id = m.home_team_id
+             LEFT JOIN latest_club_logos al ON al.club_id = m.away_team_id
              WHERE m.match_id = ?::BIGINT`,
             [DEFAULT_LOGO, DEFAULT_LOGO, fixtureId]
         );
@@ -57,7 +57,7 @@ class MatchDetailV4Service {
             db.all(
                 `SELECT
                      l.match_lineup_id::text AS id,
-                     l.club_id::text  AS team_id,
+                     l.team_id::text  AS team_id,
                      l.player_id::text AS player_id,
                      l.side, l.is_starter, l.jersey_number, l.position_code, l.role_code,
                      COALESCE(p.full_name, l.player_name) AS player_name,
@@ -65,7 +65,7 @@ class MatchDetailV4Service {
                      c.name      AS team_name
                  FROM v4.match_lineups l
                  LEFT JOIN v4.people p ON p.person_id = l.player_id
-                 JOIN v4.clubs c  ON c.club_id   = l.club_id
+                 JOIN v4.teams c  ON c.team_id   = l.team_id
                  WHERE l.match_id = ?::BIGINT
                  ORDER BY l.side ASC, l.is_starter DESC,
                           NULLIF(l.jersey_number, '') ASC NULLS LAST,
@@ -74,8 +74,8 @@ class MatchDetailV4Service {
             ),
             db.get(
                 `SELECT
-                     home_club_id::text AS home_team_id,
-                     away_club_id::text AS away_team_id,
+                     home_team_id::text AS home_team_id,
+                     away_team_id::text AS away_team_id,
                      home_formation, away_formation
                  FROM v4.matches
                  WHERE match_id = ?::BIGINT`,

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--
+  V47 fixture — page rendered but DOM structure has changed.
+  No [data-testid="trend"] elements found.
+  Expected: parse_trends_from_html raises DomStructureError.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sports / X</title>
+  <link rel="canonical" href="https://x.com/explore/tabs/sports">
+</head>
+<body>
+  <main>
+    <section aria-label="Timeline: Explore">
+      <h1>Trends for you</h1>
+      <!-- The rebrand replaced data-testid="trend" with data-testid="trending-item" -->
+      <div data-testid="trending-item">
+        <div dir="ltr">Sports &middot; Trending</div>
+        <div dir="ltr"><span>Mbappé</span></div>
+      </div>
+      <div data-testid="trending-item">
+        <div dir="ltr">Sports &middot; Trending</div>
+        <div dir="ltr"><span>Haaland</span></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
