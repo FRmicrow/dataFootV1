@@ -44,10 +44,10 @@ class TransfermarktScraperService {
         return false;
     }
 
-    async resolvePerson(name, tmId) {
+    async resolvePerson(name, tmId, type = 'player') {
         if (!name || !tmId) return null;
         try {
-            return await ResolutionServiceV4.resolvePerson('transfermarkt', tmId, { name });
+            return await ResolutionServiceV4.resolvePerson(`transfermarkt_${type}`, tmId, { name, personType: type });
         } catch (err) {
             logger.error({ err, tmId, name }, 'Failed to resolve person in TM scraper');
             return null;
@@ -245,7 +245,7 @@ class TransfermarktScraperService {
                 const details = await this.fetchMatchDetails(match.source_match_id, match, true);
                 if (details && details.date) {
                     const venueId = details.venue.name ? await this.resolveVenue(details.venue.name, details.venue.url) : null;
-                    const refereeId = details.referee.tmId ? await this.resolvePerson(details.referee.name, details.referee.tmId) : null;
+                    const refereeId = details.referee.tmId ? await this.resolvePerson(details.referee.name, details.referee.tmId, 'referee') : null;
 
                     await db.run(`
                         UPDATE v4.matches 

@@ -9,6 +9,7 @@ export const ResolutionContextSchema = z.object({
     // People specific
     nationality: z.string().optional(),
     birthDate: z.string().optional(), // ISO or YYYY-MM-DD
+    personType: z.string().optional(), // player, referee, coach, manager
     lastClubId: z.number().optional().or(z.string().transform(v => parseInt(v, 10))),
     
     // Team specific

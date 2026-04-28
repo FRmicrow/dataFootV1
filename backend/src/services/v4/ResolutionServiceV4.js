@@ -156,7 +156,7 @@ class ResolutionServiceV4 {
     async _createPerson(ctx) {
         const result = await db.run(
             `INSERT INTO v4.people (full_name, person_type, nationality_1, birth_date) VALUES (?, ?, ?, ?) RETURNING person_id`,
-            [ctx.name || 'Unknown Person', 'player', ctx.nationality || null, ctx.birthDate || null]
+            [ctx.name || 'Unknown Person', ctx.personType || 'player', ctx.nationality || null, ctx.birthDate || null]
         );
         return result.lastInsertRowid;
     }
