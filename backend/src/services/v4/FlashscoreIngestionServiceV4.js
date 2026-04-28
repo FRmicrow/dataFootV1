@@ -123,27 +123,26 @@ export async function importFlashscoreMatchResult(flashscoreData) {
 
     // STEP 3: Business key lookup (match_date + teams + competition)
     const existingMatch = await db.get(
-      `SELECT match_id, home_score, away_score, scraped_score_at
+      `SELECT match_id, home_score, away_score
        FROM v4.matches
        WHERE home_team_id = ? AND away_team_id = ?
          AND match_date = ? AND competition_id = ?`,
       [homeTeamId, awayTeamId, validated.match_date, competitionId]
     );
 
-    // STEP 4: Idempotence check — don't re-scrape if already marked
+    // STEP 4: Idempotence check — don't re-scrape if already scored
     if (existingMatch) {
-      if (existingMatch.scraped_score_at) {
+      if (existingMatch.home_score !== null) {
         logger.info({
           match_id: existingMatch.match_id,
-          scraped_at: existingMatch.scraped_score_at,
-        }, 'Match already scraped — skipped (idempotent)');
-        return { action: 'skipped', match_id: existingMatch.match_id, reason: 'already_scraped' };
+        }, 'Match already scored — skipped (idempotent)');
+        return { action: 'skipped', match_id: existingMatch.match_id, reason: 'already_scored' };
       }
 
-      // UPDATE: match exists but not yet scored (note: v4.matches has no 'status' column)
+      // UPDATE: match exists but not yet scored
       await db.run(
         `UPDATE v4.matches
-         SET home_score = ?, away_score = ?, venue_id = COALESCE(?, venue_id), scraped_score_at = NOW()
+         SET home_score = ?, away_score = ?, venue_id = COALESCE(?, venue_id)
          WHERE match_id = ?`,
         [validated.home_score, validated.away_score, venueId, existingMatch.match_id]
       );
@@ -161,8 +160,8 @@ export async function importFlashscoreMatchResult(flashscoreData) {
       // INSERT: new match from Flashscore
       const result = await db.run(
         `INSERT INTO v4.matches
-         (home_team_id, away_team_id, competition_id, venue_id, match_date, home_score, away_score, scraped_score_at, source_provider)
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'flashscore')`,
+         (home_team_id, away_team_id, competition_id, venue_id, match_date, home_score, away_score, source_provider)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'flashscore')`,
         [homeTeamId, awayTeamId, competitionId, venueId, validated.match_date,
          validated.home_score, validated.away_score]
       );
@@ -210,9 +209,9 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
       event_count: validated.length,
     }, 'Starting bulk event import (transaction)');
 
-    // STEP 2: Verify match exists and has score (idempotence check)
+    // STEP 2: Verify match exists
     const match = await db.get(
-      `SELECT match_id, home_team_id, away_team_id, home_score, away_score, scraped_events_at
+      `SELECT match_id, home_team_id, away_team_id, home_score, away_score
        FROM v4.matches WHERE match_id = ?`,
       [matchId]
     );
@@ -221,13 +220,17 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
       throw new Error(`Match ${matchId} not found`);
     }
 
-    // STEP 3: Idempotence: If already marked as attempted, skip
-    if (match.scraped_events_at) {
-      logger.warn({
+    // STEP 3: Idempotence: Check if events already exist
+    const existingEvents = await db.get(
+      `SELECT EXISTS(SELECT 1 FROM v4.match_events WHERE match_id = ?) as exists`,
+      [matchId]
+    );
+
+    if (existingEvents.exists) {
+      logger.info({
         match_id: matchId,
-        scraped_at: match.scraped_events_at,
-      }, 'Events already scraped — skipped (marker check)');
-      return { action: 'skipped', match_id: matchId, reason: 'marker_present' };
+      }, 'Events already exist — skipped (idempotent)');
+      return { action: 'skipped', match_id: matchId, reason: 'events_exist' };
     }
 
     // STEP 4: Start transaction
@@ -239,12 +242,16 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
     // STEP 5: Process each event
     for (const event of validated) {
       try {
+        // Resolve team (home or away) first so we can scope the player pseudo-ID
+        const teamId = event.team_side === 'home' ? match.home_team_id : match.away_team_id;
+
         // Resolve player via ResolutionServiceV4
         let playerId = null;
         if (event.player_name) {
+          const pseudoId = `TEAM:${teamId}_NAME:${event.player_name}`;
           playerId = await ResolutionServiceV4.resolvePerson(
             'flashscore',
-            event.player_id || `NAME:${event.player_name}`,
+            event.player_id || pseudoId,
             { name: event.player_name }
           );
           if (!playerId) {
@@ -254,9 +261,6 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
             }, 'Player not resolved — using NULL');
           }
         }
-
-        // Resolve team (home or away)
-        const teamId = event.team_side === 'home' ? match.home_team_id : match.away_team_id;
 
         // Check for duplicate event (business key)
         const existing = await client.query(
@@ -291,11 +295,7 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
       }
     }
 
-    // STEP 6: Mark match as "events scraped" (idempotence marker)
-    await client.query(
-      `UPDATE v4.matches SET scraped_events_at = NOW() WHERE match_id = $1`,
-      [matchId]
-    );
+    // STEP 6: Mark match as "events scraped" (Note: marker removed, handled by existence check)
 
     // STEP 7: Commit transaction
     await client.query('COMMIT');
@@ -338,71 +338,7 @@ export async function importFlashscoreMatchEvents(matchId, flashscoreEvents) {
 
 // All resolution logic now delegated to ResolutionServiceV4
 
-// ============================================================================
-// CHALLENGE 6: Self-Healing (Repair Empty Markers)
-// ============================================================================
-
-/**
- * Repair idempotence markers that were set but data got deleted
- *
- * If `scraped_events_at IS NOT NULL` but `match_events` is empty,
- * reset the marker so retry will work.
- *
- * This prevents getting stuck in "already attempted" state.
- */
-export async function repairEmptyMarkers(matchId) {
-  try {
-    logger.info({ match_id: matchId }, 'Repairing empty markers');
-
-    // Check if events marker is set but no events exist
-    const hasMarker = await db.get(
-      `SELECT scraped_events_at FROM v4.matches WHERE match_id = ?`,
-      [matchId]
-    );
-
-    if (!hasMarker || !hasMarker.scraped_events_at) {
-      return { repaired: false };
-    }
-
-    const eventCount = await db.get(
-      `SELECT COUNT(*) as count FROM v4.match_events WHERE match_id = ?`,
-      [matchId]
-    );
-
-    // Check if match has goals (if yes, should have events)
-    const match = await db.get(
-      `SELECT home_score, away_score FROM v4.matches WHERE match_id = ?`,
-      [matchId]
-    );
-
-    const totalGoals = (match.home_score || 0) + (match.away_score || 0);
-
-    // If goals > 0 but no events, marker was set without data → repair
-    if (totalGoals > 0 && eventCount.count === 0) {
-      await db.run(
-        `UPDATE v4.matches SET scraped_events_at = NULL WHERE match_id = ?`,
-        [matchId]
-      );
-
-      logger.info({
-        match_id: matchId,
-        goals: totalGoals,
-        events_found: eventCount.count,
-      }, 'Empty events marker repaired');
-
-      return { repaired: true, marker: 'scraped_events_at' };
-    }
-
-    return { repaired: false };
-
-  } catch (error) {
-    logger.error({ err: error, match_id: matchId }, 'Marker repair failed');
-    return { error: error.message, repaired: false };
-  }
-}
-
 export default {
   importFlashscoreMatchResult,
   importFlashscoreMatchEvents,
-  repairEmptyMarkers,
 };
