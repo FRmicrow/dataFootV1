@@ -20,6 +20,7 @@ Use this skill for any server-side development, including:
 - **Architecture**: Controllers handle requests/responses; **Services** own the business logic.
 - **Logging**: Use the centralized `logger`. Never use `console.*`.
 - **Response Format**: Always return `{ success: true, data: ... }` or `{ success: false, error: "..." }`.
+- **Data Ingestion**: Every external ingestion **must** follow the **[.agents/rules/canonical-identity-resolution.md](file:///.agents/rules/canonical-identity-resolution.md)** procedure via `ResolutionServiceV4`.
 
 ## Best Practices
 1. **RESTful Design**: Use plural nouns for resources (e.g., `/matches`, `/players`) and appropriate HTTP verbs.

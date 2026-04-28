@@ -20,6 +20,7 @@ Use this skill for any database-related tasks, including:
 - **Safety**: Use **parameterized queries** only (`db.all(sql, [params])`). Never use string interpolation for SQL.
 - **Consistency**: Follow the database schema design in `backend/scripts/v3/migrate.js`.
 - **Migrations**: Always create a migration script for schema changes.
+- **Canonical Identity**: Every external data ingestion **must** use `ResolutionServiceV4` and mapping tables (`v4.mapping_teams`, etc.). No direct insertion of external IDs in business tables. Refer to **[.agents/rules/canonical-identity-resolution.md](file:///.agents/rules/canonical-identity-resolution.md)**.
 
 ## Best Practices
 1. **Indexing**: Create indexes for columns frequently used in `WHERE`, `JOIN`, or `ORDER BY` clauses.

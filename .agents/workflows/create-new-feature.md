@@ -25,7 +25,7 @@ Consulte `.claude/project-architecture/` pour l'analyse d'impact. Rédige `techn
 **RÈGLE D'OR (CANONICAL IDENTITY)** : 
 - Il est **STRICTEMENT INTERDIT** d'insérer des données externes directement avec leurs IDs sources dans les tables métier (`matches`, `people`, `teams`, etc.).
 - Chaque ingestion **doit** passer par une table de mapping dédiée : `v4.mapping_teams`, `v4.mapping_people`, `v4.mapping_competitions`, `v4.mapping_venues`.
-- La résolution d'identité doit être déléguée au `ResolutionServiceV4`.
+- La résolution d'identité doit être déléguée au `ResolutionServiceV4` conformément à la règle **[.agents/rules/canonical-identity-resolution.md](file:///.agents/rules/canonical-identity-resolution.md)**.
 - Le TSD **doit** détailler le schéma des tables de mapping nécessaires.
 **Soumets à l'utilisateur avant de continuer.**
 
