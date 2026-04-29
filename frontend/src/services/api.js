@@ -39,6 +39,8 @@ export default {
     getHealth: () => api.get('/admin/health'),
     search: (params) => api.get(`/search?${new URLSearchParams(params)}`),
     getSearchCountries: () => api.get('/search/countries'),
+    searchV4: (params) => api.get(`/v4/search?${new URLSearchParams(params)}`),
+    getSearchCountriesV4: () => api.get('/v4/search/countries'),
 
     // --- Leagues ---
     getLeagues: (country) => api.get(country ? `/leagues?country=${encodeURIComponent(country)}` : '/leagues'),

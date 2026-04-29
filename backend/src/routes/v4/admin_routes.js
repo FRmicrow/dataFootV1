@@ -38,4 +38,19 @@ router.get('/maintenance/status', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/v4/admin/maintenance/recalculate-importance
+ * Recalculates importance_rank for all players
+ */
+router.post('/maintenance/recalculate-importance', async (req, res) => {
+    try {
+        const { default: PlayerImportanceServiceV4 } = await import('../../services/v4/PlayerImportanceServiceV4.js');
+        const result = await PlayerImportanceServiceV4.recalculateAll();
+        res.json({ success: true, ...result });
+    } catch (error) {
+        logger.error({ error }, 'Maintenance error at importance recalculation endpoint');
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 export default router;

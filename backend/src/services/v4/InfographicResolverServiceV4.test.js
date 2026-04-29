@@ -188,9 +188,9 @@ describe('resolvePlayerComparison — missing fields', () => {
     it('reports name as critical missing when full_name IS NULL', async () => {
         db.get
             .mockResolvedValueOnce({ ...PERSON_A, full_name: null })
+            .mockResolvedValueOnce(PERSON_B)
             .mockResolvedValueOnce(STATS_A)
             .mockResolvedValueOnce(CLUB_A)
-            .mockResolvedValueOnce(PERSON_B)
             .mockResolvedValueOnce(STATS_B)
             .mockResolvedValueOnce(CLUB_B);
 

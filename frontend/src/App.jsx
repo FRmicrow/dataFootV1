@@ -7,7 +7,7 @@ import V3Layout from './components/v3/layouts/V3Layout';
 import V3Dashboard from './components/v3/pages/dashboard/V3Dashboard';
 import V3LeaguesList from './components/v3/pages/league/V3LeaguesList';
 import PlayerProfilePageV3 from './components/v3/pages/profile/PlayerProfilePageV3';
-import SearchPageV3 from './components/v3/pages/search/SearchPageV3';
+import SearchPageV4 from './components/v4/pages/search/SearchPageV4';
 import ClubProfilePageV4 from './components/v4/pages/profile/ClubProfilePageV4';
 import ContentStudioV3 from './components/v3/pages/studio/ContentStudioV3';
 import ImportEventsPage from './components/v3/pages/import/ImportEventsPage';
@@ -45,7 +45,7 @@ function App() {
                             <Route path="/league/:id" element={<SeasonOverviewPage />} />
                             <Route path="/league/:id/season/:year" element={<SeasonOverviewPage />} />
                             <Route path="/player/:id" element={<PlayerProfilePageV3 />} />
-                            <Route path="/search" element={<SearchPageV3 />} />
+                            <Route path="/search" element={<SearchPageV4 />} />
                             <Route path="/club/:name" element={<ClubProfilePageV4 />} />
                             <Route path="/studio" element={<ContentStudioV3 />} />
                             <Route path="/events" element={<ImportEventsPage />} />

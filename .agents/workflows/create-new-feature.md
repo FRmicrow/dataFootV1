@@ -21,7 +21,7 @@ Endosse le rôle **Product Owner** et pilote la feature de bout en bout :
 Dialogue avec l'utilisateur pour comprendre le "Pourquoi" et le "Quoi". Identifie la version (ex: V37) et le nom de la feature.
 
 ### Phase 1 — TSD (Product Architect)
-Consulte `.claude/project-architecture/` pour l'analyse d'impact. Rédige `technical-spec.md` avec : Data Contract (SQL + Zod), UI Blueprint, Logic & Edge Cases. 
+Consulte `.agents/project-architecture/` pour l'analyse d'impact. Rédige `technical-spec.md` avec : Data Contract (SQL + Zod), UI Blueprint, Logic & Edge Cases. 
 **RÈGLE D'OR (CANONICAL IDENTITY)** : 
 - Il est **STRICTEMENT INTERDIT** d'insérer des données externes directement avec leurs IDs sources dans les tables métier (`matches`, `people`, `teams`, etc.).
 - Chaque ingestion **doit** passer par une table de mapping dédiée : `v4.mapping_teams`, `v4.mapping_people`, `v4.mapping_competitions`, `v4.mapping_venues`.
@@ -60,13 +60,13 @@ Découpe le TSD en US numérotées (V37 → US-370, US-371...). Génère les fic
 **Mapping des tags → skills :**
 | Tag | Skills chargés avant l'implémentation |
 |---|---|
-| `[FRONTEND]` | `.claude/skills/frontend-design/SKILL.md` |
-| `[BACKEND]` | `.claude/skills/backend/rest-endpoint-design/SKILL.md` + `input-validation/SKILL.md` |
-| `[DATABASE]` | `.claude/skills/database/migration-script/SKILL.md` + `normalization/SKILL.md` |
-| `[SQL]` | `.claude/skills/database/indexing-strategy/SKILL.md` + `security/sql-injection-mitigation/SKILL.md` |
-| `[ML]` | `.claude/skills/machine-learning/SKILL.md` |
-| `[SECURITY]` | `.claude/skills/security/sql-injection-mitigation/SKILL.md` + `xss-prevention/SKILL.md` |
-| `[QA]` | `.claude/skills/qa-automation/SKILL.md` — **toujours présent, sans exception** |
+| `[FRONTEND]` | `.agents/skills/design/SKILL.md` + `.agents/skills/web-dev/SKILL.md` |
+| `[BACKEND]` | `.agents/skills/backend/SKILL.md` |
+| `[DATABASE]` | `.agents/skills/database/SKILL.md` |
+| `[SQL]` | `.agents/skills/database/SKILL.md` |
+| `[ML]` | `.agents/skills/machine-learning/SKILL.md` |
+| `[SECURITY]` | `.agents/skills/security/SKILL.md` |
+| `[QA]` | `.agents/skills/testing/SKILL.md` — **toujours présent, sans exception** |
 
 **Valide le backlog complet avec l'utilisateur avant de commencer l'implémentation.**
 
@@ -101,7 +101,7 @@ cd frontend && npm test
 Une fois les tests verts, délègue à l'agent `doc-writer` :
 
 1. **QA-REPORT.md** : Génère `docs/features/Vxx-[Nom]/QA-REPORT.md` avec résultats de tests, logs Docker, checklist UI
-2. **Swagger** : Si des endpoints ont changé, vérifie que `.claude/project-architecture/backend-swagger.yaml` est à jour
+2. **Swagger** : Si des endpoints ont changé, vérifie que `.agents/project-architecture/backend-swagger.yaml` est à jour
 3. **technical-spec.md** : Ajoute une section "Résultat de livraison" avec les écarts éventuels par rapport au TSD initial
 
 ---

@@ -1,0 +1,34 @@
+{
+  "competitions": {
+    "rows_all": 580,
+    "rows_with_tm_id": 580,
+    "rows_with_tm_and_flashscore_id": 105,
+    "rows_without_flashscore_id": 475,
+    "file_all": "Exports-V4\\Final-TM-FS-IDs\\competitions.csv",
+    "file_matched_only": "Exports-V4\\Final-TM-FS-IDs\\competitions_matched_only.csv"
+  },
+  "equipes": {
+    "rows_all": 10596,
+    "rows_with_tm_id": 10596,
+    "rows_with_tm_and_flashscore_id": 2460,
+    "rows_without_flashscore_id": 8136,
+    "file_all": "Exports-V4\\Final-TM-FS-IDs\\equipes.csv",
+    "file_matched_only": "Exports-V4\\Final-TM-FS-IDs\\equipes_matched_only.csv"
+  },
+  "joueurs": {
+    "rows_all": 108506,
+    "rows_with_tm_id": 108506,
+    "rows_with_tm_and_flashscore_id": 18476,
+    "rows_without_flashscore_id": 90030,
+    "file_all": "Exports-V4\\Final-TM-FS-IDs\\joueurs.csv",
+    "file_matched_only": "Exports-V4\\Final-TM-FS-IDs\\joueurs_matched_only.csv"
+  },
+  "venues": {
+    "rows_all": 1817,
+    "rows_with_tm_id": 1817,
+    "rows_with_tm_and_flashscore_id": 0,
+    "rows_without_flashscore_id": 1817,
+    "file_all": "Exports-V4\\Final-TM-FS-IDs\\venues.csv",
+    "file_matched_only": "Exports-V4\\Final-TM-FS-IDs\\venues_matched_only.csv"
+  }
+}
