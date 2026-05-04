@@ -50,12 +50,100 @@
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 
 ## Commands
+
+### Production / Staging (Docker)
+```bash
+docker compose up -d --build       # full stack (Postgres + backend + frontend + ML)
+docker compose down                # stop all services
+docker compose logs -f backend     # view backend logs
+docker compose ps                  # list running services
+```
+
+### Local Development (without Docker)
 ```bash
 cd backend && npm run dev          # backend dev server (port 3001)
 cd frontend && npm run dev         # frontend dev server (port 5173)
 cd backend && npm test             # backend tests (Vitest + Supertest)
 cd frontend && npm test            # frontend tests (Vitest + jsdom)
-docker-compose up                  # full stack (Postgres + backend + frontend + ML)
+```
+
+### Database & Migrations
+```bash
+# Migrations run automatically on backend startup (Docker or local)
+# Check applied migrations: SELECT * FROM V3_Migrations;
+# Manually trigger: node backend/src/services/v3/MigrationService.js
+```
+
+## Deployment & Migrations
+
+### Docker Deployment
+
+**Full stack startup:**
+```bash
+docker compose up -d --build
+```
+
+This starts:
+- **PostgreSQL** (port 5432) — runs migrations automatically on `backend` startup
+- **Backend** (port 3001) — MigrationService executes all pending migrations from `backend/src/migrations/registry/`
+- **Frontend** (port 5173)
+- **ML Service** (Python-based inference)
+
+**Monitor migration execution:**
+```bash
+docker compose logs -f backend | grep -E "Checking for Database Migrations|Applying migration|Successfully applied"
+```
+
+### Phase 1 Schema Creation
+
+When `docker compose up -d --build` runs:
+
+1. PostgreSQL container starts and initializes empty database
+2. Backend container starts and runs MigrationService
+3. MigrationService creates `V3_Migrations` tracking table
+4. Applies all pending migrations in `backend/src/migrations/registry/` in alphabetical order
+5. Latest migration: `20260504_00_STEP0_Phase1_Complete_Schema.js` creates:
+   - **dev.*** — 13 canonical tables (countries, teams, people, competitions, venues, matches, etc.)
+   - **mapping.*** — 4 external ID mapping tables (teams, people, competitions, venues)
+   - **audit.*** — immutable change log (canonical_changes)
+   - **stg.*** — manual review queue (mapping_candidates)
+
+**Verify tables created:**
+```bash
+# Option 1: Check logs
+docker compose logs backend | grep "STEP 0 Migration"
+
+# Option 2: Query database directly
+docker compose exec -T postgres psql -U postgres -d statfoot_db -c "\dt dev.* mapping.* audit.* stg.*"
+
+# Option 3: Check migration tracking
+docker compose exec -T postgres psql -U postgres -d statfoot_db -c "SELECT name FROM V3_Migrations ORDER BY name;"
+```
+
+### Adding New Migrations
+
+1. Create migration file: `backend/src/migrations/registry/20260505_XX_Description.js`
+2. Export `up(db)` and `down(db)` async functions
+3. Restart services: `docker compose up -d --build`
+4. MigrationService automatically detects and applies pending migrations
+
+**Migration template:**
+```javascript
+export async function up(db) {
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS dev.new_table (
+      id BIGSERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  console.log('✅ Created dev.new_table');
+}
+
+export async function down(db) {
+  await db.run(`DROP TABLE IF EXISTS dev.new_table CASCADE`);
+  console.log('✅ Dropped dev.new_table');
+}
 ```
 
 ## Agent System
@@ -173,7 +261,6 @@ When adding a new V4 API endpoint, follow this structure:
 **All data insertion/import operations MUST follow these rules:**
 
 ### Core Rules
-0. **Mandatory ID Mapping (V4):** Every external entity (Teams, People, Competitions, Venues) MUST be resolved through `ResolutionServiceV4` before any insertion. Direct use of external IDs in business tables is forbidden.
 1. **Schema Validation First:** Every record must pass Zod validation BEFORE touching the database
 2. **Deduplication Always:** Check for existing records using business keys (not just technical IDs)
 3. **Business Key Definition:** Every entity has a unique constraint on its business key (name+country for leagues, etc.)
